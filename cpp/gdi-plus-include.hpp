@@ -8,7 +8,7 @@ Gdiplus programs can be finnicky with includes and defines. Use this as the comm
 
 #pragma comment (lib, "Gdiplus.lib")
 
-#include "windows-lam-include.h"
+#include "windows-lam-include.hpp"
 
 #include <algorithm>
 

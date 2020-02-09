@@ -8,8 +8,8 @@ Extends ClientSocketManager and ServerManager with the `headed` protocol, which 
 
 #pragma once
 
-#include "network-client-manager.h"
-#include "network-server-manager.h"
+#include "network-client-manager.hpp"
+#include "network-server-manager.hpp"
 
 namespace Rain {
 	class HeadedClientSocketManager : public ClientSocketManager {

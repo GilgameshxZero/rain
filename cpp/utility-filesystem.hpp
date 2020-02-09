@@ -15,8 +15,8 @@ Windows-specific.
 
 #pragma once
 
-#include "utility-string.h"
-#include "windows-lam-include.h"
+#include "utility-string.hpp"
+#include "windows-lam-include.hpp"
 
 #include <cstdlib>
 #include <fstream>

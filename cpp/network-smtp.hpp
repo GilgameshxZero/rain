@@ -4,7 +4,7 @@ Standard
 
 #pragma once
 
-#include "utility-string.h"
+#include "utility-string.hpp"
 
 namespace Rain {
 	//retreive the status code from a message, such as 250 or 221

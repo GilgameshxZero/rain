@@ -12,8 +12,8 @@ Windows-specific.
 
 #pragma comment(lib,"user32.lib") 
 
-#include "windows-lam-include.h"
-#include "utility-libraries.h"
+#include "windows-lam-include.hpp"
+#include "utility-libraries.hpp"
 
 #include <tchar.h>
 #include <unordered_map>

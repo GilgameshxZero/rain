@@ -1,4 +1,4 @@
-#include "gdi-plus-libraries.h"
+#include "gdi-plus-libraries.hpp"
 
 namespace Rain {
 	int getEncoderClsid(const WCHAR *format, CLSID *pClsid) {

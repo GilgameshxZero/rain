@@ -1,4 +1,4 @@
-#include "utility-time.h"
+#include "utility-time.hpp"
 
 namespace Rain {
 	std::string getTime(std::string format, time_t now) {

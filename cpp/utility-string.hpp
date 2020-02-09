@@ -8,7 +8,7 @@ Compatiable with all OS.
 
 #pragma once
 
-#include "windows-lam-include.h"
+#include "windows-lam-include.hpp"
 
 #include <algorithm> 
 #include <cctype>

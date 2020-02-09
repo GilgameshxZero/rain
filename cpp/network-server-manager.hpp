@@ -8,12 +8,12 @@ Implements thread for listening for socket connections and spawning recvThreads.
 
 #pragma once
 
-#include "utility-error.h"
-#include "utility-logging.h"
-#include "network-base.h"
-#include "network-recv-thread.h"
-#include "network-socket-manager.h"
-#include "network-utility.h"
+#include "utility-error.hpp"
+#include "utility-logging.hpp"
+#include "network-base.hpp"
+#include "network-recv-thread.hpp"
+#include "network-socket-manager.hpp"
+#include "network-utility.hpp"
 
 #include <cstddef>
 #include <mutex>

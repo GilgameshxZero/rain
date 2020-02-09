@@ -8,9 +8,9 @@ Functions to make program logging easier.
 
 #pragma once
 
-#include "utility-filesystem.h"
-#include "utility-time.h"
-#include "network-socket-manager.h"
+#include "utility-filesystem.hpp"
+#include "utility-time.hpp"
+#include "network-socket-manager.hpp"
 
 #include <fcntl.h>
 #include <io.h>

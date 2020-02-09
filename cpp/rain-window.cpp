@@ -1,4 +1,4 @@
-#include "rain-window.h"
+#include "rain-window.hpp"
 
 namespace Rain {
 	const LPCTSTR RainWindow::NULLCLASSNAME = _T("");
