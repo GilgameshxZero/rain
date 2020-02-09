@@ -1,4 +1,4 @@
-#include "utility-libraries.h"
+#include "utility-libraries.hpp"
 
 namespace Rain {
 	HANDLE simpleCreateThread(LPTHREAD_START_ROUTINE threadfunc, LPVOID threadparam) {

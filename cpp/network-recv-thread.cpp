@@ -1,4 +1,4 @@
-#include "network-recv-thread.h"
+#include "network-recv-thread.hpp"
 
 namespace Rain {
 	DWORD WINAPI recvThread(LPVOID lpParameter) {

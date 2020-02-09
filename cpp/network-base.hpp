@@ -10,8 +10,8 @@ Higher-level, optional functions are in NetworkUtility.
 
 #pragma once
 
-#include "network-wsa-include.h"
-#include "rain-window.h"
+#include "network-wsa-include.hpp"
+#include "rain-window.hpp"
 
 #include <string>
 #include <unordered_map>

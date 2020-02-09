@@ -1,4 +1,4 @@
-#include "utility-string.h"
+#include "utility-string.hpp"
 
 namespace Rain {
 	const std::string CRLF = "\r\n",

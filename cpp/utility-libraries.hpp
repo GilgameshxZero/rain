@@ -8,11 +8,11 @@ Include this for all UtilityLibraries libraries.
 
 #pragma once
 
-#include "utility-error.h"
-#include "utility-filesystem.h"
-#include "utility-logging.h"
-#include "utility-string.h"
-#include "utility-time.h"
+#include "utility-error.hpp"
+#include "utility-filesystem.hpp"
+#include "utility-logging.hpp"
+#include "utility-string.hpp"
+#include "utility-time.hpp"
 
 namespace Rain {
 	HANDLE simpleCreateThread(LPTHREAD_START_ROUTINE threadfunc, LPVOID threadparam);

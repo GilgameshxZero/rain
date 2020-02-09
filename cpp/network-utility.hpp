@@ -4,11 +4,11 @@ Standard
 
 #pragma once
 
-#include "network-base.h"
-#include "network-recv-param.h"
-#include "network-socket-manager.h"
-#include "rain-window.h"
-#include "utility-string.h"
+#include "network-base.hpp"
+#include "network-recv-param.hpp"
+#include "network-socket-manager.hpp"
+#include "rain-window.hpp"
+#include "utility-string.hpp"
 
 #include <functional>
 #include <string>

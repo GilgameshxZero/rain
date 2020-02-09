@@ -1,4 +1,4 @@
-#include "network-recv-param.h"
+#include "network-recv-param.hpp"
 
 namespace Rain {
 	RecvHandlerParam::RecvHandlerParam() {

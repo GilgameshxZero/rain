@@ -4,7 +4,7 @@ Standard
 
 #pragma once
 
-#include "utility-logging.h"
+#include "utility-logging.hpp"
 
 #include <fstream>
 #include <iostream>

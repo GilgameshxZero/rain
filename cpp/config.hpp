@@ -6,8 +6,8 @@ Standard
 
 #pragma once
 
-#include "utility-filesystem.h"
-#include "utility-string.h"
+#include "utility-filesystem.hpp"
+#include "utility-string.hpp"
 
 namespace Rain {
 	class Configuration {

@@ -1,4 +1,4 @@
-#include "utility-logging.h"
+#include "utility-logging.hpp"
 
 namespace Rain {
 	LogStream::LogStream() {

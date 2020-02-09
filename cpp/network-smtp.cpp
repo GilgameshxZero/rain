@@ -1,4 +1,4 @@
-#include "network-smtp.h"
+#include "network-smtp.hpp"
 
 namespace Rain {
 	int getSMTPStatus(std::string *message) {
