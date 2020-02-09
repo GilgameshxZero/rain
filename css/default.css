@@ -1,5 +1,4 @@
 @import "size.css";
-@import "garamond.css";
 @import "no-classes.css";
 
 html {
@@ -11,4 +10,6 @@ body {
   margin: 0;
 
   font-size: var(--s);
+  font-family: Georgia, serif;
+  line-height: 1.25;
 }
