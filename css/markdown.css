@@ -8,6 +8,10 @@ p {
   text-indent: 2ch;
 }
 
+.no-indent {
+  text-indent: 0;
+}
+
 a {
   background-color: transparent;
 }
