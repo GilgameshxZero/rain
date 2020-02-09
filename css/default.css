@@ -1,4 +1,14 @@
+@import "size.css";
+@import "garamond.css";
+@import "no-classes.css";
+
+html {
+  overflow-x: hidden;
+}
+
 body {
-  margin: 0;
   position: relative;
+  margin: 0;
+
+  font-size: var(--s);
 }

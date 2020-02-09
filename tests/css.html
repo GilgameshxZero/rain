@@ -1,0 +1,115 @@
+<html>
+
+<head>
+	<title></title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+	<script></script>
+	<style></style>
+
+	<link rel="stylesheet" href="../css/default.css" />
+	<link rel="stylesheet" href="../css/markdown.css" />
+</head>
+
+<body>
+	This is unwrapped text.
+	<div class="no-display">This is text classified as "no-display".</div>
+	<h1>This is an h1 title</h1>
+	<p>Paragraph following h1.</p>
+	<p>Next paragraph.</p>
+	<p>Another paragraph.</p>
+	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut quis ultrices turpis. Nulla facilisi. Pellentesque
+		interdum in ante at condimentum. Phasellus laoreet fringilla ante vel efficitur. Proin elit lectus, rhoncus sit amet
+		dolor ut, blandit varius augue. Integer tempor nibh sit amet ligula viverra, quis accumsan elit gravida. Praesent
+		suscipit, sem vitae porttitor mattis, orci augue venenatis felis, vitae elementum ante tortor sed leo. Nam dapibus
+		semper tellus, a tincidunt leo finibus non. Nam suscipit fringilla sapien, in elementum nibh iaculis et.
+		Pellentesque ligula mauris, sodales ut risus a, feugiat fringilla diam. </p>
+	<h2>This is an h2 title</h2>
+	<p>This is paragraph.</p>
+	<h3>This is an h3 title</h3>
+	<p>This is paragraph.</p>
+	<pre><code>/*Everything related to the icon and planet content, which is not markdown.*/
+
+.planet>.inner>.label {
+	z-index: 1;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+
+	display: flex;
+	font-size: 200%;
+}
+
+.planet>.inner>.label>span {
+	margin: auto;
+}
+
+.planet>.inner>.label>img {
+	margin: auto;
+}</code></pre>
+	<p>This is paragraph.</p>
+	<hr>
+	<p>Above is a border. <a href="#">This is a link.</a></p>
+	<table>
+		<thead>
+			<tr>
+				<th>Command</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>exit</td>
+				<td>Exits the process.</td>
+			</tr>
+			<tr>
+				<td>help</td>
+				<td>Lists all available commands.</td>
+			</tr>
+			<tr>
+				<td>connect</td>
+				<td>Connect to remote update server. Not available if already connected to a remote server.</td>
+			</tr>
+			<tr>
+				<td>disconnect</td>
+				<td>Disconnect from a remote connection.</td>
+			</tr>
+			<tr>
+				<td>push</td>
+				<td>Overwrite the remote <code>shared</code> files with the local ones.</td>
+			</tr>
+			<tr>
+				<td>push-exclusive</td>
+				<td>Overwrite the remote <code>exclusive</code> files with the local ones specific to the domain.</td>
+			</tr>
+			<tr>
+				<td>pull</td>
+				<td>Overwrite local <code>exclusive</code> files specific to the domain with remote <code>exclusive</code>
+					files.</td>
+			</tr>
+			<tr>
+				<td>sync</td>
+				<td>Runs <code>push</code>, then <code>push-exclusive</code>, then <code>pull</code> in series.</td>
+			</tr>
+			<tr>
+				<td>start</td>
+				<td>Starts the HTTP and SMTP servers, or the remote HTTP and SMTP servers if connected.</td>
+			</tr>
+			<tr>
+				<td>stop</td>
+				<td>Stops the HTTP and SMTP servers, or the remote HTTP and SMTP servers if connected.</td>
+			</tr>
+			<tr>
+				<td>restart</td>
+				<td>Restarts the HTTP and SMTP servers, or the remote HTTP and SMTP servers if connected.</td>
+			</tr>
+			<tr>
+				<td>restart-all</td>
+				<td>Restarts the application, or the remote application if connected.</td>
+			</tr>
+		</tbody>
+	</table>
+</body>
+
+</html>
