@@ -15,12 +15,13 @@ pre>code {
   width: 100%;
   margin: calc(0.8 * var(--x)) 0 0;
   padding: calc(0.6 * var(--x)) calc(0.6 * var(--x));
+
+  border: calc(0.1 * var(--x)) solid;
+  border-radius: calc(0.3 * var(--x));
 }
 
 code {
 	display: inline-block;
-	margin: calc(0.2 * var(--x));
-  padding: calc(0.2 * var(--x)) calc(0.4 * var(--x));
   max-width: 100%;
 
   white-space: pre-wrap;
@@ -28,8 +29,6 @@ code {
   font-family: "Roboto Mono", monospace;
   font-size: 85%;
 
-  border: calc(0.1 * var(--x)) solid;
-  border-radius: calc(0.3 * var(--x));
   color: inherit;
   font-weight: 300;
   line-height: inherit;
