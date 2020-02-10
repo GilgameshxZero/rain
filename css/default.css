@@ -1,5 +1,6 @@
 @import "size.css";
 @import "no-classes.css";
+@import "markdown.css";
 
 html {
   overflow-x: hidden;
