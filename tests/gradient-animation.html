@@ -1,0 +1,40 @@
+<html>
+
+<head>
+  <title></title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+  <script></script>
+  <style>
+    body {
+      padding: calc(5 * var(--x));
+
+      background-image: linear-gradient(to right, #2980B9 0%, #6DD5FA 25%, #FFFFFF 50%, #6DD5FA 75%, #2980B9 100%);
+      background-size: 200% 100%;
+
+      animation: gradient-animation 5s linear infinite;
+    }
+
+    @keyframes gradient-animation {
+      0% {
+        background-position: 0 0;
+      }
+
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+  </style>
+
+  <link rel="stylesheet" href="../css/default.css" />
+</head>
+
+<body>
+  <h1>Oh, Garamond</h1>
+  <p>One might argue that Georgia is a better web font choice than Garamond as it was designed <i>for the web</i>. I, however, find the lower x-height of Garamond an irresitable alstroemeria to which the buzzing of my inner designer inevitably gravitates.</p>
+  <p>Unfortunately, this webpage is still written in Georgia. Luckily, it's primary use is to demonstrate smooth CSS-only gradient animations, as well as a styling method where every length is based on the <code>rem</code> specifier. This <code>rem</code> specification allows for some easy responsive constraints, which I shall not demonstrate today.</p>
+</body>
+
+</html>
