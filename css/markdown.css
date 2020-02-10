@@ -1,15 +1,10 @@
-@import "size.css";
+@import "x.css";
 
 p {
   padding-bottom: 0;
-  margin-bottom: calc(-0.5 * var(--s));
+  margin-bottom: calc(-0.5 * var(--x));
 
   word-wrap: break-word;
-  text-indent: 2ch;
-}
-
-.no-indent {
-  text-indent: 0;
 }
 
 a {
@@ -18,14 +13,14 @@ a {
 
 pre>code {
   width: 100%;
-  margin: calc(0.8 * var(--s)) 0 0;
-  padding: calc(0.6 * var(--s)) calc(0.6 * var(--s));
+  margin: calc(0.8 * var(--x)) 0 0;
+  padding: calc(0.6 * var(--x)) calc(0.6 * var(--x));
 }
 
 code {
 	display: inline-block;
-	margin: calc(0.2 * var(--s));
-  padding: calc(0.2 * var(--s)) calc(0.4 * var(--s));
+	margin: calc(0.2 * var(--x));
+  padding: calc(0.2 * var(--x)) calc(0.4 * var(--x));
   max-width: 100%;
 
   white-space: pre-wrap;
@@ -33,46 +28,48 @@ code {
   font-family: "Roboto Mono", monospace;
   font-size: 85%;
 
-  border: calc(0.1 * var(--s)) solid;
-  border-radius: calc(0.3 * var(--s));
+  border: calc(0.1 * var(--x)) solid;
+  border-radius: calc(0.3 * var(--x));
   color: inherit;
   font-weight: 300;
   line-height: inherit;
 }
 
 h1 {
-  margin: calc(2 * var(--s)) 0 calc(0.1 * var(--s));
-  padding-bottom: calc(0.1 * var(--s));
+  margin: calc(2 * var(--x)) 0 calc(0.1 * var(--x));
+  padding-bottom: calc(0.1 * var(--x));
 
-  border-bottom: calc(0.1 * var(--s)) solid;
+  border-bottom: calc(0.1 * var(--x)) solid;
 }
 
 h2 {
-  margin: calc(2 * var(--s)) 0 0;
+  margin: calc(2 * var(--x)) 0 0;
   padding-top: 0;
 	padding-bottom: 0;
 	width: 80%;
 
-  border-bottom: calc(0.1 * var(--s)) solid;
+  border-bottom: calc(0.1 * var(--x)) solid;
 }
 
 h3 {
-	margin: calc(1.5 * var(--s)) auto calc(-0.4 * var(--s));
+	margin: calc(1.5 * var(--x)) auto calc(-0.4 * var(--x));
   padding-bottom: 0;
 }
 
 hr {
   max-width: 75%;
-  margin: calc(1.8 * var(--s)) auto calc(1 * var(--s));
+  height: 0;
+  margin: calc(1.8 * var(--x)) auto calc(1 * var(--x));
 
-  border: calc(0.05 * var(--s)) solid;
+  border-top: calc(0.1 * var(--x)) solid;
+  border-bottom: 0;
   border-left: none;
   border-right: none;
 }
 
 table {
   width: 100%;
-  margin: calc(1 * var(--s)) auto;
+  margin: calc(1 * var(--x)) auto;
 
   font-size: 100%;
   border-collapse: collapse;
@@ -85,19 +82,19 @@ table thead {
 }
 
 table td {
-	padding: calc(1 * var(--s));
+	padding: calc(1 * var(--x));
 }
 
 table th {
-  padding: calc(0.8 * var(--s));
+  padding: calc(0.8 * var(--x));
 
-  border: calc(0.1 * var(--s)) solid;
+  border: calc(0.1 * var(--x)) solid;
   border-left: none;
   border-right: none;
 }
 
 table tr td {
-  padding: calc(0.4 * var(--s));
+  padding: calc(0.4 * var(--x));
 }
 
 table tr:nth-child(odd) td {
