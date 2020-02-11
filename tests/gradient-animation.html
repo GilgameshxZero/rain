@@ -8,12 +8,17 @@
   <script></script>
   <style>
     body {
-      padding: calc(5 * var(--x));
+      display: flex;
+      flex-flow: column nowrap;
 
       background-image: linear-gradient(to right, #2980B9 0%, #6DD5FA 25%, #FFFFFF 50%, #6DD5FA 75%, #2980B9 100%);
       background-size: 200% 100%;
 
       animation: gradient-animation 5s linear infinite;
+    }
+
+    body>div {
+      margin: auto calc(5 * var(--x));
     }
 
     @keyframes gradient-animation {
@@ -32,9 +37,31 @@
 </head>
 
 <body>
-  <h1>Oh, Garamond</h1>
-  <p>One might argue that Georgia is a better web font choice than Garamond as it was designed <i>for the web</i>. I, however, find the lower x-height of Garamond an irresitable alstroemeria to which the buzzing of my inner designer inevitably gravitates.</p>
-  <p>Unfortunately, this webpage is still written in Georgia. Luckily, it's primary use is to demonstrate smooth CSS-only gradient animations, as well as a styling method where every length is based on the <code>rem</code> specifier. This <code>rem</code> specification allows for some easy responsive constraints, which I shall not demonstrate today.</p>
+  <div>
+    <h1>Some thoughts</h1>
+    <p>One might argue that Georgia is a better web font choice than Garamond as it was designed <i>for the web</i>. I,
+      however, dream of a day that technological advances in PPI will enable Garamond to be a viable web font even with
+      its cluttered appearance.</p>
+    <p>This webpage, however, is still written in Georgia. Luckily, it's purpose is not to discuss the differences
+      between these two fonts. Rather, it is to demonstrate smooth CSS-only gradient animations.</p>
+    <p>The following is all the relevant CSS for the gradient animation.</p>
+    <pre><code>body {
+  background-image: linear-gradient(to right, #2980B9 0%, #6DD5FA 25%, #FFFFFF 50%, #6DD5FA 75%, #2980B9 100%);
+  background-size: 200% 100%;
+
+  animation: gradient-animation 5s linear infinite;
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}</code></pre>
+  </div>
 </body>
 
 </html>
