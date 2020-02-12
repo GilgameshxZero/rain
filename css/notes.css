@@ -1,3 +1,7 @@
 @import "base.css";
 @import "georgia.css";
 @import "markdown.css";
+
+p {
+  margin-bottom: calc(-0.1 * var(--x));
+}
