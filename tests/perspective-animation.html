@@ -14,7 +14,7 @@
 			height: 100%;
 
 			background-color: black;
-			perspective: calc(120 * var(--x));
+			perspective: calc(60 * var(--x));
 		}
 
 		body>div {
@@ -30,17 +30,17 @@
 
 		@keyframes rotate-spin {
 			0% {
-				transform: rotate3d(0, 1, 0, 0) translate3d(0, 0, calc(40 * var(--x)));
+				transform: rotate3d(0, 1, 0, 0) translate3d(0, 0, calc(20 * var(--x)));
 				background-color: #c392f5;
 			}
 
 			50% {
-				transform: rotate3d(0, 1, 0, 180deg) translate3d(0, 0, calc(40 * var(--x)));
+				transform: rotate3d(0, 1, 0, 180deg) translate3d(0, 0, calc(20 * var(--x)));
 				background-color: #8ee48b;
 			}
 
 			100% {
-				transform: rotate3d(0, 1, 0, 360deg) translate3d(0, 0, calc(40 * var(--x)));
+				transform: rotate3d(0, 1, 0, 360deg) translate3d(0, 0, calc(20 * var(--x)));
 				background-color: #c392f5;
 			}
 		}
