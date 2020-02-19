@@ -53,6 +53,13 @@ h2 {
 h3 {
 	margin: calc(1.5 * var(--x)) auto calc(-0.4 * var(--x));
   padding-bottom: 0;
+
+  font-weight: bolder;
+}
+
+h4 {
+	margin: calc(1.5 * var(--x)) auto calc(-0.4 * var(--x));
+  padding-bottom: 0;
 }
 
 hr {
