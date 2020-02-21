@@ -1,0 +1,9 @@
+@media print {
+	:root {
+		--x: 0.1rem;
+	}
+
+	html, body {
+		padding: 0;
+	}
+}
