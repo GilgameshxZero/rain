@@ -1,6 +1,6 @@
 @media print {
 	:root {
-		--x: 0.1rem;
+		--x: 1rem;
 	}
 
 	html, body {
