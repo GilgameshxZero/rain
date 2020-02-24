@@ -5,6 +5,6 @@ p {
   margin-bottom: calc(-1 * var(--x));
 }
 
-.no-indent {
+.no-indent, .no-indent p {
   text-indent: 0;
 }
