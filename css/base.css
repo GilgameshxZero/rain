@@ -1,3 +1,9 @@
+@import "x.css";
+
+html, body {
+  font-size: calc(1.05 * var(--x));
+}
+
 html {
   overflow-x: hidden;
 }

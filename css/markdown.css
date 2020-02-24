@@ -1,5 +1,17 @@
 @import "x.css";
 
+.vscode-light {
+  --border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark {
+  --border-color: rgba(255, 255, 255, 0.18);
+}
+
+body {
+  padding-top: calc(2 * var(--x));
+}
+
 p {
   padding-bottom: 0;
   margin-bottom: calc(-0.5 * var(--x));
@@ -41,13 +53,17 @@ h1 {
   border-bottom: calc(0.1 * var(--x)) solid;
 }
 
+h1:first-of-type {
+  margin-top: 0;
+}
+
 h2 {
   margin: calc(2 * var(--x)) 0 0;
   padding-top: 0;
 	padding-bottom: 0;
 	width: 80%;
 
-  border-bottom: calc(0.1 * var(--x)) solid;
+  border-bottom: calc(0.1 * var(--x)) solid var(--border-color);
 }
 
 h3 {
