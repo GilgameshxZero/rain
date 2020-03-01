@@ -1,5 +1,9 @@
+<link rel="stylesheet" type="text/css" href="css/notes.css">
+
 # Rain
 
-## Style
+## Changelog
 
-Hard tabs are preferred to spaces. Indentation space is up to the editor, but 2 is assumed by default.
+### 1.0.0
+
+Initial release.
