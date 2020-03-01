@@ -1,5 +1,3 @@
-@import "x.css";
-
 p {
   text-indent: 2ch;
   margin-bottom: calc(-1 * var(--x));

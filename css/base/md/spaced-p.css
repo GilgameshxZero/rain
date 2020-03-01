@@ -1,5 +1,3 @@
-@import "x.css";
-
 p {
   margin-bottom: calc(-0.1 * var(--x));
 }

@@ -1,6 +1,6 @@
-@import "base.css";
-@import "georgia.css";
-@import "markdown.css";
-@import "indent.css";
-@import "h2+p.css";
-@import "pagebreak.css";
+@import "base/base.css";
+@import "base/fonts/georgia.css";
+@import "base/md/base.css";
+@import "base/md/indent.css";
+@import "base/md/padded-h2-p.css";
+@import "base/print/pagebreak.css";
