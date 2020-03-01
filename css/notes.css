@@ -1,8 +1,6 @@
-@import "base.css";
-@import "georgia.css";
-@import "markdown.css";
-@import "markdown.no-box.css";
-@import "katex.css";
-@import "p-0.1.css";
-@import "pagebreak.css";
-@import "print.css";
+@import "base/base.css";
+@import "base/fonts/georgia.css";
+@import "base/md/base.css";
+@import "base/md/spaced-p.css";
+@import "base/print/pagebreak.css";
+@import "base/print/print.css";

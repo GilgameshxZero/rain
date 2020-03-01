@@ -1,6 +1,6 @@
-@import "base.css";
-@import "georgia.css";
-@import "x.css";
-@import "markdown.css";
-@import "no-classes.css";
-@import "pagebreak.css";
+@import "base/base.css";
+@import "base/fonts/georgia.css";
+@import "base/x.css";
+@import "base/md/base.css";
+@import "base/no-classes.css";
+@import "base/print/pagebreak.css";
