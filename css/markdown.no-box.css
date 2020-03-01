@@ -1,0 +1,10 @@
+@import "x.css";
+
+pre>code {
+  width: initial;
+  margin: initial;
+  padding: initial;
+
+  border: initial;
+  border-radius: initial;
+}
