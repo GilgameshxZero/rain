@@ -6,10 +6,6 @@
   --border-color: rgba(255, 255, 255, 0.18);
 }
 
-body {
-  padding-top: calc(2 * var(--x));
-}
-
 p {
   padding-bottom: 0;
   margin-bottom: calc(-0.5 * var(--x));
