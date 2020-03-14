@@ -4,6 +4,10 @@
 
 ## Changelog
 
+### 1.0.3
+
+* Fixed `border-color` bug in `grouped-h2+p` CSS pages.
+
 ### 1.0.2
 
 * Standardized use of `base.css` CSS pages.
