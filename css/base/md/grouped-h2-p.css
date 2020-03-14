@@ -10,7 +10,7 @@ h2+p {
 	padding-bottom: calc(0.3 * var(--x));
 	width: 80%;
 	
-	border-bottom: calc(0.1 * var(--x)) solid;
+	border-bottom: calc(0.1 * var(--x)) solid var(--border-color);
 	
 	text-indent: 0;
 }
