@@ -4,6 +4,11 @@
 
 ## Changelog
 
+### 1.0.2
+
+* Standardized use of `base.css` CSS pages.
+* Created Garamond font pages.
+
 ### 1.0.1
 
 * Fixed mislinked print CSS page in `notes.css`.

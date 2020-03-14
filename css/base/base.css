@@ -1,7 +1,9 @@
-@import "x.css";
+:root {
+	--x: 1rem;
+}
 
 html, body {
-  font-size: calc(1.05 * var(--x));
+  font-size: var(--x);
 }
 
 html {
@@ -11,4 +13,6 @@ html {
 body {
   position: relative;
   margin: 0;
+
+  line-height: 1.25;
 }

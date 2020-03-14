@@ -1,0 +1,7 @@
+/* Substitutes Garamond as body font type during printing. */
+
+@media print {
+  body {
+		font-family: Garamond, Georgia, serif;
+	}
+}

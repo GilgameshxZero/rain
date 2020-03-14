@@ -1,8 +1,4 @@
 @media print {
-	:root {
-		--x: 1rem;
-	}
-
 	html, body {
 		padding: 0;
 	}
