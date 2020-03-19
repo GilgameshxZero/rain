@@ -4,6 +4,12 @@
 
 ## Changelog
 
+### 1.1.0
+
+* Moved design HTML out of repository. Created tests directory.
+* Started upgrading CPP library to be cross-platform.
+* Moved all CPP code into HPP files to avoid having to link.
+
 ### 1.0.3
 
 * Fixed `border-color` bug in `grouped-h2+p` CSS pages.
