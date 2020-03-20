@@ -4,6 +4,10 @@
 
 ## Changelog
 
+### 1.2.1
+
+* Created Makefile for `.cpp` tests. Tests don't work yet, since the library is not compatible with non-Windows systems.
+
 ### 1.2.0
 
 * Verified builds working for `Emilia`.
