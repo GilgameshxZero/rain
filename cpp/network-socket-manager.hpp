@@ -9,6 +9,8 @@ allows for communications to be logged.
 
 #pragma once
 
+#include "windows-lam-include.hpp"
+
 #include <string>
 
 namespace Rain {
