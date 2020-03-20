@@ -4,6 +4,11 @@
 
 ## Changelog
 
+### 1.1.1
+
+* Removed VS test suites for CPP.
+* Update `.gitignore` to include `.out` files.
+
 ### 1.1.0
 
 * Moved design HTML out of repository. Created tests directory.
