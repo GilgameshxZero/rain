@@ -2,6 +2,7 @@
 **/Release/
 **/*.tlog/
 
+**.out
 **.exe
 **.user
 **.log
