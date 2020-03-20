@@ -4,6 +4,12 @@
 
 ## Changelog
 
+### 1.2.0
+
+* Verified builds working for `Emilia`.
+* Reinstantiated `.cpp` files for a better build process.
+* Removed legacy `rain-libraries.hpp` in favor of `rain.hpp`.
+
 ### 1.1.1
 
 * Removed VS test suites for CPP.
