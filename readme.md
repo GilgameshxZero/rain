@@ -4,6 +4,10 @@
 
 ## Changelog
 
+### 1.2.2
+
+* In Markdown CSS, the first `h1` only has `0` top margin during printing.
+
 ### 1.2.1
 
 * Created Makefile for `.cpp` tests. Tests don't work yet, since the library is not compatible with non-Windows systems.

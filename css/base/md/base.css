@@ -38,8 +38,10 @@ h1 {
   border-bottom: calc(0.1 * var(--x)) solid;
 }
 
-h1:first-of-type {
-  margin-top: 0;
+@media print {
+  h1:first-of-type {
+    margin-top: 0;
+  }
 }
 
 h2 {
