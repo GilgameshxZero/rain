@@ -6,17 +6,17 @@ namespace Rain {
 	std::unordered_map<HWND, RainWindow *> RainWindow::objmap;
 
 	RainWindow::RainWindow() {
-		hwnd = NULL;
+		hWnd = NULL;
 		classname = NULL;
 	}
 	RainWindow::~RainWindow() {
-		if (hwnd) {
-			int k = DestroyWindow(hwnd);
+		if (hWnd) {
+			int k = DestroyWindow(hWnd);
 			if (k == 0) {
 				int p = GetLastError();
 				k += p;
 			}
-			hwnd = NULL;
+			hWnd = NULL;
 		}
 		if (classname) {
 			delete[] classname;
@@ -86,15 +86,15 @@ namespace Rain {
 		if (!RegisterClassEx(&wcex))
 			return GetLastError();
 
-		hwnd = CreateWindowEx(dwExStyle, lpszClassName, lpWindowName, dwStyle, x, y,
+		hWnd = CreateWindowEx(dwExStyle, lpszClassName, lpWindowName, dwStyle, x, y,
 				nWidth, nHeight, hWndParent, hMenu, hInstance,
 				this);	// pass pointer to this class, so that we can access message
 								// funcs
 
-		if (hwnd == NULL)
+		if (hWnd == NULL)
 			return GetLastError();
 
-		objmap.insert(std::make_pair(hwnd, this));
+		objmap.insert(std::make_pair(hWnd, this));
 
 		return 0;
 	}
@@ -122,7 +122,7 @@ namespace Rain {
 		return msg.wParam;
 	}
 
-	LRESULT CALLBACK rainWindowProc(HWND hwnd,
+	LRESULT CALLBACK rainWindowProc(HWND hWnd,
 			UINT uMsg,
 			WPARAM wParam,
 			LPARAM lParam) {
@@ -132,21 +132,21 @@ namespace Rain {
 			wndobj = reinterpret_cast<UNALIGNED RainWindow *>(
 					reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams);
 		else
-			wndobj = RainWindow::getWndObj(hwnd);
+			wndobj = RainWindow::getWndObj(hWnd);
 
 		if (wndobj == NULL)
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 		if (wndobj->intfc != NULL) {
-			LRESULT rt = (*(wndobj->intfc))(hwnd, uMsg, wParam, lParam);
+			LRESULT rt = (*(wndobj->intfc))(hWnd, uMsg, wParam, lParam);
 			if (rt != 0)
 				return rt;
 		}
 
 		auto it = wndobj->msgm->find(uMsg);
 		if (it != wndobj->msgm->end())
-			return it->second(hwnd, uMsg, wParam, lParam);
+			return it->second(hWnd, uMsg, wParam, lParam);
 		else
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 }
