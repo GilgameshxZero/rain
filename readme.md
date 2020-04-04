@@ -4,6 +4,10 @@
 
 ## Changelog
 
+### 1.2.3
+
+* Added option to interpret value as `double` in `Rain::Configuration`.
+
 ### 1.2.2
 
 * In Markdown CSS, the first `h1` only has `0` top margin during printing.

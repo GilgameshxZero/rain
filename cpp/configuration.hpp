@@ -15,6 +15,7 @@ namespace Rain {
 		std::set<std::string> keys();
 		std::string s();
 		int i();
+		double d();
 
 	 private:
 		std::map<std::string, Configuration *> children;
