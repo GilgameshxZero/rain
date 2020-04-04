@@ -37,7 +37,7 @@ namespace Rain {
 				}
 			}
 			cstack.back()->children.insert(
-					std::make_pair(line.substr(0, keyInd), option));
+				std::make_pair(line.substr(0, keyInd), option));
 			option->value = Rain::strTrimWhite(line.substr(keyInd));
 
 			// in case the next line scopes into this option
@@ -61,6 +61,7 @@ namespace Rain {
 	}
 	std::string Configuration::s() { return this->value; }
 	int Configuration::i() { return Rain::strToT<int>(this->value); }
+	double Configuration::d() { return Rain::strToT<double>(this->value); }
 
 	std::vector<std::string> readMultilineFile(std::string filePath) {
 		std::ifstream fileIn;
@@ -84,7 +85,7 @@ namespace Rain {
 	}
 
 	std::map<std::string, std::string> readParameterStream(
-			std::stringstream &paramStream) {
+		std::stringstream &paramStream) {
 		std::string key = "", value;
 		std::map<std::string, std::string> params;
 		std::getline(paramStream, key, ':');
@@ -100,7 +101,7 @@ namespace Rain {
 		return params;
 	}
 	std::map<std::string, std::string> readParameterString(
-			std::string paramString) {
+		std::string paramString) {
 		std::stringstream ss;
 		ss << paramString;
 		return readParameterStream(ss);
@@ -116,7 +117,7 @@ namespace Rain {
 		return ret;
 	}
 	void writeParameterFile(std::string filePath,
-			std::map<std::string, std::string> params) {
+		std::map<std::string, std::string> params) {
 		std::ofstream fileOut(filePath, std::ios::binary);
 		for (auto it = params.begin(); it != params.end(); it++) {
 			fileOut << it->first << ": " << it->second << CRLF;
