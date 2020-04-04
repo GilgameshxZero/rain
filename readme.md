@@ -4,6 +4,10 @@
 
 ## Changelog
 
+### 1.2.4
+
+* Replace `hwnd` with `hWnd`.
+
 ### 1.2.3
 
 * Added option to interpret value as `double` in `Rain::Configuration`.

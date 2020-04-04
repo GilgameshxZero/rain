@@ -31,7 +31,7 @@ namespace Rain {
 
 		static const LPCTSTR NULLCLASSNAME;
 
-		HWND hwnd;
+		HWND hWnd;
 
 		RainWindow();
 		~RainWindow();
@@ -81,13 +81,13 @@ namespace Rain {
 		rainWindowProc(	// the windowproc is controlled by this class; process
 										 // messages through the map in the initializer; if intfc !=
 										 // NULL, this function is not used
-				HWND hwnd,
+				HWND hWnd,
 				UINT uMsg,
 				WPARAM wParam,
 				LPARAM lParam);
 	};
 
-	LRESULT CALLBACK rainWindowProc(HWND hwnd,
+	LRESULT CALLBACK rainWindowProc(HWND hWnd,
 			UINT uMsg,
 			WPARAM wParam,
 			LPARAM lParam);
