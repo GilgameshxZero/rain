@@ -1,0 +1,11 @@
+@media print {
+	@page {
+		margin: 25mm;
+	}
+
+	body {
+		margin-top: 0;
+
+		font-size: calc(1.2 * var(--x));
+	}
+}

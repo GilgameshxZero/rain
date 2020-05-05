@@ -1,7 +1,8 @@
 @import "base/base.css";
-@import "base/fonts/georgia.css";
+@import "base/fonts/garamond.css";
 @import "base/md/base.css";
 @import "base/md/indent.css";
 @import "base/md/grouped-h2-p.css";
 @import "base/print/base.css";
 @import "base/print/pagebreak.css";
+@import "base/print/wide.css";
