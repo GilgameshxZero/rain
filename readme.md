@@ -4,6 +4,10 @@
 
 ## Changelog
 
+### 1.2.5
+
+* Add a wide printing option for `creative.css`.
+
 ### 1.2.4
 
 * Replace `hwnd` with `hWnd`.
