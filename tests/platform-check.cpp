@@ -1,7 +1,7 @@
-#include "../../utility-platform.hpp"
+#include "../src/utility-platform.hpp"
 
 // Conditionally include a windows header.
-#include "../../windows-lam-include.hpp"
+#include "../src/windows-lam-include.hpp"
 
 #include <iostream>
 

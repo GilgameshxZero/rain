@@ -1,8 +1,38 @@
-<link rel="stylesheet" type="text/css" href="css/notes.css">
+# rain
 
-# Rain
+A C++ library.
+
+## Linting & formatting
+
+We use Clang with the options:
+
+```json
+{
+	BasedOnStyle: Chromium,
+	FixNamespaceComments: false,
+	NamespaceIndentation: All,
+	PointerAlignment: Right,
+	UseTab: Always,
+	TabWidth: 2,
+	AlignAfterOpenBracket: DontAlign,
+	IncludeBlocks: Preserve,
+	ContinuationIndentWidth: 2,
+	AccessModifierOffset: 0,
+	ReflowComments: false,
+	BinPackArguments: false,
+	BinPackParameters: false,
+	AlignTrailingComments: false,
+	IndentCaseLabels: true,
+	AlignConsecutiveDeclarations: false,
+	ColumnLimit: 0,
+}
+```
 
 ## Changelog
+
+### 2.0.0
+
+* Remove `css` library files. `rain` is now a pure C++ library.
 
 ### 1.2.5
 
