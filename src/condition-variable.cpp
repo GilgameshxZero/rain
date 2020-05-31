@@ -10,7 +10,7 @@ namespace Rain {
 	// overrides
 	void ConditionVariable::wait(std::unique_lock<std::mutex> &lck) {
 		std::condition_variable::wait(
-				lck, std::bind(&ConditionVariable::predicate, this));
+			lck, std::bind(&ConditionVariable::predicate, this));
 	}
 
 	void ConditionVariable::notify_one() noexcept {

@@ -1,6 +1,18 @@
 # rain
 
-A C++ library.
+A cross-platform library primarily for use in web servers and related applications written in C++. The intended usage is to include `rain` as a submodule, and utilize its source files, but not its build files or test files.
+
+See [changelog.md](changelog.md) for information on versioning.
+
+## Dependencies
+
+On Unix-based platforms, `rain`'s will expect a `g++` compiler, as well as GNU make. On Windows platforms, `rain` will expect a compatible Visual Studio C++ compiler or IDE, or a similar Cygwin environment. No additional libraries are required.
+
+## Tests
+
+Tests are located in `./test/`, and can be run from `./build/`. On a Unix-based platform, use GMU make. On Windows platforms, utilize the Visual Studio C++ solution, which contains a project per test.
+
+To create new tests, use the `./build/template/` project to initialize directories and build pipelines.
 
 ## Linting & formatting
 
@@ -27,63 +39,3 @@ We use Clang with the options:
 	ColumnLimit: 0,
 }
 ```
-
-## Changelog
-
-### 2.0.0
-
-* Remove `css` library files. `rain` is now a pure C++ library.
-
-### 1.2.5
-
-* Add a wide printing option for `creative.css`.
-
-### 1.2.4
-
-* Replace `hwnd` with `hWnd`.
-
-### 1.2.3
-
-* Added option to interpret value as `double` in `Rain::Configuration`.
-
-### 1.2.2
-
-* In Markdown CSS, the first `h1` only has `0` top margin during printing.
-
-### 1.2.1
-
-* Created Makefile for `.cpp` tests. Tests don't work yet, since the library is not compatible with non-Windows systems.
-
-### 1.2.0
-
-* Verified builds working for `Emilia`.
-* Reinstantiated `.cpp` files for a better build process.
-* Removed legacy `rain-libraries.hpp` in favor of `rain.hpp`.
-
-### 1.1.1
-
-* Removed VS test suites for CPP.
-* Update `.gitignore` to include `.out` files.
-
-### 1.1.0
-
-* Moved design HTML out of repository. Created tests directory.
-* Started upgrading CPP library to be cross-platform.
-* Moved all CPP code into HPP files to avoid having to link.
-
-### 1.0.3
-
-* Fixed `border-color` bug in `grouped-h2+p` CSS pages.
-
-### 1.0.2
-
-* Standardized use of `base.css` CSS pages.
-* Created Garamond font pages.
-
-### 1.0.1
-
-* Fixed mislinked print CSS page in `notes.css`.
-
-### 1.0.0
-
-Initial release.

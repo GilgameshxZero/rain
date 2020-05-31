@@ -1,8 +1,10 @@
 #include "gdi-plus-libraries.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	int getEncoderClsid(const WCHAR *format, CLSID *pClsid) {
-		UINT num = 0;		// number of image encoders
+		UINT num = 0;	 // number of image encoders
 		UINT size = 0;	// size of the image encoder array in bytes
 
 		Gdiplus::ImageCodecInfo *pImageCodecInfo = NULL;
@@ -21,7 +23,7 @@ namespace Rain {
 			if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0) {
 				*pClsid = pImageCodecInfo[j].Clsid;
 				free(pImageCodecInfo);
-				return j;	// Success
+				return j;	 // Success
 			}
 		}
 
@@ -29,3 +31,5 @@ namespace Rain {
 		return -1;	// Failure
 	}
 }
+
+#endif

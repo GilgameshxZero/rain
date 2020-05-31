@@ -1,5 +1,7 @@
 #include "network-server-manager.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	ServerSocketManager::ServerSocketManager(SOCKET *cSocket,
 			RecvHandlerParam::EventHandler onConnect,
@@ -311,3 +313,5 @@ namespace Rain {
 		}
 	}
 }
+
+#endif

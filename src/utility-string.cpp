@@ -8,8 +8,12 @@ namespace Rain {
 		std::size_t wStrLen;
 		std::wstring ws;
 
-		buffer = new wchar_t[s->length() * 4];
-		mbstowcs_s(&wStrLen, buffer, s->length() * 4, s->c_str(), s->length() * 4);
+		buffer = new wchar_t[s->length()];
+#ifdef RAIN_WINDOWS
+		mbstowcs_s(&wStrLen, buffer, s->length(), s->c_str(), s->length());
+#else
+		wStrLen = mbstowcs(buffer, s->c_str(), s->length());
+#endif
 		ws = std::wstring(buffer, wStrLen - 1);
 		delete[] buffer;
 		return ws;
@@ -21,7 +25,11 @@ namespace Rain {
 		std::string s;
 
 		buffer = new char[ws->length() * 4];
+#ifdef RAIN_WINDOWS
 		wcstombs_s(&mbStrLen, buffer, ws->length() * 4, ws->c_str(), ws->length() * 4);
+#else
+		mbStrLen = wcstombs(buffer, ws->c_str(), ws->length() * 4);
+#endif
 		s = std::string(buffer, mbStrLen - 1);
 		delete[] buffer;
 		return s;

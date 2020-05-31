@@ -1,5 +1,7 @@
 #include "utility-libraries.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	HANDLE simpleCreateThread(LPTHREAD_START_ROUTINE threadfunc,
 			LPVOID threadparam) {
@@ -15,3 +17,5 @@ namespace Rain {
 				static_cast<unsigned char>(hexToChr(std::make_pair(hex[4], hex[5]))));
 	}
 }
+
+#endif

@@ -1,5 +1,7 @@
 #include "logstream.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	LogStream::LogStream() {
 		this->outputStdout = false;
@@ -157,3 +159,5 @@ namespace Rain {
 		return 0;
 	}
 }
+
+#endif

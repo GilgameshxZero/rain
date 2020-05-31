@@ -1,5 +1,7 @@
 #include "network-utility.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	bool WSAStarted() {
 		SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -37,7 +39,7 @@ namespace Rain {
 		return message + "\n";
 	}
 	std::string mapToHTTPHeader(
-			std::unordered_map<std::string, std::string> &hMap) {
+		std::unordered_map<std::string, std::string> &hMap) {
 		std::string message;
 		for (auto it = hMap.begin(); it != hMap.end(); it++)
 			message += it->first + ": " + it->second + "\n";
@@ -45,11 +47,9 @@ namespace Rain {
 	}
 
 	RainWindow *createSendHandler(
-			std::unordered_map<UINT, RainWindow::MSGFC> *msgm) {
+		std::unordered_map<UINT, RainWindow::MSGFC> *msgm) {
 		RainWindow *rw = new RainWindow();
-		rw->create(msgm, NULL, 0, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL,
-				_T(""), NULL, 0, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL,
-				RainWindow::NULLCLASSNAME);
+		rw->create(msgm, NULL, 0, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, _T(""), NULL, 0, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL, RainWindow::NULLCLASSNAME);
 
 		return rw;
 	}
@@ -71,7 +71,7 @@ namespace Rain {
 		for (std::size_t a = 0; a < lines.size(); a++) {
 			std::size_t equals = lines[a].find('=');
 			rt.insert(std::make_pair(strDecodeURI(lines[a].substr(0, equals)),
-					strDecodeURI(lines[a].substr(equals + 1, lines[a].length()))));
+				strDecodeURI(lines[a].substr(equals + 1, lines[a].length()))));
 		}
 
 		return rt;
@@ -100,3 +100,5 @@ namespace Rain {
 		manager.sendRawMessage(message);
 	}
 }
+
+#endif

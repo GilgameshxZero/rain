@@ -1,5 +1,7 @@
 #include "network-recv-thread.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	DWORD WINAPI recvThread(LPVOID lpParameter) {
 		RecvHandlerParam *recvparam = reinterpret_cast<RecvHandlerParam *>(lpParameter);
@@ -54,3 +56,5 @@ namespace Rain {
 		return newThread.native_handle();
 	}
 }
+
+#endif

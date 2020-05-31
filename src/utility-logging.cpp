@@ -9,9 +9,9 @@ namespace Rain {
 	std::ostream &streamOutOne(std::ostream &os) { return os; }
 
 	void outLogStdTrunc(std::string *info,
-			int maxLen,
-			std::string filePath,
-			bool append) {
+		int maxLen,
+		std::string filePath,
+		bool append) {
 		static std::string persistentLogFilePath = "";
 		if (filePath != "")
 			persistentLogFilePath = filePath;
@@ -22,21 +22,20 @@ namespace Rain {
 			Rain::tsCout(*info);
 	}
 	void outLogStdTrunc(std::string info,
-			int maxLen,
-			std::string filePath,
-			bool append) {
+		int maxLen,
+		std::string filePath,
+		bool append) {
 		Rain::outLogStdTrunc(&info, maxLen, filePath, append);
 	}
 	void outLogStd(std::string info, std::string filePath, bool append) {
 		Rain::outLogStdTrunc(&info, 0, filePath, append);
 	}
 
+#ifdef RAIN_WINDOWS
 	HANDLE logMemoryLeaks(std::string out_file) {
 		if (IsDebuggerPresent()) {
 			// Redirect the error stream to a file, only if the program is debugging.
-			HANDLE mem_leak = CreateFileA(out_file.c_str(), GENERIC_WRITE,
-					FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
-					FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE mem_leak = CreateFileA(out_file.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 			// Turn on debugging for memory leaks. This is automatically turned off
 			// when the build is Release.
@@ -53,4 +52,6 @@ namespace Rain {
 
 		return NULL;
 	}
+#endif
+
 }

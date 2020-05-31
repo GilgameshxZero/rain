@@ -1,15 +1,17 @@
 #include "network-recv-param.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	RecvHandlerParam::RecvHandlerParam() {}
 
 	RecvHandlerParam::RecvHandlerParam(SOCKET *socket,
-			std::string *message,
-			std::size_t buflen,
-			void *funcParam,
-			EventHandler onConnect,
-			EventHandler onMessage,
-			EventHandler onDisconnect) {
+		std::string *message,
+		std::size_t buflen,
+		void *funcParam,
+		EventHandler onConnect,
+		EventHandler onMessage,
+		EventHandler onDisconnect) {
 		this->socket = socket;
 		this->message = message;
 		this->bufLen = bufLen;
@@ -19,3 +21,5 @@ namespace Rain {
 		this->onDisconnect = onDisconnect;
 	}
 }
+
+#endif
