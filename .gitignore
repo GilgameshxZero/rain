@@ -1,9 +1,9 @@
-**/.vs/
-**/Release/
-**/*.tlog/
+**.vs/
 
-**.out
-**.exe
+**.dropbox.attr
+**.DS_Store
+**desktop.ini
 **.user
-**.log
-**.pdb
+
+/bin/
+/obj/

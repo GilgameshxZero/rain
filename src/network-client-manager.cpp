@@ -1,5 +1,7 @@
 #include "network-client-manager.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	ClientSocketManager::ClientSocketManager() {
 		this->socket = NULL;
@@ -9,7 +11,7 @@ namespace Rain {
 		this->ipAddress = "";
 		this->lowPort = this->highPort = 0;
 		this->onConnectDelegate = this->onMessageDelegate =
-				this->onDisconnectDelegate = NULL;
+			this->onDisconnectDelegate = NULL;
 		this->msReconnectWaitMax = this->msSendWaitMax = 3000;
 		this->recvBufLen = 65536;
 		this->logger = NULL;
@@ -32,13 +34,13 @@ namespace Rain {
 		int error = initWinsock22();
 		if (error) {
 			reportError(error,
-					"ClientSocketManager: initWinsock22 failed, no resolution "
-					"implemented");
+				"ClientSocketManager: initWinsock22 failed, no resolution "
+				"implemented");
 		}
 
 		// create the send thread once for every manager
 		this->hSendThread =
-				simpleCreateThread(ClientSocketManager::attemptSendMessageThread, this);
+			simpleCreateThread(ClientSocketManager::attemptSendMessageThread, this);
 	}
 	ClientSocketManager::~ClientSocketManager() {
 		// don't try to reconnect
@@ -109,8 +111,8 @@ namespace Rain {
 	std::string ClientSocketManager::getTargetIP() { return this->ipAddress; }
 	SOCKET &ClientSocketManager::getSocket() { return this->socket; }
 	void ClientSocketManager::setClientTarget(std::string ipAddress,
-			DWORD lowPort,
-			DWORD highPort) {
+		DWORD lowPort,
+		DWORD highPort) {
 		this->disconnectSocket();
 		this->ipAddress = ipAddress;
 
@@ -126,7 +128,7 @@ namespace Rain {
 			// thread exits when connect success
 			ResetEvent(this->connectEvent);
 			this->hConnectThread =
-					simpleCreateThread(ClientSocketManager::attemptConnectThread, this);
+				simpleCreateThread(ClientSocketManager::attemptConnectThread, this);
 		}
 	}
 	void ClientSocketManager::retryConnect() {
@@ -135,7 +137,7 @@ namespace Rain {
 			// thread exits when connect success
 			ResetEvent(this->connectEvent);
 			this->hConnectThread =
-					simpleCreateThread(ClientSocketManager::attemptConnectThread, this);
+				simpleCreateThread(ClientSocketManager::attemptConnectThread, this);
 		}
 	}
 	bool ClientSocketManager::setRetryOnDisconnect(bool value) {
@@ -144,10 +146,10 @@ namespace Rain {
 		return orig;
 	}
 	void ClientSocketManager::setEventHandlers(
-			RecvHandlerParam::EventHandler onConnect,
-			RecvHandlerParam::EventHandler onMessage,
-			RecvHandlerParam::EventHandler onDisconnect,
-			void *funcParam) {
+		RecvHandlerParam::EventHandler onConnect,
+		RecvHandlerParam::EventHandler onMessage,
+		RecvHandlerParam::EventHandler onDisconnect,
+		void *funcParam) {
 		this->onConnectDelegate = onConnect;
 		this->onMessageDelegate = onMessage;
 		this->onDisconnectDelegate = onDisconnect;
@@ -178,16 +180,16 @@ namespace Rain {
 			return;
 		} else if (this->socketStatus == this->STATUS_CONNECTED ||
 							 this->socketStatus ==
-									 this->STATUS_CONNECTING) {	// connected, so shutdown
-																							 // immediately or terminate thread
-																							 // on next check
+								 this->STATUS_CONNECTING) {	 // connected, so shutdown
+			// immediately or terminate thread
+			// on next check
 			shutdownSocketSend(this->socket);
 			closesocket(this->socket);
 
 			// this will exit the connect thread
 			this->socketStatus =
-					this->STATUS_DISCONNECTED;	// manually disconnect, so that we won't
-																			// try to disconnect
+				this->STATUS_DISCONNECTED;	// manually disconnect, so that we won't
+			// try to disconnect
 			WaitForSingleObject(this->connectEvent, INFINITE);
 
 			this->connectedPort = -1;
@@ -212,12 +214,12 @@ namespace Rain {
 		csm.msReconnectWait = 1;
 		csm.freePortAddrs();
 		csm.portAddrs.resize(static_cast<size_t>(csm.highPort) -
-														 static_cast<size_t>(csm.lowPort) + 1,
-				NULL);
+													 static_cast<size_t>(csm.lowPort) + 1,
+			NULL);
 
 		if (createSocket(csm.socket)) {
 			reportError(WSAGetLastError(),
-					"ClientSocketManager: createSocket failed, aborting...");
+				"ClientSocketManager: createSocket failed, aborting...");
 			SetEvent(csm.connectEvent);
 			return -1;
 		}
@@ -226,22 +228,21 @@ namespace Rain {
 			Rain::sleep(csm.msReconnectWait);
 			if (csm.msReconnectWait < csm.msReconnectWaitMax)
 				csm.msReconnectWait =
-						min(csm.msReconnectWait * 2, csm.msReconnectWaitMax);
+					min(csm.msReconnectWait * 2, csm.msReconnectWaitMax);
 
 			// try to reconnect; assume ipAddress and port ranges are valid
 			// if address has not yet been retreived, try to get it here
 			for (DWORD a = csm.lowPort; a <= csm.highPort; a++) {
 				if (csm.socketStatus !=
 						csm.STATUS_CONNECTING)	// make sure status hasn't changed
-																		// externally
+					// externally
 					break;
 
 				if (csm.portAddrs[a - csm.lowPort] ==
-						NULL) {	// address not yet found, get it now
-					if (getTargetAddr(&csm.portAddrs[a - csm.lowPort], csm.ipAddress,
-									Rain::tToStr(a))) {
+						NULL) {	 // address not yet found, get it now
+					if (getTargetAddr(&csm.portAddrs[a - csm.lowPort], csm.ipAddress, Rain::tToStr(a))) {
 						reportError(WSAGetLastError(),
-								"ClientSocketManager: getTargetAddr failed, retrying...");
+							"ClientSocketManager: getTargetAddr failed, retrying...");
 						continue;
 					}
 				}
@@ -266,7 +267,7 @@ namespace Rain {
 					break;
 				} else {
 					reportError(WSAGetLastError(),
-							"ClientSocketManager: connectTarget failed, retrying...");
+						"ClientSocketManager: connectTarget failed, retrying...");
 					std::cerr << csm.socket << Rain::CRLF;
 					continue;
 				}
@@ -298,7 +299,7 @@ namespace Rain {
 				if (csm.socketStatus != csm.STATUS_CONNECTED &&
 						csm.msSendMessageWait < csm.msSendWaitMax)
 					csm.msSendMessageWait =
-							min(csm.msSendMessageWait * 2, csm.msSendWaitMax);
+						min(csm.msSendMessageWait * 2, csm.msSendWaitMax);
 				else if (csm.socketStatus == csm.STATUS_CONNECTED) {
 					Rain::sendRawMessage(csm.socket, &csm.messageQueue.front());
 					csm.messageQueue.pop();
@@ -321,8 +322,8 @@ namespace Rain {
 		ResetEvent(csm.recvExitComplete);
 
 		return csm.onConnectDelegate == NULL
-							 ? 0
-							 : csm.onConnectDelegate(&csm.csmdhParam);
+						 ? 0
+						 : csm.onConnectDelegate(&csm.csmdhParam);
 	}
 	int ClientSocketManager::onMessage(void *param) {
 		ClientSocketManager &csm = *reinterpret_cast<ClientSocketManager *>(param);
@@ -333,8 +334,8 @@ namespace Rain {
 			csm.logger->logString(csm.rParam.message);
 
 		return csm.onMessageDelegate == NULL
-							 ? 0
-							 : csm.onMessageDelegate(&csm.csmdhParam);
+						 ? 0
+						 : csm.onMessageDelegate(&csm.csmdhParam);
 	}
 	int ClientSocketManager::onDisconnect(void *param) {
 		ClientSocketManager &csm = *reinterpret_cast<ClientSocketManager *>(param);
@@ -347,7 +348,7 @@ namespace Rain {
 			// thread exits when connect success
 			ResetEvent(csm.connectEvent);
 			csm.hConnectThread =
-					simpleCreateThread(ClientSocketManager::attemptConnectThread, &csm);
+				simpleCreateThread(ClientSocketManager::attemptConnectThread, &csm);
 		} else {
 			csm.socketStatus = csm.STATUS_DISCONNECTED;
 
@@ -358,7 +359,9 @@ namespace Rain {
 		// call delegate if it exists regardless of disconnect attempt; this may
 		// activate CSM destructor; but it should block on recvThread
 		return csm.onDisconnectDelegate == NULL
-							 ? 0
-							 : csm.onDisconnectDelegate(&csm.csmdhParam);
+						 ? 0
+						 : csm.onDisconnectDelegate(&csm.csmdhParam);
 	}
 }
+
+#endif

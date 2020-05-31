@@ -1,5 +1,7 @@
 #include "rain-window.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	const LPCTSTR RainWindow::NULLCLASSNAME = _T("");
 	int RainWindow::class_id;
@@ -24,26 +26,26 @@ namespace Rain {
 		}
 	}
 	int RainWindow::create(std::unordered_map<UINT, MSGFC> *msgm,
-			MSGFC *intfc,
-			UINT style,
-			int cbClsExtra,
-			int cbWndExtra,
-			HINSTANCE hInstance,
-			HICON hIcon,
-			HCURSOR hCursor,
-			HBRUSH hbrBackground,
-			LPCTSTR lpszMenuName,
-			HICON hIconSm,
-			DWORD dwExStyle,
-			LPCTSTR lpWindowName,
-			DWORD dwStyle,
-			int x,
-			int y,
-			int nWidth,
-			int nHeight,
-			HWND hWndParent,
-			HMENU hMenu,
-			LPCTSTR lpszClassName) {
+		MSGFC *intfc,
+		UINT style,
+		int cbClsExtra,
+		int cbWndExtra,
+		HINSTANCE hInstance,
+		HICON hIcon,
+		HCURSOR hCursor,
+		HBRUSH hbrBackground,
+		LPCTSTR lpszMenuName,
+		HICON hIconSm,
+		DWORD dwExStyle,
+		LPCTSTR lpWindowName,
+		DWORD dwStyle,
+		int x,
+		int y,
+		int nWidth,
+		int nHeight,
+		HWND hWndParent,
+		HMENU hMenu,
+		LPCTSTR lpszClassName) {
 		this->msgm = msgm;
 		this->intfc = intfc;
 
@@ -51,11 +53,11 @@ namespace Rain {
 			static LPCTSTR prefix = _T("Rain::Mono5::RainWindow ");
 			static const size_t prelen = _tcslen(prefix);
 			LPTSTR format =
-					new TCHAR[prelen + 3];	// 2 for the "%d", and 1 for the "\0"
+				new TCHAR[prelen + 3];	// 2 for the "%d", and 1 for the "\0"
 			int idlen = static_cast<int>(
-					Rain::tToStr(class_id).length());	// length of class_id
+				Rain::tToStr(class_id).length());	 // length of class_id
 			classname =
-					new TCHAR[idlen + prelen + 1];	// 1 for the "\0", memory freed later
+				new TCHAR[idlen + prelen + 1];	// 1 for the "\0", memory freed later
 			_tcscpy_s(format, prelen + 3, prefix);
 			_tcscat_s(format, prelen + 3, _T("%d"));
 			_stprintf_s(classname, idlen + prelen + 1, format, class_id);
@@ -86,10 +88,9 @@ namespace Rain {
 		if (!RegisterClassEx(&wcex))
 			return GetLastError();
 
-		hWnd = CreateWindowEx(dwExStyle, lpszClassName, lpWindowName, dwStyle, x, y,
-				nWidth, nHeight, hWndParent, hMenu, hInstance,
-				this);	// pass pointer to this class, so that we can access message
-								// funcs
+		hWnd = CreateWindowEx(dwExStyle, lpszClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance,
+			this);	// pass pointer to this class, so that we can access message
+		// funcs
 
 		if (hWnd == NULL)
 			return GetLastError();
@@ -123,14 +124,14 @@ namespace Rain {
 	}
 
 	LRESULT CALLBACK rainWindowProc(HWND hWnd,
-			UINT uMsg,
-			WPARAM wParam,
-			LPARAM lParam) {
+		UINT uMsg,
+		WPARAM wParam,
+		LPARAM lParam) {
 		UNALIGNED RainWindow *wndobj;
 
 		if (uMsg == WM_CREATE || uMsg == WM_NCCREATE)
 			wndobj = reinterpret_cast<UNALIGNED RainWindow *>(
-					reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams);
+				reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams);
 		else
 			wndobj = RainWindow::getWndObj(hWnd);
 
@@ -150,3 +151,5 @@ namespace Rain {
 			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 }
+
+#endif

@@ -1,16 +1,18 @@
 #include "network-base.hpp"
 
+#ifdef RAIN_WINDOWS
+
 namespace Rain {
 	int initWinsock22() {
 		WSADATA wsaData;
 		return WSAStartup(MAKEWORD(2, 2), &wsaData);
 	}
 	int getTargetAddr(struct addrinfo **target,
-			std::string host,
-			std::string port,
-			int family,
-			int sockType,
-			int type) {
+		std::string host,
+		std::string port,
+		int family,
+		int sockType,
+		int type) {
 		struct addrinfo hints;
 
 		ZeroMemory(&hints, sizeof(hints));
@@ -21,11 +23,11 @@ namespace Rain {
 		return getaddrinfo(host.c_str(), port.c_str(), &hints, target);
 	}
 	int getServerAddr(struct addrinfo **server,
-			std::string port,
-			int family,
-			int sockType,
-			int type,
-			int flags) {
+		std::string port,
+		int family,
+		int sockType,
+		int type,
+		int flags) {
 		struct addrinfo hints;
 
 		ZeroMemory(&hints, sizeof(hints));
@@ -94,10 +96,12 @@ namespace Rain {
 	}
 	int sendRawMessage(SOCKET &sock, std::string strText) {
 		return sendRawMessage(
-				sock, strText.c_str(), static_cast<int>(strText.length()));
+			sock, strText.c_str(), static_cast<int>(strText.length()));
 	}
 	int sendRawMessage(SOCKET &sock, std::string *strText) {
 		return sendRawMessage(
-				sock, strText->c_str(), static_cast<int>(strText->length()));
+			sock, strText->c_str(), static_cast<int>(strText->length()));
 	}
 }
+
+#endif
