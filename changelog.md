@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.2
+
+Update the `readme` with the latest usage information.
+
 ## 3.0.1
 
 Revamp build process to increment build number on both Unix and Windows builds.
