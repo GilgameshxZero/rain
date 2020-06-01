@@ -14,6 +14,8 @@ EMILIA_OBJ := $(addsuffix .o, $(addprefix $(OBJ_DIR), $(EMILIA_NAME)))
 TEST_NAME := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
 TEST_BIN := $(addprefix $(BIN_DIR), $(TEST_NAME))
 
+VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain-version-build.hpp
+
 # Flags for build. Release by default.
 CXX := g++
 CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -g -Wall -pthread
@@ -37,18 +39,17 @@ endif
 .PHONY: clean
 
 # Compile and run all tests.
-testall: $(TEST_BIN)
-	@for x in $(TEST_BIN) ; do echo $$x ; ./$$x ; done ;
+testall: increment-build $(TEST_BIN)
+	@for x in $(TEST_BIN); do \
+		echo $$x; \
+		./$$x; \
+	done
 
 # Compile and run single test.
-test:
-	@$(eval TEST=$(filter-out $@,$(MAKECMDGOALS)))
+test: increment-build
+	@$(eval TEST:=$(filter-out $@,$(MAKECMDGOALS)))
 	$(MAKE) $(BIN_DIR)$(TEST)
 	./$(BIN_DIR)$(TEST)
-
-# Delete compile-time files.
-clean:
-	@rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 # Rules for test binaries and objects.
 $(BIN_DIR)%: $(OBJ_DIR)test/%.o $(EMILIA_OBJ) $(EMILIA_INCLUDE)
@@ -58,8 +59,20 @@ $(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAG)
 
+# Delete compile-time files.
+clean:
+	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+
 # Rules for Emilia library objects.
 $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAG)
 
+# Increment build number.
+increment-build:
+	@while read line || [ -n "$$line" ]; do \
+		TOKENS=($$line); \
+		RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
+		echo -e "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD\c" > $(VERSION_BUILD_INCLUDE); \
+	done < $(VERSION_BUILD_INCLUDE); \
+	echo build $$RAIN_VERSION_BUILD

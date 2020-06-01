@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.1
+
+Revamp build process to increment build number on both Unix and Windows builds.
+
 ## 3.0.0
 
 `rain` is now updated with a new Visual Studio-based toolchain for tests. In addition, the process of adapting the libraries to Unix platforms is now in progress, but much functionality is still disabled on non-Windows platforms.
