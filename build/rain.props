@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
-      <Command>$(SolutionDir)pre-build.bat</Command>
+      <Command>$(SolutionDir)increment-build.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup />
