@@ -9,7 +9,7 @@ Utility functions for network/socket-related applications.
 #include "network-socket-manager.hpp"
 #include "platform.hpp"
 #include "rain-window.hpp"
-#include "utility-string.hpp"
+#include "string.hpp"
 
 #include <functional>
 #include <string>

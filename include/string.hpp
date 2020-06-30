@@ -15,6 +15,7 @@ Various string-related helper functions.
 #include <vector>
 
 namespace Rain {
+	// Line endings.
 	extern const std::string CRLF, LF;
 
 	// Converts from any type to string using stringstream.
@@ -45,7 +46,7 @@ namespace Rain {
 		return ret;
 	}
 
-	// Convenience function to convert to/from unicode/multibyte std::string.
+	// Convert to/from unicode/multibyte std::string.
 	std::wstring mbStrToWStr(std::string *s);
 	std::wstring mbStrToWStr(std::string s);
 	std::string wStrToMBStr(std::wstring *ws);

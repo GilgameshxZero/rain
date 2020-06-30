@@ -1,4 +1,4 @@
-#include "utility-string.hpp"
+#include "string.hpp"
 
 namespace Rain {
 	const std::string CRLF = "\r\n", LF = "\n";
@@ -37,19 +37,21 @@ namespace Rain {
 	std::string wStrToMBStr(std::wstring ws) { return wStrToMBStr(&ws); }
 
 	std::string *strToLower(std::string *s) {
-		for (std::size_t a = 0; a < s->length(); a++)
+		for (std::size_t a = 0; a < s->length(); a++) {
 			(*s)[a] = tolower((*s)[a]);
+		}
 		return s;
 	}
 	std::string strToLower(std::string s) { return *strToLower(&s); }
 
 	std::string *strTrimWhite(std::string *s) {
-		s->erase(s->begin(), std::find_if(s->begin(), s->end(),
-														 [](int ch) { return !std::isspace(ch); }));
-		s->erase(std::find_if(s->rbegin(), s->rend(),
-								 [](int ch) { return !std::isspace(ch); })
-								 .base(),
-				s->end());
+		s->erase(s->begin(), std::find_if(s->begin(), s->end(), [](int ch) {
+			return !std::isspace(ch);
+		}));
+		s->erase(std::find_if(s->rbegin(), s->rend(), [](int ch) {
+			return !std::isspace(ch);
+		}).base(),
+			s->end());
 		return s;
 	}
 	std::string strTrimWhite(std::string s) { return *strTrimWhite(&s); }
@@ -78,7 +80,7 @@ namespace Rain {
 	}
 	std::string strEncodeB64(const std::string *str) {
 		static const std::string b64Map =
-				"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 		std::string out;
 		int val = 0, valb = -6;
 		for (unsigned char c : *str) {
@@ -98,7 +100,7 @@ namespace Rain {
 	std::string strEncodeB64(std::string str) { return strEncodeB64(&str); }
 	std::string strDecodeB64(const std::string *str) {
 		static const std::string b64Map =
-				"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 		std::string out;
 		std::vector<int> T(256, -1);
 		for (int i = 0; i < 64; i++)
@@ -124,7 +126,8 @@ namespace Rain {
 		escaped << std::hex;
 
 		for (std::string::const_iterator i = value->begin(), n = value->end();
-				 i != n; ++i) {
+				 i != n;
+				 ++i) {
 			std::string::value_type c = (*i);
 			if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
 				escaped << c;
@@ -178,7 +181,7 @@ namespace Rain {
 
 	char hexToChr(std::pair<char, char> hex) {
 		unsigned char byte = static_cast<unsigned char>(
-				b16ToB10(hex.first) * 16 + b16ToB10(hex.second));
+			b16ToB10(hex.first) * 16 + b16ToB10(hex.second));
 		return reinterpret_cast<char &>(byte);
 	}
 	std::pair<char, char> chrToHex(char c) {

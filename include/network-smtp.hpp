@@ -4,7 +4,7 @@ SMTP utility functions.
 
 #pragma once
 
-#include "utility-string.hpp"
+#include "string.hpp"
 
 namespace Rain {
 	// retreive the status code from a message, such as 250 or 221

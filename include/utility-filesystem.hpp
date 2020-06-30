@@ -15,7 +15,7 @@ Windows-specific.
 #pragma once
 
 #include "platform.hpp"
-#include "utility-string.hpp"
+#include "string.hpp"
 #include "windows-lam-include.hpp"
 
 #include <sys/stat.h>

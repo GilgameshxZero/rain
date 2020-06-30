@@ -5,7 +5,7 @@ Reading configuration files.
 #pragma once
 
 #include "utility-filesystem.hpp"
-#include "utility-string.hpp"
+#include "string.hpp"
 
 namespace Rain {
 	class Configuration {
