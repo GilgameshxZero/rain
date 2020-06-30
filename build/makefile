@@ -14,7 +14,7 @@ EMILIA_OBJ := $(addsuffix .o, $(addprefix $(OBJ_DIR), $(EMILIA_NAME)))
 TEST_NAME := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
 TEST_BIN := $(addprefix $(BIN_DIR), $(TEST_NAME))
 
-VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain-version-build.hpp
+VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain-build.hpp
 
 # Flags for build. Release by default.
 CXX := g++

@@ -16,7 +16,13 @@ All functions are thread-safe unless otherwise mentioned.
 
 #pragma once
 
-// these includes must be in this order
+#define RAIN_VERSION_MAJOR 3
+#define RAIN_VERSION_MINOR 0
+#define RAIN_VERSION_REVISION 3
+
+#include "rain-build.hpp"
+
+// These includes must be in this order.
 #include "gdi-plus-include.hpp"
 #include "network-wsa-include.hpp"
 #include "windows-lam-include.hpp"
@@ -28,6 +34,5 @@ All functions are thread-safe unless otherwise mentioned.
 #include "configuration.hpp"
 #include "gdi-plus-libraries.hpp"
 #include "network-libraries.hpp"
-#include "rain-version.hpp"
 #include "timer.hpp"
 #include "utility-libraries.hpp"

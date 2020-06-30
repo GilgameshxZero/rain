@@ -3,7 +3,7 @@
 #ifdef RAIN_WINDOWS
 
 namespace Rain {
-	int getEncoderClsid(const WCHAR *format, CLSID *pClsid) {
+	int getEncoderCLSID(const WCHAR *format, CLSID *pClsid) {
 		UINT num = 0;	 // number of image encoders
 		UINT size = 0;	// size of the image encoder array in bytes
 

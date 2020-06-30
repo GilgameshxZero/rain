@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.3
+
+Begin renaming refactor by renaming `utility-string` to `string`.
+
 ## 3.0.2
 
 Update the `readme` with the latest usage information.

@@ -9,7 +9,7 @@ A cross-platform library written in C++. Features:
 * OS/platform detection.
 * Filesystem utilities.
 
-See [changelog.md](changelog.md) for versioning and udpate information.
+See [changelog.md](changelog.md) for versioning and update information.
 
 ## Usage
 

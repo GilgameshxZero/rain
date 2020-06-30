@@ -8,7 +8,7 @@ Include this for all utility libraries.
 #include "utility-error.hpp"
 #include "utility-filesystem.hpp"
 #include "utility-logging.hpp"
-#include "utility-string.hpp"
+#include "string.hpp"
 #include "time.hpp"
 
 #ifdef RAIN_WINDOWS
