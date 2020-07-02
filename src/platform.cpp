@@ -1,4 +1,4 @@
-#include "platform.hpp"
+#include "rain/platform.hpp"
 
 namespace Rain {
 	bool isCygwin() {

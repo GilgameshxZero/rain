@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{54819c13-f79d-48bc-aec2-4998de4a405a}</ProjectGuid>
-    <RootNamespace>sleep</RootNamespace>
+    <ProjectGuid>{bd517c04-b62a-4792-92ca-ceb127f8f60e}</ProjectGuid>
+    <RootNamespace>platform_check</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -143,29 +143,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\algorithm-libraries.cpp" />
-    <ClCompile Include="..\..\src\condition-variable.cpp" />
-    <ClCompile Include="..\..\src\configuration.cpp" />
-    <ClCompile Include="..\..\src\gdi-plus-libraries.cpp" />
-    <ClCompile Include="..\..\src\logstream.cpp" />
-    <ClCompile Include="..\..\src\network-base.cpp" />
-    <ClCompile Include="..\..\src\network-client-manager.cpp" />
-    <ClCompile Include="..\..\src\network-headed-managers.cpp" />
-    <ClCompile Include="..\..\src\network-recv-param.cpp" />
-    <ClCompile Include="..\..\src\network-recv-thread.cpp" />
-    <ClCompile Include="..\..\src\network-server-manager.cpp" />
-    <ClCompile Include="..\..\src\network-smtp.cpp" />
-    <ClCompile Include="..\..\src\network-utility.cpp" />
     <ClCompile Include="..\..\src\platform.cpp" />
-    <ClCompile Include="..\..\src\rain-window.cpp" />
-    <ClCompile Include="..\..\src\time.cpp" />
-    <ClCompile Include="..\..\src\timer.cpp" />
-    <ClCompile Include="..\..\src\utility-error.cpp" />
-    <ClCompile Include="..\..\src\utility-filesystem.cpp" />
-    <ClCompile Include="..\..\src\utility-libraries.cpp" />
-    <ClCompile Include="..\..\src\utility-logging.cpp" />
-    <ClCompile Include="..\..\src\utility-string.cpp" />
-    <ClCompile Include="..\..\test\sleep.cpp" />
+    <ClCompile Include="..\..\test\platform-check.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

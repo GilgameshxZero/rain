@@ -6,6 +6,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\hello-world.cpp" />
+    <ClCompile Include="..\..\test\platform-check.cpp" />
+    <ClCompile Include="..\..\src\platform.cpp">
+      <Filter>rain</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

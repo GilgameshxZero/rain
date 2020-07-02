@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7ef19d1c-0f64-45db-9149-5067a25af995}</ProjectGuid>
+    <ProjectGuid>{7de28686-c6e0-4e5a-9f3b-be283818e097}</ProjectGuid>
     <RootNamespace>hello_world</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -143,28 +143,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\algorithm-libraries.cpp" />
-    <ClCompile Include="..\..\src\condition-variable.cpp" />
-    <ClCompile Include="..\..\src\configuration.cpp" />
-    <ClCompile Include="..\..\src\gdi-plus-libraries.cpp" />
-    <ClCompile Include="..\..\src\logstream.cpp" />
-    <ClCompile Include="..\..\src\network-base.cpp" />
-    <ClCompile Include="..\..\src\network-client-manager.cpp" />
-    <ClCompile Include="..\..\src\network-headed-managers.cpp" />
-    <ClCompile Include="..\..\src\network-recv-param.cpp" />
-    <ClCompile Include="..\..\src\network-recv-thread.cpp" />
-    <ClCompile Include="..\..\src\network-server-manager.cpp" />
-    <ClCompile Include="..\..\src\network-smtp.cpp" />
-    <ClCompile Include="..\..\src\network-utility.cpp" />
-    <ClCompile Include="..\..\src\platform.cpp" />
-    <ClCompile Include="..\..\src\rain-window.cpp" />
-    <ClCompile Include="..\..\src\time.cpp" />
-    <ClCompile Include="..\..\src\timer.cpp" />
-    <ClCompile Include="..\..\src\utility-error.cpp" />
-    <ClCompile Include="..\..\src\utility-filesystem.cpp" />
-    <ClCompile Include="..\..\src\utility-libraries.cpp" />
-    <ClCompile Include="..\..\src\utility-logging.cpp" />
-    <ClCompile Include="..\..\src\utility-string.cpp" />
     <ClCompile Include="..\..\test\hello-world.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,9 +1,11 @@
-**.vs/
+**/.vs/
+**/.vscode/
+**/bin/
+**/obj/
 
+**.aps
+**.db
 **.dropbox.attr
 **.DS_Store
-**desktop.ini
+**.stackdump
 **.user
-
-/bin/
-/obj/
