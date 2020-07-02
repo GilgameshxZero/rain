@@ -1,9 +1,9 @@
 @ECHO OFF
 
-REM Increments RAIN_VERSION_BUILD every build.
+REM Increments build version at compile-time.
 
 SETLOCAL ENABLEDELAYEDEXPANSION
-SET versionpath=%~dp0..\include\rain-build.hpp
+SET versionpath=%~dp0..\include\rain\build.hpp
 FOR /F "tokens=1-3 delims= " %%A IN (%versionpath%) DO (
 	SET /A versionbuild=%%C+1
 	ECHO | SET /P="%%A %%B !versionbuild!" > %versionpath%

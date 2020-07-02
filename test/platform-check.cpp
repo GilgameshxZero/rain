@@ -1,4 +1,4 @@
-#include "rain.hpp"
+#include "rain/rain.hpp"
 
 #include <iostream>
 
@@ -7,7 +7,7 @@ int main() {
 						<< RAIN_VERSION_MAJOR << "."
 						<< RAIN_VERSION_MINOR << "."
 						<< RAIN_VERSION_REVISION << "."
-						<< RAIN_VERSION_BUILD << "." << Rain::CRLF;
-	std::cout << "This binary was built on " << Rain::getPlatformString() << "." << Rain::CRLF;
+						<< RAIN_VERSION_BUILD << "." << std::endl;
+	std::cout << "This binary was built on " << Rain::getPlatformString() << "." << std::endl;
 	return 0;
 }
