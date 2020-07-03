@@ -2,7 +2,6 @@
 
 #include "rain/string.hpp"
 
-#include <iostream>
 #include <map>
 
 namespace Rain {
