@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.3
+
+Convert `rain` to header-only. Use `inline static` member variables and require at least `C++17` compilation.
+
 ## 6.0.2
 
 Add basic cross-platform `Socket` implementation.

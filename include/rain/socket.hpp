@@ -1,8 +1,12 @@
+/*
+A platform-agnostic socket implementation.
+*/
+
 #pragma once
 
-#include "rain/platform.hpp"
-#include "rain/string.hpp"
-#include "rain/windows.hpp"
+#include "./platform.hpp"
+#include "./string.hpp"
+#include "./windows.hpp"
 
 #ifdef RAIN_WINDOWS
 #ifndef _WIN32_WINNT
@@ -29,36 +33,164 @@
 namespace Rain {
 	class Socket {
 		public:
-		Socket();
-		~Socket();
-
-#ifdef RAIN_WINDOWS
-		static bool wsaInitialized;
-		static WSADATA wsaData;
-
-		static int wsaCleanup();
-#endif
-
+		// Internal platform-specific implementation.
 #ifdef RAIN_WINDOWS
 		SOCKET socket;
 #else
 		int socket;
 #endif
 
-#ifdef RAIN_WINDOWS
-		SOCKET create(int = AF_INET, int = SOCK_STREAM, int = IPPROTO_TCP);
-#else
-		int create(int = AF_INET, int = SOCK_STREAM, int = IPPROTO_TCP);
-#endif
-		int connect(const char *, const char *);
-		int bind();
-		int listen();
-		int accept();
-		int send(const void *, size_t, int = 0);
-		int send(const char *, int = 0);
-		int recv(void *, size_t, int = 0);
-		int close();
+		// Stored from constructor.
+		int family, type, protocol;
 
-		private:
-	};
+#ifdef RAIN_WINDOWS
+		Socket(SOCKET socket = NULL,
+#else
+		Socket(int socket = 0,
+#endif
+			int family = AF_INET,
+			int type = SOCK_STREAM,
+			int protocol = IPPROTO_TCP)
+				: socket(socket), family(family), type(type), protocol(protocol) {
+#ifdef RAIN_WINDOWS
+			Socket::wsaStartup();
+#endif
+#ifdef RAIN_WINDOWS
+			if (this->socket == NULL) {
+#else
+			if (this->socket == 0) {
+#endif
+				this->socket = ::socket(family, type, protocol);
+			}
+		}
+		~Socket() {}
+
+		// Stuff related to WSA in Windows.
+#ifdef RAIN_WINDOWS
+		inline static bool wsaInitialized = false;
+		inline static WSADATA wsaData;
+
+		static int wsaStartup() {
+			if (!Socket::wsaInitialized) {
+				Socket::wsaInitialized = true;
+				return WSAStartup(MAKEWORD(2, 2), &Socket::wsaData);
+			}
+			return -1;
+		}
+		static int wsaCleanup() { return WSACleanup(); }
+#endif
+
+		// Shorthand for calling wsaCleanup in Windows and doing nothing otherwise.
+		static int cleanup() {
+#ifdef RAIN_WINDOWS
+			return wsaCleanup();
+#else
+			return 0;
+#endif
+		}
+
+		// Platform-agnostic socket operations adapted to the Socket interface.
+		int connect(const char *node, const char *service) {
+			struct addrinfo hints, *result, *curAddr;
+
+			memset(&hints, 0, sizeof(struct addrinfo));
+			hints.ai_family = this->family;
+			hints.ai_socktype = this->type;
+			hints.ai_protocol = this->protocol;
+			int status = getaddrinfo(node, service, &hints, &result);
+			if (status != 0) {
+				return status;
+			}
+
+			curAddr = result;
+			while (curAddr != NULL) {
+				status = ::connect(this->socket,
+					curAddr->ai_addr,
+					static_cast<int>(curAddr->ai_addrlen));
+				if (status == 0) {
+					return 0;
+				}
+				curAddr = curAddr->ai_next;
+			}
+			return status;
+		}
+		int bind(const char *service) {
+			struct addrinfo hints, *result, *curAddr;
+
+			memset(&hints, 0, sizeof(struct addrinfo));
+			hints.ai_family = this->family;
+			hints.ai_socktype = this->type;
+			hints.ai_protocol = this->protocol;
+			hints.ai_flags = AI_PASSIVE;
+			int status = getaddrinfo(NULL, service, &hints, &result);
+			if (status != 0) {
+				return status;
+			}
+
+			curAddr = result;
+			while (curAddr != NULL) {
+				status = ::bind(this->socket,
+					curAddr->ai_addr,
+					static_cast<int>(curAddr->ai_addrlen));
+				if (status == 0) {
+					return 0;
+				}
+				curAddr = curAddr->ai_next;
+			}
+			return status;
+		}
+		int listen(int backlog = 1024) { return ::listen(this->socket, backlog); }
+		Socket accept(struct sockaddr *addr = NULL,
+#ifdef RAIN_WINDOWS
+			int *addrLen = NULL){
+#else
+			socklen_t *addrLen = NULL) {
+#endif
+			return Socket(::accept(this->socket, addr, addrLen),
+				this->family,
+				this->type,
+				this->protocol);
+	}
+	
+	int send(const void *msg, size_t len, int flags = 0) {
+		return ::send(this->socket,
+#ifdef RAIN_WINDOWS
+			reinterpret_cast<const char *>(msg),
+			static_cast<int>(len),
+#else
+				msg,
+				len,
+#endif
+			flags);
+	}
+	int send(const char *msg, int flags = 0) {
+		return this->send(reinterpret_cast<const void *>(msg), strlen(msg), flags);
+	}
+	int recv(void *buf, size_t len, int flags = 0) {
+		return ::recv(this->socket,
+#ifdef RAIN_WINDOWS
+			reinterpret_cast<char *>(buf),
+			static_cast<int>(len),
+#else
+				buf,
+				len,
+#endif
+			flags);
+	}
+	int close() {
+		int status;
+#ifdef RAIN_WINDOWS
+		status = shutdown(this->socket, SD_BOTH);
+		if (status == 0) {
+			status = closesocket(this->socket);
+		}
+#else
+			status = shutdown(this->socket, SHUT_RDWR);
+			if (status == 0) {
+				status = ::close(this->socket);
+			}
+#endif
+		return status;
+	}
+};
 }

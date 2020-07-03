@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rain/platform.hpp"
-#include "rain/windows.hpp"
+#include "./platform.hpp"
+#include "./windows.hpp"
 
 #ifdef RAIN_WINDOWS
 #pragma comment(lib, "Gdiplus.lib")

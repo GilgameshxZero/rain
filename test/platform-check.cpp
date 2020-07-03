@@ -1,4 +1,4 @@
-#include "rain/rain.hpp"
+#include "rain.hpp"
 
 #include <iostream>
 
