@@ -1,11 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="rain">
-      <UniqueIdentifier>{6a322466-c3d6-4708-8fb0-dfe614365595}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\test\hello-world.cpp" />
   </ItemGroup>
 </Project>

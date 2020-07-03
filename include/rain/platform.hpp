@@ -4,6 +4,10 @@ Utilities for cross-platform development.
 
 #pragma once
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <string>
 
 // Standardize preprocessors.
@@ -36,13 +40,71 @@ Utilities for cross-platform development.
 #endif
 
 namespace Rain {
-	bool isCygwin();
-	bool isWindows();
-	bool isUnix();
-	bool isMac();
-	bool isLinux();
-	bool isFreeBSD();
-	bool isAndroid();
+	inline bool isCygwin() {
+#ifdef RAIN_CYGWIN
+		return true;
+#endif
+		return false;
+	}
 
-	std::string getPlatformString();
+	inline bool isWindows() {
+#ifdef RAIN_WINDOWS
+		return true;
+#endif
+		return false;
+	}
+
+	inline bool isUnix() {
+#ifdef RAIN_UNIX
+		return true;
+#endif
+		return false;
+	}
+
+	inline bool isMac() {
+#ifdef RAIN_MAC
+		return true;
+#endif
+		return false;
+	}
+
+	inline bool isLinux() {
+#ifdef RAIN_LINUX
+		return true;
+#endif
+		return false;
+	}
+
+	inline bool isFreeBSD() {
+#ifdef RAIN_FREEBSD
+		return true;
+#endif
+		return false;
+	}
+
+	inline bool isAndroid() {
+#ifdef RAIN_ANDROID
+		return true;
+#endif
+		return false;
+	}
+
+	inline std::string getPlatformString() {
+#if defined(RAIN_CYGWIN)
+		return "Cygwin";
+#elif defined(RAIN_WINDOWS)
+		return "Windows";
+#elif defined(RAIN_UNIX)
+		return "Unix";
+#elif defined(RAIN_MAC)
+		return "Mac";
+#elif defined(RAIN_LINUX)
+		return "Linux";
+#elif defined(RAIN_FREEBSD)
+		return "FreeBSD";
+#elif defined(RAIN_ANDROID)
+		return "Android";
+#endif
+		return "";
+	}
 }

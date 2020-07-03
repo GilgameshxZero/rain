@@ -21,7 +21,7 @@ VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain/build.hpp
 
 # Flags for build. Release by default.
 CXX := g++
-CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -g -Wall -pthread -D_GNU_SOURCE
+CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -g -Wall -pthread
 CXXFLAG_DEBUG := -O0
 CXXFLAG_RELEASE := -O3 -march=native
 

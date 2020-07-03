@@ -12,6 +12,9 @@
     <PreBuildEvent>
       <Command>$(SolutionDir)increment-build.bat</Command>
     </PreBuildEvent>
+    <ClCompile>
+      <ObjectFileName>$(IntDir)%(Directory)</ObjectFileName>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
   </ItemDefinitionGroup>
-  <ItemGroup />
 </Project>
