@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.6
+
+`CustomHttpServer` now parses headers and calls `onRequest` as designed.
+
 ## 6.0.5
 
 * Have `ThreadPool` use `std::function` to allow lambdas with captures to be passed as `Task`s.

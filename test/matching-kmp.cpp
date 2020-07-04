@@ -12,6 +12,24 @@ int main() {
 		std::cout << partialMatch[a] << " ";
 	}
 
+	s = "\r\n";
+	partialMatch.resize(s.length() + 1);
+	Rain::Algorithm::partialMatchTable(
+		s.c_str(), s.length(), partialMatch.data());
+	std::cout << "Partial match table for \\r\\n: ";
+	for (size_t a = 0; a < partialMatch.size(); a++) {
+		std::cout << partialMatch[a] << " ";
+	}
+
+	s = "\r\n\r\n";
+	partialMatch.resize(s.length() + 1);
+	Rain::Algorithm::partialMatchTable(
+		s.c_str(), s.length(), partialMatch.data());
+	std::cout << "Partial match table for \\r\\n\\r\\n: ";
+	for (size_t a = 0; a < partialMatch.size(); a++) {
+		std::cout << partialMatch[a] << " ";
+	}
+
 	s = "ABC ABCDAB ABCDABCDABDE";
 	std::string w = "ABCDABD";
 	char *match = Rain::Algorithm::cStrSearchKMP(

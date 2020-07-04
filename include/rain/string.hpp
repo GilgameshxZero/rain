@@ -9,6 +9,7 @@ Includes common utility functions for strings.
 // This defines _GNU_SOURCE if necessary for the string libraries.
 #include "./platform.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <string>
@@ -17,6 +18,7 @@ namespace Rain {
 	typedef size_t rsize_t;
 	typedef int errno_t;
 
+	// Comparator for const char * for use in std::maps and like.
 	struct cStrCmp {
 		bool operator()(const char *x, const char *y) const {
 			return strcmp(x, y) < 0;
@@ -50,5 +52,23 @@ namespace Rain {
 		strncpy(dest, src, destsz)[destsz - 1] = '\0';
 		return 0;
 #endif
+	}
+
+	// Shorthand for std::string operations.
+	std::string *strToLower(std::string *s) {
+		for (size_t a = 0; a < s->length(); a++) {
+			(*s)[a] = tolower((*s)[a]);
+		}
+		return s;
+	}
+	std::string *strTrimWhite(std::string *s) {
+		s->erase(s->begin(), std::find_if(s->begin(), s->end(), [](int ch) {
+			return !std::isspace(ch);
+		}));
+		s->erase(std::find_if(
+							 s->rbegin(), s->rend(), [](int ch) { return !std::isspace(ch); })
+							 .base(),
+			s->end());
+		return s;
 	}
 }

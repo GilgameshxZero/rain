@@ -32,7 +32,7 @@ namespace Rain {
 			size_t haystackLen,
 			const char *const needle,
 			const size_t needleLen,
-			long long *partialMatch,
+			const long long *partialMatch,
 			long long *candidate) {
 
 			for (size_t a = 0; a < haystackLen;) {
