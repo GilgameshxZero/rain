@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.4
+
+* Create `BufferPool` implementation to decrease impact of freeing and allocating memory on the heap.
+* Begin `ThreadPool` implementation.
+* Implemented KMP string matching.
+* Created platform-specific types for `Socket`.
+
 ## 6.0.3
 
 Convert `rain` to header-only. Use `inline static` member variables and require at least `C++17` compilation.
