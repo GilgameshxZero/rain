@@ -37,16 +37,20 @@ namespace Rain {
 #ifdef RAIN_WINDOWS
 		typedef SOCKET NativeSocket;
 		typedef int AddressLength;
+
+		static const SOCKET INVALID_NATIVE_SOCKET = SOCKET_ERROR;
 #else
 		typedef int NativeSocket;
 		typedef socklen_t AddressLength;
+
+		static const int INVALID_NATIVE_SOCKET = -1;
 #endif
 		NativeSocket socket;
 
 		// Stored from constructor.
 		int family, type, protocol;
 
-		Socket(NativeSocket socket = 0,
+		Socket(NativeSocket socket = INVALID_NATIVE_SOCKET,
 			int family = AF_INET,
 			int type = SOCK_STREAM,
 			int protocol = IPPROTO_TCP)
@@ -54,7 +58,7 @@ namespace Rain {
 #ifdef RAIN_WINDOWS
 			Socket::wsaStartup();
 #endif
-			if (this->socket == 0) {
+			if (socket == INVALID_NATIVE_SOCKET) {
 				this->socket = ::socket(family, type, protocol);
 			}
 		}
@@ -70,7 +74,7 @@ namespace Rain {
 				Socket::wsaInitialized = true;
 				return WSAStartup(MAKEWORD(2, 2), &Socket::wsaData);
 			}
-			return -1;
+			return 0;
 		}
 		static int wsaCleanup() { return WSACleanup(); }
 #endif
@@ -136,11 +140,8 @@ namespace Rain {
 		}
 		int listen(int backlog = 1024) { return ::listen(this->socket, backlog); }
 
-		Socket accept(struct sockaddr *addr = NULL, AddressLength *addrLen = NULL) {
-			return Socket(::accept(this->socket, addr, addrLen),
-				this->family,
-				this->type,
-				this->protocol);
+		NativeSocket accept(struct sockaddr *addr = NULL, AddressLength *addrLen = NULL) {
+			return ::accept(this->socket, addr, addrLen);
 		}
 
 		int send(const void *msg, size_t len, int flags = 0) {

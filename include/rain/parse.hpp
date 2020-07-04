@@ -5,12 +5,6 @@
 #include <map>
 
 namespace Rain {
-	struct cStrCmp {
-		bool operator()(const char *x, const char *y) const {
-			return strcmp(x, y) < 0;
-		}
-	};
-
 	class WaterfallParser {
 		public:
 		// Compound type to store all information with a parser.
