@@ -6,15 +6,15 @@
 #include <list>
 #include <queue>
 #include <thread>
-
-#include <iostream>
+#include <functional>
 
 namespace Rain {
 	// Shares threads among function tasks to minimize impact of thread
 	class ThreadPool {
 		public:
 		struct Task {
-			typedef void (*Executor)(void *);
+			// Using std::function lets us capture with lambdas.
+			typedef std::function<void(void *)> Executor;
 
 			Task(Executor executor, void *param) : executor(executor), param(param) {}
 

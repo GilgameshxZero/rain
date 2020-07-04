@@ -1,78 +1,170 @@
 #pragma once
 
+#include "./buffer-pool.hpp"
 #include "./socket.hpp"
 #include "./thread-pool.hpp"
-#include "./time.hpp"
 
+#include <functional>
 #include <list>
+#include <map>
 
 #include <iostream>
 
 namespace Rain {
-	class HttpServerSocket : public Socket {
+	// Forward declarations.
+	class HttpClient;
+	class HttpServerSocket;
+
+	// Requests and responses are passed to handlers based on whether they're a
+	// part of the client or server.
+	class HttpPayload {
 		public:
-		// Receiving buffer for header information and body. Must be large enough to
-		// contain entire header.
-		size_t bufSz;
-		char *buf;
+		std::map<std::string, std::string> headers;
 
-		HttpServerSocket(Socket socket = Socket(), size_t bufSz = 16384)
-				: Socket(socket), bufSz(bufSz) {
-			this->buf = new char[this->bufSz];
-		}
-		~HttpServerSocket() { delete this->buf; }
-
-		// Accept on an HttpServerSocket creates another HttpServerSocket.
-		HttpServerSocket accept(struct sockaddr *addr = NULL,
-			AddressLength *addrLen = NULL) {
-			return HttpServerSocket(Socket(::accept(this->socket, addr, addrLen),
-																this->family,
-																this->type,
-																this->protocol),
-				this->bufSz);
-		}
-
-		// Shorthand for bind, listen, and looping accept. Break only when the
-		// current socket is shut down.
-		int serve(const char *service, ThreadPool *threadPool, int backlog = 1024) {
-			int status;
-
-			status = Socket::bind(service);
-			if (status != 0) {
-				return status;
-			}
-
-			status = Socket::listen(backlog);
-			if (status != 0) {
-				return status;
-			}
-
-			// Continuously accept new connections.
-			while (true) {
-				HttpServerSocket *socket = new HttpServerSocket(this->accept());
-				if (socket->socket == 0) {
-					return 0;
-				}
-
-				// For each new connection, spawn a task to handle it.
-				threadPool->queueTask(
-					[](void *param) {
-						HttpServerSocket *socket =
-							reinterpret_cast<HttpServerSocket *>(param);
-						std::cout << "spawned socket" << std::endl;
-						socket->send("HTTP/1.1 200 OK\r\n");
-						socket->send("content-type: text/html; charset=UTF-8\r\n");
-						socket->send("server: emilia-web\r\n");
-						socket->send("content-length: 10\r\n");
-						socket->send("\r\n");
-						socket->send("i love you\r\n");
-						sleep(500);
-						std::cout << "killed socket" << std::endl;
-						socket->close();
-						delete socket;
-					},
-					reinterpret_cast<void *>(socket));
-			}
-		}
+		char *body;
 	};
+	class HttpRequest : public HttpPayload {
+		public:
+		typedef std::function<int(HttpRequest *)> Handler;
+
+		HttpServerSocket *socket;
+	};
+	class HttpResponse : public HttpPayload {
+		public:
+		typedef std::function<int(HttpResponse *)> Handler;
+
+		HttpClient *client;
+	};
+
+	// Base class for HttpClient and HttpServerSlave.
+	class HttpSocket : public Socket {
+		public:
+		HttpSocket(Socket socket) : Socket(socket) {}
+	};
+	class HttpClient : public HttpSocket {};
+
+	// Forward declaration.
+	template <typename SlaveType>
+	class CustomHttpServer;
+
+	// Reference implementation.
+	template <typename SlaveType>
+	class CustomHttpServerSlave : public HttpSocket {
+		public:
+		CustomHttpServer<SlaveType> *server;
+
+		CustomHttpServerSlave(Socket socket, CustomHttpServer<SlaveType> *server)
+				: HttpSocket(socket), server(server) {}
+	};
+
+	// Handles listening and accepting of new connections, as well as creating the
+	// HttpServerSlave to be configured correctly.
+	template <typename SlaveType>
+	class CustomHttpServer : private Socket {
+		public:
+		// Handlers for master/slave lifecycle events. Set these before serving.
+		// By default, don't handle any events.
+		// Can override by subclassing.
+		typedef std::function<void(SlaveType *)> Handler;
+
+		Handler onNew = [](SlaveType *) {};
+		Handler onTask = [](SlaveType *) {};
+		HttpRequest::Handler onRequest = [](HttpRequest *) { return 0; };
+		Handler onClose = [](SlaveType *) {};
+		Handler onDelete = [](SlaveType *) {};
+
+		// Slave buffer size must be large enough to store the entire header block
+		// of a request.
+		CustomHttpServer(size_t maxThreads = 0, size_t slaveBufSz = 16384)
+				: Socket(),
+					threadPool(new ThreadPool(maxThreads)),
+					allocatedThreadPool(true),
+					bufferPool(new BufferPool(slaveBufSz)),
+					allocatedBufferPool(true) {}
+		CustomHttpServer(ThreadPool *threadPool, BufferPool *bufferPool)
+				: Socket(),
+					threadPool(threadPool),
+					allocatedThreadPool(false),
+					bufferPool(bufferPool),
+					allocatedBufferPool(false) {}
+
+		// Bind, listen, and accept continuously until master is closed.
+		int serve(bool blocking = true,
+			const char *service = "80",
+			int backlog = 1024) {
+			// Bind and listen.
+			int status;
+			status = this->bind(service);
+			if (status != 0) {
+				return status;
+			}
+			status = this->listen(backlog);
+			if (status != 0) {
+				return status;
+			}
+
+			std::function<void(void *)> serveSync = [&](void *param) {
+				// Continuously accept new connections until master is closed.
+				while (true) {
+					Socket::NativeSocket nativeSocket = this->accept();
+					if (nativeSocket == Socket::INVALID_NATIVE_SOCKET) {
+						break;
+					}
+					SlaveType *slave = new SlaveType(
+						Socket(nativeSocket, this->family, this->type, this->protocol),
+						this);
+					this->onNew(slave);
+
+					// For each new connection, spawn a task to handle it.
+					this->threadPool->queueTask(
+						this->slaveTask, reinterpret_cast<void *>(slave));
+				}
+			};
+
+			if (blocking) {
+				serveSync(NULL);
+			} else {
+				this->threadPool->queueTask(serveSync, NULL);
+			}
+			return 0;
+		}
+
+		// Passthrough of some private Socket functions.
+		int close() { return Socket::close(); }
+
+		private:
+		// Used to spawn slaves.
+		ThreadPool *threadPool;
+		bool allocatedThreadPool;
+		BufferPool *bufferPool;
+		bool allocatedBufferPool;
+
+		// Slave task.
+		std::function<void(void *)> slaveTask = [this](void *param) {
+			SlaveType *slave = reinterpret_cast<SlaveType *>(param);
+			this->onTask(slave);
+
+			// Continuously accept requests and call onRequest when we have
+			// enough information.
+			while (true) {
+				// Parse until we have entire header.
+				slave->recv(NULL, 0);
+				this->onRequest(NULL);
+				break;
+			}
+
+			this->onClose(slave);
+			slave->close();
+			this->onDelete(slave);
+			delete slave;
+		};
+	};
+
+	// Non-templated reference subclassing implementation.
+	class HttpServerSlave : public CustomHttpServerSlave<HttpServerSlave> {
+		public:
+		HttpServerSlave(Socket socket, CustomHttpServer<HttpServerSlave> *server)
+				: CustomHttpServerSlave<HttpServerSlave>(socket, server) {}
+	};
+	typedef CustomHttpServer<HttpServerSlave> HttpServer;
 }

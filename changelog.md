@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.5
+
+* Have `ThreadPool` use `std::function` to allow lambdas with captures to be passed as `Task`s.
+* Create skeleton implementation for `HttpPayload`, `HttpRequest`, `HttpResponse`, `HttpSocket`, `HttpClient`.
+* Implement `CustomHttpServerSlave` and `CustomHttpServer` to allow for subclassing.
+* Create reference `HttpServerSlave` and `HttpServer` implementations which don't process requests just yet.
+
 ## 6.0.4
 
 * Create `BufferPool` implementation to decrease impact of freeing and allocating memory on the heap.

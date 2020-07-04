@@ -17,6 +17,12 @@ namespace Rain {
 	typedef size_t rsize_t;
 	typedef int errno_t;
 
+	struct cStrCmp {
+		bool operator()(const char *x, const char *y) const {
+			return strcmp(x, y) < 0;
+		}
+	};
+
 	// An implementation of GNU memmem, strstr with explicit lengths.
 	void *memmem(const void *haystack,
 		size_t haystackLen,
