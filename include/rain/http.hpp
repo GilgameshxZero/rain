@@ -1,63 +1,78 @@
 #pragma once
 
 #include "./socket.hpp"
+#include "./thread-pool.hpp"
+#include "./time.hpp"
 
 #include <list>
 
+#include <iostream>
+
 namespace Rain {
-	class HttpSocket : public Socket {
+	class HttpServerSocket : public Socket {
 		public:
-		// Receiving buffer.
+		// Receiving buffer for header information and body. Must be large enough to
+		// contain entire header.
 		size_t bufSz;
-		std::list<char *> bufs;
+		char *buf;
 
-		HttpSocket(Socket socket = Socket(), size_t bufSz = 8192)
+		HttpServerSocket(Socket socket = Socket(), size_t bufSz = 16384)
 				: Socket(socket), bufSz(bufSz) {
-			this->bufs.push_back(new char[bufSz]);
+			this->buf = new char[this->bufSz];
 		}
-		~HttpSocket() {
-			// Free all buffers allocated in linked list.
-			for (auto it = this->bufs.begin(); it != this->bufs.end(); it++) {
-				delete *it;
+		~HttpServerSocket() { delete this->buf; }
+
+		// Accept on an HttpServerSocket creates another HttpServerSocket.
+		HttpServerSocket accept(struct sockaddr *addr = NULL,
+			AddressLength *addrLen = NULL) {
+			return HttpServerSocket(Socket(::accept(this->socket, addr, addrLen),
+																this->family,
+																this->type,
+																this->protocol),
+				this->bufSz);
+		}
+
+		// Shorthand for bind, listen, and looping accept. Break only when the
+		// current socket is shut down.
+		int serve(const char *service, ThreadPool *threadPool, int backlog = 1024) {
+			int status;
+
+			status = Socket::bind(service);
+			if (status != 0) {
+				return status;
 			}
-		}
 
-		// Receive into buffer until double CRLF.
-		int recvHeader(int timeout = 0) {
-			auto it = this->bufs.begin();
-			char *loc = *it, *end;
+			status = Socket::listen(backlog);
+			if (status != 0) {
+				return status;
+			}
 
-			int status, total = 0;
+			// Continuously accept new connections.
 			while (true) {
-				status =
-					this->recv(reinterpret_cast<void *>(loc), this->bufSz - (loc - *it));
-				if (status == 0) {
-					// Graceful disconnect.
-					break;
-				} else if (status < 0) {
-					// Error.
-					return status;
+				HttpServerSocket *socket = new HttpServerSocket(this->accept());
+				if (socket->socket == 0) {
+					return 0;
 				}
 
-				// Stop if we encounter a double CRLF.
-				end = reinterpret_cast<char *>(memmem(loc, status, "\r\n\r\n", 4));
-				if (end != NULL) {
-					return total + static_cast<int>(end - loc);
-				}
-
-				// Some bytes received.
-				loc += status;
-				total += status;
-
-				// If we have used all of our buffer, allocate more.
-				if (static_cast<size_t>(loc - *it) == this->bufSz &&
-					++it == this->bufs.end()) {
-					this->bufs.push_back(new char[this->bufSz]);
-					loc = *(--it);
-				}
+				// For each new connection, spawn a task to handle it.
+				threadPool->queueTask(
+					[](void *param) {
+						HttpServerSocket *socket =
+							reinterpret_cast<HttpServerSocket *>(param);
+						std::cout << "spawned socket" << std::endl;
+						socket->send("HTTP/1.1 200 OK\r\n");
+						socket->send("content-type: text/html; charset=UTF-8\r\n");
+						socket->send("server: emilia-web\r\n");
+						socket->send("content-length: 10\r\n");
+						socket->send("\r\n");
+						socket->send("i love you\r\n");
+						sleep(500);
+						std::cout << "killed socket" << std::endl;
+						socket->close();
+						delete socket;
+					},
+					reinterpret_cast<void *>(socket));
 			}
-
-			return 0;
 		}
 	};
 }

@@ -1,3 +1,9 @@
+/*
+A compatibility layer for different string implementations across platforms.
+
+Includes common utility functions for strings.
+*/
+
 #pragma once
 
 // This defines _GNU_SOURCE if necessary for the string libraries.
@@ -11,16 +17,12 @@ namespace Rain {
 	typedef size_t rsize_t;
 	typedef int errno_t;
 
+	// An implementation of GNU memmem, strstr with explicit lengths.
 	void *memmem(const void *haystack,
 		size_t haystackLen,
 		const void *const needle,
 		const size_t needleLen) {
 #ifdef RAIN_WINDOWS
-		assert(haystack != NULL);
-		assert(haystackLen != 0);
-		assert(needle != NULL);
-		assert(needleLen != 0);
-
 		for (const char *h = reinterpret_cast<const char *>(haystack);
 				 haystackLen >= needleLen;
 				 ++h, --haystackLen) {
@@ -34,7 +36,8 @@ namespace Rain {
 #endif
 	}
 
-	errno_t strcpy_s(char *dest, rsize_t destsz, const char *src) {
+	// An implementation of GNU strcpy_s.
+	errno_t strcpy_s(char *dest, size_t destsz, const char *src) {
 #ifdef RAIN_WINDOWS
 		return ::strcpy_s(dest, destsz, src);
 #else

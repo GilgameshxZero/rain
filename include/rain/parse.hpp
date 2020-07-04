@@ -7,7 +7,7 @@
 namespace Rain {
 	struct cStrCmp {
 		bool operator()(const char *x, const char *y) const {
-			return std::strcmp(x, y) < 0;
+			return strcmp(x, y) < 0;
 		}
 	};
 
@@ -56,10 +56,9 @@ namespace Rain {
 				key,
 				reinterpret_cast<void *>(store),
 				[](const char *sValue, void *param) {
-					*reinterpret_cast<bool *>(param) = !(std::strcmp(sValue, "0") == 0 ||
-						std::strcmp(sValue, "false") == 0 ||
-						std::strcmp(sValue, "False") == 0 ||
-						std::strcmp(sValue, "FALSE") == 0);
+					*reinterpret_cast<bool *>(param) =
+						!(strcmp(sValue, "0") == 0 || strcmp(sValue, "false") == 0 ||
+							strcmp(sValue, "False") == 0 || strcmp(sValue, "FALSE") == 0);
 					return 0;
 				},
 				[](void *param) {});
@@ -70,8 +69,7 @@ namespace Rain {
 				reinterpret_cast<void *>(store),
 				[](const char *sValue, void *param) {
 					try {
-						*reinterpret_cast<long long *>(param) =
-							std::strtoll(sValue, NULL, 10);
+						*reinterpret_cast<long long *>(param) = strtoll(sValue, NULL, 10);
 						return 0;
 					} catch (...) {
 						return 1;
@@ -79,23 +77,34 @@ namespace Rain {
 				},
 				[](void *param) {});
 		}
-		int addParser(const char *key, char *store, rsize_t sz) {
+		int addParser(const char *key, char *store, size_t sz) {
 			return this->addParser(
 				key,
 				// Dynamically allocate a parameter containing both store and sz.
-				reinterpret_cast<void *>(new std::pair<char *, std::size_t>(store, sz)),
+				reinterpret_cast<void *>(new std::pair<char *, size_t>(store, sz)),
 				[](const char *sValue, void *param) {
-					std::pair<char *, std::size_t> *origParam =
-						reinterpret_cast<std::pair<char *, std::size_t> *>(param);
+					std::pair<char *, size_t> *origParam =
+						reinterpret_cast<std::pair<char *, size_t> *>(param);
 					strcpy_s(origParam->first, origParam->second, sValue);
 					return 0;
 				},
 				[](void *param) {
 					// And free it later.
-					std::pair<char *, std::size_t> *origParam =
-						reinterpret_cast<std::pair<char *, std::size_t> *>(param);
+					std::pair<char *, size_t> *origParam =
+						reinterpret_cast<std::pair<char *, size_t> *>(param);
 					delete origParam;
 				});
+		}
+		int addParser(const char *key, std::string *store) {
+			return this->addParser(
+				key,
+				// Dynamically allocate a parameter containing both store and sz.
+				reinterpret_cast<void *>(store),
+				[](const char *sValue, void *param) {
+					reinterpret_cast<std::string *>(param)->assign(sValue);
+					return 0;
+				},
+				[](void *param) {});
 		}
 
 		// Add a way to parse a key. Contains shared error-checking code and builds

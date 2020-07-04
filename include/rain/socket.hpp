@@ -35,19 +35,18 @@ namespace Rain {
 		public:
 		// Internal platform-specific implementation.
 #ifdef RAIN_WINDOWS
-		SOCKET socket;
+		typedef SOCKET NativeSocket;
+		typedef int AddressLength;
 #else
-		int socket;
+		typedef int NativeSocket;
+		typedef socklen_t AddressLength;
 #endif
+		NativeSocket socket;
 
 		// Stored from constructor.
 		int family, type, protocol;
 
-#ifdef RAIN_WINDOWS
-		Socket(SOCKET socket = NULL,
-#else
-		Socket(int socket = 0,
-#endif
+		Socket(NativeSocket socket = 0,
 			int family = AF_INET,
 			int type = SOCK_STREAM,
 			int protocol = IPPROTO_TCP)
@@ -55,11 +54,7 @@ namespace Rain {
 #ifdef RAIN_WINDOWS
 			Socket::wsaStartup();
 #endif
-#ifdef RAIN_WINDOWS
-			if (this->socket == NULL) {
-#else
 			if (this->socket == 0) {
-#endif
 				this->socket = ::socket(family, type, protocol);
 			}
 		}
@@ -140,57 +135,54 @@ namespace Rain {
 			return status;
 		}
 		int listen(int backlog = 1024) { return ::listen(this->socket, backlog); }
-		Socket accept(struct sockaddr *addr = NULL,
-#ifdef RAIN_WINDOWS
-			int *addrLen = NULL){
-#else
-			socklen_t *addrLen = NULL) {
-#endif
+
+		Socket accept(struct sockaddr *addr = NULL, AddressLength *addrLen = NULL) {
 			return Socket(::accept(this->socket, addr, addrLen),
 				this->family,
 				this->type,
 				this->protocol);
-	}
-	
-	int send(const void *msg, size_t len, int flags = 0) {
-		return ::send(this->socket,
+		}
+
+		int send(const void *msg, size_t len, int flags = 0) {
+			return ::send(this->socket,
 #ifdef RAIN_WINDOWS
-			reinterpret_cast<const char *>(msg),
-			static_cast<int>(len),
+				reinterpret_cast<const char *>(msg),
+				static_cast<int>(len),
 #else
 				msg,
 				len,
 #endif
-			flags);
-	}
-	int send(const char *msg, int flags = 0) {
-		return this->send(reinterpret_cast<const void *>(msg), strlen(msg), flags);
-	}
-	int recv(void *buf, size_t len, int flags = 0) {
-		return ::recv(this->socket,
+				flags);
+		}
+		int send(const char *msg, int flags = 0) {
+			return this->send(
+				reinterpret_cast<const void *>(msg), strlen(msg), flags);
+		}
+		int recv(void *buf, size_t len, int flags = 0) {
+			return ::recv(this->socket,
 #ifdef RAIN_WINDOWS
-			reinterpret_cast<char *>(buf),
-			static_cast<int>(len),
+				reinterpret_cast<char *>(buf),
+				static_cast<int>(len),
 #else
 				buf,
 				len,
 #endif
-			flags);
-	}
-	int close() {
-		int status;
-#ifdef RAIN_WINDOWS
-		status = shutdown(this->socket, SD_BOTH);
-		if (status == 0) {
-			status = closesocket(this->socket);
+				flags);
 		}
+		int close() {
+			int status;
+#ifdef RAIN_WINDOWS
+			status = shutdown(this->socket, SD_BOTH);
+			if (status == 0) {
+				status = closesocket(this->socket);
+			}
 #else
 			status = shutdown(this->socket, SHUT_RDWR);
 			if (status == 0) {
 				status = ::close(this->socket);
 			}
 #endif
-		return status;
-	}
-};
+			return status;
+		}
+	};
 }
