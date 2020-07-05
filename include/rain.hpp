@@ -2,7 +2,7 @@
 
 #define RAIN_VERSION_MAJOR 6
 #define RAIN_VERSION_MINOR 0
-#define RAIN_VERSION_REVISION 6
+#define RAIN_VERSION_REVISION 7
 
 #include "./rain/algorithm-string.hpp"
 #include "./rain/buffer-pool.hpp"

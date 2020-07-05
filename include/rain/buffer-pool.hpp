@@ -10,7 +10,7 @@ namespace Rain {
 	// Thread-safe efficient allocation of fixed-size buffers across the process.
 	class BufferPool {
 		public:
-		BufferPool(size_t bufSz) : bufSz(bufSz) {}
+		BufferPool(size_t bufSz = 16384) : bufSz(bufSz) {}
 
 		// Free all blocks whether they've been free by a user of BufferPool or not.
 		~BufferPool() {
@@ -48,15 +48,20 @@ namespace Rain {
 			this->freeBlocksMtx.unlock();
 		}
 
-		// Utilization of blocks.
+		// Stats.
+		size_t getCBlocks() const { return this->blocks.size(); }
+		size_t getCFreeBlocks() const { return this->freeBlocks.size(); }
 		double getUtil() const {
+			if (this->blocks.size() == 0) {
+				return 1;
+			}
 			return 1 -
 				static_cast<double>(this->freeBlocks.size()) /
 				static_cast<double>(this->blocks.size());
 		}
 
 		// Trim memory usage to achieve at least target utilization.
-		void freeUntilUtil(double targetUtil) {
+		void freeToUtil(double targetUtil) {
 			size_t targetMaxFreeBlocks =
 				static_cast<size_t>((1 - targetUtil) * this->blocks.size());
 			this->freeBlocksMtx.lock();

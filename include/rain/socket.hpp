@@ -159,6 +159,10 @@ namespace Rain {
 			return this->send(
 				reinterpret_cast<const void *>(msg), strlen(msg), flags);
 		}
+		int send(const std::string &s, int flags = 0) {
+			return this->send(s.c_str(), flags);
+		}
+
 		int recv(void *buf, size_t len, int flags = 0) {
 			return ::recv(this->socket,
 #ifdef RAIN_WINDOWS

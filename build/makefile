@@ -53,10 +53,10 @@ test: increment-build
 	./$(BIN_DIR)$(TEST)
 
 # Rules for test binaries and objects.
-$(BIN_DIR)%: $(OBJ_DIR)test/%.o $(RAIN_OBJ) $(RAIN_INCLUDE)
+$(BIN_DIR)%: $(TEST_OBJ) $(RAIN_OBJ) $(RAIN_INCLUDE)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $< $(RAIN_OBJ) $(CXXFLAG)
-$(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp
+$(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDE)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAG)
 
@@ -66,7 +66,7 @@ clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 # Rules for rain library objects.
-$(OBJ_DIR)rain/%.o: $(SRC_DIR)%.cpp
+$(OBJ_DIR)rain/%.o: $(SRC_DIR)%.cpp $(RAIN_INCLUDE)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAG)
 
