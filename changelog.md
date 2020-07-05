@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.7
+
+Implemented sending of `HttpResponse` and `HttpRequest`.
+
 ## 6.0.6
 
 `CustomHttpServer` now parses headers and calls `onRequest` as designed.

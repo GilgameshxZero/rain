@@ -12,6 +12,7 @@ Includes common utility functions for strings.
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <sstream>
 #include <string>
 
 namespace Rain {
@@ -70,5 +71,20 @@ namespace Rain {
 							 .base(),
 			s->end());
 		return s;
+	}
+
+	// std::stringstream is pretty slow. Use other conversions if possible.
+	template <typename T>
+	std::string tToStr(T x) {
+		std::stringstream ss;
+		ss << x;
+		return ss.str();
+	}
+	template <typename T>
+	T strToT(std::string s) {
+		T r;
+		std::stringstream ss(s);
+		ss >> r;
+		return r;
 	}
 }

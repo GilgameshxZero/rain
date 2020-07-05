@@ -3,10 +3,10 @@
 #include "./condition-variable.hpp"
 #include "./string.hpp"
 
+#include <functional>
 #include <list>
 #include <queue>
 #include <thread>
-#include <functional>
 
 namespace Rain {
 	// Shares threads among function tasks to minimize impact of thread
@@ -115,6 +115,10 @@ namespace Rain {
 			std::unique_lock<std::mutex> lck(this->tasksDoneCV.getMutex());
 			this->tasksDoneCV.wait(lck);
 		}
+
+		size_t getCThreads() { return this->threads.size(); }
+		size_t getCWaitingThreads() { return this->cWaitingThreads; }
+		size_t getCTasks() { return this->tasks.size(); }
 
 		private:
 		// Threads quit if the tasksCV is triggered and this is true.
