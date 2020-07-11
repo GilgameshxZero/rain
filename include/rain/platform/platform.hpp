@@ -4,12 +4,6 @@ Utilities for cross-platform development.
 
 #pragma once
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include <string>
-
 // Standardize preprocessors.
 #ifdef __CYGWIN__
 #define RAIN_CYGWIN
@@ -39,7 +33,20 @@ Utilities for cross-platform development.
 #define RAIN_ANDROID
 #endif
 
+// Include some GNU extensions.
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <cstdlib>
+#include <cstring>
+
 namespace Rain {
+	typedef size_t rsize_t;
+	typedef int errno_t;
+}
+
+namespace Rain::Platform {
 	inline bool isCygwin() {
 #ifdef RAIN_CYGWIN
 		return true;
@@ -89,8 +96,8 @@ namespace Rain {
 		return false;
 	}
 
-	inline std::string getPlatformString() {
-#if defined(RAIN_CYGWIN)
+	inline const char *getPlatformString() {
+#ifdef RAIN_CYGWIN
 		return "Cygwin";
 #elif defined(RAIN_WINDOWS)
 		return "Windows";

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./platform.hpp"
+#include "../platform/.hpp"
 
 #ifdef RAIN_WINDOWS
 #ifndef WIN32_LEAN_AND_MEAN

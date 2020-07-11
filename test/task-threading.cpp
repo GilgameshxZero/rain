@@ -4,45 +4,44 @@ int main() {
 	// An integer, to do work on, and a mutex to lock the integer counter.
 	std::pair<int, std::mutex> px;
 
-	Rain::ThreadPool threadPool(4);
-	Rain::ThreadPool::Task::Executor executor = [](void *param) {
-		Rain::sleep(500);
+	Rain::Thread::ThreadPool threadPool(8);
+	Rain::Thread::ThreadPool::Task::Executor executor = [](void *param) {
+		Rain::Time::sleep(250);
 		std::pair<int, std::mutex> &px =
 			*reinterpret_cast<std::pair<int, std::mutex> *>(param);
 		px.second.lock();
 		++px.first;
 		px.second.unlock();
-		Rain::sleep(500);
+		Rain::Time::sleep(250);
 	};
 	void *param = reinterpret_cast<void *>(&px);
-	std::cout << "Limited to 4 threads, incrementing by 25." << std::endl;
+	std::cout << "Limited to 8 threads, incrementing by 25." << std::endl;
 	for (int a = 0; a < 25; a++) {
 		threadPool.queueTask(executor, param);
 	}
 
 	std::cout << "Waiting for task batch completion..." << std::endl;
-	threadPool.blockUntilDone();
+	threadPool.blockForTasks();
 	std::cout << "First batch complete. x = " << px.first << std::endl;
 
-	Rain::ThreadPool unlimitedThreadPool(0);
+	Rain::Thread::ThreadPool unlimitedThreadPool(0);
 	std::cout << "Unlimited threads, incrementing by 25." << std::endl;
 	for (int a = 0; a < 25; a++) {
 		unlimitedThreadPool.queueTask(executor, param);
 	}
 
 	std::cout << "Waiting for task batch completion..." << std::endl;
-	unlimitedThreadPool.blockUntilDone();
+	unlimitedThreadPool.blockForTasks();
 	std::cout << "Second batch complete. x = " << px.first << std::endl;
 
-	Rain::ThreadPool bigThreadPool(512);
-	std::cout << "512 threads, incrementing by 8192."
-						<< std::endl;
-	for (int a = 0; a < 8192; a++) {
+	Rain::Thread::ThreadPool bigThreadPool(512);
+	std::cout << "512 threads, incrementing by 3000." << std::endl;
+	for (int a = 0; a < 3000; a++) {
 		bigThreadPool.queueTask(executor, param);
 	}
 
 	std::cout << "Waiting for task batch completion..." << std::endl;
-	bigThreadPool.blockUntilDone();
+	bigThreadPool.blockForTasks();
 	std::cout << "Third batch complete. x = " << px.first << std::endl;
 
 	return 0;

@@ -32,28 +32,21 @@ else
   CXXFLAG := $(CXXFLAG) $(CXXFLAG_RELEASE)
 endif
 
-# Object files should not be deleted to not recompile under no changes.
-.SECONDARY: $(RAIN_OBJ) $(TEST_OBJ)
+# Keep intermediate files to speed up compilation times.
+.SECONDARY: $(RAIN_OBJ) $(TEST_OBJ) $(TEST_BIN)
 
 # Mark .PHONY for rules to avoid compiling files named the same as rules.
 
 # Compile and run all tests.
-.PHONY: testall
-testall: increment-build $(TEST_BIN)
-	@for x in $(TEST_BIN); do \
-		echo $$x; \
-		./$$x; \
-	done
+.PHONY: all
+all: increment-build $(TEST_NAME)
 
-# Compile and run single test.
-.PHONY: test
-test: increment-build
-	@$(eval TEST:=$(filter-out $@,$(MAKECMDGOALS)))
-	$(MAKE) $(BIN_DIR)$(TEST)
-	./$(BIN_DIR)$(TEST)
+# Rules for single tests just redirect to test binaries.
+%: increment-build $(BIN_DIR)%
+	./$(BIN_DIR)$@
 
 # Rules for test binaries and objects.
-$(BIN_DIR)%: $(TEST_OBJ) $(RAIN_OBJ) $(RAIN_INCLUDE)
+$(BIN_DIR)%: $(OBJ_DIR)test/%.o $(RAIN_OBJ) $(RAIN_INCLUDE)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $< $(RAIN_OBJ) $(CXXFLAG)
 $(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDE)
@@ -73,10 +66,9 @@ $(OBJ_DIR)rain/%.o: $(SRC_DIR)%.cpp $(RAIN_INCLUDE)
 # Increment build number.
 .PHONY: increment-build
 increment-build:
-	@while read line || [ -n "$$line" ]; do \
-		TOKENS=($$line); \
-		RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
-		echo -e "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD\c" > \
-			$(VERSION_BUILD_INCLUDE); \
-	done < $(VERSION_BUILD_INCLUDE); \
+	@read line < $(VERSION_BUILD_INCLUDE); \
+	TOKENS=($$line); \
+	RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
+	echo -e "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD\c" > \
+		$(VERSION_BUILD_INCLUDE); \
 	echo build $$RAIN_VERSION_BUILD
