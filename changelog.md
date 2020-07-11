@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.0.10
+
+Remove erroneous comments from makefile.
+
+## 6.0.9
+
+Modify makefile to increment the build only when rain headers change.
+
+## 6.0.8
+
+Refactor files into folders based on namespace.
+
 ## 6.0.7
 
 Implemented sending of `HttpResponse` and `HttpRequest`.
