@@ -6,45 +6,13 @@ Includes common utility functions for strings.
 
 #pragma once
 
-// This defines _GNU_SOURCE if necessary for the string libraries.
-#include "./platform.hpp"
+#include "../platform/.hpp"
 
 #include <algorithm>
 #include <cassert>
-#include <cstring>
 #include <sstream>
-#include <string>
 
 namespace Rain {
-	typedef size_t rsize_t;
-	typedef int errno_t;
-
-	// Comparator for const char * for use in std::maps and like.
-	struct cStrCmp {
-		bool operator()(const char *x, const char *y) const {
-			return strcmp(x, y) < 0;
-		}
-	};
-
-	// An implementation of GNU memmem, strstr with explicit lengths.
-	void *memmem(const void *haystack,
-		size_t haystackLen,
-		const void *const needle,
-		const size_t needleLen) {
-#ifdef RAIN_WINDOWS
-		for (const char *h = reinterpret_cast<const char *>(haystack);
-				 haystackLen >= needleLen;
-				 ++h, --haystackLen) {
-			if (!memcmp(h, needle, needleLen)) {
-				return const_cast<void *>(reinterpret_cast<const void *>(h));
-			}
-		}
-		return NULL;
-#else
-		return ::memmem(haystack, haystackLen, needle, needleLen);
-#endif
-	}
-
 	// An implementation of GNU strcpy_s.
 	errno_t strcpy_s(char *dest, size_t destsz, const char *src) {
 #ifdef RAIN_WINDOWS
@@ -54,6 +22,15 @@ namespace Rain {
 		return 0;
 #endif
 	}
+}
+
+namespace Rain::String {
+	// Comparator for const char * for use in std::maps and like.
+	struct cStrCmp {
+		bool operator()(const char *x, const char *y) const {
+			return strcmp(x, y) < 0;
+		}
+	};
 
 	// Shorthand for std::string operations.
 	std::string *strToLower(std::string *s) {

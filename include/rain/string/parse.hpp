@@ -4,7 +4,7 @@
 
 #include <map>
 
-namespace Rain {
+namespace Rain::String {
 	class WaterfallParser {
 		public:
 		// Compound type to store all information with a parser.

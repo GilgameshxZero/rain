@@ -2,21 +2,17 @@
 
 #define RAIN_VERSION_MAJOR 6
 #define RAIN_VERSION_MINOR 0
-#define RAIN_VERSION_REVISION 7
+#define RAIN_VERSION_REVISION 8
 
-#include "./rain/algorithm-string.hpp"
-#include "./rain/buffer-pool.hpp"
 #include "./rain/build.hpp"
-#include "./rain/condition-variable.hpp"
-#include "./rain/gdiplus.hpp"
-#include "./rain/http.hpp"
-#include "./rain/parse.hpp"
-#include "./rain/platform.hpp"
-#include "./rain/socket.hpp"
-#include "./rain/string.hpp"
-#include "./rain/thread-pool.hpp"
-#include "./rain/time.hpp"
-#include "./rain/windows.hpp"
+
+#include "./rain/algorithm/.hpp"
+#include "./rain/memory/.hpp"
+#include "./rain/networking/.hpp"
+#include "./rain/platform/.hpp"
+#include "./rain/string/.hpp"
+#include "./rain/thread/.hpp"
+#include "./rain/time/.hpp"
 
 #include <iostream>
 #include <vector>

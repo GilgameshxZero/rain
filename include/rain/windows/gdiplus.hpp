@@ -1,12 +1,13 @@
 #pragma once
 
-#include "./platform.hpp"
+#include "../platform/.hpp"
 #include "./windows.hpp"
 
 #ifdef RAIN_WINDOWS
 #pragma comment(lib, "Gdiplus.lib")
-#include <algorithm>
 
+// Bypasses some errors with min and max being defined twice.
+#include <algorithm>
 namespace Gdiplus {
 	using std::max;
 	using std::min;

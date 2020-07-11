@@ -16,7 +16,7 @@ int main() {
 	partialMatch.resize(s.length() + 1);
 	Rain::Algorithm::partialMatchTable(
 		s.c_str(), s.length(), partialMatch.data());
-	std::cout << "Partial match table for \\r\\n: ";
+	std::cout << std::endl << "Partial match table for \\r\\n: ";
 	for (size_t a = 0; a < partialMatch.size(); a++) {
 		std::cout << partialMatch[a] << " ";
 	}
@@ -25,7 +25,7 @@ int main() {
 	partialMatch.resize(s.length() + 1);
 	Rain::Algorithm::partialMatchTable(
 		s.c_str(), s.length(), partialMatch.data());
-	std::cout << "Partial match table for \\r\\n\\r\\n: ";
+	std::cout << std::endl << "Partial match table for \\r\\n\\r\\n: ";
 	for (size_t a = 0; a < partialMatch.size(); a++) {
 		std::cout << partialMatch[a] << " ";
 	}

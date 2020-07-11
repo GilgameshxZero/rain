@@ -1,16 +1,18 @@
 #pragma once
 
-#include "./buffer-pool.hpp"
+#include "../algorithm/.hpp"
+#include "../memory/.hpp"
+#include "../string/.hpp"
+#include "../thread/.hpp"
+#include "./server.hpp"
 #include "./socket.hpp"
-#include "./string.hpp"
-#include "./thread-pool.hpp"
 
 #include <functional>
 #include <list>
 #include <map>
 #include <set>
 
-namespace Rain {
+namespace Rain::Networking {
 	// Forward declaration.
 	class HttpSocket;
 
@@ -34,7 +36,7 @@ namespace Rain {
 		// persist until the body is sent.
 		void setBody(const char *body) {
 			size_t bodyLen = strlen(body);
-			this->headers["content-length"] = tToStr(bodyLen);
+			this->headers["content-length"] = String::tToStr(bodyLen);
 
 			// Need to capture by copy; references break when trying to cast to
 			// pointer again.
@@ -50,7 +52,7 @@ namespace Rain {
 			};
 		}
 		void setBody(std::string *body) {
-			this->headers["content-length"] = tToStr(body->length());
+			this->headers["content-length"] = String::tToStr(body->length());
 			this->getBody = [this, body](char **retBody) {
 				*retBody = const_cast<char *>(body->c_str());
 				size_t ret = body->length();
@@ -99,11 +101,11 @@ namespace Rain {
 
 		// Send either a request or a response.
 		int send(HttpRequest *req) {
-			Socket::send(req->method);
+			Socket::send(&req->method);
 			Socket::send(" ");
-			Socket::send(req->uri);
+			Socket::send(&req->uri);
 			Socket::send(" HTTP/");
-			Socket::send(req->version);
+			Socket::send(&req->version);
 			Socket::send("\r\n");
 			this->sendHeaders(req);
 			Socket::send("\r\n");
@@ -112,11 +114,11 @@ namespace Rain {
 		}
 		int send(HttpResponse *res) {
 			Socket::send("HTTP/");
-			Socket::send(res->version);
+			Socket::send(&res->version);
 			Socket::send(" ");
-			Socket::send(res->statusCode);
+			Socket::send(&res->statusCode);
 			Socket::send(" ");
-			Socket::send(res->status);
+			Socket::send(&res->status);
 			Socket::send("\r\n");
 			this->sendHeaders(res);
 			Socket::send("\r\n");
@@ -129,9 +131,9 @@ namespace Rain {
 		int sendHeaders(HttpPayload *payload) {
 			for (auto it = payload->headers.begin(); it != payload->headers.end();
 					 it++) {
-				Socket::send(it->first);
+				Socket::send(&it->first);
 				Socket::send(":");
-				Socket::send(it->second);
+				Socket::send(&it->second);
 				Socket::send("\r\n");
 			}
 			return 0;
@@ -153,125 +155,62 @@ namespace Rain {
 	template <typename SlaveType>
 	class CustomHttpServer;
 
-	// Reference implementation.
-	template <typename SlaveType>
-	class CustomHttpServerSlave : public HttpSocket {
-		public:
-		CustomHttpServer<SlaveType> *server;
-
-		CustomHttpServerSlave(Socket socket, CustomHttpServer<SlaveType> *server)
-				: HttpSocket(socket), server(server) {}
-	};
-
 	// Handles listening and accepting of new connections, as well as creating the
 	// HttpServerSlave to be configured correctly.
 	template <typename SlaveType>
-	class CustomHttpServer : private Socket {
+	class CustomHttpServerSlave : public CustomServerSlave<SlaveType>,
+																public HttpSocket {
 		public:
-		// Allows accessing the SlaveType directly from the HttpServer class type.
-		typedef SlaveType Slave;
+		CustomHttpServerSlave(Socket socket, CustomServer<SlaveType> *server)
+				: CustomServerSlave<SlaveType>(socket, server), HttpSocket(socket) {}
 
-		// Handlers for master/slave lifecycle events. Set these before serving.
-		// By default, don't handle any events.
-		// Can override by subclassing.
-		typedef std::function<void(SlaveType *)> Handler;
+		int recv(void *buf, size_t len, int flags = 0) {
+			return HttpSocket::recv(buf, len, flags);
+		}
+		int close() {
+			return HttpSocket::close();
+		}
+	};
 
-		Handler onNewSlave = [](SlaveType *) {};
-		Handler onBeginSlaveTask = [](SlaveType *) {};
-		Handler onBeginParseHeader = [](SlaveType *) {};
-		Handler onBeginSlaveRecv = [](SlaveType *) {};
-		Handler onHeaderOverflow = [](SlaveType *slave) {
-			HttpSocket *socket = reinterpret_cast<HttpSocket *>(slave);
-			HttpResponse res("413", "Header overflowed", "1.1");
-			socket->send(&res);
-		};
-		HttpRequest::Handler onRequest = [](HttpRequest *) {};
-		Handler onCloseSlave = [](SlaveType *) {};
-		Handler onDeleteSlave = [](SlaveType *) {};
+	template <typename SlaveType>
+	class CustomHttpServer : public CustomServer<SlaveType> {
+		public:
+		typedef HttpRequest Request;
+		typedef HttpResponse Response;
+
+		typename CustomServer<SlaveType>::Handler onBeginParseHeader =
+			[](SlaveType *) {};
+		typename CustomServer<SlaveType>::Handler onBeginSlaveRecv =
+			[](SlaveType *) {};
+		typename CustomServer<SlaveType>::Handler onHeaderOverflow =
+			[](SlaveType *slave) {
+				HttpSocket *socket = reinterpret_cast<HttpSocket *>(slave);
+				HttpResponse res("413", "Header overflowed", "1.1");
+				socket->send(&res);
+			};
+		Request::Handler onRequest = [](HttpRequest *) {};
 
 		// Slave buffer size must be large enough to store the entire header block
 		// of a request.
 		CustomHttpServer(size_t maxThreads = 0, size_t slaveBufSz = 16384)
-				: Socket(),
-					threadPool(new ThreadPool(maxThreads)),
-					allocatedThreadPool(true),
-					bufferPool(new BufferPool(slaveBufSz)),
+				: CustomServer<SlaveType>(maxThreads),
+					bufferPool(new Memory::BufferPool(slaveBufSz)),
 					allocatedBufferPool(true) {}
-		CustomHttpServer(ThreadPool *threadPool, BufferPool *bufferPool)
-				: Socket(),
-					threadPool(threadPool),
-					allocatedThreadPool(false),
+		CustomHttpServer(Thread::ThreadPool *threadPool,
+			Memory::BufferPool *bufferPool)
+				: CustomServer<SlaveType>(threadPool),
 					bufferPool(bufferPool),
 					allocatedBufferPool(false) {}
 		~CustomHttpServer() {
-			if (this->allocatedThreadPool) {
-				delete this->threadPool;
-			}
+			CustomServer<SlaveType>::~CustomServer<SlaveType>();
 			if (this->allocatedBufferPool) {
 				delete this->bufferPool;
 			}
 		}
 
-		// Bind, listen, and accept continuously until master is closed.
-		int serve(bool blocking = true,
-			const char *service = "80",
-			int backlog = 1024) {
-			// Bind and listen.
-			int status;
-			status = this->bind(service);
-			if (status != 0) {
-				return status;
-			}
-			status = this->listen(backlog);
-			if (status != 0) {
-				return status;
-			}
-
-			std::function<void(void *)> serveSync = [&](void *param) {
-				// Continuously accept new connections until master is closed.
-				while (true) {
-					Socket::NativeSocket nativeSocket = this->accept();
-					if (nativeSocket == Socket::INVALID_NATIVE_SOCKET) {
-						break;
-					}
-					SlaveType *slave = new SlaveType(
-						Socket(nativeSocket, this->family, this->type, this->protocol),
-						this);
-					this->onNewSlave(slave);
-					this->slaves.insert(slave);
-
-					// For each new connection, spawn a task to handle it.
-					this->threadPool->queueTask(
-						this->slaveTask, reinterpret_cast<void *>(slave));
-				}
-			};
-
-			if (blocking) {
-				serveSync(NULL);
-			} else {
-				this->threadPool->queueTask(serveSync, NULL);
-			}
-			return 0;
-		}
-
-		// Closing the server should close all associated slaves as well.
-		int close() {
-			return Socket::close();
-			for (auto it = this->slaves.begin(); it != this->slaves.end(); it++) {
-				(*it)->close();
-			}
-		}
-
-		private:
-		// Used to spawn slaves.
-		// `allocated*` is set if we allocated it in the constructor.
-		ThreadPool *threadPool;
-		bool allocatedThreadPool;
-		BufferPool *bufferPool;
+		protected:
+		Memory::BufferPool *bufferPool;
 		bool allocatedBufferPool;
-
-		// Keeps track of active slaves.
-		std::set<SlaveType *> slaves;
 
 		// Used in parsing Http.
 		inline static const char *CRLF = "\r\n";
@@ -283,14 +222,14 @@ namespace Rain {
 			this->onBeginSlaveTask(slave);
 
 			size_t bufSz = this->bufferPool->getBufSz();
-			char *buf = this->bufferPool->newBuf();
+			char *buf = this->bufferPool->getBuf();
 
 			// Continuously accept requests and call onRequest when we have
 			// enough information.
 			while (true) {
 				// Construct the request.
 				this->onBeginParseHeader(slave);
-				HttpRequest req(slave);
+				Request req(slave);
 
 				// Parse the entire header.
 				int recvLen;
@@ -405,9 +344,9 @@ namespace Rain {
 
 							// Trim whitespace from header key and value. Make key
 							// lowercase.
-							strTrimWhite(&header.first);
-							strTrimWhite(&header.second);
-							strToLower(&header.first);
+							String::strTrimWhite(&header.first);
+							String::strTrimWhite(&header.second);
+							String::strToLower(&header.first);
 
 							// Add this header to list.
 							req.headers.insert(header);
@@ -433,7 +372,7 @@ namespace Rain {
 				// TODO: Pass onto other handlers.
 			}
 
-			this->bufferPool->deleteBuf(buf);
+			this->bufferPool->freeBuf(buf);
 			this->onCloseSlave(slave);
 			slave->close();
 			this->slaves.erase(slave);
@@ -445,7 +384,7 @@ namespace Rain {
 	// Non-templated reference subclassing implementation.
 	class HttpServerSlave : public CustomHttpServerSlave<HttpServerSlave> {
 		public:
-		HttpServerSlave(Socket socket, CustomHttpServer<HttpServerSlave> *server)
+		HttpServerSlave(Socket socket, CustomServer<HttpServerSlave> *server)
 				: CustomHttpServerSlave<HttpServerSlave>(socket, server) {}
 	};
 	typedef CustomHttpServer<HttpServerSlave> HttpServer;
