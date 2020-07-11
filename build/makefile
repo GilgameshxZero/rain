@@ -1,4 +1,3 @@
-# POSIX sh and bash compatible.
 SHELL := /bin/bash
 
 # Directories relative paths.
@@ -55,7 +54,7 @@ $(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDE)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAG)
 
-# Delete compile-time files.
+# Delete intermediate files.
 .PHONY: clean
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
