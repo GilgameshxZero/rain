@@ -1,3 +1,4 @@
+# POSIX sh and bash compatible.
 SHELL := /bin/bash
 
 # Directories relative paths.
@@ -9,15 +10,15 @@ BIN_DIR := $(ROOT_DIR)bin/
 TEST_DIR := $(ROOT_DIR)test/
 
 # Groups of files and filenames.
-RAIN_INCLUDE := $(wildcard $(INCLUDE_DIR)*)
-RAIN_NAME := $(basename $(notdir $(wildcard $(SRC_DIR)*.cpp)))
-RAIN_OBJ := $(addsuffix .o, $(addprefix $(OBJ_DIR)rain/, $(RAIN_NAME)))
+VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain/build.hpp
+
+# All of rain's include fules, except for the build file.
+RAIN_INCLUDE := $(filter-out $(VERSION_BUILD_INCLUDE), \
+	$(shell find $(INCLUDE_DIR) -name *.hpp))
 
 TEST_NAME := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
 TEST_OBJ := $(addsuffix .o, $(addprefix $(OBJ_DIR)test/, $(TEST_NAME)))
 TEST_BIN := $(addprefix $(BIN_DIR), $(TEST_NAME))
-
-VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain/build.hpp
 
 # Flags for build. Release by default.
 CXX := g++
@@ -33,22 +34,23 @@ else
 endif
 
 # Keep intermediate files to speed up compilation times.
-.SECONDARY: $(RAIN_OBJ) $(TEST_OBJ) $(TEST_BIN)
+.SECONDARY: $(TEST_OBJ) $(TEST_BIN)
 
 # Mark .PHONY for rules to avoid compiling files named the same as rules.
 
 # Compile and run all tests.
 .PHONY: all
-all: increment-build $(TEST_NAME)
+all: $(VERSION_BUILD_INCLUDE) $(TEST_NAME)
 
 # Rules for single tests just redirect to test binaries.
-%: increment-build $(BIN_DIR)%
-	./$(BIN_DIR)$@
+%: $(VERSION_BUILD_INCLUDE) $(BIN_DIR)%
+	@echo $@
+	@./$(BIN_DIR)$@
 
 # Rules for test binaries and objects.
-$(BIN_DIR)%: $(OBJ_DIR)test/%.o $(RAIN_OBJ) $(RAIN_INCLUDE)
+$(BIN_DIR)%: $(OBJ_DIR)test/%.o
 	@mkdir -p $(@D)
-	$(CXX) -o $@ $< $(RAIN_OBJ) $(CXXFLAG)
+	$(CXX) -o $@ $< $(CXXFLAG)
 $(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDE)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAG)
@@ -58,14 +60,8 @@ $(OBJ_DIR)test/%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDE)
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-# Rules for rain library objects.
-$(OBJ_DIR)rain/%.o: $(SRC_DIR)%.cpp $(RAIN_INCLUDE)
-	@mkdir -p $(@D)
-	$(CXX) -c -o $@ $< $(CXXFLAG)
-
 # Increment build number.
-.PHONY: increment-build
-increment-build:
+$(VERSION_BUILD_INCLUDE): $(RAIN_INCLUDE)
 	@read line < $(VERSION_BUILD_INCLUDE); \
 	TOKENS=($$line); \
 	RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \

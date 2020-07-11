@@ -1,7 +1,8 @@
+// Include Gdiplus while linking the correct libraries and resolving min/max.
 #pragma once
 
-#include "../platform/.hpp"
-#include "./windows.hpp"
+#include "platform.hpp"
+#include "windows.hpp"
 
 #ifdef RAIN_WINDOWS
 #pragma comment(lib, "Gdiplus.lib")

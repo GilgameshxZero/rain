@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../platform/.hpp"
+#include "../platform.hpp"
 
 namespace Rain::Algorithm {
 	// Compute partial match table (used in KMP) for a string. partialMatch must

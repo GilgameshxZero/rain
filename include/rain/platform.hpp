@@ -1,10 +1,8 @@
-/*
-Utilities for cross-platform development.
-*/
-
+// Utilities for platform-detecting, and declarations for low-level platform
+// specific functions.
 #pragma once
 
-// Standardize preprocessors.
+// Platform preprocessors.
 #ifdef __CYGWIN__
 #define RAIN_CYGWIN
 #endif
@@ -41,61 +39,7 @@ Utilities for cross-platform development.
 #include <cstdlib>
 #include <cstring>
 
-namespace Rain {
-	typedef size_t rsize_t;
-	typedef int errno_t;
-}
-
 namespace Rain::Platform {
-	inline bool isCygwin() {
-#ifdef RAIN_CYGWIN
-		return true;
-#endif
-		return false;
-	}
-
-	inline bool isWindows() {
-#ifdef RAIN_WINDOWS
-		return true;
-#endif
-		return false;
-	}
-
-	inline bool isUnix() {
-#ifdef RAIN_UNIX
-		return true;
-#endif
-		return false;
-	}
-
-	inline bool isMac() {
-#ifdef RAIN_MAC
-		return true;
-#endif
-		return false;
-	}
-
-	inline bool isLinux() {
-#ifdef RAIN_LINUX
-		return true;
-#endif
-		return false;
-	}
-
-	inline bool isFreeBSD() {
-#ifdef RAIN_FREEBSD
-		return true;
-#endif
-		return false;
-	}
-
-	inline bool isAndroid() {
-#ifdef RAIN_ANDROID
-		return true;
-#endif
-		return false;
-	}
-
 	inline const char *getPlatformString() {
 #ifdef RAIN_CYGWIN
 		return "Cygwin";
