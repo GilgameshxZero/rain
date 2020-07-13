@@ -21,6 +21,9 @@
 	AlignOperands: false,
 	ContinuationIndentWidth: 2,
 
+	AllowShortIfStatementsOnASingleLine: true,
+	AllowShortLoopsOnASingleLine: true,
+
 	BinPackArguments: false,
 	BinPackParameters: false,
 	AlignTrailingComments: false,

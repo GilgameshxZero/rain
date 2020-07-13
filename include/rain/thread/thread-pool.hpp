@@ -1,10 +1,14 @@
 #pragma once
 
-#include "../platform/.hpp"
-#include "./condition-variable.hpp"
+#include "../platform.hpp"
+#include "../time.hpp"
+#include "../types.hpp"
 
+#include <atomic>
+#include <condition_variable>
 #include <functional>
 #include <list>
+#include <mutex>
 #include <queue>
 #include <thread>
 
@@ -16,128 +20,132 @@ namespace Rain::Thread {
 			// Using std::function lets us capture with lambdas.
 			typedef std::function<void(void *)> Executor;
 
-			Task(Executor executor, void *param) : executor(executor), param(param) {}
+			Task(Executor executor = NULL, void *param = NULL)
+					: executor(executor), param(param) {}
 
 			Executor executor;
 			void *param;
 		};
 
-		ThreadPool(size_t maxThreads = 0) : maxThreads(maxThreads) {}
-		~ThreadPool() {
+		ThreadPool(std::size_t maxThreads = 0) : maxThreads(maxThreads) {}
+		~ThreadPool() noexcept {
 			// Break any waiting threads.
 			this->destructing = true;
-			this->newTaskCV.notifyAll();
+			this->newTaskEv.notify_all();
 
 			// Now, we're only waiting on busy threads running tasks.
+			// Any tasks not completed at this point won't be completed.
 			for (auto it = this->threads.begin(); it != this->threads.end(); it++) {
 				it->join();
 			}
 		}
 
-		void queueTask(Task::Executor executor, void *param) {
+		void queueTask(const Task::Executor &executor, void *param) noexcept {
+			// Any time a new task is added, notify one waiting thread.
 			this->tasksMtx.lock();
 			this->tasks.push(Task(executor, param));
+			this->newTaskEv.notify_one();
 			this->tasksMtx.unlock();
 
-			if (this->cFreeThreads == 0) {
-				if (this->maxThreads == 0 || this->threads.size() < this->maxThreads) {
+			// Do we need to make a new thread?
+			std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
+			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
+			if (!this->tasks.empty() &&
+				(this->maxThreads == 0 || this->threads.size() < this->maxThreads)) {
+				try {
+					// May cause exception if system resources are not available.
 					this->threads.push_back(std::thread(ThreadPool::threadFnc, this));
+					this->cFreeThreads++;
+				} catch (...) {
+					// Pass, just don't create the thread.
 				}
 			}
-
-			// Any time a new task is added, notify all waiting threads. The thread
-			// that takes the task will reset the condition variable.
-			this->newTaskCV.notifyOne();
 		}
 
 		// Functions that each thread runs to wait on next task.
-		static void threadFnc(ThreadPool *threadPool) {
+		static void threadFnc(ThreadPool *threadPool) noexcept {
 			while (true) {
-				// When we exit out of the inner while loop, we are guaranteed some task
-				// on the queue.
-				threadPool->tasksMtx.lock();
-				while (threadPool->tasks.empty()) {
-					// About to enter into wait.
-					threadPool->cFreeThreadsMtx.lock();
+				// Wait until we have a task or need to shut down.
+				Task task;
+				{
+					std::unique_lock<std::mutex> lck(threadPool->tasksMtx);
+					threadPool->newTaskEv.wait(lck, [threadPool]() {
+						return !threadPool->tasks.empty() || threadPool->destructing;
+					});
 
-					// No tasks in queue. If all other threads are waiting, then we are
-					// done with all our tasks.
-					if (++threadPool->cFreeThreads == threadPool->threads.size()) {
-						// Fire an event for anyone waiting on it.
-						threadPool->noTasksCV.notifyAll();
-					}
-
-					threadPool->cFreeThreadsMtx.unlock();
-					threadPool->tasksMtx.unlock();
-
-					// Enter into waiting status.
-					std::unique_lock<std::mutex> lck(threadPool->newTaskCV.getMtx());
-					threadPool->newTaskCV.wait(lck);
-
+					// We own the mutex now.
+					// Exit if we need to.
 					if (threadPool->destructing) {
-						return;
+						break;
 					}
 
-					// Quit wait without shutting down.
-					threadPool->tasksMtx.lock();
-					threadPool->cFreeThreadsMtx.lock();
-					threadPool->cFreeThreads--;
-					threadPool->cFreeThreadsMtx.unlock();
+					// Otherwise, take on a task.
+					task = threadPool->tasks.front();
+					threadPool->tasks.pop();
 				}
-
-				// We know there is a task in the queue here, and it won't change while
-				// we have the tasksMtx locked.
-				Task task = threadPool->tasks.front();
-				threadPool->tasks.pop();
-				threadPool->tasksMtx.unlock();
+				threadPool->cFreeThreads--;
 				task.executor(task.param);
+				threadPool->cFreeThreads++;
+
+				// Once we finish a task, see if we have anything left, and
+				// conditionally trigger an event.
+				std::lock_guard<std::mutex> tasksLckGuard(threadPool->tasksMtx);
+				std::lock_guard<std::mutex> threadsLckGuard(threadPool->threadsMtx);
+				if (threadPool->tasks.empty() &&
+					threadPool->cFreeThreads == threadPool->threads.size()) {
+					threadPool->noTaskEv.notify_all();
+				}
 			}
 		}
 
 		// Block until all tasks completed and none are processing.
 		void blockForTasks() {
 			// If no tasks, return immediately.
-			this->tasksMtx.lock();
-			this->cFreeThreadsMtx.lock();
-			if (this->tasks.size() == 0 &&
-				this->cFreeThreads == this->threads.size()) {
-				this->cFreeThreadsMtx.unlock();
-				this->tasksMtx.unlock();
-				return;
+			{
+				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
+				std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
+				if (this->tasks.size() == 0 &&
+					this->cFreeThreads == this->threads.size()) {
+					return;
+				}
 			}
 
-			// Otherwise, there are some tasks, and the CV will trigger sometime, but
-			// not until both mutexes are unlocked.
-			this->noTasksCV.reset();
-			this->cFreeThreadsMtx.unlock();
-			this->tasksMtx.unlock();
-			std::unique_lock<std::mutex> lck(this->noTasksCV.getMtx());
-			this->noTasksCV.wait(lck);
+			// Otherwise, wait for tasks to be changed.
+			std::unique_lock<std::mutex> lck(this->tasksMtx);
+			this->noTaskEv.wait(lck, [this]() {
+				std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
+				return this->tasks.empty() &&
+					this->cFreeThreads == this->threads.size();
+			});
 		}
 
 		// Getters.
-		size_t getCTasks() const { return this->tasks.size(); }
-		size_t getCBusyThreads() const {
+		std::size_t getCTasks() { return this->tasks.size(); }
+		std::size_t getCBusyThreads() {
+			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
 			return this->threads.size() - this->cFreeThreads;
 		}
-		size_t getCFreeThreads() const { return this->cFreeThreads; }
-		size_t getCThreads() const { return this->threads.size(); }
+		std::size_t getCFreeThreads() { return this->cFreeThreads; }
+		std::size_t getCThreads() {
+			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
+			return this->threads.size();
+		}
 
 		private:
 		// Threads quit if the newTaskCV is triggered and this is true.
-		bool destructing = false;
-
-		// Track the number of free threads.
-		size_t cFreeThreads = 0;
-		std::mutex cFreeThreadsMtx;
+		std::atomic_bool destructing = false;
 
 		// Track threads.
-		size_t maxThreads;
+		const std::size_t maxThreads;
+		std::atomic_size_t cFreeThreads =
+			0;	// A thread is free if it isn't in its executor.
+		std::mutex threadsMtx;	// Locks threads.
 		std::list<std::thread> threads;
 
 		// Track tasks.
 		std::mutex tasksMtx;
 		std::queue<Task> tasks;
-		ConditionVariable newTaskCV, noTasksCV;
+		std::condition_variable newTaskEv,	// Breaks waiting in threads.
+			noTaskEv;	 // Breaks blocking on task completion.
 	};
 }

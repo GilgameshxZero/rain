@@ -1,12 +1,13 @@
-#include "../platform/.hpp"
+#include "platform.hpp"
+
+#include <cstring>
 
 namespace Rain {
 	// An implementation of GNU memmem, strstr with explicit lengths.
 	void *memmem(const void *haystack,
-		size_t haystackLen,
+		std::size_t haystackLen,
 		const void *const needle,
-		const size_t needleLen) {
-#ifdef RAIN_WINDOWS
+		const std::size_t needleLen) {
 		for (const char *h = reinterpret_cast<const char *>(haystack);
 				 haystackLen >= needleLen;
 				 ++h, --haystackLen) {
@@ -15,8 +16,5 @@ namespace Rain {
 			}
 		}
 		return NULL;
-#else
-		return ::memmem(haystack, haystackLen, needle, needleLen);
-#endif
 	}
 }

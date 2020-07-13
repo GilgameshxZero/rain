@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.11
+
+Refactor organization in `Algorithm`, `String`, and `Thread`. Remove erroneous `ConditionVariable` implementation. Improve `ThreadPool` implementation to handle common exception upon creating thread in a resource-limited environment. Use `std::condition_variable` correctly in `ThreadPool`. Improve `String` namespace with `anyToAny` and efficient whitespace methods.
+
 ## 6.0.10
 
 Remove erroneous comments from makefile.

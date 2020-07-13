@@ -19,13 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\thread-pooler.cpp" />
+    <ClCompile Include="..\..\test\task-thread-pool.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{b5b2137b-3f91-4ee3-8bcb-0e30bb3b34e8}</ProjectGuid>
-    <RootNamespace>thread_pooler</RootNamespace>
+    <ProjectGuid>{55c1a684-bc53-4952-83a1-e500c720850d}</ProjectGuid>
+    <RootNamespace>task_thread_pool</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
