@@ -2,10 +2,10 @@
 
 int main() {
 	std::string s = "PARTICIPATE IN PARACHUTE ";
-	std::vector<long long> partialMatch(s.length() + 1);
+	std::vector<size_t> partialMatch(s.length() + 1);
 
 	std::cout << "String: " << s << std::endl;
-	Rain::Algorithm::partialMatchTable(
+	Rain::Algorithm::computeKmpPartialMatch(
 		s.c_str(), s.length(), partialMatch.data());
 	std::cout << "Partial match table: ";
 	for (size_t a = 0; a < partialMatch.size(); a++) {
@@ -14,7 +14,7 @@ int main() {
 
 	s = "\r\n";
 	partialMatch.resize(s.length() + 1);
-	Rain::Algorithm::partialMatchTable(
+	Rain::Algorithm::computeKmpPartialMatch(
 		s.c_str(), s.length(), partialMatch.data());
 	std::cout << std::endl << "Partial match table for \\r\\n: ";
 	for (size_t a = 0; a < partialMatch.size(); a++) {
@@ -23,7 +23,7 @@ int main() {
 
 	s = "\r\n\r\n";
 	partialMatch.resize(s.length() + 1);
-	Rain::Algorithm::partialMatchTable(
+	Rain::Algorithm::computeKmpPartialMatch(
 		s.c_str(), s.length(), partialMatch.data());
 	std::cout << std::endl << "Partial match table for \\r\\n\\r\\n: ";
 	for (size_t a = 0; a < partialMatch.size(); a++) {

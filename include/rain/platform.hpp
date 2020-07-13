@@ -31,26 +31,18 @@
 #define RAIN_ANDROID
 #endif
 
-// Include some GNU extensions.
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include <cstdlib>
-#include <cstring>
-
 namespace Rain::Platform {
-	inline const char *getPlatformString() {
+	inline const char *getPlatformCStr() {
 #ifdef RAIN_CYGWIN
 		return "Cygwin";
 #elif defined(RAIN_WINDOWS)
 		return "Windows";
-#elif defined(RAIN_UNIX)
-		return "Unix";
 #elif defined(RAIN_MAC)
 		return "Mac";
 #elif defined(RAIN_LINUX)
 		return "Linux";
+#elif defined(RAIN_UNIX)
+		return "Unix";
 #elif defined(RAIN_FREEBSD)
 		return "FreeBSD";
 #elif defined(RAIN_ANDROID)
