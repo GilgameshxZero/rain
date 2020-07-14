@@ -21,6 +21,14 @@ namespace Rain {
 		return 0;
 #endif
 	}
+
+	// An implementation of GNU strncpy_s.
+	errno_t strncpy_s(char *dest,
+		std::size_t destsz,
+		const char *src,
+		std::size_t count) {
+		return strcpy_s(dest, std::min(destsz, count + 1), src);
+	}
 }
 
 namespace Rain::String {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../platform.hpp"
-#include "../time.hpp"
-#include "../types.hpp"
+#include "platform.hpp"
+#include "time.hpp"
+#include "types.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -10,9 +10,10 @@
 #include <list>
 #include <mutex>
 #include <queue>
+#include <system_error>
 #include <thread>
 
-namespace Rain::Thread {
+namespace Rain {
 	// Shares threads among function tasks to minimize impact of thread
 	class ThreadPool {
 		public:
@@ -27,7 +28,8 @@ namespace Rain::Thread {
 			void *param;
 		};
 
-		ThreadPool(std::size_t maxThreads = 0) : maxThreads(maxThreads) {}
+		// 0 is unlimited.
+		ThreadPool(const std::size_t &maxThreads = 0) : maxThreads(maxThreads) {}
 		~ThreadPool() noexcept {
 			// Break any waiting threads.
 			this->destructing = true;
@@ -40,25 +42,23 @@ namespace Rain::Thread {
 			}
 		}
 
-		void queueTask(const Task::Executor &executor, void *param) noexcept {
+		// Returns nonzero if some error (exception while creating thread).
+		void queueTask(const Task::Executor &executor, void *param) {
 			// Any time a new task is added, notify one waiting thread.
-			this->tasksMtx.lock();
-			this->tasks.push(Task(executor, param));
-			this->newTaskEv.notify_one();
-			this->tasksMtx.unlock();
+			{
+				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
+				this->tasks.push(Task(executor, param));
+				this->newTaskEv.notify_one();
+			}
 
 			// Do we need to make a new thread?
 			std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
 			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
 			if (!this->tasks.empty() &&
 				(this->maxThreads == 0 || this->threads.size() < this->maxThreads)) {
-				try {
-					// May cause exception if system resources are not available.
-					this->threads.push_back(std::thread(ThreadPool::threadFnc, this));
-					this->cFreeThreads++;
-				} catch (...) {
-					// Pass, just don't create the thread.
-				}
+				// May cause exception if system resources are not available.
+				this->threads.push_back(std::thread(ThreadPool::threadFnc, this));
+				this->cFreeThreads++;
 			}
 		}
 
@@ -99,7 +99,7 @@ namespace Rain::Thread {
 		}
 
 		// Block until all tasks completed and none are processing.
-		void blockForTasks() {
+		void blockForTasks() noexcept {
 			// If no tasks, return immediately.
 			{
 				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
@@ -120,15 +120,24 @@ namespace Rain::Thread {
 		}
 
 		// Getters.
-		std::size_t getCTasks() { return this->tasks.size(); }
-		std::size_t getCBusyThreads() {
+		std::size_t getCTasks() noexcept {
+			std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
+			return this->tasks.size();
+		}
+		std::size_t getCBusyThreads() noexcept {
 			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
 			return this->threads.size() - this->cFreeThreads;
 		}
-		std::size_t getCFreeThreads() { return this->cFreeThreads; }
-		std::size_t getCThreads() {
+		std::size_t getCFreeThreads() const noexcept { return this->cFreeThreads; }
+		std::size_t getCThreads() noexcept {
 			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
 			return this->threads.size();
+		}
+		std::size_t getMaxThreads() const noexcept { return this->maxThreads; }
+
+		// Setters.
+		void setMaxThreads(const size_t &newMaxThreads) noexcept {
+			this->maxThreads = newMaxThreads;
 		}
 
 		private:
@@ -136,7 +145,7 @@ namespace Rain::Thread {
 		std::atomic_bool destructing = false;
 
 		// Track threads.
-		const std::size_t maxThreads;
+		std::atomic_size_t maxThreads = 0;
 		std::atomic_size_t cFreeThreads =
 			0;	// A thread is free if it isn't in its executor.
 		std::mutex threadsMtx;	// Locks threads.
