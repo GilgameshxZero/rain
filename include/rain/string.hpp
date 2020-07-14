@@ -3,13 +3,14 @@
 
 #pragma once
 
+#include "algorithm.hpp"
 #include "platform.hpp"
 #include "types.hpp"
 
-#include <algorithm>
 #include <cstring>
 #include <locale>
 #include <sstream>
+#include <string>
 
 namespace Rain {
 	// An implementation of GNU strcpy_s.
@@ -27,7 +28,7 @@ namespace Rain {
 		std::size_t destsz,
 		const char *src,
 		std::size_t count) {
-		return strcpy_s(dest, std::min(destsz, count + 1), src);
+		return strcpy_s(dest, min(destsz, count + 1), src);
 	}
 }
 

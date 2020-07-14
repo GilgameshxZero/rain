@@ -20,7 +20,7 @@ namespace Rain::String {
 			Layer(void *param, const Parser &parser) : param(param), parser(parser) {}
 
 			void *param;
-			const Parser parser;
+			const Parser &parser;
 		};
 
 		// Attempt to parse a key with previously added parsers.

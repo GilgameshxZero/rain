@@ -1,11 +1,10 @@
-/*
-A platform-agnostic socket implementation.
-*/
+// A platform-agnostic OOP socket implementation.
 
 #pragma once
 
-#include "../platform/.hpp"
-#include "./networking.hpp"
+#include "../platform.hpp"
+#include "native-socket.hpp"
+#include "node-service-host.hpp"
 
 #include <functional>
 
@@ -17,7 +16,7 @@ namespace Rain::Networking {
 
 		// Sockets are created in an invalid state.
 		Socket(bool create = false,
-			NativeSocket socket = INVALID_NATIVE_SOCKET,
+			NativeSocket socket = NATIVE_SOCKET_INVALID,
 			int family = AF_INET,
 			int type = SOCK_STREAM,
 			int protocol = IPPROTO_TCP)
@@ -28,34 +27,26 @@ namespace Rain::Networking {
 				this->create();
 			}
 		}
-		~Socket() {}
 
 		// Stuff related to WSA in Windows.
 #ifdef RAIN_WINDOWS
 		inline static bool wsaInitialized = false;
 		inline static WSADATA wsaData;
-
-		static int wsaStartup() {
-			if (!Socket::wsaInitialized) {
-				Socket::wsaInitialized = true;
-				return WSAStartup(MAKEWORD(2, 2), &Socket::wsaData);
-			}
-			return 0;
-		}
-		static int wsaCleanup() { return WSACleanup(); }
 #endif
 
 		// Shorthand for calling wsaCleanup in Windows and doing nothing otherwise.
 		static int startup() {
 #ifdef RAIN_WINDOWS
-			return Socket::wsaStartup();
-#else
-			return 0;
+			if (!Socket::wsaInitialized) {
+				Socket::wsaInitialized = true;
+				return WSAStartup(MAKEWORD(2, 2), &Socket::wsaData);
+			}
 #endif
+			return 0;
 		}
 		static int cleanup() {
 #ifdef RAIN_WINDOWS
-			return Socket::wsaCleanup();
+			return WSACleanup();
 #else
 			return 0;
 #endif
@@ -66,27 +57,28 @@ namespace Rain::Networking {
 		}
 
 		// Platform-agnostic socket operations adapted to the Socket interface.
-		int connect(Host host) {
+		int connect(const Host &host) const noexcept {
 			return this->connectOrBind(
-				host.node, host.service, [](struct addrinfo *) {}, ::connect);
+				host, [](struct addrinfo *) {}, ::connect);
 		}
 
-		int bind(Host host) {
+		int bind(const Host &host) const noexcept {
 			return this->connectOrBind(
-				host.node,
-				host.service,
+				host,
 				[](struct addrinfo *hints) { hints->ai_flags = AI_PASSIVE; },
 				::bind);
 		}
 
-		int listen(int backlog = 1024) { return ::listen(this->socket, backlog); }
+		int listen(int backlog = 1024) const noexcept {
+			return ::listen(this->socket, backlog);
+		}
 
 		NativeSocket accept(struct sockaddr *addr = NULL,
-			AddressLength *addrLen = NULL) {
+			socklen_t *addrLen = NULL) const noexcept {
 			return ::accept(this->socket, addr, addrLen);
 		}
 
-		int send(const void *msg, size_t len, int flags = 0) {
+		int send(const void *msg, std::size_t len, int flags = 0) const noexcept {
 			return ::send(this->socket,
 #ifdef RAIN_WINDOWS
 				reinterpret_cast<const char *>(msg),
@@ -97,15 +89,15 @@ namespace Rain::Networking {
 #endif
 				flags);
 		}
-		int send(const char *msg, int flags = 0) {
+		int send(const char *msg, int flags = 0) const noexcept {
 			return this->send(
 				reinterpret_cast<const void *>(msg), strlen(msg), flags);
 		}
-		int send(const std::string *s, int flags = 0) {
-			return this->send(s->c_str(), flags);
+		int send(const std::string &s, int flags = 0) const noexcept {
+			return this->send(s.c_str(), flags);
 		}
 
-		int recv(void *buf, size_t len, int flags = 0) {
+		int recv(void *buf, std::size_t len, int flags = 0) const noexcept {
 			return ::recv(this->socket,
 #ifdef RAIN_WINDOWS
 				reinterpret_cast<char *>(buf),
@@ -117,28 +109,26 @@ namespace Rain::Networking {
 				flags);
 		}
 
-		int close() {
-			int status;
+		int close() const noexcept {
 #ifdef RAIN_WINDOWS
-			status = shutdown(this->socket, SD_BOTH);
-			if (status == 0) {
-				status = closesocket(this->socket);
-			}
+			static const std::function<int(NativeSocket)> closeFnc = closesocket;
+			static const int how = SD_BOTH;
 #else
-			status = shutdown(this->socket, SHUT_RDWR);
-			if (status == 0) {
-				status = ::close(this->socket);
-			}
+			static const std::function<int(NativeSocket)> closeFnc = ::close;
+			static const int how = SHUT_RDWR;
 #endif
+			int status = shutdown(this->socket, how);
+			if (status == 0) {
+				status = closeFnc(this->socket);
+			}
 			return status;
 		}
 
 		private:
 		// Shared code for bind and connect.
-		int connectOrBind(const char *node,
-			const char *service,
+		int connectOrBind(const Host &host,
 			std::function<void(struct addrinfo *)> setHints,
-			std::function<int(NativeSocket, sockaddr *, int)> action) {
+			std::function<int(NativeSocket, sockaddr *, int)> action) const noexcept {
 			struct addrinfo hints, *result, *curAddr;
 
 			memset(&hints, 0, sizeof(struct addrinfo));
@@ -146,11 +136,13 @@ namespace Rain::Networking {
 			hints.ai_socktype = this->type;
 			hints.ai_protocol = this->protocol;
 			setHints(&hints);
-			int status = getaddrinfo(node, service, &hints, &result);
+			int status = getaddrinfo(
+				host.node.getCStr(), host.service.getCStr(), &hints, &result);
 			if (status != 0) {
 				return status;
 			}
 
+			// Try all the addresses we found.
 			curAddr = result;
 			while (curAddr != NULL) {
 				status = action(this->socket,
