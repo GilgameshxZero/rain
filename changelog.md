@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.13
+
+Refactor `Networking` namespace except for `Http`. Create standalone inheritable `CustomServer` and `CustomServerSlave` with non-templated `Server` and `ServerSlave`.
+
+Todo: `Http` namespace library.
+
 ## 6.0.12
 
 Add `std::error_code` handling to `ThreadPool::queueTask`, which speeds up code significantly if surpassing system thread limits. Move `ThreadPool` to `Rain` namespace.

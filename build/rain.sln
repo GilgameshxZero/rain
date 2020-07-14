@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "task-thread-pool", "task-th
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parse-cmd", "parse-cmd\parse-cmd.vcxproj", "{7D0745AD-A9DC-46FE-86A0-A0B6306353BC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socket-server", "socket-server\socket-server.vcxproj", "{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -71,6 +73,14 @@ Global
 		{7D0745AD-A9DC-46FE-86A0-A0B6306353BC}.Release|x64.Build.0 = Release|x64
 		{7D0745AD-A9DC-46FE-86A0-A0B6306353BC}.Release|x86.ActiveCfg = Release|Win32
 		{7D0745AD-A9DC-46FE-86A0-A0B6306353BC}.Release|x86.Build.0 = Release|Win32
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Debug|x64.ActiveCfg = Debug|x64
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Debug|x64.Build.0 = Debug|x64
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Debug|x86.ActiveCfg = Debug|Win32
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Debug|x86.Build.0 = Debug|Win32
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Release|x64.ActiveCfg = Release|x64
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Release|x64.Build.0 = Release|x64
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Release|x86.ActiveCfg = Release|Win32
+		{5CEE6F49-0EEF-4A2F-A900-2DB57F0FBA2E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

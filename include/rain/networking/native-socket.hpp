@@ -1,10 +1,10 @@
+// Provides platform-independent NativeSocket and NATIVE_SOCKET_INVALID.
 #pragma once
 
-#include "../platform/.hpp"
-#include "../string/.hpp"
+#include "../platform.hpp"
 
 #ifdef RAIN_WINDOWS
-#include "../windows/.hpp"
+#include "../windows.hpp"
 
 #ifndef _WIN32_WINNT
 // Windows XP.
@@ -28,26 +28,11 @@
 #endif
 
 namespace Rain::Networking {
-	// Internal platform-specific implementation.
 #ifdef RAIN_WINDOWS
 	typedef SOCKET NativeSocket;
-	typedef int AddressLength;
-
-	static const SOCKET INVALID_NATIVE_SOCKET = SOCKET_ERROR;
+	static const SOCKET NATIVE_SOCKET_INVALID = SOCKET_ERROR;
 #else
 	typedef int NativeSocket;
-	typedef socklen_t AddressLength;
-
-	static const int INVALID_NATIVE_SOCKET = -1;
+	static const int NATIVE_SOCKET_INVALID = -1;
 #endif
-
-	class Host {
-		public:
-		const char *node, *service;
-
-		Host(const char *node, const char *service)
-				: node(node), service(service) {}
-		Host(const char *node = NULL, size_t service = 80)
-				: Host(node, String::tToStr(service).c_str()) {}
-	};
 }
