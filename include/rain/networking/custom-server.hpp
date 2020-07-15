@@ -101,16 +101,12 @@ namespace Rain::Networking {
 		int close() const noexcept {
 			int status;
 			status = Socket::close();
-			if (status != 0) {
-				return status;
-			}
 			for (auto it = this->slaves.begin(); it != this->slaves.end(); it++) {
-				status = (*it)->close();
-				if (status != 0) {
-					return status;
+				if ((*it)->close()) {
+					status = -1;
 				}
 			}
-			return 0;
+			return status;
 		}
 
 		protected:

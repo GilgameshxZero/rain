@@ -3,8 +3,6 @@
 #include "../socket.hpp"
 #include "request-response.hpp"
 
-#include <iostream>
-
 namespace Rain::Networking::Http {
 	// Base class for HttpClient and HttpServerSlave.
 	class Socket : public Networking::Socket {

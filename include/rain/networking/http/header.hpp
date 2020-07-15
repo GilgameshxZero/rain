@@ -12,7 +12,7 @@ namespace Rain::Networking::Http {
 #ifdef RAIN_WINDOWS
 			return _stricmp(left.c_str(), right.c_str()) < 0;
 #else
-			return strcasecmp(left.c_str(), right.c_str());
+			return strcasecmp(left.c_str(), right.c_str()) < 0;
 #endif
 		}
 	};

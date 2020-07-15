@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.16
+
+Fix `std::map` problem by fixing the lowercase comparator. Begin work on revamping `Socket` to crash less often and throw errors correctly.
+
 ## 6.0.15
 
 Abstract the `Body` and `Header` interface in `Http::Server`.
