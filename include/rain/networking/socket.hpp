@@ -8,6 +8,8 @@
 
 #include <functional>
 
+#include <iostream>
+
 namespace Rain::Networking {
 	class Socket {
 		public:
@@ -78,8 +80,9 @@ namespace Rain::Networking {
 			return ::accept(this->socket, addr, addrLen);
 		}
 
-		int send(const void *msg, std::size_t len, int flags = 0) const noexcept {
-			return ::send(this->socket,
+		int send(const void *msg, std::size_t len, int flags = MSG_NOSIGNAL) const
+			noexcept {
+			int status = ::send(this->socket,
 #ifdef RAIN_WINDOWS
 				reinterpret_cast<const char *>(msg),
 				static_cast<int>(len),
@@ -88,12 +91,14 @@ namespace Rain::Networking {
 				len,
 #endif
 				flags);
+			std::cout << status << std::endl;
+			return status;
 		}
-		int send(const char *msg, int flags = 0) const noexcept {
+		int send(const char *msg, int flags = MSG_NOSIGNAL) const noexcept {
 			return this->send(
 				reinterpret_cast<const void *>(msg), strlen(msg), flags);
 		}
-		int send(const std::string &s, int flags = 0) const noexcept {
+		int send(const std::string &s, int flags = MSG_NOSIGNAL) const noexcept {
 			return this->send(s.c_str(), flags);
 		}
 
@@ -109,19 +114,26 @@ namespace Rain::Networking {
 				flags);
 		}
 
-		int close() const noexcept {
+		// Shutdown should be called on any connected sockets (not listening
+		// sockets). Returns nonzero on error.
+		int shutdown() const noexcept {
 #ifdef RAIN_WINDOWS
-			static const std::function<int(NativeSocket)> closeFnc = closesocket;
 			static const int how = SD_BOTH;
 #else
-			static const std::function<int(NativeSocket)> closeFnc = ::close;
 			static const int how = SHUT_RDWR;
 #endif
-			int status = shutdown(this->socket, how);
-			if (status == 0) {
-				status = closeFnc(this->socket);
-			}
-			return status;
+			return ::shutdown(this->socket, how);
+		}
+
+		// Tries to shutdown and then closes. Returns nonzero on error. If shutdown
+		// fails, will just try to close.
+		int close() const noexcept {
+			this->shutdown();
+#ifdef RAIN_WINDOWS
+			return closesocket(this->socket);
+#else
+			return ::close(this->socket);
+#endif
 		}
 
 		private:
