@@ -8,25 +8,16 @@
 
 namespace Rain::Networking {
 	// Reference implementation.
-	template <template <typename> class ServerType, typename SlaveType>
+	template <typename ServerType, typename SlaveType>
 	class CustomServerSlave : protected Socket {
 		public:
-		ServerType<SlaveType> *server;
+		// For use in accessing subclass type from superclass.
+		typedef ServerType Server;
 
-		CustomServerSlave(const Socket &socket, ServerType<SlaveType> *server)
+		Server *server;
+
+		CustomServerSlave(const Socket &socket, Server *server)
 				: Socket(socket), server(server) {}
-
-		// Public interfaces for protected Socket functions we want to expose.
-		int send(const void *msg, std::size_t len, int flags = 0) const noexcept {
-			return Socket::send(msg, len, flags);
-		}
-		int send(const char *msg, int flags = 0) const noexcept {
-			return Socket::send(msg, flags);
-		}
-		int send(const std::string &s, int flags = 0) const noexcept {
-			return Socket::send(s, flags);
-		}
-		int close() const noexcept { return Socket::close(); }
 	};
 
 	// Handles listening and accepting of new connections, as well as creating the
@@ -51,15 +42,7 @@ namespace Rain::Networking {
 		// of a request.
 		CustomServer(std::size_t maxThreads = 0)
 				: Socket(true),
-					threadPool(new ThreadPool(maxThreads)),
-					allocatedThreadPool(true) {}
-		CustomServer(ThreadPool *threadPool)
-				: Socket(true), threadPool(threadPool), allocatedThreadPool(false) {}
-		~CustomServer() {
-			if (this->allocatedThreadPool) {
-				delete this->threadPool;
-			}
-		}
+					threadPool(maxThreads) {}
 
 		// Bind, listen, and accept continuously until master is closed.
 		int serve(const Host &host,
@@ -86,20 +69,30 @@ namespace Rain::Networking {
 					SlaveType *slave = new SlaveType(
 						Socket(
 							false, nativeSocket, this->family, this->type, this->protocol),
-						this);
+						reinterpret_cast<typename SlaveType::Server *>(
+							this->getSubclassPtr()));
 					this->onNewSlave(slave);
 					this->slaves.insert(slave);
 
 					// For each new connection, spawn a task to handle it.
-					this->threadPool->queueTask(
-						CustomServer::slaveTask, reinterpret_cast<void *>(slave));
+					this->threadPool.queueTask(
+						[this](void *param) {
+							SlaveType *slave = reinterpret_cast<SlaveType *>(param);
+							this->onBeginSlaveTask(slave);
+							this->onCloseSlave(slave);
+							slave->close();
+							this->slaves.erase(slave);
+							this->onDeleteSlave(slave);
+							delete slave;
+						},
+						reinterpret_cast<void *>(slave));
 				}
 			};
 
 			if (blocking) {
 				serveSync(NULL);
 			} else {
-				this->threadPool->queueTask(serveSync, NULL);
+				this->threadPool.queueTask(serveSync, NULL);
 			}
 			return 0;
 		}
@@ -121,24 +114,13 @@ namespace Rain::Networking {
 		}
 
 		protected:
-		// Used to spawn slaves.
-		// `allocated*` is set if we allocated it in the constructor.
-		ThreadPool *threadPool;
-		bool allocatedThreadPool;
+		ThreadPool threadPool;
 
 		// Keeps track of active slaves.
 		std::set<SlaveType *> slaves;
 
-		private:
-		// Slave task.
-		inline static void slaveTask(void *param) {
-			SlaveType *slave = reinterpret_cast<SlaveType *>(param);
-			slave->server->onBeginSlaveTask(slave);
-			slave->server->onCloseSlave(slave);
-			slave->close();
-			slave->server->slaves.erase(slave);
-			slave->server->onDeleteSlave(slave);
-			delete slave;
-		};
+		// Get the subclass pointer, if there is one.
+		// Is this a hack?
+		std::function<void *()> getSubclassPtr = [this]() { return this; };
 	};
 }

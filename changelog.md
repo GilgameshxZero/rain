@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.14
+
+Working inheritance for `Http::Server`. Nice!
+
+Next: refactor `Http` headers.
+
 ## 6.0.13
 
 Refactor `Networking` namespace except for `Http`. Create standalone inheritable `CustomServer` and `CustomServerSlave` with non-templated `Server` and `ServerSlave`.
