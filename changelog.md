@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.15
+
+Abstract the `Body` and `Header` interface in `Http::Server`.
+
+Todo: There is some bug in iterating through `std::map` when sending a `Response`.
+
 ## 6.0.14
 
 Working inheritance for `Http::Server`. Nice!
