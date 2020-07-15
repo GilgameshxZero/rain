@@ -20,8 +20,8 @@ namespace Rain::Networking::Http {
 				: Http::Socket(socket), CustomServerSlave(socket, server) {}
 
 		// Public interfaces for protected functions we want to expose.
-		int send(const Request &req) { return Http::Socket::send(req); }
-		int send(const Response &res) { return Http::Socket::send(res); }
+		int send(Request *req) { return Http::Socket::send(req); }
+		int send(Response *res) { return Http::Socket::send(res); }
 		int send(const void *msg, std::size_t len, int flags = 0) const noexcept {
 			return CustomServerSlave::send(msg, len, flags);
 		}
@@ -56,7 +56,7 @@ namespace Rain::Networking::Http {
 			Request(Slave *slave)
 					: Server::Payload(slave), Http::Request("", "", "") {}
 
-			int send() { return this->slave->send(*this); }
+			int send() { return this->slave->send(this); }
 		};
 		class Response : public Payload, public Http::Response {
 			public:
@@ -68,7 +68,7 @@ namespace Rain::Networking::Http {
 				const std::string &version = "1.1")
 					: Server::Payload(slave), Http::Response() {}
 
-			int send() { return this->slave->send(*this); }
+			int send() { return this->slave->send(this); }
 		};
 
 		// Default handlers.
@@ -226,19 +226,18 @@ namespace Rain::Networking::Http {
 
 						// Normalize and add to header.
 						*firstColon = '\0';
-						String::toLowerCStr(startOfLine);
-						startOfLine[1 + String::findFirstNonWhitespaceCStrN(
-													firstColon - 1, firstColon - startOfLine, -1) -
+						startOfLine[1 +
+							String::findFirstNonWhitespaceCStrN(
+								firstColon - 1, firstColon - startOfLine, -1) -
 							startOfLine] = '\0';
 						firstColon[1 +
 							String::findFirstNonWhitespaceCStrN(
 								endOfLine - 1, endOfLine - firstColon - 1, -1) -
 							firstColon] = '\0';
-						req.headers.insert(
-							std::make_pair(std::string(String::findFirstNonWhitespaceCStrN(
-															 startOfLine, firstColon - startOfLine)),
-								std::string(String::findFirstNonWhitespaceCStrN(
-									firstColon + 1, endOfLine - firstColon - 1))));
+						req.header[std::string(String::findFirstNonWhitespaceCStrN(
+							startOfLine, firstColon - startOfLine))] =
+							std::string(String::findFirstNonWhitespaceCStrN(
+								firstColon + 1, endOfLine - firstColon - 1));
 					}
 
 					// Mark the start of the next line.
@@ -248,37 +247,29 @@ namespace Rain::Networking::Http {
 
 			// Setup body retrieval. The body we have right now starts at endOfLine +
 			// 2 and goes until curRecv.
-			req.getBody = [=, &req](char **retBody) {
-				std::size_t bodyLen = curRecv - endOfLine - 2;
-				*retBody = endOfLine + 2;
-
-				// TODO: handle chunked encoding transfer.
-				std::size_t contentLength =
-					static_cast<std::size_t>(
-						strtoll(req.headers["content-length"].c_str(), NULL, 10)) -
-					bodyLen;
-				setGetRequestBody(req, contentLength);
-				return bodyLen;
-			};
+			req.body.appendBytes(endOfLine + 2, curRecv - endOfLine - 2);
+			req.body.appendGenerator(getRequestBodyGenerator(req,
+				std::strtoull(req.header["Content-Length"].c_str(), NULL, 10) -
+					(curRecv - endOfLine - 2)));
 
 			return 0;
 		}
 
 		// When called with a clear buffer, will recv enough bytes from slave and
-		// send to getBody caller. This will change req.getBody.
-		inline static void setGetRequestBody(Request &req,
+		// send to getBody caller.
+		inline static Body::Generator getRequestBodyGenerator(Request &req,
 			std::size_t contentLength) {
 			if (contentLength == 0) {
-				req.getBody = req.NO_BODY;
-			} else {
-				req.getBody = [&req, contentLength](char **retBody) {
-					std::size_t bodyLen = static_cast<std::size_t>(req.slave->recv(
-						reinterpret_cast<void *>(req.slave->buf), req.slave->bufSz));
-					*retBody = req.slave->buf;
-					setGetRequestBody(req, contentLength - bodyLen);
-					return bodyLen;
-				};
+				return [](char **) { return 0; };
 			}
+			return [&req, contentLength](char **bytes) {
+				std::size_t bodyLen = static_cast<std::size_t>(req.slave->recv(
+					reinterpret_cast<void *>(req.slave->buf), req.slave->bufSz));
+				*bytes = req.slave->buf;
+				req.body.appendGenerator(
+					getRequestBodyGenerator(req, contentLength - bodyLen));
+				return bodyLen;
+			};
 		}
 	};
 }

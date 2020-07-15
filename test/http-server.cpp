@@ -11,9 +11,10 @@ int main() {
 	server.onRequest = [](Rain::Networking::Http::Server::Request *req) {
 		std::cout << req->method << " " << req->uri << "\n";
 		Rain::Networking::Http::Server::Response res(req->slave);
-		res.headers["content-type"] = "text/html";
-		res.headers["server"] = "emilia/rain";
-		res.setBody("hi");
+		res.header["Content-Type"] = "text/html";
+		res.header["Server"] = "emilia/rain";
+		res.body.appendBytes("hihi!<br>");
+		res.body.appendBytes("a second set of bytes");
 		res.send();
 	};
 	std::cout << "Starting server...\n";
