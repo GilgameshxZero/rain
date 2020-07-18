@@ -38,13 +38,16 @@ namespace Rain::Networking::Http {
 
 		// Extract stuff from body. Returns the number of bytes extracted.
 		std::size_t extractBytes(char **bytes) {
-			std::lock_guard<std::mutex> generatorsLckGuard(this->generatorsMtx);
-			if (this->generators.empty()) {	 // If none remaining, returns 0.
-				return 0;
+			Generator generator;
+			{
+				std::lock_guard<std::mutex> generatorsLckGuard(this->generatorsMtx);
+				if (this->generators.empty()) {	 // If none remaining, returns 0.
+					return 0;
+				}
+				generator = this->generators.front();
+				this->generators.pop();
 			}
-			std::size_t numExtracted = this->generators.front()(bytes);
-			this->generators.pop();
-			return numExtracted;
+			return generator(bytes);
 		}
 
 		// Getter.
