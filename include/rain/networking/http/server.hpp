@@ -122,6 +122,9 @@ namespace Rain::Networking::Http {
 		// Size of header-parse and body buffers in each of the slaves.
 		const std::size_t slaveBufSz;
 
+		// Max amount of time to wait on each recv.
+		static const std::size_t RECV_TIMEOUT_MS = 60000;
+
 		// Http parsing and response handling.
 		inline static void handleBeginSlaveTask(Slave *slave) {
 			slave->server->onBeginSlaveTask(slave);
@@ -185,8 +188,10 @@ namespace Rain::Networking::Http {
 					return -1;
 				}
 
-				// Receive the next set of bytes from the slave.
-				std::size_t recvLen = req.slave->recv(curRecv, bufRemaining);
+				// Receive the next set of bytes from the slave, with a timeout of 1
+				// minute.
+				std::size_t recvLen = req.slave->recv(
+					curRecv, bufRemaining, RecvFlag::NONE, RECV_TIMEOUT_MS);
 				if (recvLen == 0) {	 // Graceful exit.
 					return -1;
 				}
@@ -278,8 +283,8 @@ namespace Rain::Networking::Http {
 			}
 			// Throws exception on error.
 			return [&req, contentLength](char **bytes) {
-				std::size_t bodyLen = static_cast<std::size_t>(
-					req.slave->recv(req.slave->buf, req.slave->bufSz));
+				std::size_t bodyLen = static_cast<std::size_t>(req.slave->recv(
+					req.slave->buf, req.slave->bufSz, RecvFlag::NONE, RECV_TIMEOUT_MS));
 				*bytes = req.slave->buf;
 				req.body.appendGenerator(
 					getRequestBodyGenerator(req, contentLength - bodyLen));

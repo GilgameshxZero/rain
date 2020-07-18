@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.20
+
+`Server` now has a timeout on `recv` since `select` is not guaranteed to break when the socket is closed.
+
 ## 6.0.19
 
 Revert `ThreadPool` to throw error when threads cannot be created.
