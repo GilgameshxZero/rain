@@ -41,38 +41,35 @@ namespace Rain::Networking {
 		// Slave buffer size must be large enough to store the entire header block
 		// of a request.
 		CustomServer(std::size_t maxThreads = 0)
-				: Socket(true),
-					threadPool(maxThreads) {}
+				: Socket(true), threadPool(maxThreads) {}
 
 		// Bind, listen, and accept continuously until master is closed.
-		int serve(const Host &host,
-			bool blocking = true,
-			int backlog = 1024) noexcept {
+		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
 			// Bind and listen.
-			int status;
-			status = this->bind(host);
-			if (status != 0) {
-				return status;
-			}
-			status = this->listen(backlog);
-			if (status != 0) {
-				return status;
-			}
+			this->bind(host);
+			this->listen(backlog);
 
 			std::function<void(void *)> serveSync = [&](void *param) {
 				// Continuously accept new connections until master is closed.
 				while (true) {
-					NativeSocket nativeSocket = this->accept();
-					if (nativeSocket == NATIVE_SOCKET_INVALID) {
+					NativeSocket nativeSocket;
+					try {
+						nativeSocket = this->accept();
+					} catch (...) {
+						// Accept failed, the server has likely shut down.
 						break;
 					}
-					SlaveType *slave = new SlaveType(
-						Socket(
-							false, nativeSocket, this->family, this->type, this->protocol),
+					SlaveType *slave = new SlaveType(Socket(false,
+																						 nativeSocket,
+																						 this->getFamily(),
+																						 this->getType(),
+																						 this->getProtocol()),
 						reinterpret_cast<typename SlaveType::Server *>(
 							this->getSubclassPtr()));
 					this->onNewSlave(slave);
+					this->slavesMtx.lock();
 					this->slaves.insert(slave);
+					this->slavesMtx.unlock();
 
 					// For each new connection, spawn a task to handle it.
 					this->threadPool.queueTask(
@@ -80,8 +77,10 @@ namespace Rain::Networking {
 							SlaveType *slave = reinterpret_cast<SlaveType *>(param);
 							this->onBeginSlaveTask(slave);
 							this->onCloseSlave(slave);
-							slave->close();
+							this->slavesMtx.lock();
 							this->slaves.erase(slave);
+							this->slavesMtx.unlock();
+							slave->close();
 							this->onDeleteSlave(slave);
 							delete slave;
 						},
@@ -94,19 +93,16 @@ namespace Rain::Networking {
 			} else {
 				this->threadPool.queueTask(serveSync, NULL);
 			}
-			return 0;
 		}
 
 		// Closing the server should close all associated slaves as well.
-		int close() const noexcept {
-			int status;
-			status = Socket::close();
+		void close() {
+			Socket::close();
+			this->slavesMtx.lock();
 			for (auto it = this->slaves.begin(); it != this->slaves.end(); it++) {
-				if ((*it)->close()) {
-					status = -1;
-				}
+				(*it)->close();
 			}
-			return status;
+			this->slavesMtx.unlock();
 		}
 
 		protected:
@@ -114,6 +110,7 @@ namespace Rain::Networking {
 
 		// Keeps track of active slaves.
 		std::set<SlaveType *> slaves;
+		std::mutex slavesMtx;
 
 		// Get the subclass pointer, if there is one.
 		// Is this a hack?

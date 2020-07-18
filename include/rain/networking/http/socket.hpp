@@ -11,7 +11,7 @@ namespace Rain::Networking::Http {
 		Socket(const Networking::Socket &socket) : Networking::Socket(socket) {}
 
 		// Send either a request or a response.
-		int send(Request *req) const noexcept {
+		void send(Request *req) const {
 			Networking::Socket::send(req->method);
 			Networking::Socket::send(" ");
 			Networking::Socket::send(req->uri);
@@ -21,9 +21,8 @@ namespace Rain::Networking::Http {
 			this->sendHeader(req);
 			Networking::Socket::send("\r\n");
 			this->sendBody(req);
-			return 0;
 		}
-		int send(Response *res) const noexcept {
+		void send(Response *res) const {
 			Networking::Socket::send("HTTP/");
 			Networking::Socket::send(res->version);
 			Networking::Socket::send(" ");
@@ -34,12 +33,11 @@ namespace Rain::Networking::Http {
 			this->sendHeader(res);
 			Networking::Socket::send("\r\n");
 			this->sendBody(res);
-			return 0;
 		}
 
 		private:
 		// Helper functions for send.
-		int sendHeader(Payload *payload) const noexcept {
+		void sendHeader(Payload *payload) const {
 			// If we have bytes in the body but we don't have a Content-Length, add it
 			// automatically.
 			if (payload->body.getBytesLength() > 0 &&
@@ -54,16 +52,14 @@ namespace Rain::Networking::Http {
 				Networking::Socket::send(it->second);
 				Networking::Socket::send("\r\n");
 			}
-			return 0;
 		}
-		int sendBody(Payload *payload) const noexcept {
+		void sendBody(Payload *payload) const {
 			char *bytes;
 			std::size_t bytesLen = payload->body.extractBytes(&bytes);
 			while (bytesLen != 0) {
-				Networking::Socket::send(reinterpret_cast<void *>(bytes), bytesLen);
+				Networking::Socket::send(bytes, bytesLen);
 				bytesLen = payload->body.extractBytes(&bytes);
 			}
-			return 0;
 		}
 	};
 }
