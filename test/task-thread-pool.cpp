@@ -48,7 +48,9 @@ int main() {
 		Rain::ThreadPool bigThreadPool(2048);
 		std::cout << "2048 threads, incrementing by 4000." << std::endl;
 		for (std::size_t a = 0; a < 4000; a++) {
-			if (!bigThreadPool.queueTask(executor, param)) {
+			try {
+				bigThreadPool.queueTask(executor, param);
+			} catch (...) {
 				std::cout << "queueTask failed: setting maxThreads." << std::endl;
 				bigThreadPool.setMaxThreads(bigThreadPool.getCThreads());
 			}

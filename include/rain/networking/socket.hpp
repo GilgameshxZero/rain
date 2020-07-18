@@ -11,8 +11,6 @@
 #include <functional>
 #include <stdexcept>
 
-#include <iostream>
-
 namespace Rain::Networking {
 	// Not thread-safe.
 	class Socket {
@@ -115,7 +113,6 @@ namespace Rain::Networking {
 		NativeSocket accept(sockaddr *addr = NULL,
 			socklen_t *addrLen = NULL, std::size_t timeoutMs = 0) const {
 			if (this->blockForSelect(true, timeoutMs)) {
-				std::cout << "timeout\n";
 				return NATIVE_SOCKET_INVALID;
 			}
 			NativeSocket newSocket = ::accept(this->nativeSocket, addr, addrLen);
@@ -278,9 +275,9 @@ namespace Rain::Networking {
 			FD_ZERO(&fds);
 			FD_SET(this->nativeSocket, &fds);
 			timeval tv;
-			tv.tv_sec = timeoutMs / 1000;
+			tv.tv_sec = static_cast<long>(timeoutMs) / 1000;
 			tv.tv_usec = (timeoutMs % 1000) * 1000;
-			int status = select(this->nativeSocket + 1,
+			int status = select(static_cast<int>(this->nativeSocket) + 1,
 				read ? &fds : NULL,
 				read ? NULL : &fds,
 				&fds,

@@ -16,7 +16,7 @@ namespace Rain {
 	// An implementation of GNU strcpy_s.
 	errno_t strcpy_s(char *dest, std::size_t destsz, const char *src) {
 #ifdef RAIN_WINDOWS
-		return ::strcpy_s(dest, destsz, src);
+		return ::strncpy_s(dest, destsz, src, _TRUNCATE);
 #else
 		strncpy(dest, src, destsz)[destsz - 1] = '\0';
 		return 0;

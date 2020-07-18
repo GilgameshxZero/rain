@@ -103,6 +103,7 @@ namespace Rain::Networking::Http {
 			CustomServer::onDeleteSlave = [](Slave *slave) {
 				slave->server->onDeleteSlave(slave);
 			};
+
 			CustomServer::getSubclassPtr = [this]() { return this; };
 		}
 		~Server() {
@@ -185,7 +186,7 @@ namespace Rain::Networking::Http {
 				}
 
 				// Receive the next set of bytes from the slave.
-				int recvLen = req.slave->recv(curRecv, bufRemaining);
+				std::size_t recvLen = req.slave->recv(curRecv, bufRemaining);
 				if (recvLen == 0) {	 // Graceful exit.
 					return -1;
 				}
