@@ -84,11 +84,16 @@ namespace Rain::Networking::Http {
 		};
 		Request::Handler onRequest = [](Request *) {};
 
-		// Expose some handlers of the CustomServer.
+		// Some handlers of the CustomServer.
 		CustomServer::Handler onNewSlave = [](Slave *) {};
 		CustomServer::Handler onBeginSlaveTask = [](Slave *) {};
 		CustomServer::Handler onCloseSlave = [](Slave *) {};
 		CustomServer::Handler onDeleteSlave = [](Slave *) {};
+
+		// Max amount of time to wait on each recv.
+		std::size_t recvTimeoutMs = 5000;
+
+		std::size_t &acceptTimeoutMs = CustomServer::acceptTimeoutMs;
 
 		// Constructor and destructor. Socket is initialized in CustomServer.
 		Server(std::size_t maxThreads = 0, std::size_t slaveBufSz = 16384)
@@ -121,9 +126,6 @@ namespace Rain::Networking::Http {
 		protected:
 		// Size of header-parse and body buffers in each of the slaves.
 		const std::size_t slaveBufSz;
-
-		// Max amount of time to wait on each recv.
-		static const std::size_t RECV_TIMEOUT_MS = 60000;
 
 		// Http parsing and response handling.
 		inline static void handleBeginSlaveTask(Slave *slave) {
@@ -190,8 +192,10 @@ namespace Rain::Networking::Http {
 
 				// Receive the next set of bytes from the slave, with a timeout of 1
 				// minute.
-				std::size_t recvLen = req.slave->recv(
-					curRecv, bufRemaining, RecvFlag::NONE, RECV_TIMEOUT_MS);
+				std::size_t recvLen = req.slave->recv(curRecv,
+					bufRemaining,
+					RecvFlag::NONE,
+					req.slave->server->recvTimeoutMs);
 				if (recvLen == 0) {	 // Graceful exit.
 					return -1;
 				}
@@ -283,8 +287,11 @@ namespace Rain::Networking::Http {
 			}
 			// Throws exception on error.
 			return [&req, contentLength](char **bytes) {
-				std::size_t bodyLen = static_cast<std::size_t>(req.slave->recv(
-					req.slave->buf, req.slave->bufSz, RecvFlag::NONE, RECV_TIMEOUT_MS));
+				std::size_t bodyLen =
+					static_cast<std::size_t>(req.slave->recv(req.slave->buf,
+						req.slave->bufSz,
+						RecvFlag::NONE,
+						req.slave->server->recvTimeoutMs));
 				*bytes = req.slave->buf;
 				req.body.appendGenerator(
 					getRequestBodyGenerator(req, contentLength - bodyLen));

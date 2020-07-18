@@ -9,11 +9,12 @@
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
 #define RAIN_VERSION_MINOR 0
-#define RAIN_VERSION_REVISION 20
+#define RAIN_VERSION_REVISION 21
 
 #include "rain/build.hpp"
 
 #include "rain/algorithm/kmp.hpp"
+#include "rain/algorithm/lru.hpp"
 #include "rain/gdiplus.hpp"
 #include "rain/memmem.hpp"
 #include "rain/networking/custom-server.hpp"
@@ -37,4 +38,6 @@
 #include "rain/types.hpp"
 #include "rain/windows.hpp"
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>

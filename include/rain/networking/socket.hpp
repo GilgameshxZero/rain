@@ -61,7 +61,7 @@ namespace Rain::Networking {
 				int status = WSAStartup(MAKEWORD(2, 2), &wsaData);
 				if (status) {
 					throw std::runtime_error(
-						("WSAStartup failed with code " + std::to_string(status)).c_str());
+						"WSAStartup failed with code " + std::to_string(status));
 				}
 			}
 #endif
@@ -71,7 +71,7 @@ namespace Rain::Networking {
 			int status = WSACleanup();
 			if (status) {
 				throw std::runtime_error(
-					("WSACleanup failed with code " + std::to_string(status)).c_str());
+					"WSACleanup failed with code " + std::to_string(status));
 			}
 #endif
 		}
@@ -84,8 +84,7 @@ namespace Rain::Networking {
 					static_cast<int>(this->protocol));
 				if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
 					throw std::runtime_error(
-						("socket failed with code " + std::to_string(this->nativeSocket))
-							.c_str());
+						"socket failed with code " + std::to_string(this->nativeSocket));
 				}
 			}
 			return this->nativeSocket;
@@ -104,27 +103,29 @@ namespace Rain::Networking {
 			int status = ::listen(this->nativeSocket, backlog);
 			if (status != 0) {
 				throw std::runtime_error(
-					("listen failed with code " + std::to_string(status)).c_str());
+					"listen failed with code " + std::to_string(status));
 			}
 		}
 
 		// Accept uses select to block for new connections.
 		// Timing out will return an invalid socket.
 		NativeSocket accept(sockaddr *addr = NULL,
-			socklen_t *addrLen = NULL, std::size_t timeoutMs = 0) const {
+			socklen_t *addrLen = NULL,
+			std::size_t timeoutMs = 0) const {
 			if (this->blockForSelect(true, timeoutMs)) {
 				return NATIVE_SOCKET_INVALID;
 			}
 			NativeSocket newSocket = ::accept(this->nativeSocket, addr, addrLen);
 			if (newSocket == NATIVE_SOCKET_INVALID) {
 				throw std::runtime_error(
-					("accept failed with code " + std::to_string(newSocket)).c_str());
+					"accept failed with code " + std::to_string(newSocket));
 			}
 			return newSocket;
 		}
 
 		// Block until send all bytes. Uses select to make sure we can write before
-		// we try. Returns number of bytes sent (may be different if using timeout).
+		// we try. Returns number of bytes sent (may be different from intended if
+		// using timeout).
 		std::size_t send(const char *msg,
 			std::size_t len = 0,
 			SendFlag flags = SendFlag::NO_SIGNAL,
@@ -156,7 +157,7 @@ namespace Rain::Networking {
 					static_cast<int>(flags));
 				if (status == NATIVE_SOCKET_INVALID) {
 					throw std::runtime_error(
-						("send failed with code " + std::to_string(status)).c_str());
+						"send failed with code " + std::to_string(status));
 				}
 				bytesSent += static_cast<std::size_t>(status);
 			}
@@ -189,7 +190,7 @@ namespace Rain::Networking {
 				static_cast<int>(flags));
 			if (status < 0) {
 				throw std::runtime_error(
-					("recv failed with code " + std::to_string(status)).c_str());
+					"recv failed with code " + std::to_string(status));
 			} else if (status == 0) {
 				throw std::runtime_error("recv closed gracefully.");
 			}
@@ -217,8 +218,7 @@ namespace Rain::Networking {
 			this->nativeSocket = NATIVE_SOCKET_INVALID;
 			if (status == NATIVE_SOCKET_INVALID) {
 				throw std::runtime_error(
-					("close or closesocket failed with code " + std::to_string(status))
-						.c_str());
+					"close or closesocket failed with code " + std::to_string(status));
 			}
 		}
 
@@ -250,7 +250,7 @@ namespace Rain::Networking {
 				host.node.getCStr(), host.service.getCStr(), &hints, &result);
 			if (status != 0) {
 				throw std::runtime_error(
-					("getaddrinfo failed with code " + std::to_string(status)).c_str());
+					"getaddrinfo failed with code " + std::to_string(status));
 			}
 
 			// Try all the addresses we found.
@@ -265,7 +265,7 @@ namespace Rain::Networking {
 				curAddr = curAddr->ai_next;
 			}
 			throw std::runtime_error(
-				("connect or bind failed with code " + std::to_string(status)).c_str());
+				"connect or bind failed with code " + std::to_string(status));
 		}
 
 		// Returns true if terminated on timeout. By default, blocks without
@@ -287,8 +287,7 @@ namespace Rain::Networking {
 			} else if (status == NATIVE_SOCKET_INVALID) {
 				// Error with select.
 				throw std::runtime_error(
-					("select failed with code " + std::to_string(NATIVE_SOCKET_INVALID))
-						.c_str());
+					"select failed with code " + std::to_string(NATIVE_SOCKET_INVALID));
 			}
 			return false;
 		}

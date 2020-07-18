@@ -11,6 +11,7 @@ namespace Rain::Networking::Http {
 		Socket(const Networking::Socket &socket) : Networking::Socket(socket) {}
 
 		// Send either a request or a response.
+		// This will modify body, so it cannot be passed as const reference.
 		void send(Request *req) const {
 			Networking::Socket::send(req->method);
 			Networking::Socket::send(" ");
@@ -18,9 +19,9 @@ namespace Rain::Networking::Http {
 			Networking::Socket::send(" HTTP/");
 			Networking::Socket::send(req->version);
 			Networking::Socket::send("\r\n");
-			this->sendHeader(req);
+			this->sendHeader(&req->header);
 			Networking::Socket::send("\r\n");
-			this->sendBody(req);
+			this->sendBody(&req->body);
 		}
 		void send(Response *res) const {
 			Networking::Socket::send("HTTP/");
@@ -30,35 +31,27 @@ namespace Rain::Networking::Http {
 			Networking::Socket::send(" ");
 			Networking::Socket::send(res->status);
 			Networking::Socket::send("\r\n");
-			this->sendHeader(res);
+			this->sendHeader(&res->header);
 			Networking::Socket::send("\r\n");
-			this->sendBody(res);
+			this->sendBody(&res->body);
 		}
 
 		private:
 		// Helper functions for send.
-		void sendHeader(Payload *payload) const {
-			// If we have bytes in the body but we don't have a Content-Length, add it
-			// automatically.
-			if (payload->body.getBytesLength() > 0 &&
-				payload->header.find("Content-Length") == payload->header.end()) {
-				payload->header["Content-Length"] =
-					std::to_string(payload->body.getBytesLength());
-			}
-			for (auto it = payload->header.begin(); it != payload->header.end();
-					 it++) {
+		void sendHeader(Header *header) const {
+			for (auto it = header->begin(); it != header->end(); it++) {
 				Networking::Socket::send(it->first);
 				Networking::Socket::send(":");
 				Networking::Socket::send(it->second);
 				Networking::Socket::send("\r\n");
 			}
 		}
-		void sendBody(Payload *payload) const {
+		void sendBody(Body *body) const {
 			char *bytes;
-			std::size_t bytesLen = payload->body.extractBytes(&bytes);
+			std::size_t bytesLen = body->extractBytes(&bytes);
 			while (bytesLen != 0) {
 				Networking::Socket::send(bytes, bytesLen);
-				bytesLen = payload->body.extractBytes(&bytes);
+				bytesLen = body->extractBytes(&bytes);
 			}
 		}
 	};
