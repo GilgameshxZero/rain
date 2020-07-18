@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.18
+
+`Socket::accept` now blocks on `select` with an optimal timeout. `CustomServer` uses a 1-minute `accept` blocking timeout to avoid being blocked indefinitely on `Socket::accept`, and exiting eventually when the server is closed.
+
 ## 6.0.17
 
 Modify `rain` networking libraries to report errors via exceptions instead of return `int`s. `send` and `recv` now block on `select` to terminate correctly on exceptional conditions (closing the socket from another thread).

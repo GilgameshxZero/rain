@@ -4,13 +4,17 @@
 #pragma once
 
 #include "../platform.hpp"
+#include "../time.hpp"
 #include "native-socket.hpp"
 #include "node-service-host.hpp"
 
 #include <functional>
 #include <stdexcept>
 
+#include <iostream>
+
 namespace Rain::Networking {
+	// Not thread-safe.
 	class Socket {
 		public:
 		// Custom types for family, type and protocol.
@@ -20,6 +24,7 @@ namespace Rain::Networking {
 
 		// Custom types for send and recv.
 		enum class SendFlag {
+			NONE = 0,
 #ifdef RAIN_WINDOWS
 			NO_SIGNAL = 0,
 #else
@@ -28,6 +33,7 @@ namespace Rain::Networking {
 			NO_ROUTE = MSG_DONTROUTE,
 			OUT_OF_BAND = MSG_OOB
 		};
+		enum class RecvFlag { NONE = 0 };
 
 		// Sockets are created in an invalid state.
 		Socket(bool create = false,
@@ -90,13 +96,11 @@ namespace Rain::Networking {
 		// Platform-agnostic socket operations adapted to the Socket interface.
 		void connect(const Host &host) const {
 			this->connectOrBind(
-				host, [](struct addrinfo *) {}, ::connect);
+				host, [](addrinfo *) {}, ::connect);
 		}
 		void bind(const Host &host) const {
 			this->connectOrBind(
-				host,
-				[](struct addrinfo *hints) { hints->ai_flags = AI_PASSIVE; },
-				::bind);
+				host, [](addrinfo *hints) { hints->ai_flags = AI_PASSIVE; }, ::bind);
 		}
 		void listen(int backlog = 1024) const {
 			int status = ::listen(this->nativeSocket, backlog);
@@ -105,8 +109,15 @@ namespace Rain::Networking {
 					("listen failed with code " + std::to_string(status)).c_str());
 			}
 		}
-		NativeSocket accept(struct sockaddr *addr = NULL,
-			socklen_t *addrLen = NULL) const {
+
+		// Accept uses select to block for new connections.
+		// Timing out will return an invalid socket.
+		NativeSocket accept(sockaddr *addr = NULL,
+			socklen_t *addrLen = NULL, std::size_t timeoutMs = 0) const {
+			if (this->blockForSelect(true, timeoutMs)) {
+				std::cout << "timeout\n";
+				return NATIVE_SOCKET_INVALID;
+			}
 			NativeSocket newSocket = ::accept(this->nativeSocket, addr, addrLen);
 			if (newSocket == NATIVE_SOCKET_INVALID) {
 				throw std::runtime_error(
@@ -115,27 +126,28 @@ namespace Rain::Networking {
 			return newSocket;
 		}
 
-		// Block until send all bytes. Uses selecto make sure we can write before we
-		// try.
-		void send(const char *msg,
+		// Block until send all bytes. Uses select to make sure we can write before
+		// we try. Returns number of bytes sent (may be different if using timeout).
+		std::size_t send(const char *msg,
 			std::size_t len = 0,
-			SendFlag flags = SendFlag::NO_SIGNAL) const {
+			SendFlag flags = SendFlag::NO_SIGNAL,
+			std::size_t timeoutMs = 0) const {
 			if (len == 0) {
 				len = strlen(msg);
 			}
 
 			std::size_t bytesSent = 0;
-			fd_set writefds;
+			auto timeoutTime =
+				std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
 			while (bytesSent != len) {
-				FD_ZERO(&writefds);
-				FD_SET(this->nativeSocket, &writefds);
-				if (select(this->nativeSocket + 1, NULL, &writefds, NULL, NULL) ==
-					NATIVE_SOCKET_INVALID) {
-					throw std::runtime_error(("send (select) failed with code " +
-						std::to_string(NATIVE_SOCKET_INVALID))
-																		 .c_str());
+				if (this->blockForSelect(false,
+							timeoutMs == 0
+								? 0
+								: std::chrono::duration_cast<std::chrono::milliseconds>(
+										timeoutTime - std::chrono::steady_clock::now())
+										.count())) {
+					break;
 				}
-
 				int status = ::send(this->nativeSocket,
 #ifdef RAIN_WINDOWS
 					msg + bytesSent,
@@ -151,26 +163,24 @@ namespace Rain::Networking {
 				}
 				bytesSent += static_cast<std::size_t>(status);
 			}
+			return bytesSent;
 		}
-		void send(const std::string &s,
-			SendFlag flags = SendFlag::NO_SIGNAL) const {
-			this->send(s.c_str(), s.length(), flags);
+		std::size_t send(const std::string &s,
+			SendFlag flags = SendFlag::NO_SIGNAL,
+			std::size_t timeoutMs = 0) const {
+			return this->send(s.c_str(), s.length(), flags, timeoutMs);
 		}
 
 		// Block until recv some bytes, or exception if something went wrong.
 		// Uses select to block to correctly break block if socket closed.
-		// Returns number of bytes received.
-		int recv(char *buf, std::size_t len, int flags = 0) const {
-			fd_set readfds;
-			FD_ZERO(&readfds);
-			FD_SET(this->nativeSocket, &readfds);
-			if (select(this->nativeSocket + 1, &readfds, NULL, NULL, NULL) ==
-				NATIVE_SOCKET_INVALID) {
-				throw std::runtime_error(("recv (select) failed with code " +
-					std::to_string(NATIVE_SOCKET_INVALID))
-																	 .c_str());
+		// Returns number of bytes received, 0 on timeout.
+		std::size_t recv(char *buf,
+			std::size_t len,
+			RecvFlag flags = RecvFlag::NONE,
+			std::size_t timeoutMs = 0) const {
+			if (this->blockForSelect(true, timeoutMs)) {
+				return 0;
 			}
-
 			int status = ::recv(this->nativeSocket,
 #ifdef RAIN_WINDOWS
 				buf,
@@ -179,10 +189,12 @@ namespace Rain::Networking {
 				reinterpret_cast<void *>(buf),
 				len,
 #endif
-				flags);
+				static_cast<int>(flags));
 			if (status < 0) {
 				throw std::runtime_error(
 					("recv failed with code " + std::to_string(status)).c_str());
+			} else if (status == 0) {
+				throw std::runtime_error("recv closed gracefully.");
 			}
 			return status;
 		}
@@ -228,9 +240,9 @@ namespace Rain::Networking {
 
 		// Shared code for bind and connect.
 		void connectOrBind(const Host &host,
-			std::function<void(struct addrinfo *)> setHints,
+			std::function<void(addrinfo *)> setHints,
 			std::function<int(NativeSocket, sockaddr *, int)> action) const {
-			struct addrinfo hints, *result, *curAddr;
+			addrinfo hints, *result, *curAddr;
 
 			memset(&hints, 0, sizeof(struct addrinfo));
 			hints.ai_family = static_cast<int>(this->family);
@@ -257,6 +269,31 @@ namespace Rain::Networking {
 			}
 			throw std::runtime_error(
 				("connect or bind failed with code " + std::to_string(status)).c_str());
+		}
+
+		// Returns true if terminated on timeout. By default, blocks without
+		// timeout.
+		bool blockForSelect(bool read, std::size_t timeoutMs = 0) const {
+			fd_set fds;
+			FD_ZERO(&fds);
+			FD_SET(this->nativeSocket, &fds);
+			timeval tv;
+			tv.tv_sec = timeoutMs / 1000;
+			tv.tv_usec = (timeoutMs % 1000) * 1000;
+			int status = select(this->nativeSocket + 1,
+				read ? &fds : NULL,
+				read ? NULL : &fds,
+				&fds,
+				timeoutMs == 0 ? NULL : &tv);
+			if (status == 0) {	// Timeout.
+				return true;
+			} else if (status == NATIVE_SOCKET_INVALID) {
+				// Error with select.
+				throw std::runtime_error(
+					("select failed with code " + std::to_string(NATIVE_SOCKET_INVALID))
+						.c_str());
+			}
+			return false;
 		}
 	};
 }
