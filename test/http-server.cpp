@@ -15,11 +15,17 @@ int main() {
 		res.header["Server"] = "emilia/rain";
 		res.body.appendBytes("hihi!<br>");
 		res.body.appendBytes("a second set of bytes");
-		res.send();
+
+		try {
+			res.send();
+		} catch (...) {
+			std::cout << "Failed to send response.\n";
+			throw;
+		}
 	};
 	std::cout << "Starting server...\n";
 	server.serve(Rain::Networking::Host(NULL, 80), false);
-	Rain::Time::sleep(30000);
+	Rain::Time::sleep(10000);
 	std::cout << "Stopping server...\n";
 	server.close();
 

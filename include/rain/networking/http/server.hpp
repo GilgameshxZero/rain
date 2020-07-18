@@ -4,6 +4,8 @@
 #include "../custom-server.hpp"
 #include "socket.hpp"
 
+#include <iostream>
+
 namespace Rain::Networking::Http {
 	// Forward declaration.
 	class Server;
@@ -20,21 +22,21 @@ namespace Rain::Networking::Http {
 				: Http::Socket(socket), CustomServerSlave(socket, server) {}
 
 		// Public interfaces for protected functions we want to expose.
-		int send(Request *req) { return Http::Socket::send(req); }
-		int send(Response *res) { return Http::Socket::send(res); }
-		int send(const void *msg, std::size_t len, int flags = 0) const noexcept {
-			return CustomServerSlave::send(msg, len, flags);
+		void send(Request *req) const { Http::Socket::send(req); }
+		void send(Response *res) const { Http::Socket::send(res); }
+		void send(const char *msg,
+			std::size_t len = 0,
+			SendFlag flags = SendFlag::NO_SIGNAL) const {
+			CustomServerSlave::send(msg, len, flags);
 		}
-		int send(const char *msg, int flags = 0) const noexcept {
-			return CustomServerSlave::send(msg, flags);
+		void send(const std::string &s,
+			SendFlag flags = SendFlag::NO_SIGNAL) const {
+			CustomServerSlave::send(s, flags);
 		}
-		int send(const std::string &s, int flags = 0) const noexcept {
-			return CustomServerSlave::send(s, flags);
+		int recv(char *buf, std::size_t len, int flags = 0) const {
+			return CustomServerSlave::recv(buf, len, flags);
 		}
-		int recv(void *buf, std::size_t len, int flags = 0) const noexcept {
-			return Http::Socket::recv(buf, len, flags);
-		}
-		int close() const noexcept { return Http::Socket::close(); }
+		void close() { CustomServerSlave::close(); }
 	};
 
 	class Server : private Http::Socket, private CustomServer<Http::ServerSlave> {
@@ -56,7 +58,7 @@ namespace Rain::Networking::Http {
 			Request(Slave *slave)
 					: Server::Payload(slave), Http::Request("", "", "") {}
 
-			int send() { return this->slave->send(this); }
+			void send() { this->slave->send(this); }
 		};
 		class Response : public Payload, public Http::Response {
 			public:
@@ -68,7 +70,7 @@ namespace Rain::Networking::Http {
 				const std::string &version = "1.1")
 					: Server::Payload(slave), Http::Response() {}
 
-			int send() { return this->slave->send(this); }
+			void send() { this->slave->send(this); }
 		};
 
 		// Default handlers.
@@ -105,12 +107,10 @@ namespace Rain::Networking::Http {
 		}
 
 		// Expose interfaces of CustomServer.
-		int serve(const Host &host,
-			bool blocking = true,
-			int backlog = 1024) noexcept {
-			return CustomServer::serve(host, blocking, backlog);
+		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
+			CustomServer::serve(host, blocking, backlog);
 		}
-		int close() const noexcept { return CustomServer::close(); }
+		void close() { CustomServer::close(); }
 
 		protected:
 		// Size of header-parse and body buffers in each of the slaves.
@@ -128,12 +128,22 @@ namespace Rain::Networking::Http {
 			// information.
 			while (true) {
 				Request req(slave);
-				if (parseRequest(req)) {
+				try {
+					if (parseRequest(req)) {
+						break;
+					}
+				} catch (...) {
+					// If recv dies during request header parsing, just kill the socket.
 					break;
 				}
 
 				// TODO: Pass onto other handlers.
-				slave->server->onRequest(&req);
+				try {
+					slave->server->onRequest(&req);
+				} catch (...) {
+					// Any error while handling request should just close connection.
+					break;
+				}
 			}
 
 			// Free slave buffer space.
@@ -166,15 +176,13 @@ namespace Rain::Networking::Http {
 					req.slave->bufSz - (curParse - req.slave->buf);
 				if (bufRemaining == 0) {
 					req.slave->server->onHeaderOverflow(req.slave);
-					return 1;
+					return -1;
 				}
 
 				// Receive the next set of bytes from the slave.
-				int recvLen =
-					req.slave->recv(reinterpret_cast<void *>(curRecv), bufRemaining);
-				if (recvLen <= 0) {
-					// Graceful or error.
-					return 1;
+				int recvLen = req.slave->recv(curRecv, bufRemaining);
+				if (recvLen == 0) {	 // Graceful exit.
+					return -1;
 				}
 				curRecv += recvLen;
 
@@ -262,9 +270,10 @@ namespace Rain::Networking::Http {
 			if (contentLength == 0) {
 				return [](char **) { return 0; };
 			}
+			// Throws exception on error.
 			return [&req, contentLength](char **bytes) {
-				std::size_t bodyLen = static_cast<std::size_t>(req.slave->recv(
-					reinterpret_cast<void *>(req.slave->buf), req.slave->bufSz));
+				std::size_t bodyLen = static_cast<std::size_t>(
+					req.slave->recv(req.slave->buf, req.slave->bufSz));
 				*bytes = req.slave->buf;
 				req.body.appendGenerator(
 					getRequestBodyGenerator(req, contentLength - bodyLen));

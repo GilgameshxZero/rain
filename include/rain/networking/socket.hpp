@@ -1,4 +1,5 @@
 // A platform-agnostic OOP socket implementation.
+// Throws std::system_error instead of returning error code.
 
 #pragma once
 
@@ -7,165 +8,255 @@
 #include "node-service-host.hpp"
 
 #include <functional>
-
-#include <iostream>
+#include <stdexcept>
 
 namespace Rain::Networking {
 	class Socket {
 		public:
-		NativeSocket socket;
-		int family, type, protocol;
+		// Custom types for family, type and protocol.
+		enum class Family { IPV4 = AF_INET };
+		enum class Type { STREAM = SOCK_STREAM, RAW = SOCK_RAW };
+		enum class Protocol { TCP = IPPROTO_TCP, UDP = IPPROTO_UDP };
+
+		// Custom types for send and recv.
+		enum class SendFlag {
+#ifdef RAIN_WINDOWS
+			NO_SIGNAL = 0,
+#else
+			NO_SIGNAL = MSG_NOSIGNAL,
+#endif
+			NO_ROUTE = MSG_DONTROUTE,
+			OUT_OF_BAND = MSG_OOB
+		};
 
 		// Sockets are created in an invalid state.
 		Socket(bool create = false,
-			NativeSocket socket = NATIVE_SOCKET_INVALID,
-			int family = AF_INET,
-			int type = SOCK_STREAM,
-			int protocol = IPPROTO_TCP)
-				: socket(socket), family(family), type(type), protocol(protocol) {
+			NativeSocket nativeSocket = NATIVE_SOCKET_INVALID,
+			Family family = Family::IPV4,
+			Type type = Type::STREAM,
+			Protocol protocol = Protocol::TCP)
+				: nativeSocket(nativeSocket),
+					family(family),
+					type(type),
+					protocol(protocol) {
 			Socket::startup();
 
+			// Unless create is specified.
 			if (create) {
 				this->create();
 			}
 		}
 
-		// Stuff related to WSA in Windows.
+		// Shorthand for calling WSA stuff in Windows and doing nothing otherwise.
+		static void startup() {
 #ifdef RAIN_WINDOWS
-		inline static bool wsaInitialized = false;
-		inline static WSADATA wsaData;
-#endif
-
-		// Shorthand for calling wsaCleanup in Windows and doing nothing otherwise.
-		static int startup() {
-#ifdef RAIN_WINDOWS
-			if (!Socket::wsaInitialized) {
-				Socket::wsaInitialized = true;
-				return WSAStartup(MAKEWORD(2, 2), &Socket::wsaData);
+			static bool calledBefore = false;
+			static WSADATA wsaData;
+			if (!calledBefore) {
+				calledBefore = true;
+				int status = WSAStartup(MAKEWORD(2, 2), &wsaData);
+				if (status) {
+					throw std::runtime_error(
+						("WSAStartup failed with code " + std::to_string(status)).c_str());
+				}
 			}
 #endif
-			return 0;
 		}
-		static int cleanup() {
+		static void cleanup() {
 #ifdef RAIN_WINDOWS
-			return WSACleanup();
-#else
-			return 0;
+			int status = WSACleanup();
+			if (status) {
+				throw std::runtime_error(
+					("WSACleanup failed with code " + std::to_string(status)).c_str());
+			}
 #endif
 		}
 
+		// Initialize this socket if it is invalid, or return the current socket.
 		NativeSocket create() {
-			return this->socket = ::socket(this->family, this->type, this->protocol);
+			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
+				this->nativeSocket = ::socket(static_cast<int>(this->family),
+					static_cast<int>(this->type),
+					static_cast<int>(this->protocol));
+				if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
+					throw std::runtime_error(
+						("socket failed with code " + std::to_string(this->nativeSocket))
+							.c_str());
+				}
+			}
+			return this->nativeSocket;
 		}
 
 		// Platform-agnostic socket operations adapted to the Socket interface.
-		int connect(const Host &host) const noexcept {
-			return this->connectOrBind(
+		void connect(const Host &host) const {
+			this->connectOrBind(
 				host, [](struct addrinfo *) {}, ::connect);
 		}
-
-		int bind(const Host &host) const noexcept {
-			return this->connectOrBind(
+		void bind(const Host &host) const {
+			this->connectOrBind(
 				host,
 				[](struct addrinfo *hints) { hints->ai_flags = AI_PASSIVE; },
 				::bind);
 		}
-
-		int listen(int backlog = 1024) const noexcept {
-			return ::listen(this->socket, backlog);
+		void listen(int backlog = 1024) const {
+			int status = ::listen(this->nativeSocket, backlog);
+			if (status != 0) {
+				throw std::runtime_error(
+					("listen failed with code " + std::to_string(status)).c_str());
+			}
 		}
-
 		NativeSocket accept(struct sockaddr *addr = NULL,
-			socklen_t *addrLen = NULL) const noexcept {
-			return ::accept(this->socket, addr, addrLen);
+			socklen_t *addrLen = NULL) const {
+			NativeSocket newSocket = ::accept(this->nativeSocket, addr, addrLen);
+			if (newSocket == NATIVE_SOCKET_INVALID) {
+				throw std::runtime_error(
+					("accept failed with code " + std::to_string(newSocket)).c_str());
+			}
+			return newSocket;
 		}
 
-		int send(const void *msg, std::size_t len, int flags = MSG_NOSIGNAL) const
-			noexcept {
-			int status = ::send(this->socket,
+		// Block until send all bytes. Uses selecto make sure we can write before we
+		// try.
+		void send(const char *msg,
+			std::size_t len = 0,
+			SendFlag flags = SendFlag::NO_SIGNAL) const {
+			if (len == 0) {
+				len = strlen(msg);
+			}
+
+			std::size_t bytesSent = 0;
+			fd_set writefds;
+			while (bytesSent != len) {
+				FD_ZERO(&writefds);
+				FD_SET(this->nativeSocket, &writefds);
+				if (select(this->nativeSocket + 1, NULL, &writefds, NULL, NULL) ==
+					NATIVE_SOCKET_INVALID) {
+					throw std::runtime_error(("send (select) failed with code " +
+						std::to_string(NATIVE_SOCKET_INVALID))
+																		 .c_str());
+				}
+
+				int status = ::send(this->nativeSocket,
 #ifdef RAIN_WINDOWS
-				reinterpret_cast<const char *>(msg),
+					msg + bytesSent,
+					static_cast<int>(len - bytesSent),
+#else
+					reinterpret_cast<const void *>(msg + bytesSent),
+					len - bytesSent,
+#endif
+					static_cast<int>(flags));
+				if (status == NATIVE_SOCKET_INVALID) {
+					throw std::runtime_error(
+						("send failed with code " + std::to_string(status)).c_str());
+				}
+				bytesSent += static_cast<std::size_t>(status);
+			}
+		}
+		void send(const std::string &s,
+			SendFlag flags = SendFlag::NO_SIGNAL) const {
+			this->send(s.c_str(), s.length(), flags);
+		}
+
+		// Block until recv some bytes, or exception if something went wrong.
+		// Uses select to block to correctly break block if socket closed.
+		// Returns number of bytes received.
+		int recv(char *buf, std::size_t len, int flags = 0) const {
+			fd_set readfds;
+			FD_ZERO(&readfds);
+			FD_SET(this->nativeSocket, &readfds);
+			if (select(this->nativeSocket + 1, &readfds, NULL, NULL, NULL) ==
+				NATIVE_SOCKET_INVALID) {
+				throw std::runtime_error(("recv (select) failed with code " +
+					std::to_string(NATIVE_SOCKET_INVALID))
+																	 .c_str());
+			}
+
+			int status = ::recv(this->nativeSocket,
+#ifdef RAIN_WINDOWS
+				buf,
 				static_cast<int>(len),
 #else
-				msg,
+				reinterpret_cast<void *>(buf),
 				len,
 #endif
 				flags);
-			std::cout << status << std::endl;
+			if (status < 0) {
+				throw std::runtime_error(
+					("recv failed with code " + std::to_string(status)).c_str());
+			}
 			return status;
 		}
-		int send(const char *msg, int flags = MSG_NOSIGNAL) const noexcept {
-			return this->send(
-				reinterpret_cast<const void *>(msg), strlen(msg), flags);
-		}
-		int send(const std::string &s, int flags = MSG_NOSIGNAL) const noexcept {
-			return this->send(s.c_str(), flags);
+
+		// Tries to shutdown and then closes. Returns nonzero on error. Shutdown can
+		// fail silently.
+		void close() {
+			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
+				return;
+			}
+
+#ifdef RAIN_WINDOWS
+			::shutdown(this->nativeSocket, SD_BOTH);
+#else
+			::shutdown(this->nativeSocket, SHUT_RDWR);
+#endif
+			int status;
+#ifdef RAIN_WINDOWS
+			status = closesocket(this->nativeSocket);
+#else
+			status = ::close(this->nativeSocket);
+#endif
+			this->nativeSocket = NATIVE_SOCKET_INVALID;
+			if (status == NATIVE_SOCKET_INVALID) {
+				throw std::runtime_error(
+					("close or closesocket failed with code " + std::to_string(status))
+						.c_str());
+			}
 		}
 
-		int recv(void *buf, std::size_t len, int flags = 0) const noexcept {
-			return ::recv(this->socket,
-#ifdef RAIN_WINDOWS
-				reinterpret_cast<char *>(buf),
-				static_cast<int>(len),
-#else
-				buf,
-				len,
-#endif
-				flags);
-		}
-
-		// Shutdown should be called on any connected sockets (not listening
-		// sockets). Returns nonzero on error.
-		int shutdown() const noexcept {
-#ifdef RAIN_WINDOWS
-			static const int how = SD_BOTH;
-#else
-			static const int how = SHUT_RDWR;
-#endif
-			return ::shutdown(this->socket, how);
-		}
-
-		// Tries to shutdown and then closes. Returns nonzero on error. If shutdown
-		// fails, will just try to close.
-		int close() const noexcept {
-			this->shutdown();
-#ifdef RAIN_WINDOWS
-			return closesocket(this->socket);
-#else
-			return ::close(this->socket);
-#endif
-		}
+		// Getters.
+		NativeSocket getNativeSocket() { return this->nativeSocket; }
+		Family getFamily() { return this->family; }
+		Type getType() { return this->type; }
+		Protocol getProtocol() { return this->protocol; }
 
 		private:
+		// Internal socket.
+		NativeSocket nativeSocket;
+		Family family;
+		Type type;
+		Protocol protocol;
+
 		// Shared code for bind and connect.
-		int connectOrBind(const Host &host,
+		void connectOrBind(const Host &host,
 			std::function<void(struct addrinfo *)> setHints,
-			std::function<int(NativeSocket, sockaddr *, int)> action) const noexcept {
+			std::function<int(NativeSocket, sockaddr *, int)> action) const {
 			struct addrinfo hints, *result, *curAddr;
 
 			memset(&hints, 0, sizeof(struct addrinfo));
-			hints.ai_family = this->family;
-			hints.ai_socktype = this->type;
-			hints.ai_protocol = this->protocol;
+			hints.ai_family = static_cast<int>(this->family);
+			hints.ai_socktype = static_cast<int>(this->type);
+			hints.ai_protocol = static_cast<int>(this->protocol);
 			setHints(&hints);
 			int status = getaddrinfo(
 				host.node.getCStr(), host.service.getCStr(), &hints, &result);
 			if (status != 0) {
-				return status;
+				throw std::runtime_error(
+					("getaddrinfo failed with code " + std::to_string(status)).c_str());
 			}
 
 			// Try all the addresses we found.
 			curAddr = result;
 			while (curAddr != NULL) {
-				status = action(this->socket,
+				status = action(this->nativeSocket,
 					curAddr->ai_addr,
 					static_cast<int>(curAddr->ai_addrlen));
 				if (status == 0) {
-					return 0;
+					return;
 				}
 				curAddr = curAddr->ai_next;
 			}
-			return status;
+			throw std::runtime_error(
+				("connect or bind failed with code " + std::to_string(status)).c_str());
 		}
 	};
 }

@@ -43,7 +43,7 @@ namespace Rain {
 		}
 
 		// Returns nonzero if some error (exception while creating thread).
-		void queueTask(const Task::Executor &executor, void *param) {
+		int queueTask(const Task::Executor &executor, void *param) {
 			// Any time a new task is added, notify one waiting thread.
 			{
 				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
@@ -57,9 +57,14 @@ namespace Rain {
 			if (!this->tasks.empty() &&
 				(this->maxThreads == 0 || this->threads.size() < this->maxThreads)) {
 				// May cause exception if system resources are not available.
-				this->threads.push_back(std::thread(ThreadPool::threadFnc, this));
-				this->cFreeThreads++;
+				try {
+					this->threads.push_back(std::thread(ThreadPool::threadFnc, this));
+					this->cFreeThreads++;
+				} catch (...) {
+					return -1;
+				}
 			}
+			return 0;
 		}
 
 		// Functions that each thread runs to wait on next task.

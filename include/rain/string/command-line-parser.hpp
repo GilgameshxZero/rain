@@ -14,7 +14,8 @@ namespace Rain::String {
 
 				// Arguments start with -.
 				if (arg[0] != '-') {
-					throw std::system_error(1, std::generic_category());
+					throw std::invalid_argument(
+						"Command line argument name must start with \"-\".");
 				}
 				if (arg[1] == '-') {	// Long argument name.
 					// Find delimiter.

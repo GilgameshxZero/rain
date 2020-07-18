@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.17
+
+Modify `rain` networking libraries to report errors via exceptions instead of return `int`s. `send` and `recv` now block on `select` to terminate correctly on exceptional conditions (closing the socket from another thread).
+
 ## 6.0.16
 
 Fix `std::map` problem by fixing the lowercase comparator. Begin work on revamping `Socket` to crash less often and throw errors correctly.

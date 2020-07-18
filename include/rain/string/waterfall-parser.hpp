@@ -5,7 +5,7 @@
 
 #include <functional>
 #include <map>
-#include <system_error>
+#include <stdexcept>
 #include <vector>
 
 namespace Rain::String {
@@ -28,7 +28,7 @@ namespace Rain::String {
 		void parse(const char *key, const char *sValue) const {
 			auto it = this->layers.find(key);
 			if (it == this->layers.end()) {
-				throw std::system_error(1, std::generic_category());
+				throw std::invalid_argument("Key does not have a parser.");
 			}
 			it->second.parser(sValue, it->second.param);
 		}
@@ -38,8 +38,8 @@ namespace Rain::String {
 		template <typename StoreType>
 		void addLayer(const char *key, StoreType *store) noexcept {
 			// Adding a key previously added will overwrite it.
-			this->layers.insert(std::make_pair(key,
-				Layer(reinterpret_cast<void *>(store), this->getParser(store))));
+			this->layers.insert(std::make_pair(
+				key, Layer(reinterpret_cast<void *>(store), this->getParser(store))));
 		}
 
 		private:
