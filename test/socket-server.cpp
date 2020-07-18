@@ -2,6 +2,7 @@
 
 int main() {
 	Rain::Networking::Server server;
+	server.acceptTimeoutMs = 10000;
 	server.onBeginSlaveTask = [](Rain::Networking::Server::Slave *slave) {
 		std::cout << "onBeginSlaveTask\n";
 	};

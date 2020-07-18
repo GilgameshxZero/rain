@@ -2,6 +2,7 @@
 
 int main() {
 	Rain::Networking::Http::Server server;
+	server.acceptTimeoutMs = 10000;
 	server.onBeginSlaveTask = [](Rain::Networking::Http::Server::Slave *slave) {
 		std::cout << "onBeginSlaveTask\n";
 	};
@@ -11,10 +12,11 @@ int main() {
 	server.onRequest = [](Rain::Networking::Http::Server::Request *req) {
 		std::cout << req->method << " " << req->uri << "\n";
 		Rain::Networking::Http::Server::Response res(req->slave);
-		res.header["Content-Type"] = "text/html";
-		res.header["Server"] = "emilia/rain";
 		res.body.appendBytes("hihi!<br>");
 		res.body.appendBytes("a second set of bytes");
+		res.header["Content-Type"] = "text/html";
+		res.header["Server"] = "emilia/rain";
+		res.header["Content-Length"] = std::to_string(res.body.getBytesLength());
 
 		try {
 			res.send();

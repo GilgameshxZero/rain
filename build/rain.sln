@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socket-server", "socket-ser
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http-server", "http-server\http-server.vcxproj", "{56AA4E80-69CD-43C4-9ACE-01467BBF7A61}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lru-cache", "lru-cache\lru-cache.vcxproj", "{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -91,6 +93,14 @@ Global
 		{56AA4E80-69CD-43C4-9ACE-01467BBF7A61}.Release|x64.Build.0 = Release|x64
 		{56AA4E80-69CD-43C4-9ACE-01467BBF7A61}.Release|x86.ActiveCfg = Release|Win32
 		{56AA4E80-69CD-43C4-9ACE-01467BBF7A61}.Release|x86.Build.0 = Release|Win32
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Debug|x64.ActiveCfg = Debug|x64
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Debug|x64.Build.0 = Debug|x64
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Debug|x86.ActiveCfg = Debug|Win32
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Debug|x86.Build.0 = Debug|Win32
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Release|x64.ActiveCfg = Release|x64
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Release|x64.Build.0 = Release|x64
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Release|x86.ActiveCfg = Release|Win32
+		{F88E3D41-1DA0-46C2-8EFD-C0ED72C5EDE1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

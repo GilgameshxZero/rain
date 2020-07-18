@@ -38,6 +38,9 @@ namespace Rain::Networking {
 		Handler onCloseSlave = [](SlaveType *) {};
 		Handler onDeleteSlave = [](SlaveType *) {};
 
+		// If server is closed, can take up to this much time for thread to stop.
+		std::size_t acceptTimeoutMs = 60000;
+
 		// Slave buffer size must be large enough to store the entire header block
 		// of a request.
 		CustomServer(std::size_t maxThreads = 0)
@@ -65,7 +68,7 @@ namespace Rain::Networking {
 							nativeSocket == NATIVE_SOCKET_INVALID) {
 							// 1 minute timeout means that when we close the server, it'll
 							// take up to 1 minute to stop blocking for accept/select.
-							nativeSocket = this->accept(NULL, NULL, 60000);
+							nativeSocket = this->accept(NULL, NULL, this->acceptTimeoutMs);
 						}
 
 						// Terminated by timeout.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.21
+
+* Add `LRUCache` implementation as part of `Rain::Algorithm`.
+* Add timeout options for `CustomServer`.
+
 ## 6.0.20
 
 `Server` now has a timeout on `recv` since `select` is not guaranteed to break when the socket is closed.
