@@ -21,7 +21,7 @@ TEST_BIN := $(addprefix $(BIN_DIR), $(TEST_NAME))
 
 # Flags for build. Release by default.
 CXX := g++
-CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -g -Wall -pthread
+CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -lstdc++fs -g -Wall -pthread
 CXXFLAG_DEBUG := -O0
 CXXFLAG_RELEASE := -O3 -march=native
 

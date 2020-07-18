@@ -10,7 +10,7 @@ int main() {
 		std::cout << "onCloseSlave\n";
 	};
 	server.onRequest = [](Rain::Networking::Http::Server::Request *req) {
-		std::cout << req->method << " " << req->uri << "\n";
+		std::cout << req->method << " " << req->path << "\n";
 		Rain::Networking::Http::Server::Response res(req->slave);
 		res.body.appendBytes("hihi!<br>");
 		res.body.appendBytes("a second set of bytes");

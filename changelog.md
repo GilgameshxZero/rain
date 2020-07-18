@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.23
+
+* Add `-lstdc++fs` flag to compilation options.
+* Fix `http-server` test.
+
 ## 6.0.22
 
 * Fix some bugs in `Networking` and `Http`.
