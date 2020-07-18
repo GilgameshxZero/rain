@@ -52,9 +52,22 @@ namespace Rain::Networking {
 			std::function<void(void *)> serveSync = [&](void *param) {
 				// Continuously accept new connections until master is closed.
 				while (true) {
-					NativeSocket nativeSocket;
+					NativeSocket nativeSocket = NATIVE_SOCKET_INVALID;
 					try {
-						nativeSocket = this->accept();
+						// Accept will sometimes throw an error when it is broken by close
+						// on another thread. If it doesn't, the timeout will keep it in
+						// check.
+						while (this->getNativeSocket() != NATIVE_SOCKET_INVALID &&
+							nativeSocket == NATIVE_SOCKET_INVALID) {
+							// 1 minute timeout means that when we close the server, it'll
+							// take up to 1 minute to stop blocking for accept/select.
+							nativeSocket = this->accept(NULL, NULL, 60000);
+						}
+
+						// Terminated by timeout.
+						if (nativeSocket == NATIVE_SOCKET_INVALID) {
+							break;
+						}
 					} catch (...) {
 						// Accept failed, the server has likely shut down.
 						break;

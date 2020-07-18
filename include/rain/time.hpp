@@ -16,7 +16,8 @@ namespace Rain {
 }
 
 namespace Rain::Time {
-	inline void sleep(std::size_t ms) {
+	// Shorthand for sleeping the current thread.
+	inline void sleepMs(std::size_t ms) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	}
 }

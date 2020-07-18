@@ -25,7 +25,7 @@ int main() {
 	};
 	std::cout << "Starting server...\n";
 	server.serve(Rain::Networking::Host(NULL, 80), false);
-	Rain::Time::sleep(10000);
+	Rain::Time::sleepMs(10000);
 	std::cout << "Stopping server...\n";
 	server.close();
 

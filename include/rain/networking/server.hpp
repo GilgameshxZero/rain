@@ -10,17 +10,22 @@ namespace Rain::Networking {
 		ServerSlave(const Socket &socket, CustomServer<ServerSlave> *server)
 				: CustomServerSlave(socket, server) {}
 
-		void send(const char *msg,
+		std::size_t send(const char *msg,
 			std::size_t len = 0,
-			SendFlag flags = SendFlag::NO_SIGNAL) const {
-			CustomServerSlave::send(msg, len, flags);
+			SendFlag flags = SendFlag::NO_SIGNAL,
+			std::size_t timeoutMs = 0) const {
+			return CustomServerSlave::send(msg, len, flags, timeoutMs);
 		}
-		void send(const std::string &s,
-			SendFlag flags = SendFlag::NO_SIGNAL) const {
-			CustomServerSlave::send(s, flags);
+		std::size_t send(const std::string &s,
+			SendFlag flags = SendFlag::NO_SIGNAL,
+			std::size_t timeoutMs = 0) const {
+			return CustomServerSlave::send(s, flags, timeoutMs);
 		}
-		int recv(char *buf, std::size_t len, int flags = 0) const {
-			return CustomServerSlave::recv(buf, len, flags);
+		std::size_t recv(char *buf,
+			std::size_t len,
+			RecvFlag flags = RecvFlag::NONE,
+			std::size_t timeoutMs = 0) const {
+			return CustomServerSlave::recv(buf, len, flags, timeoutMs);
 		}
 		void close() { CustomServerSlave::close(); }
 	};

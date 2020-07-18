@@ -5,16 +5,16 @@ int main() {
 	std::atomic_size_t count = 0;
 
 	Rain::ThreadPool::Task::Executor executor = [](void *param) {
-		Rain::Time::sleep(500);
+		Rain::Time::sleepMs(500);
 		++(*reinterpret_cast<std::atomic_size_t *>(param));
-		Rain::Time::sleep(500);
+		Rain::Time::sleepMs(500);
 	};
 	Rain::ThreadPool::Task::Executor printExecutor = [](void *param) {
-		Rain::Time::sleep(500);
+		Rain::Time::sleepMs(500);
 		std::stringstream ss;
 		ss << ++(*reinterpret_cast<std::atomic_size_t *>(param)) << "\n";
 		std::cout << ss.str();
-		Rain::Time::sleep(500);
+		Rain::Time::sleepMs(500);
 	};
 	void *param = reinterpret_cast<void *>(&count);
 
