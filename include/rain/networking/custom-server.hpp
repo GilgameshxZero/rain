@@ -43,8 +43,12 @@ namespace Rain::Networking {
 		CustomServer(std::size_t maxThreads = 0)
 				: Socket(true), threadPool(maxThreads) {}
 
+		// A hacky function to get the subclass pointer.
+		std::function<void *()> getSubclassPtr = [this]() { return this; };
+
 		// Bind, listen, and accept continuously until master is closed.
-		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
+		void
+		serve(const Host &host, bool blocking = true, int backlog = 1024) {
 			// Bind and listen.
 			this->bind(host);
 			this->listen(backlog);
@@ -124,9 +128,5 @@ namespace Rain::Networking {
 		// Keeps track of active slaves.
 		std::set<SlaveType *> slaves;
 		std::mutex slavesMtx;
-
-		// Get the subclass pointer, if there is one.
-		// Is this a hack?
-		std::function<void *()> getSubclassPtr = [this]() { return this; };
 	};
 }

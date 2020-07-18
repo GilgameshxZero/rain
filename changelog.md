@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.19
+
+Revert `ThreadPool` to throw error when threads cannot be created.
+
+Make `Rain::strcpy_s` use `strncpy` as a backend, with `_TRUNCATE` on Windows.
+
 ## 6.0.18
 
 `Socket::accept` now blocks on `select` with an optimal timeout. `CustomServer` uses a 1-minute `accept` blocking timeout to avoid being blocked indefinitely on `Socket::accept`, and exiting eventually when the server is closed.
