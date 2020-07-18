@@ -17,6 +17,8 @@ namespace Rain::Networking::Http {
 		Header header;
 		Body body;
 
-		Payload(const std::string &version = "") : version(version) {}
+		Payload(const std::string &version = "") : version(version) {
+			header["Content-Length"] = "0";
+		}
 	};
 }

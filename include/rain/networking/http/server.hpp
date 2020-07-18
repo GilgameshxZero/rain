@@ -11,7 +11,7 @@ namespace Rain::Networking::Http {
 	class Server;
 
 	class ServerSlave
-			: protected Http::Socket,
+			: public Http::Socket,
 				public CustomServerSlave<Http::Server, Http::ServerSlave> {
 		public:
 		// Buffer used internally by Server.
@@ -42,6 +42,9 @@ namespace Rain::Networking::Http {
 			return CustomServerSlave::recv(buf, len, flags, timeoutMs);
 		}
 		void close() { CustomServerSlave::close(); }
+		NativeSocket getNativeSocket() {
+			return CustomServerSlave::getNativeSocket();
+		}
 	};
 
 	class Server : private Http::Socket, private CustomServer<Http::ServerSlave> {
@@ -73,7 +76,8 @@ namespace Rain::Networking::Http {
 				std::size_t statusCode = 200,
 				const std::string &status = "OK",
 				const std::string &version = "1.1")
-					: Server::Payload(slave), Http::Response() {}
+					: Server::Payload(slave),
+						Http::Response(statusCode, status, version) {}
 
 			void send() { this->slave->send(this); }
 		};
@@ -224,7 +228,7 @@ namespace Rain::Networking::Http {
 						// Method is the first token before space.
 						char *firstSpace;
 						for (firstSpace = startOfLine;
-								 *firstSpace != ' ' && firstSpace != endOfLine;
+								 *firstSpace != ' ' && firstSpace < endOfLine;
 								 firstSpace++)
 							;
 						req.method.assign(startOfLine, firstSpace - startOfLine);
@@ -232,13 +236,26 @@ namespace Rain::Networking::Http {
 						// Version is the last token after a slash.
 						char *lastSlash;
 						for (lastSlash = endOfLine;
-								 *lastSlash != '/' && lastSlash - 5 != firstSpace;
+								 *lastSlash != '/' && lastSlash - 5 > firstSpace;
 								 lastSlash--)
 							;
 						req.version.assign(lastSlash + 1, endOfLine - 1 - lastSlash);
 
-						// URI is stuff in between.
-						req.uri.assign(firstSpace + 1, lastSlash - 6 - firstSpace);
+						// path, query, fragment is the stuff in between.
+						char *queryQuestionMark;
+						for (queryQuestionMark = firstSpace;
+								 *queryQuestionMark != '?' && queryQuestionMark < lastSlash - 5;
+								 queryQuestionMark++)
+							;
+						req.path.assign(firstSpace + 1, queryQuestionMark - firstSpace - 1);
+						char *fragmentPound;
+						for (fragmentPound = queryQuestionMark;
+								 *fragmentPound != '#' && fragmentPound < lastSlash - 5;
+								 fragmentPound++)
+							;
+						req.query.assign(
+							queryQuestionMark, fragmentPound - queryQuestionMark);
+						req.fragment.assign(fragmentPound, lastSlash - fragmentPound - 5);
 					} else {	// Looking for header block.
 						// Look for first colon.
 						char *firstColon;

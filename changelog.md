@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.22
+
+* Fix some bugs in `Networking` and `Http`.
+* Add `Filesystem` utility function `subpath`.
+
 ## 6.0.21
 
 * Add `LRUCache` implementation as part of `Rain::Algorithm`.

@@ -7,13 +7,18 @@ namespace Rain::Networking::Http {
 		public:
 		typedef std::function<void(Request *)> Handler;
 
-		std::string method;
-		std::string uri;
+		std::string method, path, query, fragment;
 
 		Request(const std::string &method = "GET",
-			const std::string &uri = "/",
+			const std::string &path = "/",
+			const std::string &query = "",
+			const std::string &fragment = "",
 			const std::string &version = "1.1")
-				: Payload(version), method(method), uri(uri) {}
+				: Payload(version),
+					method(method),
+					path(path),
+					query(query),
+					fragment(fragment) {}
 	};
 	class Response : public Payload {
 		public:

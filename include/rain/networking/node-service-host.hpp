@@ -32,6 +32,8 @@ namespace Rain::Networking {
 				: node(node), service(service) {}
 		Host(const char *node, const char *service)
 				: node(node), service(service) {}
+		Host(const char *node, const std::string &service)
+				: node(node), service(service.c_str()) {}
 		Host(const char *node, std::size_t service)
 				: node(node), service(service) {}
 	};

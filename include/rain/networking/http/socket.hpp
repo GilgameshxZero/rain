@@ -15,7 +15,9 @@ namespace Rain::Networking::Http {
 		void send(Request *req) const {
 			Networking::Socket::send(req->method);
 			Networking::Socket::send(" ");
-			Networking::Socket::send(req->uri);
+			Networking::Socket::send(req->path);
+			Networking::Socket::send(req->query);
+			Networking::Socket::send(req->fragment);
 			Networking::Socket::send(" HTTP/");
 			Networking::Socket::send(req->version);
 			Networking::Socket::send("\r\n");

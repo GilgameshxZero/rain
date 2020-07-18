@@ -26,7 +26,7 @@ namespace Rain::Algorithm {
 
 		// Zero capacity means infinite.
 		LRUCache(std::size_t capacity = 0) : capacity(capacity) {}
-		const ValueType &at(const KeyType &key) {
+		ValueType &at(const KeyType &key) {
 			std::lock_guard<std::mutex> lck(this->mtx);
 			const typename Super::iterator &it = Super::find(key);
 			if (it == Super::end()) {
