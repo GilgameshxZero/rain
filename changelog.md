@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.1.0
+
+* Add boilerplate for `Smtp` libraries.
+
 ## 6.0.23
 
 * Add `-lstdc++fs` flag to compilation options.
