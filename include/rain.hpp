@@ -8,8 +8,8 @@
 
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
-#define RAIN_VERSION_MINOR 0
-#define RAIN_VERSION_REVISION 23
+#define RAIN_VERSION_MINOR 1
+#define RAIN_VERSION_REVISION 0
 
 #include "rain/build.hpp"
 
@@ -29,6 +29,8 @@
 #include "rain/networking/native-socket.hpp"
 #include "rain/networking/node-service-host.hpp"
 #include "rain/networking/server.hpp"
+#include "rain/networking/smtp/server.hpp"
+#include "rain/networking/smtp/socket.hpp"
 #include "rain/networking/socket.hpp"
 #include "rain/platform.hpp"
 #include "rain/string.hpp"

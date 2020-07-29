@@ -4,8 +4,6 @@
 #include "../custom-server.hpp"
 #include "socket.hpp"
 
-#include <iostream>
-
 namespace Rain::Networking::Http {
 	// Forward declaration.
 	class Server;
