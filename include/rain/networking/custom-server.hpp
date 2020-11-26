@@ -40,7 +40,7 @@ namespace Rain::Networking {
 		Handler onDeleteSlave = [](SlaveType *) {};
 
 		// If server is closed, can take up to this much time for thread to stop.
-		std::size_t acceptTimeoutMs = 60000;
+		std::size_t acceptTimeoutMs = 5000;
 
 		// Slave buffer size must be large enough to store the entire header block
 		// of a request.
