@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.1.3
+
+* Fix bug with DNS parsing in `Smtp::Client` with regards to using `len`.
+
 ## 6.1.2
 
 * Fix small bug with `Smtp::Client` DNS parsing.

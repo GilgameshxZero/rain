@@ -50,12 +50,12 @@ namespace Rain::Networking::Smtp {
 			}
 #else
 			u_char res_res[NS_PACKETSZ];
-			if (res_query(
-						(domain + ".").c_str(), C_IN, T_MX, res_res, sizeof(res_res)) < 0) {
+			int len;
+			if ((len = res_query(
+						(domain + ".").c_str(), C_IN, T_MX, res_res, sizeof(res_res))) < 0) {
 				return -3;
 			}
 			ns_msg handle;
-			int len = 0;
 			if (ns_initparse(res_res, len, &handle) < 0) {
 				return -4;
 			}
