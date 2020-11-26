@@ -1,17 +1,18 @@
 #include "rain.hpp"
 
 int main() {
-	Rain::Networking::Http::Server server;
+	typedef Rain::Networking::Http::Server<void *> Server;
+	Server server;
 	server.acceptTimeoutMs = 10000;
-	server.onBeginSlaveTask = [](Rain::Networking::Http::Server::Slave *slave) {
+	server.onBeginSlaveTask = [](Server::Slave *slave) {
 		std::cout << "onBeginSlaveTask\n";
 	};
-	server.onCloseSlave = [](Rain::Networking::Http::Server::Slave *slave) {
+	server.onCloseSlave = [](Server::Slave *slave) {
 		std::cout << "onCloseSlave\n";
 	};
-	server.onRequest = [](Rain::Networking::Http::Server::Request *req) {
+	server.onRequest = [](Server::Request *req) {
 		std::cout << req->method << " " << req->path << "\n";
-		Rain::Networking::Http::Server::Response res(req->slave);
+		Server::Response res(req->slave);
 		res.body.appendBytes("hihi!<br>");
 		res.body.appendBytes("a second set of bytes");
 		res.header["Content-Type"] = "text/html";
@@ -26,7 +27,7 @@ int main() {
 		}
 	};
 	std::cout << "Starting server...\n";
-	server.serve(Rain::Networking::Host(NULL, 80), false);
+	server.serve(Rain::Networking::Host(NULL, 0), false);
 	Rain::Time::sleepMs(10000);
 	std::cout << "Stopping server...\n";
 	server.close();
