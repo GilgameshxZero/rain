@@ -9,7 +9,7 @@
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
 #define RAIN_VERSION_MINOR 1
-#define RAIN_VERSION_REVISION 1
+#define RAIN_VERSION_REVISION 2
 
 #include "rain/build.hpp"
 
