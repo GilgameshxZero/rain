@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.1.5
+
+* Fix the `http-server` test with new `DataType` server templates.
+
 ## 6.1.4
 
 * Bugfix response parsing in `Smtp::Client`.
