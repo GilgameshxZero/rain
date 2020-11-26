@@ -5,7 +5,7 @@
 namespace Rain::Networking {
 	// Usable non-templated server & server slave.
 	class ServerSlave
-			: public CustomServerSlave<CustomServer<ServerSlave>, ServerSlave> {
+			: public CustomServerSlave<CustomServer<ServerSlave>, ServerSlave, void *> {
 		public:
 		ServerSlave(const Socket &socket, CustomServer<ServerSlave> *server)
 				: CustomServerSlave(socket, server) {}

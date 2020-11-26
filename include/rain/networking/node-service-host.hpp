@@ -18,6 +18,7 @@ namespace Rain::Networking {
 			public:
 			Service(const char *service) : service(service) {}
 			Service(std::size_t service) : service(std::to_string(service)) {}
+			Service(int service) : service(std::to_string(service)) {}
 
 			const char *getCStr() const noexcept { return this->service.c_str(); }
 
@@ -36,5 +37,6 @@ namespace Rain::Networking {
 				: node(node), service(service.c_str()) {}
 		Host(const char *node, std::size_t service)
 				: node(node), service(service) {}
+		Host(const char *node, int service) : node(node), service(service) {}
 	};
 }

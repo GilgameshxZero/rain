@@ -9,7 +9,7 @@
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
 #define RAIN_VERSION_MINOR 1
-#define RAIN_VERSION_REVISION 0
+#define RAIN_VERSION_REVISION 1
 
 #include "rain/build.hpp"
 
@@ -22,13 +22,14 @@
 #include "rain/networking/http/body.hpp"
 #include "rain/networking/http/client.hpp"
 #include "rain/networking/http/header.hpp"
-#include "rain/networking/http/payload.hpp"
-#include "rain/networking/http/request-response.hpp"
+#include "rain/networking/http/payload-request-response.hpp"
 #include "rain/networking/http/server.hpp"
 #include "rain/networking/http/socket.hpp"
 #include "rain/networking/native-socket.hpp"
 #include "rain/networking/node-service-host.hpp"
 #include "rain/networking/server.hpp"
+#include "rain/networking/smtp/client.hpp"
+#include "rain/networking/smtp/payload-request-response.hpp"
 #include "rain/networking/smtp/server.hpp"
 #include "rain/networking/smtp/socket.hpp"
 #include "rain/networking/socket.hpp"

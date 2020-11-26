@@ -6,18 +6,27 @@
 
 namespace Rain::Networking::Http {
 	// Forward declaration.
+	template <typename DataType = void *>
 	class Server;
 
-	class ServerSlave
-			: public Http::Socket,
-				public CustomServerSlave<Http::Server, Http::ServerSlave> {
+	template <typename DataType>
+	class ServerSlave : public Http::Socket,
+											public CustomServerSlave<Http::Server<DataType>,
+												Http::ServerSlave<DataType>,
+												DataType> {
 		public:
+		typedef CustomServerSlave<Http::Server<DataType>,
+			Http::ServerSlave<DataType>,
+			DataType>
+			CustomServerSlaveBase;
+
 		// Buffer used internally by Server.
 		std::size_t bufSz = 0;
 		char *buf = NULL;
 
-		ServerSlave(const Networking::Socket &socket, Http::Server *server)
-				: Http::Socket(socket), CustomServerSlave(socket, server) {}
+		ServerSlave(const Networking::Socket &socket,
+			Http::Server<DataType> *server)
+				: Http::Socket(socket), CustomServerSlaveBase(socket, server) {}
 
 		// Public interfaces for protected functions we want to expose.
 		void send(Request *req) const { Http::Socket::send(req); }
@@ -26,29 +35,32 @@ namespace Rain::Networking::Http {
 			std::size_t len = 0,
 			SendFlag flags = SendFlag::NO_SIGNAL,
 			std::size_t timeoutMs = 0) const {
-			return CustomServerSlave::send(msg, len, flags, timeoutMs);
+			return CustomServerSlaveBase::send(msg, len, flags, timeoutMs);
 		}
 		std::size_t send(const std::string &s,
 			SendFlag flags = SendFlag::NO_SIGNAL,
 			std::size_t timeoutMs = 0) const {
-			return CustomServerSlave::send(s, flags, timeoutMs);
+			return CustomServerSlaveBase::send(s, flags, timeoutMs);
 		}
 		std::size_t recv(char *buf,
 			std::size_t len,
 			RecvFlag flags = RecvFlag::NONE,
 			std::size_t timeoutMs = 0) const {
-			return CustomServerSlave::recv(buf, len, flags, timeoutMs);
+			return CustomServerSlaveBase::recv(buf, len, flags, timeoutMs);
 		}
-		void close() { CustomServerSlave::close(); }
+		void close() { CustomServerSlaveBase::close(); }
 		NativeSocket getNativeSocket() {
-			return CustomServerSlave::getNativeSocket();
+			return CustomServerSlaveBase::getNativeSocket();
 		}
 	};
 
-	class Server : private Http::Socket, private CustomServer<Http::ServerSlave> {
+	template <typename DataType>
+	class Server : private Http::Socket,
+								 private CustomServer<Http::ServerSlave<DataType>> {
 		public:
 		// Shorthand.
-		typedef Http::ServerSlave Slave;
+		typedef Http::ServerSlave<DataType> Slave;
+		typedef CustomServer<Slave> CustomServerBase;
 
 		// Request and response with a slave socket.
 		class Payload {
@@ -63,7 +75,6 @@ namespace Rain::Networking::Http {
 
 			Request(Slave *slave)
 					: Server::Payload(slave), Http::Request("", "", "") {}
-
 			void send() { this->slave->send(this); }
 		};
 		class Response : public Payload, public Http::Response {
@@ -76,54 +87,52 @@ namespace Rain::Networking::Http {
 				const std::string &version = "1.1")
 					: Server::Payload(slave),
 						Http::Response(statusCode, status, version) {}
-
 			void send() { this->slave->send(this); }
 		};
 
 		// Default handlers.
-		CustomServer::Handler onHeaderOverflow = [](Slave *slave) {
+		typename CustomServerBase::Handler onHeaderOverflow = [](Slave *slave) {
 			Response(slave, 413, "Header overflowed", "1.1").send();
 		};
-		Request::Handler onRequest = [](Request *) {};
-
-		// Some handlers of the CustomServer.
-		CustomServer::Handler onNewSlave = [](Slave *) {};
-		CustomServer::Handler onBeginSlaveTask = [](Slave *) {};
-		CustomServer::Handler onCloseSlave = [](Slave *) {};
-		CustomServer::Handler onDeleteSlave = [](Slave *) {};
+		typename Request::Handler onRequest = [](Request *) {};
+		typename CustomServerBase::Handler onNewSlave = [](Slave *) {};
+		typename CustomServerBase::Handler onBeginSlaveTask = [](Slave *) {};
+		typename CustomServerBase::Handler onCloseSlave = [](Slave *) {};
+		typename CustomServerBase::Handler onDeleteSlave = [](Slave *) {};
 
 		// Max amount of time to wait on each recv.
 		std::size_t recvTimeoutMs = 5000;
 
-		std::size_t &acceptTimeoutMs = CustomServer::acceptTimeoutMs;
-
 		// Constructor and destructor. Socket is initialized in CustomServer.
 		Server(std::size_t maxThreads = 0, std::size_t slaveBufSz = 16384)
-				: Http::Socket(), CustomServer(maxThreads), slaveBufSz(slaveBufSz) {
-			CustomServer::onNewSlave = [](Slave *slave) {
+				: Http::Socket(), CustomServerBase(maxThreads), slaveBufSz(slaveBufSz) {
+			CustomServerBase::onNewSlave = [](Slave *slave) {
 				slave->server->onNewSlave(slave);
 			};
-			CustomServer::onBeginSlaveTask = handleBeginSlaveTask;
-			CustomServer::onCloseSlave = [](Slave *slave) {
+			CustomServerBase::onBeginSlaveTask = handleBeginSlaveTask;
+			CustomServerBase::onCloseSlave = [](Slave *slave) {
 				slave->server->onCloseSlave(slave);
 			};
-			CustomServer::onDeleteSlave = [](Slave *slave) {
+			CustomServerBase::onDeleteSlave = [](Slave *slave) {
 				slave->server->onDeleteSlave(slave);
 			};
 
-			CustomServer::getSubclassPtr = [this]() { return this; };
+			CustomServerBase::getSubclassPtr = [this]() { return this; };
 		}
 		~Server() {
 			// This subclass gets destructed before superclass if we don't block for
 			// all tasks.
-			CustomServer::threadPool.blockForTasks();
+			CustomServerBase::threadPool.blockForTasks();
 		}
 
 		// Expose interfaces of CustomServer.
+		std::size_t &acceptTimeoutMs = CustomServerBase::acceptTimeoutMs;
+
 		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
-			CustomServer::serve(host, blocking, backlog);
+			CustomServerBase::serve(host, blocking, backlog);
 		}
-		void close() { CustomServer::close(); }
+		void close() { CustomServerBase::close(); }
+		Host::Service getService() { return CustomServerBase::getService(); }
 
 		protected:
 		// Size of header-parse and body buffers in each of the slaves.
@@ -192,8 +201,7 @@ namespace Rain::Networking::Http {
 					return -1;
 				}
 
-				// Receive the next set of bytes from the slave, with a timeout of 1
-				// minute.
+				// Receive the next set of bytes from the slave.
 				std::size_t recvLen = req.slave->recv(curRecv,
 					bufRemaining,
 					RecvFlag::NONE,

@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.1.1
+
+* Complete very basic `Smtp::Client` and `Smtp::Server` implementations.
+* Update `SocketSlave` implementation to include custom templated `DataType`.
+
 ## 6.1.0
 
 * Add boilerplate for `Smtp` libraries.
