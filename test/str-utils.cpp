@@ -16,11 +16,6 @@ int main() {
 
 	char whiteCStr[] = "   	\t	\nSome string with whitespace\t\t\n   	";
 	std::cout << "Original string:             " << whiteCStr << "\n";
-	// Terminate the c-string to cut off the last whitespace.
-	*const_cast<char *>(
-		Rain::String::findFirstNonWhitespaceCStrN(
-			whiteCStr + sizeof(whiteCStr) - 2, sizeof(whiteCStr), -1) +
-		1) = '\0';
 	std::cout << "findFirstNonWhitespaceCStrN: "
 						<< Rain::String::findFirstNonWhitespaceCStrN(whiteCStr) << "\n";
 

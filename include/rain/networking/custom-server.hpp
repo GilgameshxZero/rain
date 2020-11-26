@@ -8,13 +8,14 @@
 
 namespace Rain::Networking {
 	// Reference implementation.
-	template <typename ServerType, typename SlaveType>
+	template <typename ServerType, typename SlaveType, typename DataType>
 	class CustomServerSlave : protected Socket {
 		public:
 		// For use in accessing subclass type from superclass.
 		typedef ServerType Server;
 
 		Server *server;
+		DataType data;
 
 		CustomServerSlave(const Socket &socket, Server *server)
 				: Socket(socket), server(server) {}
@@ -50,8 +51,7 @@ namespace Rain::Networking {
 		std::function<void *()> getSubclassPtr = [this]() { return this; };
 
 		// Bind, listen, and accept continuously until master is closed.
-		void
-		serve(const Host &host, bool blocking = true, int backlog = 1024) {
+		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
 			// Bind and listen.
 			this->bind(host);
 			this->listen(backlog);
@@ -123,6 +123,16 @@ namespace Rain::Networking {
 				(*it)->close();
 			}
 			this->slavesMtx.unlock();
+		}
+
+		// Getters.
+		Host::Service getService() {
+			struct sockaddr_in sin;
+			socklen_t addrlen = sizeof(sin);
+			getsockname(this->getNativeSocket(),
+				reinterpret_cast<struct sockaddr *>(&sin),
+				&addrlen);
+			return Host::Service(static_cast<std::size_t>(ntohs(sin.sin_port)));
 		}
 
 		protected:

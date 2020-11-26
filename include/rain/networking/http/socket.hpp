@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../socket.hpp"
-#include "request-response.hpp"
+#include "payload-request-response.hpp"
 
 namespace Rain::Networking::Http {
 	// Base class for HttpClient and HttpServerSlave.
