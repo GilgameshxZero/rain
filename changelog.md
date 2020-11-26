@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.1.2
+
+* Fix small bug with `Smtp::Client` DNS parsing.
+
 ## 6.1.1
 
 * Complete very basic `Smtp::Client` and `Smtp::Server` implementations.

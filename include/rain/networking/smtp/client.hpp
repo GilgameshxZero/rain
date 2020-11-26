@@ -49,13 +49,14 @@ namespace Rain::Networking::Smtp {
 				return -1;
 			}
 #else
-			u_char res[NS_PACKETSZ];
-			if (res_query((domain + ".").c_str(), C_IN, T_MX, res, sizeof(res)) < 0) {
+			u_char res_res[NS_PACKETSZ];
+			if (res_query(
+						(domain + ".").c_str(), C_IN, T_MX, res_res, sizeof(res_res)) < 0) {
 				return -3;
 			}
 			ns_msg handle;
 			int len = 0;
-			if (ns_initparse(res, len, &handle) < 0) {
+			if (ns_initparse(res_res, len, &handle) < 0) {
 				return -4;
 			}
 			len = ns_msg_count(handle, ns_s_an);
@@ -194,9 +195,10 @@ namespace Rain::Networking::Smtp {
 						for (char *space = curParse + 4, *prevSpace = curParse + 4;
 								 space != newline + 1;
 								 space++) {
-							if (*space == ' ') {
+							if (*space == ' ' || *space == '\0') {
 								*space = '\0';
-								res->extensions.back().emplace_back(std::string(curParse + 4));
+								res->extensions.back().emplace_back(std::string(prevSpace));
+								prevSpace = space + 1;
 							}
 						}
 					}
