@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.1.4
+
+* Bugfix response parsing in `Smtp::Client`.
+* Shorten default `acceptTimeoutMs` to `5` seconds.
+
 ## 6.1.3
 
 * Fix bug with DNS parsing in `Smtp::Client` with regards to using `len`.

@@ -20,7 +20,9 @@
 namespace Rain::Networking::Smtp {
 	class Client : protected Smtp::Socket {
 		public:
-		Client(std::size_t bufSz = 16384) : Smtp::Socket(), bufSz(bufSz) {
+		Client(std::size_t bufSz = 16384)
+				: Smtp::Socket(true, NATIVE_SOCKET_INVALID),
+					bufSz(bufSz) {
 			this->buffer = new char[bufSz];
 		}
 		~Client() { delete[] this->buffer; }
@@ -52,7 +54,8 @@ namespace Rain::Networking::Smtp {
 			u_char res_res[NS_PACKETSZ];
 			int len;
 			if ((len = res_query(
-						(domain + ".").c_str(), C_IN, T_MX, res_res, sizeof(res_res))) < 0) {
+						 (domain + ".").c_str(), C_IN, T_MX, res_res, sizeof(res_res))) <
+				0) {
 				return -3;
 			}
 			ns_msg handle;
@@ -83,7 +86,6 @@ namespace Rain::Networking::Smtp {
 #endif
 
 			bool connected = false;
-			this->create();
 			for (auto server : servers) {
 				try {
 					this->connect(Host(server.c_str(), 25));
@@ -162,7 +164,9 @@ namespace Rain::Networking::Smtp {
 			// State of newline search.
 			std::size_t kmpCand = 0;
 			char *curRecv = this->buffer,	 // Last search position.
-				*curParse = this->buffer;
+				*curParse = this->buffer,
+				*newline;
+			bool isLastLine;
 
 			// Keep on calling recv until we find get the full response.
 			res->code = 0;
@@ -173,16 +177,17 @@ namespace Rain::Networking::Smtp {
 				}
 				std::size_t recvLen = this->recv(
 					curRecv, bufRemaining, RecvFlag::NONE, this->recvTimeoutMs);
+				// TODO: temporary logging.
+				std::cout << std::string(curRecv, recvLen);
 				if (recvLen == 0) {
 					return -1;
 				}
 
 				// Look to parse an additional line.
-				char *newline = Algorithm::cStrSearchKMP(
-					curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand);
-				if (newline != NULL) {
+				while ((newline = Algorithm::cStrSearchKMP(
+					curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand)) != NULL) {
 					// Found full line since curParse.
-					bool isLastLine = curParse[3] == ' ';
+					isLastLine = curParse[3] == ' ';
 					curParse[3] = '\0';
 					*newline = '\0';
 					if (res->code == 0) {
@@ -202,12 +207,15 @@ namespace Rain::Networking::Smtp {
 							}
 						}
 					}
-
+					curParse = newline + 2;
 					if (isLastLine) {
 						break;
 					}
 				}
 				curRecv += recvLen;
+				if (isLastLine) {
+					break;
+				}
 			}
 
 			return 0;

@@ -16,7 +16,7 @@ namespace Rain::Networking {
 	class Socket {
 		public:
 		// Custom types for family, type and protocol.
-		enum class Family { IPV4 = AF_INET };
+		enum class Family { UNSPEC = AF_UNSPEC, IPV4 = AF_INET };
 		enum class Type { STREAM = SOCK_STREAM, RAW = SOCK_RAW };
 		enum class Protocol { TCP = IPPROTO_TCP, UDP = IPPROTO_UDP };
 
@@ -260,12 +260,15 @@ namespace Rain::Networking {
 					curAddr->ai_addr,
 					static_cast<int>(curAddr->ai_addrlen));
 				if (status == 0) {
-					return;
+					break;
 				}
 				curAddr = curAddr->ai_next;
 			}
-			throw std::runtime_error(
-				"connect or bind failed with code " + std::to_string(status));
+			freeaddrinfo(result);
+			if (status != 0) {
+				throw std::runtime_error(
+					"connect or bind failed with code " + std::to_string(status));
+			}
 		}
 
 		// Returns true if terminated on timeout. By default, blocks without
