@@ -15,13 +15,11 @@
 #include <sys/types.h>
 #endif
 
-#include <iostream>
-
 namespace Rain::Networking::Smtp {
 	class Client : protected Smtp::Socket {
 		public:
 		Client(std::size_t bufSz = 16384)
-				: Smtp::Socket(true, NATIVE_SOCKET_INVALID),
+				: Smtp::Socket(),
 					bufSz(bufSz) {
 			this->buffer = new char[bufSz];
 		}
@@ -177,8 +175,6 @@ namespace Rain::Networking::Smtp {
 				}
 				std::size_t recvLen = this->recv(
 					curRecv, bufRemaining, RecvFlag::NONE, this->recvTimeoutMs);
-				// TODO: temporary logging.
-				std::cout << std::string(curRecv, recvLen);
 				if (recvLen == 0) {
 					return -1;
 				}

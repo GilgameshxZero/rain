@@ -10,6 +10,7 @@
 #include <queue>
 
 namespace Rain::Networking::Http {
+	// TODO: refactor this.
 	class Body {
 		public:
 		// Generates some body bytes.

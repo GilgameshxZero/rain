@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.2.0
+
+* Make `Rain::Socket` weakly RAII.
+
 ## 6.1.5
 
 * Fix the `http-server` test with new `DataType` server templates.

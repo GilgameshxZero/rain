@@ -14,8 +14,5 @@ int main() {
 	std::cout << "Serving on port " << server.getService().getCStr() << "\n";
 	Rain::Time::sleepMs(10000);
 	std::cout << "Stopping server...\n";
-	server.close();
-
-	Rain::Networking::Socket::cleanup();
 	return 0;
 }

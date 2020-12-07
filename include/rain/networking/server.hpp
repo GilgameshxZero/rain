@@ -27,7 +27,7 @@ namespace Rain::Networking {
 			std::size_t timeoutMs = 0) const {
 			return CustomServerSlave::recv(buf, len, flags, timeoutMs);
 		}
-		void close() { CustomServerSlave::close(); }
+		void shutdown() { CustomServerSlave::shutdown(); }
 	};
 	typedef CustomServer<ServerSlave> Server;
 }

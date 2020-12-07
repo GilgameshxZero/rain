@@ -7,12 +7,10 @@
 namespace Rain::Networking::Smtp {
 	class Socket : public Networking::Socket {
 		public:
-		Socket(bool create = false,
-			NativeSocket nativeSocket = NATIVE_SOCKET_INVALID,
-			Family family = Socket::Family::IPV4,
+		Socket(Family family = Socket::Family::IPV4,
 			Type type = Socket::Type::STREAM,
 			Protocol protocol = Socket::Protocol::TCP)
-				: Networking::Socket(create, nativeSocket, family, type, protocol) {}
+				: Networking::Socket(family, type, protocol) {}
 		Socket(const Networking::Socket &socket) : Networking::Socket(socket) {}
 
 		// Send either a request or a response.

@@ -40,12 +40,12 @@ namespace Rain::Networking {
 		Handler onDeleteSlave = [](SlaveType *) {};
 
 		// If server is closed, can take up to this much time for thread to stop.
-		std::size_t acceptTimeoutMs = 5000;
+		std::size_t acceptTimeoutMs = 1000;
 
 		// Slave buffer size must be large enough to store the entire header block
 		// of a request.
 		CustomServer(std::size_t maxThreads = 0)
-				: Socket(true), threadPool(maxThreads) {}
+				: Socket(), threadPool(maxThreads) {}
 
 		// A hacky function to get the subclass pointer.
 		std::function<void *()> getSubclassPtr = [this]() { return this; };
@@ -79,8 +79,7 @@ namespace Rain::Networking {
 						// Accept failed, the server has likely shut down.
 						break;
 					}
-					SlaveType *slave = new SlaveType(Socket(false,
-																						 nativeSocket,
+					SlaveType *slave = new SlaveType(Socket(nativeSocket,
 																						 this->getFamily(),
 																						 this->getType(),
 																						 this->getProtocol()),
@@ -100,7 +99,7 @@ namespace Rain::Networking {
 							this->slavesMtx.lock();
 							this->slaves.erase(slave);
 							this->slavesMtx.unlock();
-							slave->close();
+							slave->shutdown();
 							this->onDeleteSlave(slave);
 							delete slave;
 						},
@@ -115,12 +114,12 @@ namespace Rain::Networking {
 			}
 		}
 
-		// Closing the server should close all associated slaves as well.
-		void close() {
-			Socket::close();
+		// Shutting down the server should shutdown all associated slaves as well.
+		void shutdown() {
+			Socket::shutdown();
 			this->slavesMtx.lock();
 			for (auto it = this->slaves.begin(); it != this->slaves.end(); it++) {
-				(*it)->close();
+				(*it)->shutdown();
 			}
 			this->slavesMtx.unlock();
 		}
