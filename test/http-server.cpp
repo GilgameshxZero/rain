@@ -30,8 +30,5 @@ int main() {
 	server.serve(Rain::Networking::Host(NULL, 0), false);
 	Rain::Time::sleepMs(10000);
 	std::cout << "Stopping server...\n";
-	server.close();
-
-	Rain::Networking::Socket::cleanup();
 	return 0;
 }

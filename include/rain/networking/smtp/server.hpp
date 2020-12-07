@@ -48,7 +48,7 @@ namespace Rain::Networking::Smtp {
 			std::size_t timeoutMs = 0) const {
 			return CustomServerSlaveBase::recv(buf, len, flags, timeoutMs);
 		}
-		void close() { CustomServerSlaveBase::close(); }
+		void shutdown() { CustomServerSlaveBase::shutdown(); }
 		NativeSocket getNativeSocket() {
 			return CustomServerSlaveBase::getNativeSocket();
 		}
@@ -129,7 +129,7 @@ namespace Rain::Networking::Smtp {
 		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
 			CustomServerBase::serve(host, blocking, backlog);
 		}
-		void close() { CustomServerBase::close(); }
+		void shutdown() { CustomServerBase::shutdown(); }
 		Host::Service getService() { return CustomServerBase::getService(); }
 
 		protected:

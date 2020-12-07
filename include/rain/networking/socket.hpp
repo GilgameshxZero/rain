@@ -1,4 +1,5 @@
-// A platform-agnostic OOP socket implementation.
+// A platform-agnostic RAII OOP socket implementation.
+// Not socket-safe by default.
 // Throws std::system_error instead of returning error code.
 
 #pragma once
@@ -12,7 +13,6 @@
 #include <stdexcept>
 
 namespace Rain::Networking {
-	// Not thread-safe.
 	class Socket {
 		public:
 		// Custom types for family, type and protocol.
@@ -33,61 +33,62 @@ namespace Rain::Networking {
 		};
 		enum class RecvFlag { NONE = 0 };
 
-		// Sockets are created in an invalid state.
-		Socket(bool create = false,
-			NativeSocket nativeSocket = NATIVE_SOCKET_INVALID,
+		// Sockets are created anew.
+		Socket(Family family = Family::IPV4,
+			Type type = Type::STREAM,
+			Protocol protocol = Protocol::TCP)
+				: family(family), type(type), protocol(protocol) {
+			// Call WSA stuff in Windows, and register to call it at program exit too.
+#ifdef RAIN_WINDOWS
+			static bool startupCalledBefore = false;
+			if (!startupCalledBefore) {
+				WSADATA wsaData;
+				startupCalledBefore = true;
+				int status = WSAStartup(MAKEWORD(2, 2), &wsaData);
+				if (status) {
+					throw std::runtime_error(
+						"WSAStartup failed with code " + std::to_string(status));
+				}
+
+				// Register the cleanup function to be called at program exit.
+				status = atexit([]() {
+					int status = WSACleanup();
+					if (status) {
+						throw std::runtime_error(
+							"WSACleanup failed with code " + std::to_string(status));
+					}
+				});
+				if (status) {
+					throw std::runtime_error("atexit(Socket::cleanup) failed with code " +
+						std::to_string(status));
+				}
+			}
+#endif
+
+			// Create the socket, to be closed on destruction.
+			this->nativeSocket = ::socket(static_cast<int>(this->family),
+				static_cast<int>(this->type),
+				static_cast<int>(this->protocol));
+			if (!this->nativeSocket) {
+				throw std::runtime_error(
+					"socket failed with code " + std::to_string(this->nativeSocket));
+			}
+		}
+		Socket(const NativeSocket &nativeSocket,
 			Family family = Family::IPV4,
 			Type type = Type::STREAM,
 			Protocol protocol = Protocol::TCP)
 				: nativeSocket(nativeSocket),
 					family(family),
 					type(type),
-					protocol(protocol) {
-			Socket::startup();
-
-			// Unless create is specified.
-			if (create) {
-				this->create();
-			}
-		}
-
-		// Shorthand for calling WSA stuff in Windows and doing nothing otherwise.
-		static void startup() {
+					protocol(protocol) {}
+		~Socket() {
+			// Just ignore the error for noexcept destructors.
 #ifdef RAIN_WINDOWS
-			static bool calledBefore = false;
-			static WSADATA wsaData;
-			if (!calledBefore) {
-				calledBefore = true;
-				int status = WSAStartup(MAKEWORD(2, 2), &wsaData);
-				if (status) {
-					throw std::runtime_error(
-						"WSAStartup failed with code " + std::to_string(status));
-				}
-			}
+			closesocket(this->nativeSocket);
+#else
+			::close(this->nativeSocket);
 #endif
-		}
-		static void cleanup() {
-#ifdef RAIN_WINDOWS
-			int status = WSACleanup();
-			if (status) {
-				throw std::runtime_error(
-					"WSACleanup failed with code " + std::to_string(status));
-			}
-#endif
-		}
-
-		// Initialize this socket if it is invalid, or return the current socket.
-		NativeSocket create() {
-			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
-				this->nativeSocket = ::socket(static_cast<int>(this->family),
-					static_cast<int>(this->type),
-					static_cast<int>(this->protocol));
-				if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
-					throw std::runtime_error(
-						"socket failed with code " + std::to_string(this->nativeSocket));
-				}
-			}
-			return this->nativeSocket;
 		}
 
 		// Platform-agnostic socket operations adapted to the Socket interface.
@@ -101,26 +102,27 @@ namespace Rain::Networking {
 		}
 		void listen(int backlog = 1024) const {
 			int status = ::listen(this->nativeSocket, backlog);
-			if (status != 0) {
+			if (status) {
 				throw std::runtime_error(
 					"listen failed with code " + std::to_string(status));
 			}
 		}
 
 		// Accept uses select to block for new connections.
-		// Timing out will return an invalid socket.
+		// Timing out will throw an error.
 		NativeSocket accept(sockaddr *addr = NULL,
 			socklen_t *addrLen = NULL,
 			std::size_t timeoutMs = 0) const {
 			if (this->blockForSelect(true, timeoutMs)) {
-				return NATIVE_SOCKET_INVALID;
+				throw std::runtime_error("");
 			}
-			NativeSocket newSocket = ::accept(this->nativeSocket, addr, addrLen);
-			if (newSocket == NATIVE_SOCKET_INVALID) {
+			NativeSocket newNativeSocket =
+				::accept(this->nativeSocket, addr, addrLen);
+			if (newNativeSocket == NATIVE_SOCKET_INVALID) {
 				throw std::runtime_error(
-					"accept failed with code " + std::to_string(newSocket));
+					"accept failed with code " + std::to_string(newNativeSocket));
 			}
-			return newSocket;
+			return newNativeSocket;
 		}
 
 		// Block until send all bytes. Uses select to make sure we can write before
@@ -155,7 +157,7 @@ namespace Rain::Networking {
 					len - bytesSent,
 #endif
 					static_cast<int>(flags));
-				if (status == NATIVE_SOCKET_INVALID) {
+				if (status) {
 					throw std::runtime_error(
 						"send failed with code " + std::to_string(status));
 				}
@@ -188,7 +190,7 @@ namespace Rain::Networking {
 				len,
 #endif
 				static_cast<int>(flags));
-			if (status < 0) {
+			if (!status) {
 				throw std::runtime_error(
 					"recv failed with code " + std::to_string(status));
 			} else if (status == 0) {
@@ -197,39 +199,28 @@ namespace Rain::Networking {
 			return status;
 		}
 
-		// Tries to shutdown and then closes. Returns nonzero on error. Shutdown can
-		// fail silently.
-		void close() {
-			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
-				return;
-			}
-
-#ifdef RAIN_WINDOWS
-			::shutdown(this->nativeSocket, SD_BOTH);
-#else
-			::shutdown(this->nativeSocket, SHUT_RDWR);
-#endif
+		// Shutdown read and write on the socket.
+		void shutdown() {
 			int status;
 #ifdef RAIN_WINDOWS
-			status = closesocket(this->nativeSocket);
+			status = ::shutdown(this->nativeSocket, SD_BOTH);
 #else
-			status = ::close(this->nativeSocket);
+			status = ::shutdown(this->nativeSocket, SHUT_RDWR);
 #endif
-			this->nativeSocket = NATIVE_SOCKET_INVALID;
-			if (status == NATIVE_SOCKET_INVALID) {
+			if (status) {
 				throw std::runtime_error(
-					"close or closesocket failed with code " + std::to_string(status));
+					"shutdown failed with code " + std::to_string(status));
 			}
 		}
 
 		// Getters.
-		NativeSocket getNativeSocket() { return this->nativeSocket; }
-		Family getFamily() { return this->family; }
-		Type getType() { return this->type; }
-		Protocol getProtocol() { return this->protocol; }
+		NativeSocket getNativeSocket() const { return this->nativeSocket; }
+		Family getFamily() const { return this->family; }
+		Type getType() const { return this->type; }
+		Protocol getProtocol() const { return this->protocol; }
 
 		private:
-		// Internal socket.
+		// Internal socket parameters.
 		NativeSocket nativeSocket;
 		Family family;
 		Type type;
