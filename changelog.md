@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.2.1
+
+* Switch to WSL from Cygwin.
+
 ## 6.2.0
 
 * Make `Rain::Socket` weakly RAII.
