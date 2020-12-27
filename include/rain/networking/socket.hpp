@@ -4,77 +4,151 @@
 
 #pragma once
 
+#include "../error-exception.hpp"
 #include "../platform.hpp"
 #include "../time.hpp"
 #include "native-socket.hpp"
 #include "node-service-host.hpp"
 
 #include <functional>
-#include <stdexcept>
 
 namespace Rain::Networking {
 	class Socket {
+		// Error handling.
 		public:
-		// Custom types for family, type and protocol.
+		enum class Error {
+			AT_EXIT_REGISTER = 65536,
+			RECV_CLOSE_GRACEFUL,
+			SELECT_ON_INVALID,
+			PERMISSION_DENIED = 13,
+			BROKEN_PIPE = 32,
+			TP_END_DISCONNECTED = 107,
+			WSA_E_INTR = 10004,
+			WSA_E_ACCES = 10013,
+			WSA_E_NOT_SOCK = 10038,
+			WSA_E_NOT_CONN = 10057
+		};
+		class ErrorCategory : public std::error_category {
+			public:
+			const char *name() const noexcept { return "Socket"; }
+			std::string message(int ev) const {
+				switch (static_cast<Error>(ev)) {
+					case Error::AT_EXIT_REGISTER:
+						return "Failed to register `WSACleanup` with `atexit`.";
+					case Error::RECV_CLOSE_GRACEFUL:
+						return "`recv` closed gracefully.";
+					case Error::SELECT_ON_INVALID:
+						return "Attempted to `select` on invalid socket, likely because "
+									 "socket has already been closed.";
+					case Error::PERMISSION_DENIED:
+						return "Permission denied.";
+					case Error::BROKEN_PIPE:
+						return "Broken pipe.";
+					case Error::TP_END_DISCONNECTED:
+						return "Transport endpoint disconnected.";
+					case Error::WSA_E_INTR:
+						return "Interrupted function call.";
+					case Error::WSA_E_ACCES:
+						return "Permission denied.";
+					case Error::WSA_E_NOT_SOCK:
+						return "Socket operation on nonsocket.";
+					case Error::WSA_E_NOT_CONN:
+						return "Socket is not connected.";
+					default:
+						return "Generic.";
+				}
+			}
+			bool equivalent(const std::error_code &code,
+				int condition) const noexcept {
+				return false;
+			}
+		};
+		inline static ErrorCategory errorCategory;
+
+		private:
+		static std::error_condition makeErrorCondition(Error e) {
+			return std::error_condition(static_cast<int>(e), errorCategory);
+		}
+		static Exception makeException(Error e) {
+			return Exception(makeErrorCondition(e));
+		}
+
+		// Family, type, protocol options.
+		public:
 		enum class Family { UNSPEC = AF_UNSPEC, IPV4 = AF_INET };
 		enum class Type { STREAM = SOCK_STREAM, RAW = SOCK_RAW };
 		enum class Protocol { TCP = IPPROTO_TCP, UDP = IPPROTO_UDP };
 
-		// Custom types for send and recv.
-		enum class SendFlag {
-			NONE = 0,
-#ifdef RAIN_WINDOWS
-			NO_SIGNAL = 0,
-#else
-			NO_SIGNAL = MSG_NOSIGNAL,
-#endif
-			NO_ROUTE = MSG_DONTROUTE,
-			OUT_OF_BAND = MSG_OOB
-		};
-		enum class RecvFlag { NONE = 0 };
+		// Internal socket parameters.
+		private:
+		NativeSocket nativeSocket;
+		Family family;
+		Type type;
+		Protocol protocol;
 
-		// Sockets are created anew.
+		// Getters.
+		public:
+		NativeSocket getNativeSocket() const noexcept { return this->nativeSocket; }
+		Family getFamily() const noexcept { return this->family; }
+		Type getType() const noexcept { return this->type; }
+		Protocol getProtocol() const noexcept { return this->protocol; }
+
+		// Constructors and destructors.
+		public:
+		// Registers a new socket with the system.
 		Socket(Family family = Family::IPV4,
 			Type type = Type::STREAM,
 			Protocol protocol = Protocol::TCP)
 				: family(family), type(type), protocol(protocol) {
-			// Call WSA stuff in Windows, and register to call it at program exit too.
+			// Call WSA initializers in Windows, and register to cleanup at program
+			// exit.
 #ifdef RAIN_WINDOWS
 			static bool startupCalledBefore = false;
 			if (!startupCalledBefore) {
 				WSADATA wsaData;
 				startupCalledBefore = true;
 				int status = WSAStartup(MAKEWORD(2, 2), &wsaData);
-				if (status) {
-					throw std::runtime_error(
-						"WSAStartup failed with code " + std::to_string(status));
+				if (status != 0) {
+					throw makeException(static_cast<Error>(status));
 				}
 
-				// Register the cleanup function to be called at program exit.
 				status = atexit([]() {
-					int status = WSACleanup();
-					if (status) {
-						throw std::runtime_error(
-							"WSACleanup failed with code " + std::to_string(status));
+					if (WSACleanup() == NATIVE_SOCKET_ERROR) {
+						throw makeException(static_cast<Error>(WSAGetLastError()));
 					}
 				});
-				if (status) {
-					throw std::runtime_error("atexit(Socket::cleanup) failed with code " +
-						std::to_string(status));
+				if (status != 0) {
+					throw makeException(Error::AT_EXIT_REGISTER);
 				}
 			}
 #endif
 
-			// Create the socket, to be closed on destruction.
+			// Create the socket, to be closed with the system on object destruction.
 			this->nativeSocket = ::socket(static_cast<int>(this->family),
 				static_cast<int>(this->type),
 				static_cast<int>(this->protocol));
-			if (!this->nativeSocket) {
-				throw std::runtime_error(
-					"socket failed with code " + std::to_string(this->nativeSocket));
+			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
 			}
 		}
-		Socket(const NativeSocket &nativeSocket,
+		~Socket() {
+			// nativeSocket may be invalid after a move constructor.
+			if (this->nativeSocket != NATIVE_SOCKET_INVALID) {
+				// Ignore any errors or exceptions since destructors are noexcept.
+				try {
+					close();
+				} catch (...) {
+				}
+			}
+		}
+
+		// Protected constructor allows for accept factory to create new Sockets.
+		protected:
+		Socket(NativeSocket nativeSocket,
 			Family family = Family::IPV4,
 			Type type = Type::STREAM,
 			Protocol protocol = Protocol::TCP)
@@ -82,151 +156,23 @@ namespace Rain::Networking {
 					family(family),
 					type(type),
 					protocol(protocol) {}
-		~Socket() {
-			// Just ignore the error for noexcept destructors.
-#ifdef RAIN_WINDOWS
-			closesocket(this->nativeSocket);
-#else
-			::close(this->nativeSocket);
-#endif
-		}
 
-		// Platform-agnostic socket operations adapted to the Socket interface.
-		void connect(const Host &host) const {
-			this->connectOrBind(
-				host, [](addrinfo *) {}, ::connect);
-		}
-		void bind(const Host &host) const {
-			this->connectOrBind(
-				host, [](addrinfo *hints) { hints->ai_flags = AI_PASSIVE; }, ::bind);
-		}
-		void listen(int backlog = 1024) const {
-			int status = ::listen(this->nativeSocket, backlog);
-			if (status) {
-				throw std::runtime_error(
-					"listen failed with code " + std::to_string(status));
-			}
-		}
+		// RAII: Explicitly forbid the copy constructor and the assignment operator.
+		public:
+		Socket(const Socket &) = delete;
+		Socket &operator=(Socket const &) = delete;
 
-		// Accept uses select to block for new connections.
-		// Timing out will throw an error.
-		NativeSocket accept(sockaddr *addr = NULL,
-			socklen_t *addrLen = NULL,
-			std::size_t timeoutMs = 0) const {
-			if (this->blockForSelect(true, timeoutMs)) {
-				throw std::runtime_error("");
-			}
-			NativeSocket newNativeSocket =
-				::accept(this->nativeSocket, addr, addrLen);
-			if (newNativeSocket == NATIVE_SOCKET_INVALID) {
-				throw std::runtime_error(
-					"accept failed with code " + std::to_string(newNativeSocket));
-			}
-			return newNativeSocket;
-		}
+		// Move constructor is the preferred way of constructing with Socket
+		// returned from accept.
+		Socket(Socket &&o) noexcept
+				: nativeSocket(std::exchange(o.nativeSocket, NATIVE_SOCKET_INVALID)),
+					family(o.family),
+					type(o.type),
+					protocol(o.protocol) {}
 
-		// Block until send all bytes. Uses select to make sure we can write before
-		// we try. Returns number of bytes sent (may be different from intended if
-		// using timeout).
-		std::size_t send(const char *msg,
-			std::size_t len = 0,
-			SendFlag flags = SendFlag::NO_SIGNAL,
-			std::size_t timeoutMs = 0) const {
-			if (len == 0) {
-				len = strlen(msg);
-			}
-
-			std::size_t bytesSent = 0;
-			auto timeoutTime =
-				std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
-			while (bytesSent != len) {
-				if (this->blockForSelect(false,
-							timeoutMs == 0
-								? 0
-								: std::chrono::duration_cast<std::chrono::milliseconds>(
-										timeoutTime - std::chrono::steady_clock::now())
-										.count())) {
-					break;
-				}
-				int status = ::send(this->nativeSocket,
-#ifdef RAIN_WINDOWS
-					msg + bytesSent,
-					static_cast<int>(len - bytesSent),
-#else
-					reinterpret_cast<const void *>(msg + bytesSent),
-					len - bytesSent,
-#endif
-					static_cast<int>(flags));
-				if (status) {
-					throw std::runtime_error(
-						"send failed with code " + std::to_string(status));
-				}
-				bytesSent += static_cast<std::size_t>(status);
-			}
-			return bytesSent;
-		}
-		std::size_t send(const std::string &s,
-			SendFlag flags = SendFlag::NO_SIGNAL,
-			std::size_t timeoutMs = 0) const {
-			return this->send(s.c_str(), s.length(), flags, timeoutMs);
-		}
-
-		// Block until recv some bytes, or exception if something went wrong.
-		// Uses select to block to correctly break block if socket closed.
-		// Returns number of bytes received, 0 on timeout.
-		std::size_t recv(char *buf,
-			std::size_t len,
-			RecvFlag flags = RecvFlag::NONE,
-			std::size_t timeoutMs = 0) const {
-			if (this->blockForSelect(true, timeoutMs)) {
-				return 0;
-			}
-			int status = ::recv(this->nativeSocket,
-#ifdef RAIN_WINDOWS
-				buf,
-				static_cast<int>(len),
-#else
-				reinterpret_cast<void *>(buf),
-				len,
-#endif
-				static_cast<int>(flags));
-			if (!status) {
-				throw std::runtime_error(
-					"recv failed with code " + std::to_string(status));
-			} else if (status == 0) {
-				throw std::runtime_error("recv closed gracefully.");
-			}
-			return status;
-		}
-
-		// Shutdown read and write on the socket.
-		void shutdown() {
-			int status;
-#ifdef RAIN_WINDOWS
-			status = ::shutdown(this->nativeSocket, SD_BOTH);
-#else
-			status = ::shutdown(this->nativeSocket, SHUT_RDWR);
-#endif
-			if (status) {
-				throw std::runtime_error(
-					"shutdown failed with code " + std::to_string(status));
-			}
-		}
-
-		// Getters.
-		NativeSocket getNativeSocket() const { return this->nativeSocket; }
-		Family getFamily() const { return this->family; }
-		Type getType() const { return this->type; }
-		Protocol getProtocol() const { return this->protocol; }
-
+		// Connect and bind.
 		private:
-		// Internal socket parameters.
-		NativeSocket nativeSocket;
-		Family family;
-		Type type;
-		Protocol protocol;
-
-		// Shared code for bind and connect.
+		// Shared code
 		void connectOrBind(const Host &host,
 			std::function<void(addrinfo *)> setHints,
 			std::function<int(NativeSocket, sockaddr *, int)> action) const {
@@ -240,8 +186,7 @@ namespace Rain::Networking {
 			int status = getaddrinfo(
 				host.node.getCStr(), host.service.getCStr(), &hints, &result);
 			if (status != 0) {
-				throw std::runtime_error(
-					"getaddrinfo failed with code " + std::to_string(status));
+				throw makeException(static_cast<Error>(status));
 			}
 
 			// Try all the addresses we found.
@@ -256,34 +201,230 @@ namespace Rain::Networking {
 				curAddr = curAddr->ai_next;
 			}
 			freeaddrinfo(result);
-			if (status != 0) {
-				throw std::runtime_error(
-					"connect or bind failed with code " + std::to_string(status));
+			if (status == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
 			}
 		}
 
-		// Returns true if terminated on timeout. By default, blocks without
-		// timeout.
-		bool blockForSelect(bool read, std::size_t timeoutMs = 0) const {
+		public:
+		void connect(const Host &host) const {
+			this->connectOrBind(
+				host, [](addrinfo *) {}, ::connect);
+		}
+		void bind(const Host &host) const {
+			this->connectOrBind(
+				host, [](addrinfo *hints) { hints->ai_flags = AI_PASSIVE; }, ::bind);
+		}
+
+		// Listen.
+		public:
+		void listen(int backlog = SOMAXCONN) const {
+			if (::listen(this->nativeSocket, backlog) == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
+			}
+		}
+
+		private:
+		// Convenience function for optionally-blocking functions. Returns true if
+		// terminated on timeout. By default, blocks without timeout.
+		// Throws an exception if nativeSocket is invalid (socket has been closed).
+		bool blockForSelect(bool read,
+			const std::chrono::milliseconds &timeoutMs) const {
+			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
+				throw makeException(Error::SELECT_ON_INVALID);
+			}
 			fd_set fds;
 			FD_ZERO(&fds);
 			FD_SET(this->nativeSocket, &fds);
 			timeval tv;
-			tv.tv_sec = static_cast<long>(timeoutMs) / 1000;
-			tv.tv_usec = (timeoutMs % 1000) * 1000;
+			tv.tv_sec = static_cast<long>(timeoutMs.count()) / 1000;
+			tv.tv_usec = (timeoutMs.count() % 1000) * 1000;
 			int status = select(static_cast<int>(this->nativeSocket) + 1,
 				read ? &fds : NULL,
 				read ? NULL : &fds,
 				&fds,
-				timeoutMs == 0 ? NULL : &tv);
+				timeoutMs.count() == 0 ? NULL : &tv);
 			if (status == 0) {	// Timeout.
 				return true;
-			} else if (status == NATIVE_SOCKET_INVALID) {
-				// Error with select.
-				throw std::runtime_error(
-					"select failed with code " + std::to_string(NATIVE_SOCKET_INVALID));
+			} else if (status == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
 			}
+			// Not timeout.
 			return false;
 		}
+
+		// Accept uses select to block for new connections.
+		// Timing out will return an invalid Socket.
+		public:
+		Socket accept(sockaddr *addr = NULL,
+			socklen_t *addrLen = NULL,
+			const std::chrono::milliseconds &timeoutMs =
+				std::chrono::milliseconds::zero()) const {
+			if (this->blockForSelect(true, timeoutMs)) {
+				return Socket(NATIVE_SOCKET_INVALID, family, type, protocol);
+			}
+			NativeSocket newNativeSocket =
+				::accept(this->nativeSocket, addr, addrLen);
+			if (newNativeSocket == NATIVE_SOCKET_INVALID) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
+			}
+			return Socket(newNativeSocket, family, type, protocol);
+		}
+
+		// Custom types for send and recv flags.
+		public:
+		enum class SendFlag {
+			NONE = 0,
+#ifdef RAIN_WINDOWS
+			NO_SIGNAL = 0,
+#else
+			NO_SIGNAL = MSG_NOSIGNAL,
+#endif
+			NO_ROUTE = MSG_DONTROUTE,
+			OUT_OF_BAND = MSG_OOB
+		};
+		enum class RecvFlag { NONE = 0 };
+
+		// Send and recv.
+		public:
+		// Block until send all bytes. Uses select to make sure we can write before
+		// we try. Returns number of bytes sent (may be different from intended if
+		// using timeout).
+		std::size_t send(const char *msg,
+			std::size_t len = 0,
+			SendFlag flags = SendFlag::NONE,
+			const std::chrono::milliseconds &timeoutMs =
+				std::chrono::milliseconds::zero()) const {
+			if (len == 0) {
+				len = strlen(msg);
+			}
+
+			std::size_t bytesSent = 0;
+			std::chrono::steady_clock::time_point timeoutTime =
+				std::chrono::steady_clock::now() + timeoutMs;
+			while (bytesSent != len) {
+				if (this->blockForSelect(false,
+							timeoutMs.count() == 0
+								? std::chrono::milliseconds::zero()
+								: std::chrono::duration_cast<std::chrono::milliseconds>(
+										timeoutTime - std::chrono::steady_clock::now()))) {
+					break;
+				}
+				int status = ::send(this->nativeSocket,
+#ifdef RAIN_WINDOWS
+					msg + bytesSent,
+					static_cast<int>(len - bytesSent),
+#else
+					reinterpret_cast<const void *>(msg + bytesSent),
+					len - bytesSent,
+#endif
+					static_cast<int>(flags));
+				if (status == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+					throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+					throw makeException(static_cast<Error>(errno));
+#endif
+				}
+				bytesSent += static_cast<std::size_t>(status);
+			}
+			return bytesSent;
+		}
+		std::size_t send(const std::string &s,
+			std::size_t len = 0,
+			SendFlag flags = SendFlag::NONE,
+			const std::chrono::milliseconds &timeoutMs =
+				std::chrono::milliseconds::zero()) const {
+			return this->send(s.c_str(), s.length(), flags, timeoutMs);
+		}
+
+		// Block until recv some bytes, or exception if something went wrong.
+		// Uses select to block to correctly break block if socket closed.
+		// Returns positive number of bytes received, or 0 if timed out.
+		std::size_t recv(char *buf,
+			std::size_t len,
+			RecvFlag flags = RecvFlag::NONE,
+			const std::chrono::milliseconds &timeoutMs =
+				std::chrono::milliseconds::zero()) const {
+			if (this->blockForSelect(true, timeoutMs)) {
+				return 0;
+			}
+			int status = ::recv(this->nativeSocket,
+#ifdef RAIN_WINDOWS
+				buf,
+				static_cast<int>(len),
+#else
+				reinterpret_cast<void *>(buf),
+				len,
+#endif
+				static_cast<int>(flags));
+			if (status == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
+			} else if (status == 0) {
+				throw makeException(Error::RECV_CLOSE_GRACEFUL);
+			}
+			return status;
+		}
+
+		// Manually shutdown read and write or close listening sockets.
+		public:
+		void shutdown() const {
+			int status;
+#ifdef RAIN_WINDOWS
+			status = ::shutdown(this->nativeSocket, SD_BOTH);
+#else
+			status = ::shutdown(this->nativeSocket, SHUT_RDWR);
+#endif
+			if (status == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
+			}
+		}
+		void close() {
+			int status;
+#ifdef RAIN_WINDOWS
+			status = closesocket(this->nativeSocket);
+#else
+			status = ::close(this->nativeSocket);
+#endif
+			if (status == NATIVE_SOCKET_ERROR) {
+#ifdef RAIN_WINDOWS
+				throw makeException(static_cast<Error>(WSAGetLastError()));
+#else
+				throw makeException(static_cast<Error>(errno));
+#endif
+			}
+			this->nativeSocket = NATIVE_SOCKET_INVALID;
+		}
 	};
+}
+
+// Error handling, continued.
+namespace std {
+	template <>
+	struct is_error_condition_enum<Rain::Networking::Socket::Error>
+			: public true_type {};
 }

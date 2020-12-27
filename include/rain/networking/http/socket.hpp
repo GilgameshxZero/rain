@@ -5,10 +5,11 @@
 
 namespace Rain::Networking::Http {
 	// Base class for HttpClient and HttpServerSlave.
-	class Socket : public Networking::Socket {
+	class Socket : virtual public Networking::Socket {
 		public:
 		Socket() : Networking::Socket() {}
-		Socket(const Networking::Socket &socket) : Networking::Socket(socket) {}
+		Socket(Networking::Socket &socket)
+				: Networking::Socket(std::move(socket)) {}
 
 		// Send either a request or a response.
 		// This will modify body, so it cannot be passed as const reference.

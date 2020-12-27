@@ -1,4 +1,7 @@
-#include <rain.hpp>
+#include <rain/algorithm/kmp.hpp>
+
+#include <iostream>
+#include <vector>
 
 int main() {
 	std::string s = "PARTICIPATE IN PARACHUTE ";

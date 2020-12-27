@@ -5,82 +5,56 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::Smtp {
-	// Forward declaration.
-	template <typename DataType = void *>
-	class Server;
-
-	template <typename DataType>
-	class ServerSlave : public Smtp::Socket,
-											public CustomServerSlave<Smtp::Server<DataType>,
-												Smtp::ServerSlave<DataType>,
-												DataType> {
+	// Both base classes virtually inherit Socket, so there will only be one copy.
+	template <typename ServerType, typename SlaveType, typename DataType>
+	class ServerSlave
+			: public Networking::ServerSlave<ServerType, SlaveType, DataType>,
+				public Smtp::Socket {
 		public:
-		typedef CustomServerSlave<Smtp::Server<DataType>,
-			Smtp::ServerSlave<DataType>,
-			DataType>
-			CustomServerSlaveBase;
+		typedef Networking::ServerSlave<ServerType, SlaveType, DataType>
+			ServerSlaveBase;
+		ServerSlave(Networking::Socket &socket, ServerType *server)
+				: Networking::Socket(std::move(socket)),
+					ServerSlaveBase(socket, server),
+					Smtp::Socket(socket) {}
 
-		// Buffer used internally by Server.
+		// Buffer used internally by Slave.
 		std::size_t bufSz = 0;
 		char *buf = NULL;
 
-		ServerSlave(const Networking::Socket &socket,
-			Smtp::Server<DataType> *server)
-				: Smtp::Socket(socket), CustomServerSlaveBase(socket, server) {}
-
-		// Public interfaces for protected functions we want to expose.
-		void send(Request *req) const { Smtp::Socket::send(req); }
-		void send(Response *res) const { Smtp::Socket::send(res); }
-		std::size_t send(const char *msg,
-			std::size_t len = 0,
-			SendFlag flags = SendFlag::NO_SIGNAL,
-			std::size_t timeoutMs = 0) const {
-			return CustomServerSlaveBase::send(msg, len, flags, timeoutMs);
-		}
-		std::size_t send(const std::string &s,
-			SendFlag flags = SendFlag::NO_SIGNAL,
-			std::size_t timeoutMs = 0) const {
-			return CustomServerSlaveBase::send(s, flags, timeoutMs);
-		}
-		std::size_t recv(char *buf,
-			std::size_t len,
-			RecvFlag flags = RecvFlag::NONE,
-			std::size_t timeoutMs = 0) const {
-			return CustomServerSlaveBase::recv(buf, len, flags, timeoutMs);
-		}
-		void shutdown() { CustomServerSlaveBase::shutdown(); }
-		NativeSocket getNativeSocket() {
-			return CustomServerSlaveBase::getNativeSocket();
-		}
+		// Ambiguity resolution via exposure.
+		using ServerSlaveBase::send;
+		using Smtp::Socket::send;
 	};
 
-	template <typename DataType>
-	class Server : private Smtp::Socket,
-								 private CustomServer<Smtp::ServerSlave<DataType>> {
+	template <typename SlaveType>
+	class Server : public Networking::Server<SlaveType>, protected Http::Socket {
 		public:
 		// Shorthand.
-		typedef Smtp::ServerSlave<DataType> Slave;
-		typedef CustomServer<Slave> CustomServerBase;
+		typedef Networking::Server<SlaveType> ServerBase;
+
+		// If server is closed, can take up to this much time for threads to stop.
+		std::chrono::milliseconds recvTimeoutMs{1000};
 
 		// Request and response with a slave socket.
 		class Payload {
 			public:
-			Slave *slave;
+			SlaveType *slave;
 
-			Payload(Slave *slave = NULL) : slave(slave) {}
+			Payload(SlaveType *slave = NULL) : slave(slave) {}
 		};
 		class Request : public Payload, public Smtp::Request {
 			public:
 			typedef std::function<void(Request *)> Handler;
 
-			Request(Slave *slave) : Server::Payload(slave), Smtp::Request("", "") {}
+			Request(SlaveType *slave) : Server::Payload(slave), Smtp::Request("", "") {}
 			void send() { this->slave->send(this); }
 		};
 		class Response : public Payload, public Smtp::Response {
 			public:
 			typedef std::function<void(Response *)> Handler;
 
-			Response(Slave *slave,
+			Response(SlaveType *slave,
 				std::size_t code = 250,
 				const std::string &parameter = "")
 					: Server::Payload(slave), Smtp::Response(code, parameter) {}
@@ -88,58 +62,12 @@ namespace Rain::Networking::Smtp {
 		};
 
 		// Default handlers.
-		typename CustomServerBase::Handler onRequestOverflow = [](Slave *slave) {
-			Rain::Networking::Smtp::Response res(500, "request too long");
-			slave->send(&res);
-		};
-		typename Request::Handler onRequest = [](Request *) {};
-		typename CustomServerBase::Handler onNewSlave = [](Slave *) {};
-		typename CustomServerBase::Handler onBeginSlaveTask = [](Slave *) {};
-		typename CustomServerBase::Handler onCloseSlave = [](Slave *) {};
-		typename CustomServerBase::Handler onDeleteSlave = [](Slave *) {};
-
-		// Max amount of time to wait on each recv.
-		std::size_t recvTimeoutMs = 5000;
-
-		// Constructor and destructor. Socket is initialized in CustomServer.
-		Server(std::size_t maxThreads = 0, std::size_t slaveBufSz = 16384)
-				: Smtp::Socket(), CustomServerBase(maxThreads), slaveBufSz(slaveBufSz) {
-			CustomServerBase::onNewSlave = [](Slave *slave) {
-				slave->server->onNewSlave(slave);
-			};
-			CustomServerBase::onBeginSlaveTask = handleBeginSlaveTask;
-			CustomServerBase::onCloseSlave = [](Slave *slave) {
-				slave->server->onCloseSlave(slave);
-			};
-			CustomServerBase::onDeleteSlave = [](Slave *slave) {
-				slave->server->onDeleteSlave(slave);
-			};
-
-			CustomServerBase::getSubclassPtr = [this]() { return this; };
-		}
-		~Server() {
-			// This subclass gets destructed before superclass if we don't block for
-			// all tasks.
-			CustomServerBase::threadPool.blockForTasks();
-		}
-
-		// Expose interfaces of CustomServer.
-		std::size_t &acceptTimeoutMs = CustomServerBase::acceptTimeoutMs;
-
-		void serve(const Host &host, bool blocking = true, int backlog = 1024) {
-			CustomServerBase::serve(host, blocking, backlog);
-		}
-		void shutdown() { CustomServerBase::shutdown(); }
-		Host::Service getService() { return CustomServerBase::getService(); }
-
 		protected:
-		// Size of header-parse and body buffers in each of the slaves.
-		const std::size_t slaveBufSz;
-
-		// Smtp parsing and response handling.
-		inline static void handleBeginSlaveTask(Slave *slave) {
-			slave->server->onBeginSlaveTask(slave);
-
+		virtual void *getSubclassPtr() { return reinterpret_cast<void *>(this); }
+		virtual void onBeginSlaveTask(SlaveType *) {}
+		void onSlaveTask(SlaveType *slave) {
+			this->onBeginSlaveTask(slave);
+			
 			// Buffer for header & body parsing.
 			slave->bufSz = slave->server->slaveBufSz;
 			slave->buf = new char[slave->bufSz];
@@ -159,7 +87,7 @@ namespace Rain::Networking::Smtp {
 
 				// TODO: Pass onto other handlers.
 				try {
-					slave->server->onRequest(&req);
+					this->onRequest(&req);
 				} catch (...) {
 					// Any error while handling request should just close connection.
 					break;
@@ -169,10 +97,24 @@ namespace Rain::Networking::Smtp {
 			// Free slave buffer space.
 			delete[] slave->buf;
 		}
+		virtual void onRequestOverflow(SlaveType *slave) {
+			Rain::Networking::Smtp::Response res(500, "request too long");
+			slave->send(&res);
+		}
+		virtual void onRequest(Request *) {}
 
+		// Size of header-parse and body buffers in each of the slaves.
+		const std::size_t slaveBufSz;
+
+		// Constructor.
+		public:
+		Server(std::size_t maxThreads = 0, std::size_t slaveBufSz = 16384)
+				: ServerBase(maxThreads), slaveBufSz(slaveBufSz) {}
+
+		protected:
 		// Given a slave socket, wait until the socket is closed or we have parsed a
 		// request. Returns nonzero if error.
-		inline static int parseRequest(Request &req) {
+		int parseRequest(Request &req) {
 			// Constants for KMP.
 			static const char *CRLF = "\r\n";
 			static const std::size_t PART_MATCH_CRLF[] = {
@@ -198,7 +140,7 @@ namespace Rain::Networking::Smtp {
 				std::size_t recvLen = req.slave->recv(curRecv,
 					bufRemaining,
 					RecvFlag::NONE,
-					req.slave->server->recvTimeoutMs);
+					this->recvTimeoutMs);
 				if (recvLen == 0) {	 // Graceful exit.
 					return -1;
 				}

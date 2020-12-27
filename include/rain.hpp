@@ -6,19 +6,25 @@
 #define _GNU_SOURCE
 #endif
 
+// Necessary for SMTP library compatibility.
+#ifdef UNICODE
+#undef UNICODE
+#endif
+
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
-#define RAIN_VERSION_MINOR 2
-#define RAIN_VERSION_REVISION 1
+#define RAIN_VERSION_MINOR 3
+#define RAIN_VERSION_REVISION 0
 
 #include "rain/build.hpp"
 
 #include "rain/algorithm/kmp.hpp"
 #include "rain/algorithm/lru.hpp"
+#include "rain/error-exception.hpp"
 #include "rain/filesystem.hpp"
 #include "rain/gdiplus.hpp"
 #include "rain/memmem.hpp"
-#include "rain/networking/custom-server.hpp"
+#include "rain/networking/client.hpp"
 #include "rain/networking/http/body.hpp"
 #include "rain/networking/http/client.hpp"
 #include "rain/networking/http/header.hpp"

@@ -13,19 +13,34 @@
 #include <netinet/in.h>
 #include <resolv.h>
 #include <sys/types.h>
+
+// Compatibility layer for outdated arpa/nameser.h implementations on MacOS.
+// TODO: Make this robust to other options.
+#ifndef MAXDNAME
+#define MAXDNAME NI_MAXHOST
+#endif
+#ifndef C_IN
+#define C_IN 1
+#endif
+#ifndef T_MX
+#define T_MX 15
+#endif
 #endif
 
 namespace Rain::Networking::Smtp {
-	class Client : protected Smtp::Socket {
+	class Client : virtual protected Smtp::Socket {
+		private:
+		std::size_t bufSz;
+		char *buffer;
+
 		public:
-		Client(std::size_t bufSz = 16384)
-				: Smtp::Socket(),
-					bufSz(bufSz) {
+		Client(std::size_t bufSz = 16384) : Smtp::Socket(), bufSz(bufSz) {
 			this->buffer = new char[bufSz];
 		}
 		~Client() { delete[] this->buffer; }
 
-		std::size_t recvTimeoutMs = 5000;
+		// If server is closed, can take up to this much time for threads to stop.
+		std::chrono::milliseconds recvTimeoutMs{1000};
 
 		int connectDomain(const std::string &domain) {
 			// Get SMTP server addresses.
@@ -162,8 +177,7 @@ namespace Rain::Networking::Smtp {
 			// State of newline search.
 			std::size_t kmpCand = 0;
 			char *curRecv = this->buffer,	 // Last search position.
-				*curParse = this->buffer,
-				*newline;
+				*curParse = this->buffer, *newline;
 			bool isLastLine;
 
 			// Keep on calling recv until we find get the full response.
@@ -180,8 +194,9 @@ namespace Rain::Networking::Smtp {
 				}
 
 				// Look to parse an additional line.
-				while ((newline = Algorithm::cStrSearchKMP(
-					curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand)) != NULL) {
+				while (
+					(newline = Algorithm::cStrSearchKMP(
+						 curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand)) != NULL) {
 					// Found full line since curParse.
 					isLastLine = curParse[3] == ' ';
 					curParse[3] = '\0';
@@ -216,9 +231,5 @@ namespace Rain::Networking::Smtp {
 
 			return 0;
 		}
-
-		private:
-		std::size_t bufSz;
-		char *buffer;
 	};
 }

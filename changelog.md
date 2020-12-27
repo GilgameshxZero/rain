@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.3.0
+
+* Make `Socket` RAII by implementing move constructors.
+* Removed Unicode specification in VS test projects.
+* Added custom error/exception handling to `Rain`.
+* Fix builds on `MacOS`.
+* Rework inheritance model of `Socket` subclasses.
+* Make `socket-server` test much more comprehensive.
+
 ## 6.2.1
 
 * Switch to WSL from Cygwin.

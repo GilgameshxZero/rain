@@ -5,13 +5,11 @@
 #include "payload-request-response.hpp"
 
 namespace Rain::Networking::Smtp {
-	class Socket : public Networking::Socket {
+	class Socket : virtual public Networking::Socket {
 		public:
-		Socket(Family family = Socket::Family::IPV4,
-			Type type = Socket::Type::STREAM,
-			Protocol protocol = Socket::Protocol::TCP)
-				: Networking::Socket(family, type, protocol) {}
-		Socket(const Networking::Socket &socket) : Networking::Socket(socket) {}
+		Socket() : Networking::Socket() {}
+		Socket(Networking::Socket &socket)
+				: Networking::Socket(std::move(socket)) {}
 
 		// Send either a request or a response.
 		void send(Request *req) const {
@@ -40,16 +38,8 @@ namespace Rain::Networking::Smtp {
 				Networking::Socket::send("\r\n");
 			}
 		}
-		std::size_t send(const char *msg,
-			std::size_t len = 0,
-			SendFlag flags = SendFlag::NO_SIGNAL,
-			std::size_t timeoutMs = 0) const {
-			return Networking::Socket::send(msg, len, flags, timeoutMs);
-		}
-		std::size_t send(const std::string &s,
-			SendFlag flags = SendFlag::NO_SIGNAL,
-			std::size_t timeoutMs = 0) const {
-			return Networking::Socket::send(s, flags, timeoutMs);
-		}
+
+		// Ambiguity resolution via exposure.
+		using Networking::Socket::send;
 	};
 }
