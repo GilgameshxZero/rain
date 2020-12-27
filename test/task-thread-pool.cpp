@@ -1,4 +1,7 @@
-#include <rain.hpp>
+#include <rain/thread-pool.hpp>
+
+#include <iostream>
+#include <sstream>
 
 int main() {
 	// An integer, to do work on, and a mutex to lock the integer counter.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cuchar>
+#include <cstdlib>
 
 namespace Rain {
 	typedef int errno_t;

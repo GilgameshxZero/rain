@@ -1,4 +1,6 @@
-#include "rain.hpp"
+#include <rain/string/command-line-parser.hpp>
+
+#include <iostream>
 
 int main() {
 	Rain::String::CommandLineParser parser;

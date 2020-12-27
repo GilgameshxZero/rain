@@ -21,9 +21,15 @@ TEST_BIN := $(addprefix $(BIN_DIR), $(TEST_NAME))
 
 # Flags for build. Release by default.
 CXX := g++
-CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -lstdc++fs -lresolv -g -Wall -pthread
+CXXFLAG := -I$(INCLUDE_DIR) -std=c++17 -g -Wall -pthread -lresolv
 CXXFLAG_DEBUG := -O0
 CXXFLAG_RELEASE := -O3 -march=native
+
+# OS-specific behavior.
+UNAME_S := $(shell uname -s)
+ifneq ($(UNAME_S), Darwin)
+	CXXFLAG := $(CXXFLAG) -lstdc++fs
+endif
 
 # Check if DEBUG=1 is set.
 ifeq ($(DEBUG), 1)

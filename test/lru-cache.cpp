@@ -1,4 +1,6 @@
-#include "rain.hpp"
+#include <rain/algorithm/lru.hpp>
+
+#include <iostream>
 
 int main() {
 	Rain::Algorithm::LRUCache<int, int> cache(2);

@@ -10,7 +10,7 @@
 #include <queue>
 
 namespace Rain::Networking::Http {
-	// TODO: refactor this.
+	// TODO: Is this functional formulation optimal?
 	class Body {
 		public:
 		// Generates some body bytes.

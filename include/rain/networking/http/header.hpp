@@ -7,6 +7,7 @@
 #include <map>
 
 namespace Rain::Networking::Http {
+	// Case-agnostic key comparison.
 	struct HeaderStrCmp {
 		bool operator()(const std::string &left, const std::string &right) const {
 #ifdef RAIN_WINDOWS
