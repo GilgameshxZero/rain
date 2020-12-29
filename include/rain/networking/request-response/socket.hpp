@@ -16,7 +16,7 @@ namespace Rain::Networking::RequestResponse {
 		// Need to define default constructor on this virtual base class to ensure
 		// that subclasses can more easily declare default constructors via `using`.
 		Socket(const std::chrono::milliseconds &RECV_TIMEOUT_MS =
-						 std::chrono::milliseconds(1000),
+						 std::chrono::milliseconds(60000),
 			std::size_t BUF_SZ = 16384)
 				: Networking::Socket(),
 					RECV_TIMEOUT_MS(RECV_TIMEOUT_MS),

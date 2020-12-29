@@ -28,7 +28,7 @@ namespace Rain::Networking::Smtp {
 		std::string verb;
 
 		Request(const std::string &verb = "EHLO", const std::string &parameter = "")
-				: Payload(parameter), verb(verb) {}
+				: Payload(parameter), overflowed(false), verb(verb) {}
 
 		// Superclass behavior.
 		bool sendWith(

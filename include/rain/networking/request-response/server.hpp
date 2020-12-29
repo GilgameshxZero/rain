@@ -13,7 +13,7 @@ namespace Rain::Networking::RequestResponse {
 		// use in onServerAccept.
 		Slave(Networking::Socket &socket,
 			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(1000),
+				std::chrono::milliseconds(60000),
 			std::size_t BUF_SZ = 16384)
 				: Networking::Socket(std::move(socket)),
 					RequestResponse::Socket<RequestType, ResponseType>(socket,
@@ -47,7 +47,7 @@ namespace Rain::Networking::RequestResponse {
 		public:
 		Server(std::size_t maxThreads = 1024,
 			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(1000),
+				std::chrono::milliseconds(60000),
 			std::size_t BUF_SZ = 16384)
 				: Networking::Socket(),
 					RequestResponse::Socket<RequestType, ResponseType>(RECV_TIMEOUT_MS,

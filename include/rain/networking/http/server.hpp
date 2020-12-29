@@ -12,7 +12,7 @@ namespace Rain::Networking::Http {
 		// Networking::Socket constructor.
 		Slave(Networking::Socket &socket,
 			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(1000),
+				std::chrono::milliseconds(60000),
 			std::size_t BUF_SZ = 16384)
 				: Networking::Socket(std::move(socket)),
 					RequestResponse::Socket<Request, Response>(socket,

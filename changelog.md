@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.4.1
+
+* Increase default `RECV_TIMEOUT_MS` to `60000` from `1000`.
+
 ## 6.4.0
 
 * Don't sort `using` in `.clang-format`.
