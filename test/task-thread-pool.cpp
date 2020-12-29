@@ -7,12 +7,12 @@ int main() {
 	// An integer, to do work on, and a mutex to lock the integer counter.
 	std::atomic_size_t count = 0;
 
-	Rain::ThreadPool::Task::Executor executor = [](void *param) {
+	Rain::ThreadPool<>::Task::Executor executor = [](void *param) {
 		Rain::Time::sleepMs(500);
 		++(*reinterpret_cast<std::atomic_size_t *>(param));
 		Rain::Time::sleepMs(500);
 	};
-	Rain::ThreadPool::Task::Executor printExecutor = [](void *param) {
+	Rain::ThreadPool<>::Task::Executor printExecutor = [](void *param) {
 		Rain::Time::sleepMs(500);
 		std::stringstream ss;
 		ss << ++(*reinterpret_cast<std::atomic_size_t *>(param)) << "\n";
@@ -22,7 +22,7 @@ int main() {
 	void *param = reinterpret_cast<void *>(&count);
 
 	{
-		Rain::ThreadPool threadPool(8);
+		Rain::ThreadPool<> threadPool(8);
 		std::cout << "Limited to 8 threads, incrementing by 25." << std::endl;
 		for (std::size_t a = 0; a < 25; a++) {
 			threadPool.queueTask(printExecutor, param);
@@ -35,7 +35,7 @@ int main() {
 	}
 
 	{
-		Rain::ThreadPool unlimitedThreadPool;
+		Rain::ThreadPool<> unlimitedThreadPool;
 		std::cout << "Unlimited threads, incrementing by 25." << std::endl;
 		for (std::size_t a = 0; a < 25; a++) {
 			unlimitedThreadPool.queueTask(executor, param);
@@ -48,7 +48,7 @@ int main() {
 	}
 
 	{
-		Rain::ThreadPool bigThreadPool(2048);
+		Rain::ThreadPool<> bigThreadPool(2048);
 		std::cout << "2048 threads, incrementing by 4000." << std::endl;
 		for (std::size_t a = 0; a < 4000; a++) {
 			try {

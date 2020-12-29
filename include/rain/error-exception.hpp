@@ -11,13 +11,17 @@
 namespace Rain {
 	class Exception : public std::exception {
 		public:
+		Exception(const std::error_condition &ec)
+				: ec(ec),
+					whatStr(std::string(this->ec.category().name()) + " (" +
+						std::to_string(this->ec.value()) +
+						"): " + this->ec.category().message(this->ec.value())) {}
+
 		const char *what() const noexcept { return this->whatStr.c_str(); }
-		Exception(const std::error_condition &ec) {
-			this->whatStr = std::string(ec.category().name()) + " (" +
-				std::to_string(ec.value()) + "): " + ec.category().message(ec.value());
-		}
+		const std::error_condition getErrorCondition() { return this->ec; }
 
 		private:
-		std::string whatStr;
+		const std::error_condition ec;
+		const std::string whatStr;
 	};
 }

@@ -15,22 +15,42 @@
 
 namespace Rain {
 	// Shares threads among function tasks to minimize impact of thread
+	template <typename ExecutorParamType = void *>
 	class ThreadPool {
 		public:
-		struct Task {
+		class Task {
+			public:
 			// Using std::function lets us capture with lambdas.
-			typedef std::function<void(void *)> Executor;
+			typedef std::function<void(ExecutorParamType)> Executor;
 
-			Task(Executor executor = NULL, void *param = NULL)
+			Task(Executor executor, ExecutorParamType param)
 					: executor(executor), param(param) {}
 
 			Executor executor;
-			void *param;
+			ExecutorParamType param;
 		};
 
+		private:
+		// Threads quit if the newTaskCV is triggered and this is true.
+		std::atomic_bool destructing = false;
+
+		// Track threads.
+		std::atomic_size_t maxThreads = 0;
+		std::atomic_size_t cFreeThreads =
+			0;	// A thread is free if it isn't in its executor.
+		std::mutex threadsMtx;	// Locks threads.
+		std::list<std::thread> threads;
+
+		// Track tasks.
+		std::mutex tasksMtx;
+		std::queue<Task> tasks;
+		std::condition_variable newTaskEv,	// Breaks waiting in threads.
+			noTaskEv;	 // Breaks blocking on task completion.
+
+		public:
 		// 0 is unlimited.
-		ThreadPool(const std::size_t &maxThreads = 0) : maxThreads(maxThreads) {}
-		~ThreadPool() noexcept {
+		ThreadPool(std::size_t maxThreads = 0) : maxThreads(maxThreads) {}
+		~ThreadPool() {
 			// Break any waiting threads.
 			this->destructing = true;
 			this->newTaskEv.notify_all();
@@ -42,7 +62,8 @@ namespace Rain {
 			}
 		}
 
-		void queueTask(const Task::Executor &executor, void *param) {
+		void queueTask(const typename Task::Executor &executor,
+			ExecutorParamType param) {
 			// Any time a new task is added, notify one waiting thread.
 			{
 				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
@@ -65,7 +86,7 @@ namespace Rain {
 		static void threadFnc(ThreadPool *threadPool) noexcept {
 			while (true) {
 				// Wait until we have a task or need to shut down.
-				Task task;
+				Task *task;
 				{
 					std::unique_lock<std::mutex> lck(threadPool->tasksMtx);
 					threadPool->newTaskEv.wait(lck, [threadPool]() {
@@ -79,11 +100,12 @@ namespace Rain {
 					}
 
 					// Otherwise, take on a task.
-					task = threadPool->tasks.front();
+					task = new Task(threadPool->tasks.front());
 					threadPool->tasks.pop();
 				}
 				threadPool->cFreeThreads--;
-				task.executor(task.param);
+				task->executor(task->param);
+				delete task;
 				threadPool->cFreeThreads++;
 
 				// Once we finish a task, see if we have anything left, and
@@ -138,22 +160,5 @@ namespace Rain {
 		void setMaxThreads(const size_t &newMaxThreads) noexcept {
 			this->maxThreads = newMaxThreads;
 		}
-
-		private:
-		// Threads quit if the newTaskCV is triggered and this is true.
-		std::atomic_bool destructing = false;
-
-		// Track threads.
-		std::atomic_size_t maxThreads = 0;
-		std::atomic_size_t cFreeThreads =
-			0;	// A thread is free if it isn't in its executor.
-		std::mutex threadsMtx;	// Locks threads.
-		std::list<std::thread> threads;
-
-		// Track tasks.
-		std::mutex tasksMtx;
-		std::queue<Task> tasks;
-		std::condition_variable newTaskEv,	// Breaks waiting in threads.
-			noTaskEv;	 // Breaks blocking on task completion.
 	};
 }

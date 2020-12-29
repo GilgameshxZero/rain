@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.4.0
+
+* Don't sort `using` in `.clang-format`.
+* Fix `make noinc`.
+* Define `NOMINMAX` where it matters.
+* Restructure `Networking` inheritance with fewer templates, around `RequestResponse` `Server` and `Socket`.
+
 ## 6.3.0
 
 * Make `Socket` RAII by implementing move constructors.

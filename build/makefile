@@ -47,6 +47,9 @@ endif
 .PHONY: all
 all: $(VERSION_BUILD_INCLUDE) $(TEST_NAME)
 
+.PHONY: noinc
+noinc: $(TEST_NAME)
+
 # Rules for single tests just redirect to test binaries.
 %: $(VERSION_BUILD_INCLUDE) $(BIN_DIR)%
 	@echo $@

@@ -3,33 +3,16 @@
 
 #include <iostream>
 
-class Server;
-
-class ServerSlave
-		: public Rain::Networking::ServerSlave<Server, ServerSlave, void *> {
-	public:
-	typedef Rain::Networking::ServerSlave<Server, ServerSlave, void *>
-		ServerSlaveBase;
-	ServerSlave(Rain::Networking::Socket &socket, Server *server)
-			: Rain::Networking::Socket(std::move(socket)),
-				ServerSlaveBase(socket, server) {}
-};
-
-class Server : public Rain::Networking::Server<ServerSlave> {
-	public:
-	typedef Rain::Networking::Server<ServerSlave> ServerBase;
-	Server(std::size_t maxThreads = 0) : ServerBase(maxThreads) {}
-
+class Server : public Rain::Networking::Server<Rain::Networking::Slave> {
 	protected:
-	void *getSubclassPtr() { return reinterpret_cast<void *>(this); }
-	void onSlaveTask(ServerSlave *slave) {
-		std::cout << "Spawned slave " << slave->getNativeSocket()
+	void onBeginSlaveTask(Slave &slave) noexcept override {
+		std::cout << "Spawned slave " << slave.getNativeSocket()
 							<< ". Receiving...\n";
 		try {
 			char buffer[1024];
 			std::size_t recvLen;
 			while (true) {
-				recvLen = slave->recv(buffer,
+				recvLen = slave.recv(buffer,
 					sizeof(buffer),
 					Rain::Networking::Socket::RecvFlag::NONE,
 					std::chrono::milliseconds(500));
@@ -37,15 +20,15 @@ class Server : public Rain::Networking::Server<ServerSlave> {
 									<< " bytes: " << std::string(buffer, recvLen) << "\n";
 			}
 		} catch (const std::exception &e) {
-			std::cout << "Receiving terminated by exception.\n" << e.what() << "\n";
+			std::cout << "Receiving terminated by exception:\n" << e.what() << "\n";
 		}
 	}
 };
 
 int main() {
 	Server server;
-	server.serve(Rain::Networking::Host(NULL, 0), false);
-	Rain::Networking::Host host("127.0.0.1", server.getService());
+	server.serve(Rain::Networking::Host("localhost", 0), false);
+	Rain::Networking::Host host("localhost", server.getService());
 	std::cout << "Started server on port " << host.service.getCStr() << ".\n";
 	Rain::Time::sleepMs(1000);
 	Rain::Networking::Client client;

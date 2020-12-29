@@ -3,6 +3,7 @@
 
 #include "../../platform.hpp"
 #include "../../string.hpp"
+#include "../socket.hpp"
 
 #include <map>
 
@@ -17,5 +18,19 @@ namespace Rain::Networking::Http {
 #endif
 		}
 	};
-	typedef std::map<std::string, std::string, HeaderStrCmp> Header;
+
+	class Header : public std::map<std::string, std::string, HeaderStrCmp> {
+		public:
+		using std::map<std::string, std::string, HeaderStrCmp>::map;
+
+		bool sendWith(Networking::Socket &socket) {
+			for (auto it = this->begin(); it != this->end(); it++) {
+				socket.send(it->first);
+				socket.send(":");
+				socket.send(it->second);
+				socket.send("\r\n");
+			}
+			return false;
+		}
+	};
 }

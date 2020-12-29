@@ -1,8 +1,13 @@
 // SMTP client implementation.
 #pragma once
 
+#ifdef UNICODE
+#undef UNICODE
+#endif
+
 #include "../../platform.hpp"
-#include "socket.hpp"
+#include "../request-response/client.hpp"
+#include "request-response.hpp"
 
 #ifdef RAIN_WINDOWS
 #include <WinDNS.h>
@@ -28,19 +33,10 @@
 #endif
 
 namespace Rain::Networking::Smtp {
-	class Client : virtual protected Smtp::Socket {
-		private:
-		std::size_t bufSz;
-		char *buffer;
-
+	class Client : public RequestResponse::Client<Request, Response>,
+								 virtual public Socket {
 		public:
-		Client(std::size_t bufSz = 16384) : Smtp::Socket(), bufSz(bufSz) {
-			this->buffer = new char[bufSz];
-		}
-		~Client() { delete[] this->buffer; }
-
-		// If server is closed, can take up to this much time for threads to stop.
-		std::chrono::milliseconds recvTimeoutMs{1000};
+		using RequestResponse::Client<Request, Response>::Client;
 
 		int connectDomain(const std::string &domain) {
 			// Get SMTP server addresses.
@@ -109,7 +105,7 @@ namespace Rain::Networking::Smtp {
 				}
 			}
 			Response res;
-			parseResponse(&res);
+			this->recv(res);
 			connected = connected && res.code == 220;
 
 			return connected ? 0 : -2;
@@ -122,111 +118,48 @@ namespace Rain::Networking::Smtp {
 			Response res;
 			req.verb = "EHLO";
 			req.parameter = ehloParam;
-			this->send(&req);
-			parseResponse(&res);
+			this->send(req);
+			this->recv(res);
 			if (res.code != 250) {
 				return -1;
 			}
 
 			req.verb = "MAIL";
 			req.parameter = "FROM:<" + from + ">";
-			this->send(&req);
-			parseResponse(&res);
+			this->send(req);
+			this->recv(res);
 			if (res.code != 250) {
 				return -2;
 			}
 
 			req.verb = "RCPT";
 			req.parameter = "TO:<" + to + ">";
-			this->send(&req);
-			parseResponse(&res);
+			this->send(req);
+			this->recv(res);
 			if (res.code != 250) {
 				return -3;
 			}
 
 			req.verb = "DATA";
 			req.parameter = "";
-			this->send(&req);
-			parseResponse(&res);
+			this->send(req);
+			this->recv(res);
 			if (res.code != 354) {
 				return -4;
 			}
 
 			this->send(data);
-			parseResponse(&res);
+			this->recv(res);
 			if (res.code != 250) {
 				return -5;
 			}
 
 			req.verb = "QUIT";
 			req.parameter = "";
-			this->send(&req);
-			parseResponse(&res);
+			this->send(req);
+			this->recv(res);
 			if (res.code != 221) {
 				return -6;
-			}
-
-			return 0;
-		}
-		int parseResponse(Response *res) {
-			static const char *CRLF = "\r\n";
-			static const std::size_t PART_MATCH_CRLF[] = {
-				(std::numeric_limits<std::size_t>::max)(), 0, 0};
-
-			// Parse the entire header.
-			// State of newline search.
-			std::size_t kmpCand = 0;
-			char *curRecv = this->buffer,	 // Last search position.
-				*curParse = this->buffer, *newline;
-			bool isLastLine;
-
-			// Keep on calling recv until we find get the full response.
-			res->code = 0;
-			while (true) {
-				std::size_t bufRemaining = this->bufSz - (curRecv - this->buffer);
-				if (bufRemaining == 0) {
-					return -2;
-				}
-				std::size_t recvLen = this->recv(
-					curRecv, bufRemaining, RecvFlag::NONE, this->recvTimeoutMs);
-				if (recvLen == 0) {
-					return -1;
-				}
-
-				// Look to parse an additional line.
-				while (
-					(newline = Algorithm::cStrSearchKMP(
-						 curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand)) != NULL) {
-					// Found full line since curParse.
-					isLastLine = curParse[3] == ' ';
-					curParse[3] = '\0';
-					*newline = '\0';
-					if (res->code == 0) {
-						// First line.
-						res->code = std::strtoll(curParse, NULL, 10);
-						res->parameter = std::string(curParse + 4);
-					} else {
-						// Extension line.
-						res->extensions.emplace_back(std::vector<std::string>());
-						for (char *space = curParse + 4, *prevSpace = curParse + 4;
-								 space != newline + 1;
-								 space++) {
-							if (*space == ' ' || *space == '\0') {
-								*space = '\0';
-								res->extensions.back().emplace_back(std::string(prevSpace));
-								prevSpace = space + 1;
-							}
-						}
-					}
-					curParse = newline + 2;
-					if (isLastLine) {
-						break;
-					}
-				}
-				curRecv += recvLen;
-				if (isLastLine) {
-					break;
-				}
 			}
 
 			return 0;

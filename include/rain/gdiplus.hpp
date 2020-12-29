@@ -7,6 +7,10 @@
 #ifdef RAIN_WINDOWS
 #pragma comment(lib, "Gdiplus.lib")
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 // Bypasses some errors with min and max being defined twice.
 #include <algorithm>
 namespace Gdiplus {

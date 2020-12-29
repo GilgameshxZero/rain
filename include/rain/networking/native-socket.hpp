@@ -30,11 +30,11 @@
 namespace Rain::Networking {
 #ifdef RAIN_WINDOWS
 	typedef SOCKET NativeSocket;
-	static const NativeSocket NATIVE_SOCKET_INVALID = INVALID_SOCKET,
-														NATIVE_SOCKET_ERROR = SOCKET_ERROR;
+	static const NativeSocket NATIVE_SOCKET_INVALID = INVALID_SOCKET;
+	static const int NATIVE_SOCKET_ERROR = SOCKET_ERROR;
 #else
 	typedef int NativeSocket;
-	static const NativeSocket NATIVE_SOCKET_INVALID = -1,
-														NATIVE_SOCKET_ERROR = -1;
+	static const NativeSocket NATIVE_SOCKET_INVALID = -1;
+	static const int NATIVE_SOCKET_ERROR = -1;
 #endif
 }
