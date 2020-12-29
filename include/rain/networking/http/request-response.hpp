@@ -40,6 +40,7 @@ namespace Rain::Networking::Http {
 			const std::string &version = "1.1")
 				: RequestResponse::Request<Request, Response>(),
 					Payload(version),
+					overflowed(false),
 					method(method),
 					path(path),
 					query(query),
