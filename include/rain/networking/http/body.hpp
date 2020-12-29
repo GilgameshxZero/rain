@@ -3,6 +3,7 @@
 
 #include "../../platform.hpp"
 #include "../../string.hpp"
+#include "../socket.hpp"
 
 #include <atomic>
 #include <functional>
@@ -53,6 +54,17 @@ namespace Rain::Networking::Http {
 
 		// Getter.
 		std::size_t getBytesLength() { return this->bytesLength; }
+
+		// Used with Request/Response subclasses.
+		bool sendWith(Networking::Socket &socket) {
+			char *bytes;
+			std::size_t bytesLen = this->extractBytes(&bytes);
+			while (bytesLen != 0) {
+				socket.send(bytes, bytesLen);
+				bytesLen = this->extractBytes(&bytes);
+			}
+			return false;
+		}
 
 		private:
 		std::queue<Generator> generators;

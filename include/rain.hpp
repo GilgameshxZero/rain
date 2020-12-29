@@ -6,18 +6,14 @@
 #define _GNU_SOURCE
 #endif
 
-// Necessary for SMTP library compatibility.
-#ifdef UNICODE
-#undef UNICODE
-#endif
-
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
-#define RAIN_VERSION_MINOR 3
+#define RAIN_VERSION_MINOR 4
 #define RAIN_VERSION_REVISION 0
 
 #include "rain/build.hpp"
 
+#include "rain/algorithm.hpp"
 #include "rain/algorithm/kmp.hpp"
 #include "rain/algorithm/lru.hpp"
 #include "rain/error-exception.hpp"
@@ -28,14 +24,18 @@
 #include "rain/networking/http/body.hpp"
 #include "rain/networking/http/client.hpp"
 #include "rain/networking/http/header.hpp"
-#include "rain/networking/http/payload-request-response.hpp"
+#include "rain/networking/http/request-response.hpp"
 #include "rain/networking/http/server.hpp"
 #include "rain/networking/http/socket.hpp"
 #include "rain/networking/native-socket.hpp"
 #include "rain/networking/node-service-host.hpp"
+#include "rain/networking/request-response/client.hpp"
+#include "rain/networking/request-response/request-response.hpp"
+#include "rain/networking/request-response/server.hpp"
+#include "rain/networking/request-response/socket.hpp"
 #include "rain/networking/server.hpp"
 #include "rain/networking/smtp/client.hpp"
-#include "rain/networking/smtp/payload-request-response.hpp"
+#include "rain/networking/smtp/request-response.hpp"
 #include "rain/networking/smtp/server.hpp"
 #include "rain/networking/smtp/socket.hpp"
 #include "rain/networking/socket.hpp"
