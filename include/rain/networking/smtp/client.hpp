@@ -7,7 +7,7 @@
 
 #include "../../platform.hpp"
 #include "../request-response/client.hpp"
-#include "request-response.hpp"
+#include "socket.hpp"
 
 #ifdef RAIN_WINDOWS
 #include <WinDNS.h>
@@ -24,19 +24,33 @@
 #ifndef MAXDNAME
 #define MAXDNAME NI_MAXHOST
 #endif
+
 #ifndef C_IN
 #define C_IN 1
 #endif
+
 #ifndef T_MX
 #define T_MX 15
 #endif
 #endif
 
 namespace Rain::Networking::Smtp {
-	class Client : public RequestResponse::Client<Request, Response>,
-								 virtual public Socket {
+	class Client : virtual protected Socket,
+								 public RequestResponse::Client<Request, Response> {
 		public:
 		using RequestResponse::Client<Request, Response>::Client;
+
+		using RequestResponse::Client<Request, Response>::close;
+		using RequestResponse::Client<Request, Response>::connect;
+		using RequestResponse::Client<Request, Response>::getFamily;
+		using RequestResponse::Client<Request, Response>::getNativeSocket;
+		using RequestResponse::Client<Request, Response>::getProtocol;
+		using RequestResponse::Client<Request, Response>::getService;
+		using RequestResponse::Client<Request, Response>::getType;
+		using RequestResponse::Client<Request, Response>::isValid;
+		using RequestResponse::Client<Request, Response>::recv;
+		using RequestResponse::Client<Request, Response>::send;
+		using RequestResponse::Client<Request, Response>::shutdown;
 
 		int connectDomain(const std::string &domain) {
 			// Get SMTP server addresses.
@@ -105,7 +119,7 @@ namespace Rain::Networking::Smtp {
 				}
 			}
 			Response res;
-			this->recv(res);
+			Socket::recv(res);
 			connected = connected && res.code == 220;
 
 			return connected ? 0 : -2;
@@ -118,46 +132,46 @@ namespace Rain::Networking::Smtp {
 			Response res;
 			req.verb = "EHLO";
 			req.parameter = ehloParam;
-			this->send(req);
-			this->recv(res);
+			Socket::send(req);
+			Socket::recv(res);
 			if (res.code != 250) {
 				return -1;
 			}
 
 			req.verb = "MAIL";
 			req.parameter = "FROM:<" + from + ">";
-			this->send(req);
-			this->recv(res);
+			Socket::send(req);
+			Socket::recv(res);
 			if (res.code != 250) {
 				return -2;
 			}
 
 			req.verb = "RCPT";
 			req.parameter = "TO:<" + to + ">";
-			this->send(req);
-			this->recv(res);
+			Socket::send(req);
+			Socket::recv(res);
 			if (res.code != 250) {
 				return -3;
 			}
 
 			req.verb = "DATA";
 			req.parameter = "";
-			this->send(req);
-			this->recv(res);
+			Socket::send(req);
+			Socket::recv(res);
 			if (res.code != 354) {
 				return -4;
 			}
 
-			this->send(data);
-			this->recv(res);
+			Socket::send(data);
+			Socket::recv(res);
 			if (res.code != 250) {
 				return -5;
 			}
 
 			req.verb = "QUIT";
 			req.parameter = "";
-			this->send(req);
-			this->recv(res);
+			Socket::send(req);
+			Socket::recv(res);
 			if (res.code != 221) {
 				return -6;
 			}

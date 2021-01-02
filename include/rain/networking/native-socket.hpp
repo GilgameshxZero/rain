@@ -10,6 +10,7 @@
 // Windows XP.
 #define _WIN32_WINNT 0x0501
 #endif
+
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 #endif

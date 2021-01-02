@@ -1,5 +1,6 @@
 #include <rain/networking/client.hpp>
 #include <rain/networking/server.hpp>
+#include <rain/networking/slave.hpp>
 
 #include <iostream>
 

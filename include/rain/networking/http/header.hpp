@@ -3,11 +3,15 @@
 
 #include "../../platform.hpp"
 #include "../../string.hpp"
-#include "../socket.hpp"
+#include "../request-response/socket.hpp"
 
 #include <map>
 
 namespace Rain::Networking::Http {
+	// Forward declarations.
+	class Request;
+	class Response;
+
 	// Case-agnostic key comparison.
 	struct HeaderStrCmp {
 		bool operator()(const std::string &left, const std::string &right) const {
@@ -23,12 +27,13 @@ namespace Rain::Networking::Http {
 		public:
 		using std::map<std::string, std::string, HeaderStrCmp>::map;
 
-		bool sendWith(Networking::Socket &socket) {
+		bool sendWith(
+			RequestResponse::Socket<Request, Response> &socket) const noexcept {
 			for (auto it = this->begin(); it != this->end(); it++) {
-				socket.send(it->first);
-				socket.send(":");
-				socket.send(it->second);
-				socket.send("\r\n");
+				if (socket.send(it->first) || socket.send(": ") ||
+					socket.send(it->second) || socket.send("\r\n")) {
+					return true;
+				}
 			}
 			return false;
 		}

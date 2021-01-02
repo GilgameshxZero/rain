@@ -9,7 +9,7 @@
 // Versioning.
 #define RAIN_VERSION_MAJOR 6
 #define RAIN_VERSION_MINOR 4
-#define RAIN_VERSION_REVISION 1
+#define RAIN_VERSION_REVISION 2
 
 #include "rain/build.hpp"
 
@@ -21,22 +21,31 @@
 #include "rain/gdiplus.hpp"
 #include "rain/memmem.hpp"
 #include "rain/networking/client.hpp"
+#include "rain/networking/host.hpp"
 #include "rain/networking/http/body.hpp"
 #include "rain/networking/http/client.hpp"
 #include "rain/networking/http/header.hpp"
-#include "rain/networking/http/request-response.hpp"
+#include "rain/networking/http/payload.hpp"
+#include "rain/networking/http/request.hpp"
+#include "rain/networking/http/response.hpp"
 #include "rain/networking/http/server.hpp"
+#include "rain/networking/http/slave.hpp"
 #include "rain/networking/http/socket.hpp"
 #include "rain/networking/native-socket.hpp"
-#include "rain/networking/node-service-host.hpp"
 #include "rain/networking/request-response/client.hpp"
-#include "rain/networking/request-response/request-response.hpp"
+#include "rain/networking/request-response/request.hpp"
+#include "rain/networking/request-response/response.hpp"
 #include "rain/networking/request-response/server.hpp"
+#include "rain/networking/request-response/slave.hpp"
 #include "rain/networking/request-response/socket.hpp"
 #include "rain/networking/server.hpp"
+#include "rain/networking/slave.hpp"
 #include "rain/networking/smtp/client.hpp"
-#include "rain/networking/smtp/request-response.hpp"
+#include "rain/networking/smtp/payload.hpp"
+#include "rain/networking/smtp/request.hpp"
+#include "rain/networking/smtp/response.hpp"
 #include "rain/networking/smtp/server.hpp"
+#include "rain/networking/smtp/slave.hpp"
 #include "rain/networking/smtp/socket.hpp"
 #include "rain/networking/socket.hpp"
 #include "rain/platform.hpp"

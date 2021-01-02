@@ -5,27 +5,9 @@
 #include "../thread-pool.hpp"
 #include "socket.hpp"
 
-#include <functional>
 #include <set>
 
 namespace Rain::Networking {
-	// A new Slave is spawned from each accepted connection from the server.
-	class Slave : virtual protected Socket {
-		public:
-		Slave(Socket &socket) : Socket(std::move(socket)) {}
-
-		// Expose some relevant functions from base Socket.
-		using Socket::getNativeSocket;
-		using Socket::getFamily;
-		using Socket::getProtocol;
-		using Socket::getType;
-		using Socket::isValid;
-		using Socket::send;
-		using Socket::recv;
-		using Socket::shutdown;
-		using Socket::close;
-	};
-
 	// DataType is data carried with each new connected slave socket.
 	template <typename SlaveType>
 	class Server : virtual protected Socket {
@@ -65,9 +47,9 @@ namespace Rain::Networking {
 		using Socket::getService;
 
 		// Constructor.
-		Server(std::size_t maxThreads = 1024,
+		Server(std::size_t maxThreads = 128,
 			const std::chrono::milliseconds &ACCEPT_TIMEOUT_MS =
-				std::chrono::milliseconds(1000))
+				std::chrono::milliseconds(5000))
 				: Socket(),
 					threadPool(maxThreads),
 					ACCEPT_TIMEOUT_MS(ACCEPT_TIMEOUT_MS) {}
@@ -93,7 +75,6 @@ namespace Rain::Networking {
 			this->threadPool.blockForTasks();
 		}
 
-		public:
 		// Bind, listen, and accept continuously until master is closed.
 		void serve(const Host &host,
 			bool blocking = true,
