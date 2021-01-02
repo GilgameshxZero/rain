@@ -1,4 +1,5 @@
 #include <rain/networking/http/server.hpp>
+#include <rain/networking/http/slave.hpp>
 
 #include <iostream>
 
@@ -19,7 +20,7 @@ class Server
 
 int main() {
 	Server server;
-	server.serve(Rain::Networking::Host("localhost", 0), false);
+	server.serve(Rain::Networking::Host("*", 0), false);
 	std::cout << "Started server on port " << server.getService().getCStr()
 						<< ".\n";
 	Rain::Time::sleepMs(15000);

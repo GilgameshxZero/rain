@@ -3,14 +3,22 @@
 #include "../string.hpp"
 
 namespace Rain::Networking {
+	// Any values passed in are copied, so there is no need to consider memory
+	// management.
 	class Host {
 		public:
+		// Pass "localhost" to bind & listen for any incoming connections, or to
+		// connect to localhost addresses. This is more reliable cross-platform than
+		// "*" or "127.0.0.1" or "0.0.0.0".
 		class Node {
 			public:
 			Node(const std::string &node) : node(node) {}
-			Node(const char *node) : node(node) {}
+			Node(const char *node) : node(node == NULL ? "localhost" : node) {}
+			Node(int node) : node(node == 0 ? "localhost" : std::to_string(node)) {}
 
-			const char *getCStr() const noexcept { return this->node.c_str(); }
+			const char *getCStr() const noexcept {
+				return this->node == "localhost" ? NULL : this->node.c_str();
+			}
 
 			private:
 			std::string node;
@@ -28,8 +36,8 @@ namespace Rain::Networking {
 			std::string service;
 		};
 
-		const Node node;
-		const Service service;
+		Node node;
+		Service service;
 
 		template <typename NodeType, typename ServiceType>
 		Host(NodeType node, ServiceType service) : node(node), service(service) {}

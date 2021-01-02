@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../request-response/socket.hpp"
-#include "request-response.hpp"
+#include "request.hpp"
+#include "response.hpp"
 
 namespace Rain::Networking::Http {
 	class Socket : virtual public RequestResponse::Socket<Request, Response> {

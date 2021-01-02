@@ -12,12 +12,16 @@
 #include "../error-exception.hpp"
 #include "../platform.hpp"
 #include "../time.hpp"
+#include "host.hpp"
 #include "native-socket.hpp"
-#include "node-service-host.hpp"
 
 #include <functional>
 
 namespace Rain::Networking {
+	// There are four types of Sockets, expressed via inheritance: Client, Server,
+	// Slave, and general Sockets, which each expose a different set of functions.
+	// When a class inherits two types of Sockets, it needs to explicitly expose
+	// which functions are called from which base class.
 	class Socket {
 		// Error handling for common errors.
 		public:
@@ -28,9 +32,10 @@ namespace Rain::Networking {
 			WSA_E_NOT_SOCK = WSAENOTSOCK,
 			WSA_E_NOT_CONN = WSAENOTCONN,
 #else
-			PERMISSION_DENIED = 13,
-			BROKEN_PIPE = 32,
-			TP_END_DISCONNECTED = 107,
+			E_ACCESS = EACCES,
+			E_PIPE = EPIPE,
+			E_NOT_CONN = ENOTCONN,
+			E_ADDR_NOT_AVAIL = EADDRNOTAVAIL,
 #endif
 			E_AI_AGAIN = EAI_AGAIN,
 			E_AI_BADFLAGS = EAI_BADFLAGS,
@@ -59,19 +64,16 @@ namespace Rain::Networking {
 					case Error::WSA_E_NOT_CONN:
 						return "Socket is not connected.";
 #else
-					case Error::PERMISSION_DENIED:
+					case Error::E_ACCESS:
 						return "Permission denied.";
-					case Error::BROKEN_PIPE:
+					case Error::E_PIPE:
 						return "Broken pipe.";
-					case Error::TP_END_DISCONNECTED:
-						return "Transport endpoint disconnected.";
+					case Error::E_NOT_CONN:
+						return "Transport endpoint is not connected.";
+					case Error::E_ADDR_NOT_AVAIL:
+						return "A nonexistent interface was requested or the requested "
+									 "address was not local.";
 #endif
-					case Error::AT_EXIT_REGISTER:
-						return "Failed to register `WSACleanup` with `atexit`.";
-					case Error::RECV_CLOSE_GRACEFUL:
-						return "`recv` closed gracefully.";
-					case Error::SELECT_ON_INVALID:
-						return "Attempted to `select` on invalid (closed) socket.";
 					case Error::E_AI_AGAIN:
 					case Error::E_AI_BADFLAGS:
 					case Error::E_AI_FAIL:
@@ -81,6 +83,12 @@ namespace Rain::Networking {
 					case Error::E_AI_SERVICE:
 					case Error::E_AI_SOCKTYPE:
 						return gai_strerror(ev);
+					case Error::AT_EXIT_REGISTER:
+						return "Failed to register `WSACleanup` with `atexit`.";
+					case Error::RECV_CLOSE_GRACEFUL:
+						return "`recv` closed gracefully.";
+					case Error::SELECT_ON_INVALID:
+						return "Attempted to `select` on invalid (closed) socket.";
 					default:
 						return "Generic.";
 				}
@@ -345,7 +353,7 @@ namespace Rain::Networking {
 			const std::chrono::milliseconds &timeoutMs =
 				std::chrono::milliseconds::zero()) const {
 			if (len == 0) {
-				len = strlen(msg);
+				len = std::strlen(msg);
 			}
 
 			std::size_t bytesSent = 0;
@@ -374,7 +382,6 @@ namespace Rain::Networking {
 			return bytesSent;
 		}
 		std::size_t send(const std::string &s,
-			std::size_t len = 0,
 			SendFlag flags = SendFlag::NONE,
 			const std::chrono::milliseconds &timeoutMs =
 				std::chrono::milliseconds::zero()) const {

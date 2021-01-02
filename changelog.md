@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.4.2
+
+* Redo accessibility and ambiguity resolution in `Socket` inheritance.
+* Add `send` timeouts to `RequestResponse::Server`, partially implemented.
+* `RECV_TIMEOUT_MS` default tuned down to `5000`.
+* Break down files in `Networking` to encompass one class each.
+
 ## 6.4.1
 
 * Increase default `RECV_TIMEOUT_MS` to `60000` from `1000`.

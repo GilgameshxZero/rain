@@ -32,12 +32,11 @@ namespace Rain {
 
 		private:
 		// Threads quit if the newTaskCV is triggered and this is true.
-		std::atomic_bool destructing = false;
+		std::atomic_bool destructing;
 
 		// Track threads.
-		std::atomic_size_t maxThreads = 0;
-		std::atomic_size_t cFreeThreads =
-			0;	// A thread is free if it isn't in its executor.
+		std::atomic_size_t maxThreads,
+			cFreeThreads;	 // A thread is free if it isn't in its executor.
 		std::mutex threadsMtx;	// Locks threads.
 		std::list<std::thread> threads;
 
@@ -49,7 +48,8 @@ namespace Rain {
 
 		public:
 		// 0 is unlimited.
-		ThreadPool(std::size_t maxThreads = 0) : maxThreads(maxThreads) {}
+		ThreadPool(std::size_t maxThreads = 0)
+				: destructing(false), maxThreads(maxThreads), cFreeThreads(0) {}
 		~ThreadPool() {
 			// Break any waiting threads.
 			this->destructing = true;
@@ -60,6 +60,11 @@ namespace Rain {
 			for (auto it = this->threads.begin(); it != this->threads.end(); it++) {
 				it->join();
 			}
+		}
+
+		// Setters.
+		void setMaxThreads(std::size_t newMaxThreads) noexcept {
+			this->maxThreads = newMaxThreads;
 		}
 
 		void queueTask(const typename Task::Executor &executor,
@@ -155,10 +160,5 @@ namespace Rain {
 			return this->threads.size();
 		}
 		std::size_t getMaxThreads() const noexcept { return this->maxThreads; }
-
-		// Setters.
-		void setMaxThreads(const size_t &newMaxThreads) noexcept {
-			this->maxThreads = newMaxThreads;
-		}
 	};
 }

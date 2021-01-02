@@ -1,33 +1,18 @@
 #pragma once
 
 #include "../../algorithm/kmp.hpp"
-#include "../../string.hpp"
-#include "../request-response/request-response.hpp"
-#include "body.hpp"
-#include "header.hpp"
+#include "../request-response/request.hpp"
+#include "payload.hpp"
 
 #include <functional>
 #include <map>
 
 namespace Rain::Networking::Http {
-	// Requests and responses are passed to handlers based on whether they're a
-	// part of the client or server.
-	class Payload {
-		public:
-		std::string version;
-		Header header;
-		Body body;
-
-		Payload(const std::string &version = "") : version(version) {
-			header["Content-Length"] = "0";
-		}
-	};
-
 	// Forward declaration.
 	class Response;
 
-	class Request : public RequestResponse::Request<Request, Response>,
-									public Payload {
+	class Request : public Payload,
+									public RequestResponse::Request<Request, Response> {
 		// Settings and constructor.
 		public:
 		bool overflowed;
@@ -38,8 +23,8 @@ namespace Rain::Networking::Http {
 			const std::string &query = "",
 			const std::string &fragment = "",
 			const std::string &version = "1.1")
-				: RequestResponse::Request<Request, Response>(),
-					Payload(version),
+				: Payload(version),
+					RequestResponse::Request<Request, Response>(),
 					overflowed(false),
 					method(method),
 					path(path),
@@ -96,10 +81,8 @@ namespace Rain::Networking::Http {
 					}
 
 					// Receive the next set of bytes from the slave.
-					std::size_t recvLen = socket.recv(curRecv,
-						bufRemaining,
-						Networking::Socket::RecvFlag::NONE,
-						socket.RECV_TIMEOUT_MS);
+					std::size_t recvLen = socket.recv(
+						curRecv, bufRemaining, Networking::Socket::RecvFlag::NONE);
 					if (recvLen == 0) {	 // Graceful exit.
 						return true;
 					}
@@ -213,54 +196,13 @@ namespace Rain::Networking::Http {
 			}
 			// Throws exception on error.
 			return [this, &socket, contentLength](char **bytes) {
-				std::size_t bodyLen = static_cast<std::size_t>(socket.recv(socket.buf,
-					socket.BUF_SZ,
-					Networking::Socket::RecvFlag::NONE,
-					socket.RECV_TIMEOUT_MS));
+				std::size_t bodyLen = static_cast<std::size_t>(socket.recv(
+					socket.buf, socket.BUF_SZ, Networking::Socket::RecvFlag::NONE));
 				*bytes = socket.buf;
 				this->body.appendGenerator(
 					getRequestBodyGenerator(socket, contentLength - bodyLen));
 				return bodyLen;
 			};
-		}
-	};
-	class Response : public RequestResponse::Response<Request, Response>,
-									 public Payload {
-		public:
-		std::size_t statusCode;
-		std::string status;
-
-		Response(std::size_t statusCode = 200,
-			const std::string &status = "OK",
-			const std::string &version = "1.1")
-				: RequestResponse::Response<Request, Response>(),
-					Payload(version),
-					statusCode(statusCode),
-					status(status) {}
-
-		// Superclass behavior.
-		bool sendWith(
-			RequestResponse::Socket<Request, Response> &socket) noexcept override {
-			try {
-				socket.send("HTTP/");
-				socket.send(this->version);
-				socket.send(" ");
-				socket.send(std::to_string(this->statusCode));
-				socket.send(" ");
-				socket.send(this->status);
-				socket.send("\r\n");
-				this->header.sendWith(socket);
-				socket.send("\r\n");
-				this->body.sendWith(socket);
-				return false;
-			} catch (...) {
-				return true;
-			}
-		}
-		bool recvWith(
-			RequestResponse::Socket<Request, Response> &socket) noexcept override {
-			// TODO.
-			return false;
 		}
 	};
 }

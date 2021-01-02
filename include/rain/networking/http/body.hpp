@@ -3,7 +3,7 @@
 
 #include "../../platform.hpp"
 #include "../../string.hpp"
-#include "../socket.hpp"
+#include "../request-response/socket.hpp"
 
 #include <atomic>
 #include <functional>
@@ -11,6 +11,10 @@
 #include <queue>
 
 namespace Rain::Networking::Http {
+	// Forward declarations.
+	class Request;
+	class Response;
+	
 	// TODO: Is this functional formulation optimal?
 	class Body {
 		public:
@@ -56,7 +60,7 @@ namespace Rain::Networking::Http {
 		std::size_t getBytesLength() { return this->bytesLength; }
 
 		// Used with Request/Response subclasses.
-		bool sendWith(Networking::Socket &socket) {
+		bool sendWith(RequestResponse::Socket<Request, Response> &socket) {
 			char *bytes;
 			std::size_t bytesLen = this->extractBytes(&bytes);
 			while (bytesLen != 0) {

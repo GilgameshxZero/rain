@@ -4,65 +4,53 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::RequestResponse {
-	template <typename RequestType, typename ResponseType>
-	class Slave
-			: public Networking::Slave,
-				virtual public RequestResponse::Socket<RequestType, ResponseType> {
-		public:
-		// Needs to encompass same signature as Networking::Slave constructor, for
-		// use in onServerAccept.
-		Slave(Networking::Socket &socket,
-			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(60000),
-			std::size_t BUF_SZ = 16384)
-				: Networking::Socket(std::move(socket)),
-					RequestResponse::Socket<RequestType, ResponseType>(socket,
-						RECV_TIMEOUT_MS,
-						BUF_SZ),
-					Networking::Slave(socket) {}
-
-		// Ambiguity resolution via exposure.
-		using Networking::Slave::send;
-		using RequestResponse::Socket<RequestType, ResponseType>::send;
-		using Networking::Slave::recv;
-		using RequestResponse::Socket<RequestType, ResponseType>::recv;
-	};
-
 	template <typename SlaveType, typename RequestType, typename ResponseType>
 	class Server
-			: public Networking::Server<SlaveType>,
-				virtual protected RequestResponse::Socket<RequestType, ResponseType> {
+			: virtual protected RequestResponse::Socket<RequestType, ResponseType>,
+				public Networking::Server<SlaveType> {
 		// Shorthand for overriding virtuals in subclasses.
 		public:
 		typedef SlaveType Slave;
 		typedef RequestType Request;
 		typedef ResponseType Response;
 
-		// Settings.
-		private:
-		const std::chrono::milliseconds RECV_TIMEOUT_MS;
-		const std::size_t BUF_SZ;
-
 		// Constructor.
-		public:
-		Server(std::size_t maxThreads = 1024,
+		Server(std::size_t maxThreads = 128,
+			std::size_t BUF_SZ = 16384,
+			const std::chrono::milliseconds &ACCEPT_TIMEOUT_MS =
+				std::chrono::milliseconds(5000),
 			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(60000),
-			std::size_t BUF_SZ = 16384)
+				std::chrono::milliseconds(5000),
+			const std::chrono::milliseconds &SEND_MS_PER_KB =
+				std::chrono::milliseconds(5000),
+			const std::chrono::milliseconds &SEND_TIMEOUT_MS_LOWER =
+				std::chrono::milliseconds(5000))
 				: Networking::Socket(),
-					RequestResponse::Socket<RequestType, ResponseType>(RECV_TIMEOUT_MS,
-						BUF_SZ),
-					Networking::Server<SlaveType>(maxThreads),
-					RECV_TIMEOUT_MS(RECV_TIMEOUT_MS),
-					BUF_SZ(BUF_SZ) {}
+					RequestResponse::Socket<RequestType, ResponseType>(BUF_SZ,
+						RECV_TIMEOUT_MS,
+						SEND_MS_PER_KB,
+						SEND_TIMEOUT_MS_LOWER),
+					Networking::Server<SlaveType>(maxThreads, ACCEPT_TIMEOUT_MS) {}
+					
+		using Networking::Server<SlaveType>::getFamily;
+		using Networking::Server<SlaveType>::getNativeSocket;
+		using Networking::Server<SlaveType>::getProtocol;
+		using Networking::Server<SlaveType>::getType;
+		using Networking::Server<SlaveType>::isValid;
+		using Networking::Server<SlaveType>::getService;
 
+		protected:
 		// Subclass behavior. Return true to abort Slave.
 		virtual bool onRequest(Slave &, Request &) noexcept { return false; };
 
+		private:
 		// Superclass behavior.
-		protected:
 		Slave *onServerAccept(Networking::Socket &acceptedSocket) override {
-			return new Slave(acceptedSocket, this->RECV_TIMEOUT_MS, this->BUF_SZ);
+			return new Slave(acceptedSocket,
+				this->BUF_SZ,
+				this->RECV_TIMEOUT_MS,
+				this->SEND_MS_PER_KB,
+				this->SEND_TIMEOUT_MS_LOWER);
 		}
 		void onBeginSlaveTask(Slave &slave) noexcept override {
 			// Respond to requests forever until either the request or response tells
