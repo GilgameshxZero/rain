@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../request-response/client.hpp"
+#include "request.hpp"
+#include "response.hpp"
 #include "socket.hpp"
 
 namespace Rain::Networking::Http {
