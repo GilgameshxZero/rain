@@ -25,26 +25,19 @@ namespace Rain::Networking::Http {
 		// Superclass behavior.
 		bool sendWith(
 			RequestResponse::Socket<Request, Response> &socket) noexcept override {
-			try {
-				socket.send("HTTP/");
-				socket.send(this->version);
-				socket.send(" ");
-				socket.send(std::to_string(this->statusCode));
-				socket.send(" ");
-				socket.send(this->status);
-				socket.send("\r\n");
-				this->header.sendWith(socket);
-				socket.send("\r\n");
-				this->body.sendWith(socket);
-				return false;
-			} catch (...) {
+			if (socket.send("HTTP/") || socket.send(this->version) ||
+				socket.send(" ") || socket.send(std::to_string(this->statusCode)) ||
+				socket.send(" ") || socket.send(this->status) || socket.send("\r\n") ||
+				this->header.sendWith(socket) || socket.send("\r\n") ||
+				this->body.sendWith(socket)) {
 				return true;
 			}
+			return false;
 		}
 		bool recvWith(
 			RequestResponse::Socket<Request, Response> &socket) noexcept override {
 			// TODO.
-			return false;
+			return true;
 		}
 	};
 }

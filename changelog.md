@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.4.3
+
+* Fix includes in `networking/http/client.hpp`.
+* Start migrating over to `RequestResponse::Socket::send` functions introduced in `6.4.2`.
+
 ## 6.4.2
 
 * Redo accessibility and ambiguity resolution in `Socket` inheritance.
