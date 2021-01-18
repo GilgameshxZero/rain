@@ -176,8 +176,9 @@ namespace Rain::Networking::Http {
 				// + 2 and goes until curRecv.
 				this->body.appendBytes(endOfLine + 2, curRecv - endOfLine - 2);
 				this->body.appendGenerator(getRequestBodyGenerator(socket,
-					std::strtoull(this->header["Content-Length"].c_str(), NULL, 10) -
-						(curRecv - endOfLine - 2)));
+					static_cast<std::size_t>(
+						std::strtoull(this->header["Content-Length"].c_str(), NULL, 10) -
+						(curRecv - endOfLine - 2))));
 
 				return false;
 			} catch (...) {
