@@ -1,5 +1,6 @@
 #include <rain/string/command-line-parser.hpp>
 
+#include <filesystem>
 #include <iostream>
 
 int main() {
@@ -15,11 +16,11 @@ int main() {
 		"--name=Yang"};
 	int argc = 9;
 
-	size_t port = 443;
+	unsigned long long portULL = 443;
 	bool live = false, reload = true;
 	std::string name = "GILGAMESH";
 	std::vector<std::string> includes;
-	parser.addLayer("port", &port);
+	parser.addLayer("port", &portULL);
 	parser.addLayer("live", &live);
 	parser.addLayer("reload", &reload);
 	parser.addLayer("name", &name);
@@ -31,11 +32,15 @@ int main() {
 		std::cout << err.what() << std::endl;
 	}
 
-	std::cout << "Port: " << port << std::endl
+	std::size_t port = static_cast<size_t>(portULL);
+
+	std::cout << "Working directory: " << std::filesystem::current_path()
+						<< std::endl
+						<< "Port: " << port << std::endl
 						<< "Live: " << live << std::endl
 						<< "Reload: " << reload << std::endl
 						<< "Name: " << name << std::endl;
-	for (size_t a = 0; a < includes.size(); a++) {
+	for (std::size_t a = 0; a < includes.size(); a++) {
 		std::cout << "Include: " << includes[a] << std::endl;
 	}
 

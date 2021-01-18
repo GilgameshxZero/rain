@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.4.4
+
+* Revamp `makefile` process to only link when necessary, and clean up Release vs. Debug flags.
+* Setup and test Visual Studio Code pipeline for debugging tests.
+
 ## 6.4.3
 
 * Fix includes in `networking/http/client.hpp`.
