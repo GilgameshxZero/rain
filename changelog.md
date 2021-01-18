@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.4.6
+
+* Additional small fixes to include path and versioning.
+
 ## 6.4.5
 
 * Fix two `size_t` conversion warnings.
