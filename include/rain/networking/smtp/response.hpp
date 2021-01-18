@@ -82,7 +82,7 @@ namespace Rain::Networking::Smtp {
 						*newline = '\0';
 						if (this->code == 0) {
 							// First line.
-							this->code = std::strtoll(curParse, NULL, 10);
+							this->code = static_cast<std::size_t>(std::strtoll(curParse, NULL, 10));
 							this->parameter = std::string(curParse + 4);
 						} else {
 							// Extension line.

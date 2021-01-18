@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.4.5
+
+* Fix two `size_t` conversion warnings.
+
 ## 6.4.4
 
 * Revamp `makefile` process to only link when necessary, and clean up Release vs. Debug flags.
