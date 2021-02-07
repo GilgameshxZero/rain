@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.4.7
+
+* Hotfix for global functions not `inline`-d.
+* Small change to `rain.props` to use `C++17` instead of `C++-latest`.
+
 ## 6.4.6
 
 * Additional small fixes to include path and versioning.
