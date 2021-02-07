@@ -14,7 +14,7 @@
 
 namespace Rain {
 	// An implementation of GNU strcpy_s.
-	errno_t strcpy_s(char *dest, std::size_t destsz, const char *src) {
+	inline errno_t strcpy_s(char *dest, std::size_t destsz, const char *src) {
 #ifdef RAIN_WINDOWS
 		return ::strncpy_s(dest, destsz, src, _TRUNCATE);
 #else
@@ -24,7 +24,7 @@ namespace Rain {
 	}
 
 	// An implementation of GNU strncpy_s.
-	errno_t strncpy_s(char *dest,
+	inline errno_t strncpy_s(char *dest,
 		std::size_t destsz,
 		const char *src,
 		std::size_t count) {
@@ -41,13 +41,13 @@ namespace Rain::String {
 	};
 
 	// Convert string to lowercase.
-	std::string *toLowerStr(std::string *str) {
+	inline std::string *toLowerStr(std::string *str) {
 		std::transform(str->begin(), str->end(), str->begin(), [](unsigned char c) {
 			return std::tolower(c);
 		});
 		return str;
 	}
-	char *toLowerCStr(char *cStr) {
+	inline char *toLowerCStr(char *cStr) {
 		for (char *it = cStr; *it; it++) {
 			*it = static_cast<char>(std::tolower(static_cast<unsigned char>(*it)));
 		}
@@ -55,7 +55,7 @@ namespace Rain::String {
 	}
 
 	// Utilities for trimming whitespace on ends of string.
-	std::string *trimWhitespaceStr(std::string *str) {
+	inline std::string *trimWhitespaceStr(std::string *str) {
 		str->erase(
 			str->begin(), std::find_if(str->begin(), str->end(), [](unsigned char c) {
 				return !std::isspace(c);
@@ -67,7 +67,7 @@ namespace Rain::String {
 			str->end());
 		return str;
 	}
-	const char *findFirstNonWhitespaceCStrN(const char *cStr,
+	inline const char *findFirstNonWhitespaceCStrN(const char *cStr,
 		const std::size_t cStrLen = 0,
 		const std::size_t direction = 1) {
 		for (std::size_t a = 0; ((cStrLen == 0 && *cStr) || a < cStrLen) &&

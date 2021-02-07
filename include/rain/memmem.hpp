@@ -4,7 +4,7 @@
 
 namespace Rain {
 	// An implementation of GNU memmem, strstr with explicit lengths.
-	void *memmem(const void *haystack,
+	inline void *memmem(const void *haystack,
 		std::size_t haystackLen,
 		const void *const needle,
 		const std::size_t needleLen) {
