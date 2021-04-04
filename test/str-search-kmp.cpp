@@ -5,7 +5,7 @@
 
 int main() {
 	std::string s = "PARTICIPATE IN PARACHUTE ";
-	std::vector<size_t> partialMatch(s.length() + 1);
+	std::vector<std::size_t> partialMatch(s.length() + 1);
 
 	std::cout << "String: " << s << std::endl;
 	Rain::Algorithm::computeKmpPartialMatch(

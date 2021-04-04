@@ -4,17 +4,26 @@
 
 namespace Rain {
 	// An implementation of GNU memmem, strstr with explicit lengths.
-	inline void *memmem(const void *haystack,
+	inline void const *memmem(void const *const haystack,
 		std::size_t haystackLen,
-		const void *const needle,
-		const std::size_t needleLen) {
-		for (const char *h = reinterpret_cast<const char *>(haystack);
+		void const *const needle,
+		std::size_t needleLen) {
+		for (char const *h = reinterpret_cast<char const *>(haystack);
 				 haystackLen >= needleLen;
 				 ++h, --haystackLen) {
 			if (!memcmp(h, needle, needleLen)) {
-				return const_cast<void *>(reinterpret_cast<const void *>(h));
+				return reinterpret_cast<void const *>(h);
 			}
 		}
 		return NULL;
+	}
+	inline void *memmem(void *const haystack,
+		std::size_t haystackLen,
+		void const *const needle,
+		std::size_t needleLen) {
+		return const_cast<void *>(memmem(static_cast<void const *>(haystack),
+			haystackLen,
+			needle,
+			needleLen));
 	}
 }

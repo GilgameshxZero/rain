@@ -9,7 +9,7 @@
 namespace Rain::Algorithm {
 	// Compute partial match table (used in KMP) for a string. partialMatch must
 	// be at least sLen + 1 in length.
-	inline void computeKmpPartialMatch(const char *s,
+	inline void computeKmpPartialMatch(char const *s,
 		std::size_t sLen,
 		std::size_t *partialMatch) {
 		// This represents -1.
@@ -33,17 +33,17 @@ namespace Rain::Algorithm {
 	}
 
 	// KMP string search while storing candidate state.
-	inline char *cStrSearchKMP(const char *haystack,
+	inline char *cStrSearchKMP(char const *haystack,
 		std::size_t haystackLen,
-		const char *const needle,
-		const std::size_t needleLen,
-		const std::size_t *partialMatch,
+		char const *const needle,
+		std::size_t const needleLen,
+		std::size_t const *partialMatch,
 		std::size_t *candidate) {
 		for (std::size_t a = 0; a < haystackLen;) {
 			if (haystack[a] == needle[*candidate]) {
 				a++;
 				(*candidate)++;
-				if (static_cast<std::size_t>(*candidate) == needleLen) {
+				if (*candidate == needleLen) {
 					return const_cast<char *>(haystack) + a - *candidate;
 				}
 			} else {
@@ -59,10 +59,10 @@ namespace Rain::Algorithm {
 	}
 
 	// Knuth-Morris-Pratt string search: an O(m+n) version of strstr.
-	inline char *cStrSearchKMP(const char *haystack,
+	inline char *cStrSearchKMP(char const *haystack,
 		std::size_t haystackLen,
-		const char *const needle,
-		const std::size_t needleLen) {
+		char const *const needle,
+		std::size_t const needleLen) {
 		std::size_t *partialMatch = new std::size_t[needleLen + 1];
 		computeKmpPartialMatch(needle, needleLen, partialMatch);
 		std::size_t candidate = 0;

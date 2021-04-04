@@ -7,6 +7,6 @@ namespace Rain::Networking::Smtp {
 		public:
 		std::string parameter;
 
-		Payload(const std::string &parameter = "") : parameter(parameter) {}
+		Payload(std::string const &parameter = "") : parameter(parameter) {}
 	};
 }

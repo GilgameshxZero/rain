@@ -14,36 +14,63 @@ namespace Rain::Networking::Http {
 	// Forward declarations.
 	class Request;
 	class Response;
-	
-	// TODO: Is this functional formulation optimal?
+
 	class Body {
 		public:
-		// Generates some body bytes.
-		typedef std::function<std::size_t(char **)> Generator;
+		// Bodies are composed of a series of generators, which modify a pointer to point to a buffer which contains the next piece of the body, returning the size of the buffer. The buffer is const char, and cannot be modified.
+		typedef std::function<std::size_t(char const **)> Generator;
 
-		// Add stuff to body.
-		// Adding a generator that gives 0 length will terminate the body.
-		void appendGenerator(const Generator &generator) {
+		private:
+		std::queue<Generator> generators;
+		std::mutex generatorsMtx;
+
+		// Length of body added through appendBytes, only available if body is
+		// "static".
+		bool isStatic;
+		std::atomic_size_t length;
+
+		public:
+		Body() : isStatic(true), length(0) {}
+
+		// Do not append a generator which writes 0 bytes.
+		void appendGenerator(Generator const &generator) noexcept {
 			std::lock_guard<std::mutex> generatorsLckGuard(this->generatorsMtx);
 			this->generators.push(generator);
+			this->isStatic = false;
 		}
-		void appendBytes(const char *cStr, std::size_t len = 0) {
+
+		// Alternatively, append bytes directly to the body. The body does not store
+		// the bytes.
+		void appendBytes(char const *cStr, std::size_t len = 0) noexcept {
 			if (len == 0) {
 				len = std::strlen(cStr);
 			}
-			this->bytesLength += len;
-			this->appendGenerator([cStr, len](char **bytes) {
+			this->length += len;
+
+			std::lock_guard<std::mutex> generatorsLckGuard(this->generatorsMtx);
+			this->generators.push([cStr, len](char const **bytes) {
 				// Need const_cast here?
-				*bytes = const_cast<char *>(cStr);
+				*bytes = cStr;
 				return len;
 			});
 		}
-		void appendBytes(const std::string &s) {
+		void appendBytes(std::string const &s) noexcept {
 			this->appendBytes(s.c_str(), s.length());
 		}
 
+		// A body which has only accepted bytes and no general generators (a
+		// "static" body) can be queried for its length.
+		std::size_t getLength() const {
+			if (this->isStatic) {
+				return this->length;
+			} else {
+				throw std::runtime_error("Cannot get length of non-static Body.");
+			}
+		}
+		bool getIsStatic() const noexcept { return this->isStatic; }
+
 		// Extract stuff from body. Returns the number of bytes extracted.
-		std::size_t extractBytes(char **bytes) {
+		std::size_t extractBytes(char const **bytes) {
 			Generator generator;
 			{
 				std::lock_guard<std::mutex> generatorsLckGuard(this->generatorsMtx);
@@ -56,25 +83,17 @@ namespace Rain::Networking::Http {
 			return generator(bytes);
 		}
 
-		// Getter.
-		std::size_t getBytesLength() { return this->bytesLength; }
-
 		// Used with Request/Response subclasses.
 		bool sendWith(RequestResponse::Socket<Request, Response> &socket) {
-			char *bytes;
+			char const *bytes;
 			std::size_t bytesLen = this->extractBytes(&bytes);
 			while (bytesLen != 0) {
-				socket.send(bytes, bytesLen);
+				if (socket.send(bytes, bytesLen)) {
+					return true;
+				}
 				bytesLen = this->extractBytes(&bytes);
 			}
 			return false;
 		}
-
-		private:
-		std::queue<Generator> generators;
-		std::mutex generatorsMtx;
-
-		// Length of body added through appendBytes.
-		std::atomic_size_t bytesLength = 0;
 	};
 }

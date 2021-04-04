@@ -9,9 +9,9 @@ namespace Rain::Networking::RequestResponse {
 		public:
 		// Request/response sockets have a buffer for their request/response
 		// parsing.
-		const std::size_t BUF_SZ;
+		std::size_t const BUF_SZ;
 		char *buf;
-		const std::chrono::milliseconds
+		std::chrono::milliseconds const
 			RECV_TIMEOUT_MS,	// If no data is sent over this period, the socket will
 												// likely be closed. If data is sent every period, then
 												// the socket is guaranteed to be open.
@@ -22,11 +22,11 @@ namespace Rain::Networking::RequestResponse {
 		// Need to define default constructor on this virtual base class to ensure
 		// that subclasses can more easily declare default constructors via `using`.
 		Socket(std::size_t BUF_SZ = 16384,
-			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
+			std::chrono::milliseconds const &RECV_TIMEOUT_MS =
 				std::chrono::milliseconds(5000),
-			const std::chrono::milliseconds &SEND_MS_PER_KB =
+			std::chrono::milliseconds const &SEND_MS_PER_KB =
 				std::chrono::milliseconds(5000),
-			const std::chrono::milliseconds &SEND_TIMEOUT_MS_LOWER =
+			std::chrono::milliseconds const &SEND_TIMEOUT_MS_LOWER =
 				std::chrono::milliseconds(5000))
 				: Networking::Socket(),
 					BUF_SZ(BUF_SZ),
@@ -36,9 +36,9 @@ namespace Rain::Networking::RequestResponse {
 					SEND_TIMEOUT_MS_LOWER(SEND_TIMEOUT_MS_LOWER) {}
 		Socket(Networking::Socket &socket,
 			std::size_t BUF_SZ,
-			const std::chrono::milliseconds &RECV_TIMEOUT_MS,
-			const std::chrono::milliseconds &SEND_MS_PER_KB,
-			const std::chrono::milliseconds &SEND_TIMEOUT_MS_LOWER)
+			std::chrono::milliseconds const &RECV_TIMEOUT_MS,
+			std::chrono::milliseconds const &SEND_MS_PER_KB,
+			std::chrono::milliseconds const &SEND_TIMEOUT_MS_LOWER)
 				: Networking::Socket(std::move(socket)),
 					BUF_SZ(BUF_SZ),
 					buf(new char[BUF_SZ]),
@@ -55,7 +55,7 @@ namespace Rain::Networking::RequestResponse {
 
 		// Override base Socket send and recv to take into account the timeout
 		// options. In addition, returns true on failure or timeout.
-		bool send(const char *msg,
+		bool send(char const *msg,
 			std::size_t len = 0,
 			Networking::Socket::SendFlag flags =
 				Networking::Socket::SendFlag::NONE) const noexcept {
@@ -74,7 +74,7 @@ namespace Rain::Networking::RequestResponse {
 				return true;
 			}
 		}
-		bool send(const std::string &s,
+		bool send(std::string const &s,
 			Networking::Socket::SendFlag flags =
 				Networking::Socket::SendFlag::NONE) const noexcept {
 			return this->send(s.c_str(), s.length(), flags);

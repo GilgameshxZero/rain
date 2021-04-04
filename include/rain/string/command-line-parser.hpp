@@ -6,10 +6,10 @@ namespace Rain::String {
 	class CommandLineParser : public WaterfallParser {
 		public:
 		// Parse a list of command-line arguments, without the first argument.
-		void parse(int argc, const char **argv) const {
+		void parse(int argc, char const *const *const argv) const {
 			char argNameBuf[128];	 // Argument name to be passed to parse.
 			for (int a = 0; a < argc; a++) {
-				const char *arg = argv[a],	// Current argument.
+				char const *arg = argv[a],	// Current argument.
 					*value;	 // Argument value to be passed to parse.
 
 				// Arguments start with -.

@@ -48,8 +48,9 @@ namespace Rain {
 
 		public:
 		// 0 is unlimited.
-		ThreadPool(std::size_t maxThreads = 0)
+		ThreadPool(std::size_t maxThreads = 0) noexcept
 				: destructing(false), maxThreads(maxThreads), cFreeThreads(0) {}
+		// Might throw exceptions.
 		~ThreadPool() {
 			// Break any waiting threads.
 			this->destructing = true;
@@ -67,7 +68,7 @@ namespace Rain {
 			this->maxThreads = newMaxThreads;
 		}
 
-		void queueTask(const typename Task::Executor &executor,
+		void queueTask(typename Task::Executor const &executor,
 			ExecutorParamType param) {
 			// Any time a new task is added, notify one waiting thread.
 			{
@@ -125,7 +126,7 @@ namespace Rain {
 		}
 
 		// Block until all tasks completed and none are processing.
-		void blockForTasks() noexcept {
+		void blockForTasks() {
 			// If no tasks, return immediately.
 			{
 				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);

@@ -22,13 +22,13 @@ namespace Rain::Algorithm {
 		typedef std::unordered_map<KeyType, typename ListType::iterator> Super;
 
 		public:
-		const std::size_t capacity;
+		std::size_t const capacity;
 
 		// Zero capacity means infinite.
 		LRUCache(std::size_t capacity = 0) : capacity(capacity) {}
-		ValueType &at(const KeyType &key) {
+		ValueType &at(KeyType const &key) {
 			std::lock_guard<std::mutex> lck(this->mtx);
-			const typename Super::iterator &it = Super::find(key);
+			typename Super::iterator const &it = Super::find(key);
 			if (it == Super::end()) {
 				throw std::out_of_range("Key does not exist in LRU cache.");
 			}
@@ -38,11 +38,11 @@ namespace Rain::Algorithm {
 			return this->lru.begin()->second;
 		}
 		std::pair<typename Super::iterator, bool> insert_or_assign(
-			const KeyType &key,
-			const ValueType &value) {
+			KeyType const &key,
+			ValueType const &value) {
 			std::lock_guard<std::mutex> lck(this->mtx);
 
-			const typename Super::iterator &it = Super::find(key);
+			typename Super::iterator const &it = Super::find(key);
 			if (it != Super::end()) {	 // If key already exists, replace it.
 				this->lru.erase(it->second);
 				Super::erase(it);

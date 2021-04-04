@@ -4,11 +4,11 @@
 			"name": "debug-windows",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}\\bin\\${fileBasenameNoExtension}.exe",
+			"program": "${workspaceFolder}\\bin\\${fileBasenameNoExtension}-debug-x64.exe",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}\\bin",
-			"externalConsole": false,
+			"console": "externalTerminal",
 			"preLaunchTask": "build-debug",
 		},
 		{
