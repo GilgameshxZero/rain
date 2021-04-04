@@ -52,7 +52,7 @@ namespace Rain::Networking::Smtp {
 		using RequestResponse::Client<Request, Response>::send;
 		using RequestResponse::Client<Request, Response>::shutdown;
 
-		int connectDomain(const std::string &domain) {
+		int connectDomain(std::string const &domain) {
 			// Get SMTP server addresses.
 			std::vector<std::string> servers;
 
@@ -124,10 +124,10 @@ namespace Rain::Networking::Smtp {
 
 			return connected ? 0 : -2;
 		}
-		int sendEmail(const std::string &ehloParam,
-			const std::string &from,
-			const std::string &to,
-			const std::string &data) {
+		int sendEmail(std::string const &ehloParam,
+			std::string const &from,
+			std::string const &to,
+			std::string const &data) {
 			Request req;
 			Response res;
 			req.verb = "EHLO";

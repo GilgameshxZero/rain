@@ -15,8 +15,8 @@ namespace Rain::Networking::Http {
 		std::string status;
 
 		Response(std::size_t statusCode = 200,
-			const std::string &status = "OK",
-			const std::string &version = "1.1")
+			std::string const &status = "OK",
+			std::string const &version = "1.1")
 				: Payload(version),
 					RequestResponse::Response<Request, Response>(),
 					statusCode(statusCode),
@@ -25,6 +25,8 @@ namespace Rain::Networking::Http {
 		// Superclass behavior.
 		bool sendWith(
 			RequestResponse::Socket<Request, Response> &socket) noexcept override {
+			this->checkSetContentLength();
+
 			if (socket.send("HTTP/") || socket.send(this->version) ||
 				socket.send(" ") || socket.send(std::to_string(this->statusCode)) ||
 				socket.send(" ") || socket.send(this->status) || socket.send("\r\n") ||

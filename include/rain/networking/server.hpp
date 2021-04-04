@@ -35,7 +35,7 @@ namespace Rain::Networking {
 		std::mutex slavesMtx;
 
 		// If server is closed, can take up to this much time for thread to stop.
-		const std::chrono::milliseconds ACCEPT_TIMEOUT_MS;
+		std::chrono::milliseconds const ACCEPT_TIMEOUT_MS;
 
 		// Getters.
 		public:
@@ -48,7 +48,7 @@ namespace Rain::Networking {
 
 		// Constructor.
 		Server(std::size_t maxThreads = 128,
-			const std::chrono::milliseconds &ACCEPT_TIMEOUT_MS =
+			std::chrono::milliseconds const &ACCEPT_TIMEOUT_MS =
 				std::chrono::milliseconds(5000))
 				: Socket(),
 					threadPool(maxThreads),
@@ -76,7 +76,7 @@ namespace Rain::Networking {
 		}
 
 		// Bind, listen, and accept continuously until master is closed.
-		void serve(const Host &host,
+		void serve(Host const &host,
 			bool blocking = true,
 			int backlog = SOMAXCONN) {
 			this->bind(host);

@@ -13,11 +13,11 @@ namespace Rain::Networking::Smtp {
 		// Networking::Socket constructor.
 		Slave(Networking::Socket &socket,
 			std::size_t BUF_SZ = 16384,
-			const std::chrono::milliseconds &RECV_TIMEOUT_MS =
+			std::chrono::milliseconds const &RECV_TIMEOUT_MS =
 				std::chrono::milliseconds(5000),
-			const std::chrono::milliseconds &SEND_MS_PER_KB =
+			std::chrono::milliseconds const &SEND_MS_PER_KB =
 				std::chrono::milliseconds(5000),
-			const std::chrono::milliseconds &SEND_TIMEOUT_MS_LOWER =
+			std::chrono::milliseconds const &SEND_TIMEOUT_MS_LOWER =
 				std::chrono::milliseconds(5000))
 				: Networking::Socket(std::move(socket)),
 					RequestResponse::Socket<Request, Response>(socket,

@@ -36,6 +36,7 @@ namespace Rain::Networking {
 			E_PIPE = EPIPE,
 			E_NOT_CONN = ENOTCONN,
 			E_ADDR_NOT_AVAIL = EADDRNOTAVAIL,
+			E_ADDR_IN_USE = EADDRINUSE,
 #endif
 			E_AI_AGAIN = EAI_AGAIN,
 			E_AI_BADFLAGS = EAI_BADFLAGS,
@@ -51,7 +52,7 @@ namespace Rain::Networking {
 		};
 		class ErrorCategory : public std::error_category {
 			public:
-			const char *name() const noexcept { return "Socket"; }
+			char const *name() const noexcept { return "Socket"; }
 			std::string message(int ev) const {
 				switch (static_cast<Error>(ev)) {
 #ifdef RAIN_WINDOWS
@@ -73,6 +74,8 @@ namespace Rain::Networking {
 					case Error::E_ADDR_NOT_AVAIL:
 						return "A nonexistent interface was requested or the requested "
 									 "address was not local.";
+					case Error::E_ADDR_IN_USE:
+						return "Address already in use";
 #endif
 					case Error::E_AI_AGAIN:
 					case Error::E_AI_BADFLAGS:
@@ -93,7 +96,7 @@ namespace Rain::Networking {
 						return "Generic.";
 				}
 			}
-			bool equivalent(const std::error_code &code,
+			bool equivalent(std::error_code const &code,
 				int condition) const noexcept {
 				return false;
 			}
@@ -212,7 +215,7 @@ namespace Rain::Networking {
 
 		public:
 		// RAII: Explicitly forbid the copy constructor and the assignment operator.
-		Socket(const Socket &) = delete;
+		Socket(Socket const &) = delete;
 		Socket &operator=(Socket const &) = delete;
 
 		// Move constructor is the preferred way of constructing with Socket
@@ -226,9 +229,9 @@ namespace Rain::Networking {
 		// Connect and bind.
 		private:
 		// Shared code for connect and bind.
-		void connectOrBind(const Host &host,
-			const std::function<void(addrinfo *)> &setHints,
-			const std::function<int(NativeSocket, sockaddr *, int)> &action) const {
+		void connectOrBind(Host const &host,
+			std::function<void(addrinfo *)> const &setHints,
+			std::function<int(NativeSocket, sockaddr *, int)> const &action) const {
 			addrinfo hints, *result, *curAddr;
 
 			memset(&hints, 0, sizeof(struct addrinfo));
@@ -257,11 +260,11 @@ namespace Rain::Networking {
 		}
 
 		public:
-		void connect(const Host &host) const {
+		void connect(Host const &host) const {
 			this->connectOrBind(
 				host, [](addrinfo *) {}, ::connect);
 		}
-		void bind(const Host &host) const {
+		void bind(Host const &host) const {
 			this->connectOrBind(
 				host, [](addrinfo *hints) { hints->ai_flags = AI_PASSIVE; }, ::bind);
 		}
@@ -289,7 +292,7 @@ namespace Rain::Networking {
 		// terminated on timeout. By default, blocks without timeout.
 		// Throws an exception if nativeSocket is invalid (socket has been closed).
 		bool blockForSelect(bool read,
-			const std::chrono::milliseconds &timeoutMs) const {
+			std::chrono::milliseconds const &timeoutMs) const {
 			if (this->nativeSocket == NATIVE_SOCKET_INVALID) {
 				throw makeException(Error::SELECT_ON_INVALID);
 			}
@@ -315,7 +318,7 @@ namespace Rain::Networking {
 		public:
 		Socket accept(sockaddr *addr = NULL,
 			socklen_t *addrLen = NULL,
-			const std::chrono::milliseconds &timeoutMs =
+			std::chrono::milliseconds const &timeoutMs =
 				std::chrono::milliseconds::zero()) const {
 			if (this->blockForSelect(true, timeoutMs)) {
 				return Socket(NATIVE_SOCKET_INVALID, family, type, protocol);
@@ -347,10 +350,10 @@ namespace Rain::Networking {
 		// Block until send all bytes. Uses select to make sure we can write before
 		// we try. Returns number of bytes sent (may be different from intended if
 		// using timeout).
-		std::size_t send(const char *msg,
+		std::size_t send(char const *msg,
 			std::size_t len = 0,
 			SendFlag flags = SendFlag::NONE,
-			const std::chrono::milliseconds &timeoutMs =
+			std::chrono::milliseconds const &timeoutMs =
 				std::chrono::milliseconds::zero()) const {
 			if (len == 0) {
 				len = std::strlen(msg);
@@ -381,9 +384,9 @@ namespace Rain::Networking {
 			}
 			return bytesSent;
 		}
-		std::size_t send(const std::string &s,
+		std::size_t send(std::string const &s,
 			SendFlag flags = SendFlag::NONE,
-			const std::chrono::milliseconds &timeoutMs =
+			std::chrono::milliseconds const &timeoutMs =
 				std::chrono::milliseconds::zero()) const {
 			return this->send(s.c_str(), s.length(), flags, timeoutMs);
 		}
@@ -394,7 +397,7 @@ namespace Rain::Networking {
 		std::size_t recv(char *buf,
 			std::size_t len,
 			RecvFlag flags = RecvFlag::NONE,
-			const std::chrono::milliseconds &timeoutMs =
+			std::chrono::milliseconds const &timeoutMs =
 				std::chrono::milliseconds::zero()) const {
 			if (this->blockForSelect(true, timeoutMs)) {
 				return 0;

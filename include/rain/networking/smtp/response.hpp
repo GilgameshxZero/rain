@@ -14,7 +14,7 @@ namespace Rain::Networking::Smtp {
 		std::size_t code;
 		std::vector<std::vector<std::string>> extensions;
 
-		Response(std::size_t code = 250, const std::string &parameter = "")
+		Response(std::size_t code = 250, std::string const &parameter = "")
 				: Payload(parameter),
 					RequestResponse::Response<Request, Response>(),
 					code(code) {}
@@ -47,8 +47,8 @@ namespace Rain::Networking::Smtp {
 		bool recvWith(
 			RequestResponse::Socket<Request, Response> &socket) noexcept override {
 			try {
-				static const char *CRLF = "\r\n";
-				static const std::size_t PART_MATCH_CRLF[] = {
+				static char const *CRLF = "\r\n";
+				static std::size_t const PART_MATCH_CRLF[] = {
 					(std::numeric_limits<std::size_t>::max)(), 0, 0};
 
 				// Parse the entire header.

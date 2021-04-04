@@ -23,7 +23,7 @@ TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 CXX := g++
 CXXFLAGS := -I$(INCLUDE_DIR) -std=c++17 -pthread -Wall
 CXXFLAGS_DEBUG := -O0 -g
-CXXFLAGS_RELEASE := -O3 -march=native
+CXXFLAGS_RELEASE := -O3 # -march=native
 LDLIBS := -lresolv
 
 # OS-specific behavior.

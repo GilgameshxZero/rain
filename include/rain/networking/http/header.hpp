@@ -14,7 +14,7 @@ namespace Rain::Networking::Http {
 
 	// Case-agnostic key comparison.
 	struct HeaderStrCmp {
-		bool operator()(const std::string &left, const std::string &right) const {
+		bool operator()(std::string const &left, std::string const &right) const {
 #ifdef RAIN_WINDOWS
 			return _stricmp(left.c_str(), right.c_str()) < 0;
 #else

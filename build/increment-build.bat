@@ -2,11 +2,18 @@
 
 REM Increments build version at compile-time.
 
-SETLOCAL ENABLEDELAYEDEXPANSION
-SET versionpath=%~dp0..\include\rain\build.hpp
-FOR /F "tokens=1-3 delims= " %%A IN (%versionpath%) DO (
-	SET /A versionbuild=%%C+1
-	ECHO | SET /P="%%A %%B !versionbuild!" > %versionpath%
+REM LF newline variable.
+(set \n=^
+
 )
-ECHO build !versionbuild!
+
+SETLOCAL ENABLEDELAYEDEXPANSION
+SET FILE_PATH=%~dp0..\include\rain\build.hpp
+FOR /F "tokens=1-3 delims= " %%A IN (%FILE_PATH%) DO (
+	SET /A BUILD=%%C+1
+
+	REM ECHO with custom LF-only newline.
+	<nul SET /P=%%A %%B !BUILD!!\n!> %FILE_PATH%
+)
+ECHO Build !BUILD!.
 ENDLOCAL

@@ -14,7 +14,9 @@
 
 namespace Rain {
 	// An implementation of GNU strcpy_s.
-	inline errno_t strcpy_s(char *dest, std::size_t destsz, const char *src) {
+	inline errno_t strcpy_s(char *const dest,
+		std::size_t destsz,
+		char const *const src) {
 #ifdef RAIN_WINDOWS
 		return ::strncpy_s(dest, destsz, src, _TRUNCATE);
 #else
@@ -24,9 +26,9 @@ namespace Rain {
 	}
 
 	// An implementation of GNU strncpy_s.
-	inline errno_t strncpy_s(char *dest,
+	inline errno_t strncpy_s(char *const dest,
 		std::size_t destsz,
-		const char *src,
+		char const *const src,
 		std::size_t count) {
 		return strcpy_s(dest, min(destsz, count + 1), src);
 	}
@@ -35,46 +37,53 @@ namespace Rain {
 namespace Rain::String {
 	// Comparator for const char * for use in std::maps and the like.
 	struct cStrCmp {
-		bool operator()(const char *x, const char *y) const {
+		bool operator()(char const *const x, char const *const y) const {
 			return strcmp(x, y) < 0;
 		}
 	};
 
 	// Convert string to lowercase.
-	inline std::string *toLowerStr(std::string *str) {
+	inline std::string *toLowerStr(std::string *const str) {
 		std::transform(str->begin(), str->end(), str->begin(), [](unsigned char c) {
-			return std::tolower(c);
+			return static_cast<char>(std::tolower(static_cast<int>(c)));
 		});
 		return str;
 	}
-	inline char *toLowerCStr(char *cStr) {
+	inline char *toLowerCStr(char *const cStr) {
 		for (char *it = cStr; *it; it++) {
-			*it = static_cast<char>(std::tolower(static_cast<unsigned char>(*it)));
+			*it = static_cast<char>(std::tolower(static_cast<int>(*it)));
 		}
 		return cStr;
 	}
 
 	// Utilities for trimming whitespace on ends of string.
-	inline std::string *trimWhitespaceStr(std::string *str) {
+	inline std::string *trimWhitespaceStr(std::string *const str) {
 		str->erase(
 			str->begin(), std::find_if(str->begin(), str->end(), [](unsigned char c) {
-				return !std::isspace(c);
+				return std::isspace(static_cast<int>(c)) == 0;
 			}));
-		str->erase(std::find_if(str->rbegin(),
-								 str->rend(),
-								 [](unsigned char c) { return !std::isspace(c); })
-								 .base(),
+		str->erase(
+			std::find_if(str->rbegin(),
+				str->rend(),
+				[](unsigned char c) { return std::isspace(static_cast<int>(c)) == 0; })
+				.base(),
 			str->end());
 		return str;
 	}
-	inline const char *findFirstNonWhitespaceCStrN(const char *cStr,
-		const std::size_t cStrLen = 0,
-		const std::size_t direction = 1) {
+	inline char const *findFirstNonWhitespaceCStrN(char const *cStr,
+		std::size_t const cStrLen = 0,
+		std::size_t const direction = 1) {
 		for (std::size_t a = 0; ((cStrLen == 0 && *cStr) || a < cStrLen) &&
-				 std::isspace(static_cast<unsigned char>(*cStr));
+				 std::isspace(static_cast<int>(*cStr));
 				 cStr += direction, a++)
 			;
 		return cStr;
+	}
+	inline char *findFirstNonWhitespaceCStrN(char *cStr,
+		std::size_t const cStrLen = 0,
+		std::size_t const direction = 1) {
+		return const_cast<char *>(findFirstNonWhitespaceCStrN(
+			static_cast<char const *>(cStr), cStrLen, direction));
 	}
 
 	// Convert from any type to another using std::stringstream.

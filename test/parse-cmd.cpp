@@ -16,11 +16,11 @@ int main() {
 		"--name=Yang"};
 	int argc = 9;
 
-	unsigned long long portULL = 443;
+	unsigned long long port = 443;
 	bool live = false, reload = true;
 	std::string name = "GILGAMESH";
 	std::vector<std::string> includes;
-	parser.addLayer("port", &portULL);
+	parser.addLayer("port", &port);
 	parser.addLayer("live", &live);
 	parser.addLayer("reload", &reload);
 	parser.addLayer("name", &name);
@@ -28,11 +28,9 @@ int main() {
 
 	try {
 		parser.parse(argc, argv);
-	} catch (const std::system_error &err) {
-		std::cout << err.what() << std::endl;
+	} catch (const std::exception &e) {
+		std::cout << e.what() << std::endl;
 	}
-
-	std::size_t port = static_cast<size_t>(portULL);
 
 	std::cout << "Working directory: " << std::filesystem::current_path()
 						<< std::endl

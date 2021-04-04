@@ -12,11 +12,11 @@ namespace Rain::Networking {
 		// "*" or "127.0.0.1" or "0.0.0.0".
 		class Node {
 			public:
-			Node(const std::string &node) : node(node) {}
-			Node(const char *node) : node(node == NULL ? "localhost" : node) {}
+			Node(std::string const &node) : node(node) {}
+			Node(char const *node) : node(node == NULL ? "localhost" : node) {}
 			Node(int node) : node(node == 0 ? "localhost" : std::to_string(node)) {}
 
-			const char *getCStr() const noexcept {
+			char const *getCStr() const noexcept {
 				return this->node == "localhost" ? NULL : this->node.c_str();
 			}
 
@@ -25,12 +25,12 @@ namespace Rain::Networking {
 		};
 		class Service {
 			public:
-			Service(const std::string &service) : service(service) {}
-			Service(const char *service) : service(service) {}
+			Service(std::string const &service) : service(service) {}
+			Service(char const *service) : service(service) {}
 			Service(std::size_t service) : service(std::to_string(service)) {}
 			Service(int service) : service(std::to_string(service)) {}
 
-			const char *getCStr() const noexcept { return this->service.c_str(); }
+			char const *getCStr() const noexcept { return this->service.c_str(); }
 
 			private:
 			std::string service;

@@ -8,7 +8,7 @@
 
 namespace Rain {
 #ifdef RAIN_WINDOWS
-	inline struct tm *localtime_r(time_t *_clock, struct tm *_result) {
+	inline tm *localtime_r(time_t const *const _clock, tm *const _result) {
 		localtime_s(_result, _clock);
 		return _result;
 	}

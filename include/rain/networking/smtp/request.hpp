@@ -40,8 +40,8 @@ namespace Rain::Networking::Smtp {
 			RequestResponse::Socket<Request, Response> &socket) noexcept override {
 			try {
 				// Constants for KMP.
-				static const char *CRLF = "\r\n";
-				static const std::size_t PART_MATCH_CRLF[] = {
+				static char const *CRLF = "\r\n";
+				static std::size_t const PART_MATCH_CRLF[] = {
 					(std::numeric_limits<std::size_t>::max)(), 0, 0};
 
 				// Parse the entire header.

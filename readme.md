@@ -1,3 +1,3 @@
 # rain
 
-Cross-platform libraries for C++.
+Cross-platform header-only libraries for C++.

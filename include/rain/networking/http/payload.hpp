@@ -11,8 +11,15 @@ namespace Rain::Networking::Http {
 		Header header;
 		Body body;
 
-		Payload(const std::string &version = "") : version(version) {
-			header["Content-Length"] = "0";
+		Payload(std::string const &version = "1.1") : version(version) {}
+
+		protected:
+		// Set Content-Length if not set and body is static.
+		void checkSetContentLength() {
+			if (this->header.find("Content-Length") == this->header.end() &&
+				this->body.getIsStatic()) {
+				this->header["Content-Length"] = std::to_string(this->body.getLength());
+			}
 		}
 	};
 }

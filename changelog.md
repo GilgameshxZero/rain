@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.5.0
+
+* Use `TYPE const` instead of `const TYPE` when declaring variables, now standard in this codebase.
+* Refreshed Windows Visual Studio project template configurations to be more concise.
+  * Added building readme.
+* Add additional build/debug tasks for Visual Studio Code.
+* Revamp build script to output LF-only newline.
+* Modified some tests to flush and be a bit more concise.
+
 ## 6.4.7
 
 * Hotfix for global functions not `inline`-d.
