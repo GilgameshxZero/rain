@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.5.1
+
+* Makefile now links libraries after objects as intended.
+* Revert to `march=native` during release builds.
+
 ## 6.5.0
 
 * Use `TYPE const` instead of `const TYPE` when declaring variables, now standard in this codebase.
