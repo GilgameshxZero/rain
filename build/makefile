@@ -23,7 +23,7 @@ TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 CXX := g++
 CXXFLAGS := -I$(INCLUDE_DIR) -std=c++17 -pthread -Wall
 CXXFLAGS_DEBUG := -O0 -g
-CXXFLAGS_RELEASE := -O3 # -march=native
+CXXFLAGS_RELEASE := -O3 -march=native
 LDLIBS := -lresolv
 
 # OS-specific behavior.
@@ -72,7 +72,7 @@ $(TEST_NAMES): $(VERSION_BUILD_INCLUDE) $(BIN_DIR)$$@
 # Rules for test binaries and objects.
 $(BIN_DIR)%: $(OBJ_DIR)%.o
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(LDLIBS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< $(LDLIBS) -o $@
 $(OBJ_DIR)%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDES)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
