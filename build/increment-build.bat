@@ -1,6 +1,6 @@
 @ECHO OFF
 
-REM Increments build version at compile-time.
+REM Increments build version number at compile-time.
 
 REM LF newline variable.
 (set \n=^

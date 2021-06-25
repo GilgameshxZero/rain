@@ -16,11 +16,19 @@
 			"problemMatcher": ["$gcc"],
 
 			"windows": {
-				"command": "call",
+				"command": "CALL",
 				"args": [
 					// Setup command line to use cl.exe.
-					"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\Tools\\VsDevCmd.bat\"",
+					"VsDevCmd.default.bat",
 					"-arch=amd64",
+					"2>",
+					"NUL",
+					"&",
+					"CALL",
+					"VsDevCmd.local.bat",
+					"-arch=amd64",
+					"2>",
+					"NUL",
 					"&",
 
 					// Increment build.
@@ -88,11 +96,19 @@
 			"problemMatcher": ["$gcc"],
 
 			"windows": {
-				"command": "call",
+				"command": "CALL",
 				"args": [
 					// Setup command line to use cl.exe.
-					"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\Tools\\VsDevCmd.bat\"",
+					"VsDevCmd.default.bat",
 					"-arch=amd64",
+					"2>",
+					"NUL",
+					"&",
+					"CALL",
+					"VsDevCmd.local.bat",
+					"-arch=amd64",
+					"2>",
+					"NUL",
 					"&",
 
 					// Increment build.
@@ -173,7 +189,7 @@
 		},
 		// Bypasses permissions problems in launching external console on MacOS.
 		{
-			"label": "terminal-osx",
+			"label": "external-terminal-osx",
 			"type": "shell",
 			"command": "osascript -e 'tell application \"Terminal\"\ndo script \"echo hello\"\nend tell'"
 		}

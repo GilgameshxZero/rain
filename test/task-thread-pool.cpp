@@ -1,3 +1,7 @@
+/*
+Tests select thread-management utilities from `rain/thread-pool.hpp`.
+*/
+
 #include <rain/thread-pool.hpp>
 
 #include <iostream>

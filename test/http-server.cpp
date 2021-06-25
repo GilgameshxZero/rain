@@ -8,7 +8,8 @@ class Server
 		: public Rain::Networking::Http::Server<Rain::Networking::Http::Slave> {
 	protected:
 	bool onRequest(Slave &slave, Request &req) noexcept override {
-		std::cout << req.method << " " << req.path << " HTTP/" << req.version << std::endl;
+		std::cout << req.method << " " << req.path << " HTTP/" << req.version
+							<< std::endl;
 
 		Server::Response res;
 		res.body.appendBytes("hihi!<br>");

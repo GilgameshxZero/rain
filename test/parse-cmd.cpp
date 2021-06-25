@@ -1,3 +1,8 @@
+/*
+Tests the `CommandLineParser` and `WaterfallParser` string parser classes in
+`rain/string/`.
+*/
+
 #include <rain/string/command-line-parser.hpp>
 
 #include <filesystem>
@@ -5,7 +10,7 @@
 
 int main() {
 	Rain::String::CommandLineParser parser;
-	const char *argv[] = {"--port",
+	char const *argv[] = {"--port",
 		"80",
 		"--live",
 		"-Iinclude/",
@@ -13,7 +18,7 @@ int main() {
 		"-I",
 		"../lib/include/",
 		"--reload",
-		"--name=Yang"};
+		"--name=GILGAMESH"};
 	int argc = 9;
 
 	unsigned long long port = 443;
@@ -28,7 +33,7 @@ int main() {
 
 	try {
 		parser.parse(argc, argv);
-	} catch (const std::exception &e) {
+	} catch (std::exception const &e) {
 		std::cout << e.what() << std::endl;
 	}
 

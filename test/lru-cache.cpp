@@ -1,3 +1,6 @@
+/*
+Tests the Least-Recently-Used caching algorithm from `rain/algorithm/lru.hpp`.
+*/
 #include <rain/algorithm/lru.hpp>
 
 #include <iostream>

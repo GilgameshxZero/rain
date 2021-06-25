@@ -1,6 +1,7 @@
 {
 	"version": "0.2.0",
-	"configurations": [{
+	"configurations": [
+		{
 			"name": "debug-windows",
 			"type": "cppvsdbg",
 			"request": "launch",
@@ -8,7 +9,7 @@
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}\\bin",
-			"console": "externalTerminal",
+			"console": "internalConsole",
 			"preLaunchTask": "build-debug",
 		},
 		{
