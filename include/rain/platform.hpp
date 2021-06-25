@@ -11,43 +11,37 @@
 #define RAIN_WINDOWS
 #endif
 
-#if defined(unix) || defined(__unix__) || defined(__unix)
-#define RAIN_UNIX
-#endif
-
 #if defined(__APPLE__) || defined(__MACH__)
-#define RAIN_MAC
+#define RAIN_MACOS
 #endif
 
 #if defined(__linux__) || defined(linux) || defined(__linux)
 #define RAIN_LINUX
 #endif
 
-#ifdef __FreeBSD__
-#define RAIN_FREEBSD
-#endif
-
-#ifdef __ANDROID__
-#define RAIN_ANDROID
+#ifdef NDEBUG
+#define RAIN_NDEBUG
 #endif
 
 namespace Rain::Platform {
-	inline const char *getPlatformCStr() {
+	inline char const *getPlatformCStr() {
 #ifdef RAIN_CYGWIN
 		return "Cygwin";
 #elif defined(RAIN_WINDOWS)
 		return "Windows";
-#elif defined(RAIN_MAC)
-		return "Mac";
+#elif defined(RAIN_MACOS)
+		return "MacOS";
 #elif defined(RAIN_LINUX)
 		return "Linux";
-#elif defined(RAIN_UNIX)
-		return "Unix";
-#elif defined(RAIN_FREEBSD)
-		return "FreeBSD";
-#elif defined(RAIN_ANDROID)
-		return "Android";
 #endif
-		return "";
+		return "Unknown";
+	}
+
+	inline bool isDebug() {
+#ifdef RAIN_NDEBUG
+		return false;
+#else
+		return true;
+#endif
 	}
 }

@@ -1,3 +1,7 @@
+/*
+Tests select string parsing utilities from `rain/string.hpp`.
+*/
+
 #include <rain/string.hpp>
 
 #include <iostream>

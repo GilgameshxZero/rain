@@ -23,7 +23,7 @@ TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 CXX := g++
 CXXFLAGS := -I$(INCLUDE_DIR) -std=c++17 -pthread -Wall
 CXXFLAGS_DEBUG := -O0 -g
-CXXFLAGS_RELEASE := -O3 -march=native
+CXXFLAGS_RELEASE := -O3 -DNDEBUG
 LDLIBS := -lresolv
 
 # OS-specific behavior.
@@ -32,7 +32,7 @@ ifneq ($(UNAME_S), Darwin)
 	LDLIBS := $(LDLIBS) -lstdc++fs
 endif
 
-# Check if RELEASE=1 is set.
+# Default to DEBUG builds. Check if RELEASE=1 is set.
 ifeq ($(RELEASE), 1)
   CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_RELEASE)
 else
@@ -40,7 +40,7 @@ else
 endif
 
 # Keep intermediate files to speed up compilation times.
-.SECONDARY: $(TEST_BINS) $(TEST_OBJS) $(TEST_NAMES)
+.SECONDARY: $(TEST_BINS) $(TEST_OBJS)
 
 # Mark .PHONY for rules to avoid compiling files named the same as rules.
 
@@ -51,7 +51,7 @@ all: $(TEST_NAMES)
 .PHONY: noinc
 noinc: $(TEST_BINS)
 
-# Run tests.
+# Run a single test whose name is specified by TEST.
 .PHONY: run
 run: $(TEST)
 	@$(BIN_DIR)$(TEST) $(ARGS)
@@ -89,4 +89,4 @@ $(VERSION_BUILD_INCLUDE): $(RAIN_INCLUDES) $(TEST_SRCS)
 	RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
 	echo -e "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD\c" > \
 		$(VERSION_BUILD_INCLUDE); \
-	echo build $$RAIN_VERSION_BUILD
+	echo Build $$RAIN_VERSION_BUILD.

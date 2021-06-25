@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.5.2
+
+* Document and update usage, build, and development procedures in `readme.md`.
+* Remove `-march=native` build flag in `build/makefile`.
+* Add `-DNDEBUG` build flag in `build/makefile` if the build is a debug build.
+* Add comments atop each test file specifying the purpose of each test.
+* Add `Rain::Platform::isDebug` to detect whether the current build is a debug build or otherwise.
+* Split the configuration specification for `VsDevCmd.bat` into a default and local file for Windows systems needing to build using the `cl.exe` command line tool, and update VSCode tasks accordingly.
+* Add recommended VSCode workspace extensions to `.vscode/extensions.json`.
+* Move the Visual Studio test project tempalte to `build/rain.template/`.
+* Move recommended VSCode settings to `.vscode/settings.default.json` and remove `.vscode/settings.json` from version control.
+
 ## 6.5.1
 
 * Makefile now links libraries after objects as intended.

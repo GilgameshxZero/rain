@@ -1,3 +1,8 @@
+/*
+Tests the Knuth-Morris-Pratt string matching algorithm from
+`rain/algorithm/kmp.hpp`.
+*/
+
 #include <rain/algorithm/kmp.hpp>
 
 #include <iostream>
