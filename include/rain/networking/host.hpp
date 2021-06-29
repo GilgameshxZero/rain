@@ -7,17 +7,21 @@ namespace Rain::Networking {
 	// management.
 	class Host {
 		public:
-		// Pass "localhost" to bind & listen for any incoming connections, or to
-		// connect to localhost addresses. This is more reliable cross-platform than
-		// "*" or "127.0.0.1" or "0.0.0.0".
 		class Node {
 			public:
+			// Passing "" is the same as passing a NULL host, most useful for binding on localhost.
 			Node(std::string const &node) : node(node) {}
-			Node(char const *node) : node(node == NULL ? "localhost" : node) {}
-			Node(int node) : node(node == 0 ? "localhost" : std::to_string(node)) {}
+			Node(char const *node) : node(node == NULL ? "" : node) {}
 
+			// An int constructor is included for compatibility for constructing with
+			// NULL.
+			Node(int node) : node(node == 0 ? "" : std::to_string(node)) {}
+
+			// Passing NULL as the node to getaddrinfo is consistent for binding to
+			// localhost. Connect directly with localhost when attempting a
+			// connection.
 			char const *getCStr() const noexcept {
-				return this->node == "localhost" ? NULL : this->node.c_str();
+				return this->node.empty() ? NULL : this->node.c_str();
 			}
 
 			private:

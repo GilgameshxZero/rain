@@ -15,7 +15,7 @@ namespace Rain::Networking::Smtp {
 		bool overflowed;
 		std::string verb;
 
-		Request(const std::string &verb = "EHLO", const std::string &parameter = "")
+		Request(std::string const &verb = "EHLO", std::string const &parameter = "")
 				: Payload(parameter),
 					RequestResponse::Request<Request, Response>(),
 					overflowed(false),

@@ -8,6 +8,7 @@ Tests basic socket client/server functions from `rain/networking/`.
 
 #include <iostream>
 
+// Subclass server for custom behavior.
 class Server : public Rain::Networking::Server<Rain::Networking::Slave> {
 	protected:
 	void onBeginSlaveTask(Slave &slave) noexcept override {
@@ -36,7 +37,7 @@ class Server : public Rain::Networking::Server<Rain::Networking::Slave> {
 
 int main() {
 	Server server;
-	server.serve(Rain::Networking::Host("localhost", 0), false);
+	server.serve(Rain::Networking::Host(NULL, 0), false);
 	Rain::Networking::Host host("localhost", server.getService());
 	std::cout << "Started server on port " << host.service.getCStr() << "."
 						<< std::endl;
