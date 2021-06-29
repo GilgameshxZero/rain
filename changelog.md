@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.5.3
+
+* Continue migration to using `TYPE const` specification syntax.
+* Change `Host` internals for `localhost` configuration.
+* Add comments to tests.
+
 ## 6.5.2
 
 * Document and update usage, build, and development procedures in `readme.md`.

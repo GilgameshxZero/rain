@@ -49,7 +49,7 @@ namespace Rain::String {
 
 		// Return a parser based on the type passed in.
 		Layer::Parser const &getParser(bool *) const noexcept {
-			static const Layer::Parser parser(
+			static Layer::Parser const parser(
 				[](char const *const sValue, void *const param) {
 					*reinterpret_cast<bool *>(param) = !(std::strcmp(sValue, "0") == 0 ||
 						std::strcmp(sValue, "false") == 0 ||
@@ -59,14 +59,14 @@ namespace Rain::String {
 			return parser;
 		}
 		Layer::Parser const &getParser(long long *) const noexcept {
-			static const Layer::Parser parser([](char const *const sValue,
+			static Layer::Parser const parser([](char const *const sValue,
 																					void *const param) {
 				*reinterpret_cast<long long *>(param) = std::strtoll(sValue, NULL, 10);
 			});
 			return parser;
 		}
 		Layer::Parser const &getParser(unsigned long long *) const noexcept {
-			static const Layer::Parser parser(
+			static Layer::Parser const parser(
 				[](char const *const sValue, void *const param) {
 					*reinterpret_cast<unsigned long long *>(param) =
 						std::strtoull(sValue, NULL, 10);
@@ -74,7 +74,7 @@ namespace Rain::String {
 			return parser;
 		}
 		Layer::Parser const &getParser(unsigned long *) const noexcept {
-			static const Layer::Parser parser(
+			static Layer::Parser const parser(
 				[](char const *const sValue, void *const param) {
 					*reinterpret_cast<unsigned long *>(param) =
 						std::strtoul(sValue, NULL, 10);
@@ -82,7 +82,7 @@ namespace Rain::String {
 			return parser;
 		}
 		Layer::Parser const &getParser(std::string *) const noexcept {
-			static const Layer::Parser parser(
+			static Layer::Parser const parser(
 				[](char const *const sValue, void *const param) {
 					reinterpret_cast<std::string *>(param)->assign(sValue);
 				});
