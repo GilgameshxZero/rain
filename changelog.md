@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.5.4
+
+* Order MX servers alphabetically, in the temporary absence of ordering them via MX priority.
+
 ## 6.5.3
 
 * Continue migration to using `TYPE const` specification syntax.
