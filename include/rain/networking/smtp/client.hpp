@@ -109,7 +109,8 @@ namespace Rain::Networking::Smtp {
 #endif
 
 			bool connected = false;
-			for (auto server : servers) {
+			for (auto const &server :
+				std::set<std::string>(servers.begin(), servers.end())) {
 				try {
 					this->connect(Host(server.c_str(), 25));
 					connected = true;
