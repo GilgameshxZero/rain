@@ -1,5 +1,18 @@
 # Changelog
 
+## 6.6.0
+
+* Rename header filenames to singular instead of plural.
+* Add `assert` checks to non-networking tests.
+* Add `_zu` `std::size_t` literal.
+* Default configuration on Windows VSCode changed to `integratedTerminal`.
+* Added many clarifying comments for tests and non-networking headers.
+* `LruCache` renamed from `LRUCache` to preserve style with acronyms.
+* `cStrSearchKmp` renamed from `cStrSearchKMP` to preserve style with acronyms.
+* LRU cache carries exceptions from superclass.
+* Modify all non-networking libraries to use `Rain::ErrorException::Exception` for throwing errors.
+* Add platform-dependent `std::size_t` parser to `Rain::String::WaterfallParser`.
+
 ## 6.5.4
 
 * Order MX servers alphabetically, in the temporary absence of ordering them via MX priority.

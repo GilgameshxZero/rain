@@ -1,25 +1,28 @@
 // Includes all rain libraries.
 #pragma once
 
+// Versioning.
+#define RAIN_VERSION_MAJOR 6
+#define RAIN_VERSION_MINOR 6
+#define RAIN_VERSION_REVISION 0
+
 // This is necessary for struct addrinfo.
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-
-// Versioning.
-#define RAIN_VERSION_MAJOR 6
-#define RAIN_VERSION_MINOR 5
-#define RAIN_VERSION_REVISION 4
 
 #include "rain/build.hpp"
 
 #include "rain/algorithm.hpp"
 #include "rain/algorithm/kmp.hpp"
 #include "rain/algorithm/lru.hpp"
-#include "rain/error-exception.hpp"
+#include "rain/debug.hpp"
+#include "rain/error-exception/exception.hpp"
 #include "rain/filesystem.hpp"
-#include "rain/gdiplus.hpp"
+#include "rain/gdi-plus.hpp"
+#include "rain/literal.hpp"
 #include "rain/memmem.hpp"
+#include "rain/multithreading/thread-pool.hpp"
 #include "rain/networking/client.hpp"
 #include "rain/networking/host.hpp"
 #include "rain/networking/http/body.hpp"
@@ -52,10 +55,10 @@
 #include "rain/string.hpp"
 #include "rain/string/command-line-parser.hpp"
 #include "rain/string/waterfall-parser.hpp"
-#include "rain/thread-pool.hpp"
 #include "rain/time.hpp"
-#include "rain/types.hpp"
+#include "rain/type.hpp"
 #include "rain/windows.hpp"
 
+#include <cassert>
 #include <fstream>
 #include <iostream>

@@ -5,11 +5,14 @@ Tests the `CommandLineParser` and `WaterfallParser` string parser classes in
 
 #include <rain/string/command-line-parser.hpp>
 
+#include <cassert>
 #include <filesystem>
 #include <iostream>
 
 int main() {
 	Rain::String::CommandLineParser parser;
+
+	// Synthetic command line.
 	char const *argv[] = {"--port",
 		"80",
 		"--live",
@@ -18,12 +21,12 @@ int main() {
 		"-I",
 		"../lib/include/",
 		"--reload",
-		"--name=GILGAMESH"};
+		"--name=rain"};
 	int argc = 9;
 
-	unsigned long long port = 443;
+	std::size_t port = 443;
 	bool live = false, reload = true;
-	std::string name = "GILGAMESH";
+	std::string name = "default";
 	std::vector<std::string> includes;
 	parser.addLayer("port", &port);
 	parser.addLayer("live", &live);
@@ -31,11 +34,7 @@ int main() {
 	parser.addLayer("name", &name);
 	parser.addLayer("I", &includes);
 
-	try {
-		parser.parse(argc, argv);
-	} catch (std::exception const &e) {
-		std::cout << e.what() << std::endl;
-	}
+	parser.parse(argc, argv);
 
 	std::cout << "Working directory: " << std::filesystem::current_path()
 						<< std::endl
@@ -46,6 +45,8 @@ int main() {
 	for (std::size_t a = 0; a < includes.size(); a++) {
 		std::cout << "Include: " << includes[a] << std::endl;
 	}
+
+	assert(port == 80);
 
 	return 0;
 }

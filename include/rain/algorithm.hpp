@@ -1,4 +1,7 @@
-// Uses min and max to avoid standardization issues.
+/*
+Replaces the <algorithm> include in STL to resolve any issues with double-defining min/max.
+*/
+
 #pragma once
 
 #ifndef NOMINMAX

@@ -9,7 +9,7 @@
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}\\bin",
-			"console": "internalConsole",
+			"console": "integratedTerminal",
 			"preLaunchTask": "build-debug",
 		},
 		{

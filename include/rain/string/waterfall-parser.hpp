@@ -1,16 +1,33 @@
 #pragma once
 
-// For cStrCmp.
-#include "../string.hpp"
+#include "../error-exception/exception.hpp"
+#include "../platform.hpp"
+#include "../string.hpp"	// For cStrCmp.
 
 #include <functional>
 #include <map>
-#include <stdexcept>
 #include <vector>
 
 namespace Rain::String {
 	class WaterfallParser {
 		public:
+		// Custom `error_condition`s.
+		enum class Error { NO_PARSER_FOR_KEY_TYPE = 0 };
+		class ErrorCategory : public std::error_category {
+			public:
+			char const *name() const noexcept {
+				return "Rain::String::WaterfallParser";
+			}
+			std::string message(int ev) const noexcept {
+				switch (static_cast<Error>(ev)) {
+					case Error::NO_PARSER_FOR_KEY_TYPE:
+						return "Key type does not have a parser.";
+					default:
+						return "Generic.";
+				}
+			}
+		};
+
 		// Compound type to store all information with a parser.
 		struct Layer {
 			// Parsing function.
@@ -29,7 +46,8 @@ namespace Rain::String {
 		void parse(char const *const key, char const *const sValue) const {
 			auto it = this->layers.find(key);
 			if (it == this->layers.end()) {
-				throw std::invalid_argument("Key does not have a parser.");
+				throw ErrorException::Exception::makeException<ErrorCategory>(
+					Error::NO_PARSER_FOR_KEY_TYPE);
 			}
 			it->second.parser(sValue, it->second.param);
 		}
@@ -37,7 +55,7 @@ namespace Rain::String {
 		// General: add a way to parse a key. Contains shared error-checking code
 		// and builds the KeyHandler. Used as a shorthand by other addParser.
 		template <typename StoreType>
-		void addLayer(char const *const key, StoreType *const store) noexcept {
+		void addLayer(char const *const key, StoreType *store) noexcept {
 			// Adding a key previously added will overwrite it.
 			this->layers.insert(std::make_pair(
 				key, Layer(reinterpret_cast<void *>(store), this->getParser(store))));
@@ -73,6 +91,19 @@ namespace Rain::String {
 				});
 			return parser;
 		}
+// For some reason, this function generates the same signature as `Layer::Parser
+// const &getParser(unsigned long long *)` on GCC and Clang but not on MSVC, so
+// we define it only on Windows.
+#ifdef RAIN_WINDOWS
+		Layer::Parser const &getParser(std::size_t *) const noexcept {
+			static Layer::Parser const parser(
+				[](char const *const sValue, void *const param) {
+					*reinterpret_cast<std::size_t *>(param) =
+						static_cast<std::size_t>(std::strtoull(sValue, NULL, 10));
+				});
+			return parser;
+		}
+#endif
 		Layer::Parser const &getParser(unsigned long *) const noexcept {
 			static Layer::Parser const parser(
 				[](char const *const sValue, void *const param) {

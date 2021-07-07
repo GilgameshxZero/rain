@@ -1,10 +1,16 @@
+/*
+Replaces the <filesystem> STL header with additional utilities.
+*/
+
 #pragma once
 
 #include <filesystem>
 
 namespace Rain::Filesystem {
-	// Returns true if needle is under the haystack directory path.
-	// Safest with absolute paths.
+	/*
+	Returns true iff needle is under the haystack directory path.
+	Safe only with absolute paths.
+	*/
 	inline bool subpath(std::filesystem::path const &haystack,
 		std::filesystem::path const &needle) {
 		return std::mismatch(

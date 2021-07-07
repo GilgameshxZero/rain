@@ -1,7 +1,7 @@
 /*
 Prints `Hello world!` on the console.
 
-Tests the build procedure, but does not include any `rain` library code.
+Tests the build procedure, but not any of the `rain` code which is omitted from includes.
 */
 
 #include <iostream>

@@ -1,47 +1,54 @@
-// A base class with immutable LRU cache behavior, to be subclassed by similar
-// caches.
+/*
+Thread-safe base class with immutable LRU cache behavior. Can be subclassed.
+*/
+
 #pragma once
 
-#include "../types.hpp"
+#include "../error-exception/exception.hpp"
+#include "../type.hpp"
 
 #include <list>
 #include <mutex>
-#include <stdexcept>
 #include <unordered_map>
 
 namespace Rain::Algorithm {
-	// KeyType should be light. ValueType can be heavier, but the cache is
-	// immutable w.r.t. ValueType.
+	/*
+	KeyType should be light. ValueType can be heavier, but the cache is immutable
+	w.r.t. ValueType.
+	*/
 	template <typename KeyType, typename ValueType>
-	class LRUCache
+	class LruCache
 			: private std::unordered_map<KeyType,
 					typename std::list<std::pair<KeyType, ValueType>>::iterator> {
 		private:
-		// Shorthand.
+		// Shorthand typedefs.
 		typedef std::list<std::pair<KeyType, ValueType>> ListType;
 		typedef std::unordered_map<KeyType, typename ListType::iterator> Super;
 
 		public:
 		std::size_t const capacity;
 
-		// Zero capacity means infinite.
-		LRUCache(std::size_t capacity = 0) : capacity(capacity) {}
+		// Zero capacity means infinite, which is a little meaningless.
+		LruCache(std::size_t capacity = 0) : capacity(capacity) {}
+
+		// Overload for member access.
 		ValueType &at(KeyType const &key) {
 			std::lock_guard<std::mutex> lck(this->mtx);
-			typename Super::iterator const &it = Super::find(key);
-			if (it == Super::end()) {
-				throw std::out_of_range("Key does not exist in LRU cache.");
-			}
-			this->lru.push_front(*(it->second));
-			this->lru.erase(it->second);
-			it->second = this->lru.begin();
+			
+			// Throws exception if key is not in cache.
+			typename ListType::iterator &it = Super::at(key);
+
+			this->lru.push_front(*it);
+			this->lru.erase(it);
+			it = this->lru.begin();
 			return this->lru.begin()->second;
 		}
+
+		// Custom function for LruCache.
 		std::pair<typename Super::iterator, bool> insert_or_assign(
 			KeyType const &key,
 			ValueType const &value) {
 			std::lock_guard<std::mutex> lck(this->mtx);
-
 			typename Super::iterator const &it = Super::find(key);
 			if (it != Super::end()) {	 // If key already exists, replace it.
 				this->lru.erase(it->second);

@@ -74,7 +74,7 @@ namespace Rain::Networking::Smtp {
 
 					// Look to parse an additional line.
 					while (
-						(newline = Algorithm::cStrSearchKMP(
+						(newline = Algorithm::cStrSearchKmp(
 							 curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand)) != NULL) {
 						// Found full line since curParse.
 						isLastLine = curParse[3] == ' ';
