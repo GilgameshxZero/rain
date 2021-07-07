@@ -1,5 +1,8 @@
-// Utilities for platform-detecting, and declarations for low-level platform
-// specific functions.
+/*
+Utilities for platform-detecting, and declarations for low-level platform
+specific functions.
+*/
+
 #pragma once
 
 // Platform preprocessors.
@@ -19,12 +22,8 @@
 #define RAIN_LINUX
 #endif
 
-#ifdef NDEBUG
-#define RAIN_NDEBUG
-#endif
-
 namespace Rain::Platform {
-	inline char const *getPlatformCStr() {
+	inline char const *getPlatformCStr() noexcept {
 #ifdef RAIN_CYGWIN
 		return "Cygwin";
 #elif defined(RAIN_WINDOWS)
@@ -34,14 +33,6 @@ namespace Rain::Platform {
 #elif defined(RAIN_LINUX)
 		return "Linux";
 #endif
-		return "Unknown";
-	}
-
-	inline bool isDebug() {
-#ifdef RAIN_NDEBUG
-		return false;
-#else
-		return true;
-#endif
+		return "Other";
 	}
 }

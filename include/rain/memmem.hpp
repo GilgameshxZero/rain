@@ -1,3 +1,9 @@
+/*
+Re-implementation of GNU memmem in the case it doesn't exist.
+*/
+
+#pragma once
+
 #include "platform.hpp"
 
 #include <cstring>

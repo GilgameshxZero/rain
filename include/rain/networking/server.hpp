@@ -2,7 +2,7 @@
 // `tests/socket-server.cpp`.
 #pragma once
 
-#include "../thread-pool.hpp"
+#include "../multithreading/thread-pool.hpp"
 #include "socket.hpp"
 
 #include <set>
@@ -28,7 +28,7 @@ namespace Rain::Networking {
 		// Settings.
 		private:
 		// Slave management.
-		ThreadPool<Slave *> threadPool;
+		Multithreading::ThreadPool<Slave *> threadPool;
 
 		// Active slaves.
 		std::set<Slave *> slaves;

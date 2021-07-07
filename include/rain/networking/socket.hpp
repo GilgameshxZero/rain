@@ -9,7 +9,7 @@
 #undef UNICODE
 #endif
 
-#include "../error-exception.hpp"
+#include "../error-exception/exception.hpp"
 #include "../platform.hpp"
 #include "../time.hpp"
 #include "host.hpp"
@@ -52,7 +52,7 @@ namespace Rain::Networking {
 		};
 		class ErrorCategory : public std::error_category {
 			public:
-			char const *name() const noexcept { return "Socket"; }
+			char const *name() const noexcept { return "Rain::Networking::Socket"; }
 			std::string message(int ev) const {
 				switch (static_cast<Error>(ev)) {
 #ifdef RAIN_WINDOWS
@@ -96,10 +96,6 @@ namespace Rain::Networking {
 						return "Generic.";
 				}
 			}
-			bool equivalent(std::error_code const &code,
-				int condition) const noexcept {
-				return false;
-			}
 		};
 		inline static ErrorCategory errorCategory;
 
@@ -107,8 +103,8 @@ namespace Rain::Networking {
 		static std::error_condition makeErrorCondition(Error e) {
 			return std::error_condition(static_cast<int>(e), errorCategory);
 		}
-		static Exception makeException(Error e) {
-			return Exception(makeErrorCondition(e));
+		static ErrorException::Exception makeException(Error e) {
+			return ErrorException::Exception(makeErrorCondition(e));
 		}
 
 		// Family, type, protocol options.

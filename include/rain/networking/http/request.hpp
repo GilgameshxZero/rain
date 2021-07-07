@@ -85,7 +85,7 @@ namespace Rain::Networking::Http {
 				// Parse everything we just received.
 				while (true) {
 					// Parsing the request line. Look for end-of-line.
-					endOfLine = Algorithm::cStrSearchKMP(
+					endOfLine = Algorithm::cStrSearchKmp(
 						curParse, curRecv - curParse, CRLF, 2, PART_MATCH_CRLF, &kmpCand);
 					if (endOfLine == NULL) {
 						// No end of line, so wait for the next recv.

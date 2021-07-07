@@ -68,7 +68,7 @@ namespace Rain::Networking::Smtp {
 					}
 
 					// Parsing the request line. Look for end-of-line.
-					char *newline = Algorithm::cStrSearchKMP(
+					char *newline = Algorithm::cStrSearchKmp(
 						curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand);
 					if (newline != NULL) {
 						// Found newline; create request.

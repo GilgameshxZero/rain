@@ -1,11 +1,15 @@
-// A compatibility layer for different string implementations across platforms.
-// Includes some string-related utility functions.
+/*
+A compatibility layer for different string implementations across platforms.
+Includes some string-related utility functions.
+
+Functionally replaces STL <string>
+*/
 
 #pragma once
 
 #include "algorithm.hpp"
 #include "platform.hpp"
-#include "types.hpp"
+#include "type.hpp"
 
 #include <cstring>
 #include <locale>
@@ -72,6 +76,7 @@ namespace Rain::String {
 	}
 	inline char const *findFirstNonWhitespaceCStrN(char const *cStr,
 		std::size_t const cStrLen = 0,
+		// direction = 1 specifies scanning LTR.
 		std::size_t const direction = 1) {
 		for (std::size_t a = 0; ((cStrLen == 0 && *cStr) || a < cStrLen) &&
 				 std::isspace(static_cast<int>(*cStr));
@@ -81,6 +86,7 @@ namespace Rain::String {
 	}
 	inline char *findFirstNonWhitespaceCStrN(char *cStr,
 		std::size_t const cStrLen = 0,
+		// direction = 1 specifies scanning LTR.
 		std::size_t const direction = 1) {
 		return const_cast<char *>(findFirstNonWhitespaceCStrN(
 			static_cast<char const *>(cStr), cStrLen, direction));

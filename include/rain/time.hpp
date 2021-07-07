@@ -1,4 +1,7 @@
-// Compatibility layer for differences between platforms.
+/*
+Compatibility layer for differences between platforms.
+*/
+
 #pragma once
 
 #include "platform.hpp"
@@ -17,7 +20,7 @@ namespace Rain {
 
 namespace Rain::Time {
 	// Shorthand for sleeping the current thread.
-	inline void sleepMs(std::size_t ms) {
+	inline void sleepMs(std::size_t ms) noexcept {
 		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	}
 }
