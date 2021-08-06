@@ -22,18 +22,17 @@ TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 
 # Flags for build. Debug by default.
 CXX := g++
-CXXFLAGS_COMMON := -I$(INCLUDE_DIR) -std=c++17 -pthread \
-	-Wall -Wextra -Wno-overloaded-virtual -D _CONSOLE -m64 -pedantic
+CXXFLAGS := -I$(INCLUDE_DIR) -std=c++17 -m64 -pthread -Wall -Wextra -D_CONSOLE
 CXXFLAGS_DEBUG := -D _DEBUG -g -O0
 CXXFLAGS_RELEASE := -D NDEBUG -Ofast
 CXXFLAGS_INSTRUMENT := -fsanitize=address,undefined,leak
-LDLIBS := -lresolv
+LDLIBS := -pthread -lresolv
 
 # Default to DEBUG builds. Check if RELEASE=1 is set.
 ifeq ($(RELEASE), 1)
-  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
+  CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_RELEASE)
 else
-  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
+  CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_DEBUG)
 endif
 
 ifeq ($(INSTRUMENT), 1)
@@ -84,7 +83,7 @@ $(TEST_NAMES): $(VERSION_BUILD_INCLUDE) $(BIN_DIR)$$@
 # Link rule.
 $(TEST_BINS): $(BIN_DIR)% : $(OBJ_DIR)$$*/$$*.o
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $< $(LDLIBS) -o $@
+	$(CXX) $< $(LDLIBS) -o $@
 
 # Compile rule. Stem % matches TEST_NAME/TEST_NAME, in which / is replaced \
 	with a space and the first word is extracted for the cpp file name.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.9
+
+Remove unused flags from `g++` command-line options in `build/makefile`.
+
 ## 7.0.8
 
 * Correctly parse out “FROM:” and “TO:” in the relevant SMTP commands in SMTP `Worker`.
