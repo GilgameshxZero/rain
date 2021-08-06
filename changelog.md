@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.7
+
+* Revert changes to `Algorithm::LruCache` inheritance.
+
 ## 7.0.6
 
 * Change `std::unordered_map` inheritance in `Algorithm::LruCache` to public to allow accessing base interface functions, while `.at` and `.insert_or_assign` is still overwritten.
