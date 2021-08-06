@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.8
+
+* Correctly parse out “FROM:” and “TO:” in the relevant SMTP commands in SMTP `Worker`.
+
 ## 7.0.7
 
 * Revert changes to `Algorithm::LruCache` inheritance.
@@ -47,15 +51,15 @@ The entire `Networking` module has been re-imagined.
 
 Inerhitance follows the pattern known as *base-specialization across protocol layers*, which is described below.
 
-Type \ Protocol|None|TCP (from None)|Request-Response (from TCP)|HTTP (from Request-Response)|SMTP (from Request-Response)
--|-|-|-|-|-
-`Socket` (base)|X|X|X|X|X
-`Client` (`Socket` specialization)|X|X|X|X|X
-`Worker` (`Socket` specialization)|X|X|X|X|X
-`Server` (`Socket` specialization)|X|X|X|X|X
-`Message` (base)|||X|X|X
-`Request` (`Message` specialization)|||X|X|X
-`Response` (`Message` specialization)|||X|X|X
+| Type \ Protocol                       | None | TCP (from None) | Request-Response (from TCP) | HTTP (from Request-Response) | SMTP (from Request-Response) |
+| ------------------------------------- | ---- | --------------- | --------------------------- | ---------------------------- | ---------------------------- |
+| `Socket` (base)                       | X    | X               | X                           | X                            | X                            |
+| `Client` (`Socket` specialization)    | X    | X               | X                           | X                            | X                            |
+| `Worker` (`Socket` specialization)    | X    | X               | X                           | X                            | X                            |
+| `Server` (`Socket` specialization)    | X    | X               | X                           | X                            | X                            |
+| `Message` (base)                      |      |                 | X                           | X                            | X                            |
+| `Request` (`Message` specialization)  |      |                 | X                           | X                            | X                            |
+| `Response` (`Message` specialization) |      |                 | X                           | X                            | X                            |
 
 Sockets are still divided into three specializations: `Client`, `Server`, and `Worker` (renamed from `Slave`), all of which derive (eventually) from the base `Socket`. Each specialization defines their own contracts and interfaces. Networking protocols are represented as layers, where each layer provides its own implementation of the protocol `Socket` and the protocol specializations, each of which derive from the layer below. The base layer specializations derive from the top-layer protocol `Sockets`, instead of `virtual`ly inheriting each layer’s protocol `Socket` multiple times.
 
