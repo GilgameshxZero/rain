@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.0.1
+
+One of two updates to add `.vscode/settings.json` to version-control, but also ignore any changes to it.
+The next update will re-add `.vscode/settings.json` to `.gitignore`, and re-introduce `.vscode/settings.DEFAULT.json` after a rename from `.vscode/settings.default.json`.
+
 ## 7.0.0 “Emancipation”
 
 *The `Networking::Slave`s have been freed!*
