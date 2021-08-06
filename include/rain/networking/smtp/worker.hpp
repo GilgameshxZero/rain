@@ -189,7 +189,7 @@ namespace Rain::Networking::Smtp {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
-				std::string parameter(req.parameter);
+				std::string parameter(req.parameter.substr(5));
 				String::trimWhitespace(parameter);
 				this->mailFrom = Mailbox(parameter.substr(1, parameter.length() - 2));
 
@@ -212,7 +212,7 @@ namespace Rain::Networking::Smtp {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
-				std::string parameter(req.parameter);
+				std::string parameter(req.parameter.substr(3));
 				String::trimWhitespace(parameter);
 
 				// Delegate to another subclass handler, since RCPT should return 550 if
@@ -230,10 +230,15 @@ namespace Rain::Networking::Smtp {
 		virtual PreResponse onDataStream(std::istream &stream) {
 			// Ignore all the data, then reject it.
 			stream.ignore(std::numeric_limits<std::streamsize>::max());
-			return {StatusCode::REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT};
+			return {StatusCode::TRANSACTION_FAILED};
 		}
 
 		virtual PreResponse onData(Request &) {
+			// Accept data as long as at from/to addresses have been issued already.
+			if (!this->mailFrom || this->rcptTo.size() == 0) {
+				return {StatusCode::BAD_SEQUENCE_COMMAND};
+			}
+
 			// Send a 354, and set up the stream for streaming the data.
 			*this << Response(StatusCode::START_MAIL_INPUT);
 
