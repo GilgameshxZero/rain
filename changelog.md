@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.2
+
+Two of two updates continued from `7.0.1`.
+
 ## 7.0.1
 
 One of two updates to add `.vscode/settings.json` to version-control, but also ignore any changes to it.
