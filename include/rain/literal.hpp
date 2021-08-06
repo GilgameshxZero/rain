@@ -14,10 +14,10 @@ namespace Rain {
 		using namespace std::literals;
 
 		// User-defined literals.
-		constexpr std::size_t operator"" _zu(unsigned long long value) {
+		inline constexpr std::size_t operator"" _zu(unsigned long long value) {
 			return static_cast<std::size_t>(value);
 		}
-		std::regex operator"" _re(char const *value, std::size_t) {
+		inline std::regex operator"" _re(char const *value, std::size_t) {
 			return std::regex(value);
 		}
 	}

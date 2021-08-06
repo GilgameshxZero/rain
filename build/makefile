@@ -3,9 +3,9 @@ SHELL := /bin/bash
 # Directories relative paths.
 ROOT_DIR := ../
 INCLUDE_DIR := $(ROOT_DIR)include/
+TEST_DIR := $(ROOT_DIR)test/
 OBJ_DIR := $(ROOT_DIR)obj/
 BIN_DIR := $(ROOT_DIR)bin/
-TEST_DIR := $(ROOT_DIR)test/
 
 # Groups of files and filenames.
 VERSION_BUILD_INCLUDE := $(INCLUDE_DIR)rain/build.hpp
@@ -16,12 +16,14 @@ RAIN_INCLUDES := $(filter-out $(VERSION_BUILD_INCLUDE), \
 
 TEST_SRCS := $(wildcard $(TEST_DIR)*.cpp)
 TEST_NAMES := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
-TEST_OBJS := $(join $(addsuffix /, $(addprefix $(OBJ_DIR), $(TEST_NAMES))), $(addsuffix .o, $(TEST_NAMES)))
+TEST_OBJS := $(join $(addsuffix /, \
+	$(addprefix $(OBJ_DIR), $(TEST_NAMES))), $(addsuffix .o, $(TEST_NAMES)))
 TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 
 # Flags for build. Debug by default.
 CXX := g++
-CXXFLAGS_COMMON := -I$(INCLUDE_DIR) -std=c++17 -pthread -Wall -Wextra -Wno-overloaded-virtual -D _CONSOLE -m64 -pedantic
+CXXFLAGS_COMMON := -I$(INCLUDE_DIR) -std=c++17 -pthread \
+	-Wall -Wextra -Wno-overloaded-virtual -D _CONSOLE -m64 -pedantic
 CXXFLAGS_DEBUG := -D _DEBUG -g -O0
 CXXFLAGS_RELEASE := -D NDEBUG -Ofast
 CXXFLAGS_INSTRUMENT := -fsanitize=address,undefined,leak
@@ -38,7 +40,8 @@ ifeq ($(INSTRUMENT), 1)
   CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_INSTRUMENT)
 endif
 
-# -lstdc++fs is included by default on MacOS and cannot be specified on the command line.
+# -lstdc++fs is included by default on MacOS and cannot be specified on the \
+	command line.
 UNAME_S := $(shell uname -s)
 ifneq ($(UNAME_S), Darwin)
 	LDLIBS := $(LDLIBS) -lstdc++fs
@@ -83,8 +86,10 @@ $(TEST_BINS): $(BIN_DIR)% : $(OBJ_DIR)$$*/$$*.o
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $< $(LDLIBS) -o $@
 
-# Compile rule. Stem % matches TEST_NAME/TEST_NAME, in which / is replaced with a space and the first word is extracted for the cpp file name.
-$(TEST_OBJS): $(OBJ_DIR)%.o : $(TEST_DIR)$$(firstword $$(subst /, ,$$*)).cpp $(RAIN_INCLUDES)
+# Compile rule. Stem % matches TEST_NAME/TEST_NAME, in which / is replaced \
+	with a space and the first word is extracted for the cpp file name.
+$(TEST_OBJS): $(OBJ_DIR)%.o : $(TEST_DIR)$$(firstword $$(subst /, ,$$*)).cpp \
+	$(RAIN_INCLUDES)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

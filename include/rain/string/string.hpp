@@ -31,7 +31,7 @@
 
 namespace Rain {
 	// strcasecmp does not exist on Windows.
-	int strcasecmp(char const *left, char const *right) {
+	inline int strcasecmp(char const *left, char const *right) {
 #ifdef RAIN_PLATFORM_WINDOWS
 		return _stricmp(
 #else
