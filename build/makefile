@@ -16,47 +16,40 @@ RAIN_INCLUDES := $(filter-out $(VERSION_BUILD_INCLUDE), \
 
 TEST_SRCS := $(wildcard $(TEST_DIR)*.cpp)
 TEST_NAMES := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
-TEST_OBJS := $(addsuffix .o, $(addprefix $(OBJ_DIR), $(TEST_NAMES)))
+TEST_OBJS := $(join $(addsuffix /, $(addprefix $(OBJ_DIR), $(TEST_NAMES))), $(addsuffix .o, $(TEST_NAMES)))
 TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 
 # Flags for build. Debug by default.
 CXX := g++
-CXXFLAGS := -I$(INCLUDE_DIR) -std=c++17 -pthread -Wall
-CXXFLAGS_DEBUG := -O0 -g
-CXXFLAGS_RELEASE := -O3 -DNDEBUG
+CXXFLAGS_COMMON := -I$(INCLUDE_DIR) -std=c++17 -pthread -Wall -Wextra -Wno-overloaded-virtual -D _CONSOLE -m64 -pedantic
+CXXFLAGS_DEBUG := -D _DEBUG -g -O0
+CXXFLAGS_RELEASE := -D NDEBUG -Ofast
+CXXFLAGS_INSTRUMENT := -fsanitize=address,undefined,leak
 LDLIBS := -lresolv
 
-# OS-specific behavior.
+# Default to DEBUG builds. Check if RELEASE=1 is set.
+ifeq ($(RELEASE), 1)
+  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
+else
+  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
+endif
+
+ifeq ($(INSTRUMENT), 1)
+  CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_INSTRUMENT)
+endif
+
+# -lstdc++fs is included by default on MacOS and cannot be specified on the command line.
 UNAME_S := $(shell uname -s)
 ifneq ($(UNAME_S), Darwin)
 	LDLIBS := $(LDLIBS) -lstdc++fs
 endif
 
-# Default to DEBUG builds. Check if RELEASE=1 is set.
-ifeq ($(RELEASE), 1)
-  CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_RELEASE)
-else
-  CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_DEBUG)
-endif
-
-# Keep intermediate files to speed up compilation times.
+# Keep intermediate and output files.
 .SECONDARY: $(TEST_BINS) $(TEST_OBJS)
 
 # Mark .PHONY for rules to avoid compiling files named the same as rules.
 
-# Build all tests.
-.PHONY: all
-all: $(TEST_NAMES)
-
-.PHONY: noinc
-noinc: $(TEST_BINS)
-
-# Run a single test whose name is specified by TEST.
-.PHONY: run
-run: $(TEST)
-	@$(BIN_DIR)$(TEST) $(ARGS)
-
-# Working directory should be consistently bin/.
+# Build and run all tests in order.
 .PHONY: runall
 runall: $(TEST_NAMES)
 	@cd $(BIN_DIR); \
@@ -65,28 +58,41 @@ runall: $(TEST_NAMES)
 		./$$file; \
 	done
 
-# Rules for single tests just redirect to test binaries.
-.SECONDEXPANSION:
-$(TEST_NAMES): $(VERSION_BUILD_INCLUDE) $(BIN_DIR)$$@
+# Run a single test whose name is specified by TEST.
+.PHONY: run
+run: $(TEST)
+	@$(BIN_DIR)$(TEST) $(ARGS)
 
-# Rules for test binaries and objects.
-$(BIN_DIR)%: $(OBJ_DIR)%.o
-	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $< $(LDLIBS) -o $@
-$(OBJ_DIR)%.o: $(TEST_DIR)%.cpp $(RAIN_INCLUDES)
-	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Build all tests.
+.PHONY: all
+all: $(TEST_NAMES)
 
 # Delete intermediate files.
 .PHONY: clean
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-# Increment build number.
+# Rules for single tests just redirect to test binaries.
+# Enable second expansion for some fancy pattern matching later.
+.SECONDEXPANSION:
+$(TEST_NAMES): $(VERSION_BUILD_INCLUDE) $(BIN_DIR)$$@
+
+# Static rules to nest one directory deep inside ../obj.
+# Link rule.
+$(TEST_BINS): $(BIN_DIR)% : $(OBJ_DIR)$$*/$$*.o
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) $< $(LDLIBS) -o $@
+
+# Compile rule. Stem % matches TEST_NAME/TEST_NAME, in which / is replaced with a space and the first word is extracted for the cpp file name.
+$(TEST_OBJS): $(OBJ_DIR)%.o : $(TEST_DIR)$$(firstword $$(subst /, ,$$*)).cpp $(RAIN_INCLUDES)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Increment version build number.
 $(VERSION_BUILD_INCLUDE): $(RAIN_INCLUDES) $(TEST_SRCS)
 	@read line < $(VERSION_BUILD_INCLUDE); \
 	TOKENS=($$line); \
 	RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
 	echo -e "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD\c" > \
 		$(VERSION_BUILD_INCLUDE); \
-	echo Build $$RAIN_VERSION_BUILD.
+	echo VERSION_BUILD: $$RAIN_VERSION_BUILD.

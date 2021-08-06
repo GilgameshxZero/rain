@@ -2,12 +2,13 @@
 
 Cross-platform, self-contained, header-only C++17 libraries with utilities for
 
-* Networking
-* Algorithms
-* Thread management
-* Platform-independent compatibility
+* Sockets, TCP, HTTP, SMTP, general request/response-based protocols, DNS resolution (A, AAAA, MX),
+* Threadpool-based thread management,
+* Command-line, string, and base 64 parsing and encode/decode,
+* Basic exception management, error management, and memory leak detection,
+* Knuth-Morris-Pratt (KMP) string matching and template Least-Recently-Used (LRU) cache.
 
-The changelog is available at `changelog.md`.
+This document contains summary-level information on `rain`. The changelog at `changelog.md` contains updates in each version, as well as high-level information about the codebase. Finally, low-level documentation can be found with in-code comments as well as the tests in `test/`.
 
 ## Usage
 
@@ -19,13 +20,7 @@ Below are instructions for adding additional include paths.
 
 ### `g++`
 
-`g++` uses the `-I` switch to specify additional include paths. For example, from the `build/` directory,
-
-```bash
-g++ -I ../include -std=c++17 ../test/platform-check.cpp -i ../bin/platform-check
-```
-
-will compile and link the `platform-check` test with the `rain` library from `include/`. The space between `-I` and the path is optional.
+`g++` uses the `-I` switch to specify additional include paths.
 
 ### Visual Studio
 
@@ -41,13 +36,9 @@ Very similar to `g++`, `cl.exe` uses the `\I` flag to specify additional include
 
 Visual Studio Code build tasks invoke a command-line compiler of choice. Please refer to the documentation for those compilers.
 
-## Documentation
-
-Documentation is available in the form of in-code comments as well as tests in the `test/` directory.
-
 ## Build
 
-To run the tests under `test/`, one needs to invoke one of several build procedures under `build/`. Depending on the platform/development environment, one or multiple of these may be available.
+To run the tests under `test/`, one needs to invoke one of several build procedures under `build/`. By default, the target is `x64`. Depending on the platform/development environment, one or multiple of these may be available.
 
 ### `g++` (Windows WSL, MacOS, Linux)
 
@@ -59,7 +50,7 @@ To run the tests under `test/`, one needs to invoke one of several build procedu
 * `runall`:  Builds and runs all tests in `test/` consecutively.
 * `clean`: Deletes the `bin/` and `obj/` intermediates directories.
 
-Builds default to debug. Specifying `RELEASE=1` builds with release optimizations instead.
+Builds default to debug. Specify `RELEASE=1` to build with release optimization. Specify `INSTRUMENT=1` to build with instrumentation options.
 
 ### Visual Studio (Windows)
 
@@ -69,11 +60,15 @@ All tests and new tests follow the project template specified in `build/rain.tem
 
 ### `cl.exe` (Windows)
 
-Command-line builds on Windows via `cl.exe` are supported. The options passed to `cl` should be similar to those specified within the projects from the Visual Studio builds. Examples of this command-line build procedure can be found within `.vscode/tasks.json`.
+Command-line builds on Windows are supported via `cl.exe`.
+
+Alternatively, `build/build.bat` builds with the same options as the Visual Studio build. It takes two arguments: the name of the test (e.g. `platform`), and “release” for a release build.
 
 ### Visual Studio Code (Windows, MacOS, Linux)
 
-Visual Studio Code supports the command-line builds for all platforms supported by `rain`. The specific tasks and launch configurations can be found within `.vscode/tasks.json` and `.vscode/launch.json`, respectively.
+Visual Studio Code utilizes `build/build.bat` or `build/makefile` with two launch options: `windows-debug-x64` and `posix-debug-x64`.
+
+An additional task `clean` is configured to remove the `bin/` and `obj/` directories.
 
 ## Development
 
@@ -89,4 +84,4 @@ To import the template into Visual Studio, zip the folder into `rain.zip` and co
 
 ### Visual Studio Code
 
-Recommended VSCode settings are stored in `.vscode/settings.default.json`. Machine-specific settings in `.vscode/settings.json` are gitignored by default.
+Recommended VSCode settings are stored in `.vscode/settings.default.json`. `.vscode/settings.json` is gitignored by default.

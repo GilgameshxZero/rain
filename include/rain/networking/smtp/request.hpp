@@ -1,94 +1,116 @@
+// Request-specific SMTP parsing.
 #pragma once
 
-#include "../../algorithm/kmp.hpp"
 #include "../request-response/request.hpp"
-#include "payload.hpp"
+#include "command.hpp"
+#include "message.hpp"
 
 namespace Rain::Networking::Smtp {
-	// Forward declaration.
-	class Response;
-
-	class Request : public Payload,
-									public RequestResponse::Request<Request, Response> {
-		// Settings and constructor.
+	template <typename ProtocolMessage>
+	class RequestInterface
+			: public RequestResponse::RequestInterface<ProtocolMessage> {
 		public:
-		bool overflowed;
-		std::string verb;
+		typedef ProtocolMessage Message;
 
-		Request(std::string const &verb = "EHLO", std::string const &parameter = "")
-				: Payload(parameter),
-					RequestResponse::Request<Request, Response>(),
-					overflowed(false),
-					verb(verb) {}
+		private:
+		// SuperInterface aliases the superclass.
+		typedef RequestResponse::RequestInterface<Message> SuperInterface;
 
-		// Superclass behavior.
-		bool sendWith(
-			RequestResponse::Socket<Request, Response> &socket) noexcept override {
-			try {
-				socket.send(this->verb);
-				if (!this->parameter.empty()) {
-					socket.send(" ");
-					socket.send(this->parameter);
-				}
-				socket.send("\r\n");
-				return false;
-			} catch (...) {
-				return true;
+		// Interface aliases this class.
+		typedef RequestInterface<Message> Interface;
+
+		protected:
+		// Tag aliases for sendWith/recvWith convenience.
+		typedef typename SuperInterface::InterfaceTag SuperTag;
+		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
+
+		public:
+		// Exception class required for catching from R/R onWork.
+		enum class Error { SYNTAX_ERROR_COMMAND = 1 };
+		class ErrorCategory : public std::error_category {
+			public:
+			char const *name() const noexcept {
+				return "Rain::Networking::Smtp::Request";
 			}
+			std::string message(int error) const noexcept {
+				switch (static_cast<Error>(error)) {
+					case Error::SYNTAX_ERROR_COMMAND:
+						return "Syntax error, command unrecognized.";
+					default:
+						return "Generic.";
+				}
+			}
+		};
+		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+
+		// Command/verb of Request.
+		Command command;
+
+		// Single-line parameter for command.
+		std::string parameter;
+
+		// Carry over constructor which recvs from a Socket.
+		template <typename... MessageArgs>
+		RequestInterface(
+			Command command = Command::HELO,
+			std::string const &parameter = "",
+			MessageArgs &&...args)
+				: SuperInterface(
+						// bind version to rvalue reference to be perfect forwarded by
+						// SuperInterface to Message.
+						std::forward<MessageArgs>(args)...),
+					command(command),
+					parameter(parameter) {}
+		RequestInterface(RequestInterface &&other)
+				: SuperInterface(std::move(other)),
+					command(other.command),
+					parameter(std::move(other.parameter)) {}
+
+		// Not copyable.
+		RequestInterface(RequestInterface const &) = delete;
+		RequestInterface &operator=(RequestInterface const &) = delete;
+
+		private:
+		// Provided for subclass override.
+		virtual void sendWithImpl(InterfaceTag, std::ostream &){};
+		virtual void recvWithImpl(InterfaceTag, std::istream &){};
+
+		// Overrides for Super versions implement protocol behavior.
+		//
+		// Calls (almost) no-op Message sendWith/recvWith to check transmissability.
+		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
+			this->sendWithImpl(InterfaceTag(), stream);
+
+			stream << this->command;
+			if (!this->parameter.empty()) {
+				stream << " " << this->parameter;
+			}
+			stream << "\r\n";
+			stream.flush();
 		}
-		bool recvWith(
-			RequestResponse::Socket<Request, Response> &socket) noexcept override {
+		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
+			this->recvWithImpl(InterfaceTag(), stream);
+
+			// Command is always first four characters.
 			try {
-				// Constants for KMP.
-				static char const *CRLF = "\r\n";
-				static std::size_t const PART_MATCH_CRLF[] = {
-					(std::numeric_limits<std::size_t>::max)(), 0, 0};
-
-				// Parse the entire header.
-				// State of newline search.
-				std::size_t kmpCand = 0;
-				char *curRecv = socket.buf;	 // Last search position.
-
-				// Keep on calling recv until we find \r\n.
-				while (true) {
-					// Is the buffer full? If so, we can't receive the rest of the
-					// header, so need to handle that.
-					std::size_t bufRemaining = socket.BUF_SZ - (curRecv - socket.buf);
-					if (bufRemaining == 0) {
-						this->overflowed = true;
-						return false;
-					}
-
-					// Receive the next set of bytes from the slave.
-					std::size_t recvLen = socket.recv(curRecv,
-						bufRemaining,
-						Networking::Socket::RecvFlag::NONE);
-					if (recvLen == 0) {	 // Graceful exit.
-						return true;
-					}
-
-					// Parsing the request line. Look for end-of-line.
-					char *newline = Algorithm::cStrSearchKmp(
-						curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand);
-					if (newline != NULL) {
-						// Found newline; create request.
-						char *space = socket.buf;
-						for (; space != newline && *space != ' '; space++)
-							;
-						this->verb.assign(socket.buf, space - socket.buf);
-						if (space + 1 < newline) {
-							this->parameter.assign(space + 1, newline - space - 1);
-						}
-						break;
-					}
-
-					curRecv += recvLen;
-				}
-
-				return false;
+				std::string commandStr(4, '\0');
+				stream.read(&commandStr[0], commandStr.length());
+				this->command = Command(commandStr);
 			} catch (...) {
-				return true;
+				throw Exception(Error::SYNTAX_ERROR_COMMAND);
 			}
+
+			// Next character is a space.
+			stream.get();
+
+			// After that, it is the parameter. No longer than 1K allowed.
+			this->parameter.resize(1_zu << 10);
+			stream.getline(&this->parameter[0], this->parameter.length());
+			// -2 to discard the \r\0.
+			this->parameter.resize(std::max(std::streamsize(0), stream.gcount() - 2));
 		}
 	};
+
+	// Request final specialization.
+	typedef RequestInterface<Message> Request;
 }

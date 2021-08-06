@@ -1,27 +1,35 @@
-/*
-Includes Windows.h headers without the Winsock 1.1 implementation, since `rain`
-uses Winsock 2.0.
-*/
-
+// Includes Windows.h headers in a way that it is impossible to interfere with
+// Windows-related APIs used elsewhere in Rain. Including this on a non-Windows
+// platform does nothing.
 #pragma once
 
 #include "platform.hpp"
 
-/*
-The Winsock2.h header file internally includes core elements from the Windows.h
-header file, so there is not usually an #include line for the Windows.h header
-file in Winsock applications. If an #include line is needed for the Windows.h
-header file, this should be preceded with the #define WIN32_LEAN_AND_MEAN macro.
-For historical reasons, the Windows.h header defaults to including the Winsock.h
-header file for Windows Sockets 1.1. The declarations in the Winsock.h header
-file will conflict with the declarations in the Winsock2.h header file required
-by Windows Sockets 2.0. The WIN32_LEAN_AND_MEAN macro prevents the Winsock.h
-from being included by the Windows.h header
-*/
-#ifdef RAIN_WINDOWS
+#ifdef RAIN_PLATFORM_WINDOWS
 
+// Rain utilizes Unicode in system calls, UTF-8 internally.
+#ifndef UNICODE
+#define UNICODE
+#endif
+
+#ifndef _UNICODE
+#define _UNICODE
+#endif
+
+// Prevents Windows.h from automatically include Winsock 1.1; Rain uses
+// Winsock 2.
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+
+// The minimum version of Windows that Rain can run on is Windows 7.
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT _WIN32_WINNT_WIN7
+#endif
+
+// Prevents double declarations of min/max functions.
+#ifndef NOMINMAX
+#define NOMINMAX
 #endif
 
 #include <Windows.h>

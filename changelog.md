@@ -1,5 +1,162 @@
 # Changelog
 
+## 7.0.0 “Emancipation”
+
+*The `Networking::Slave`s have been freed!*
+*They are now `Networking::Worker`s of their own free will.*
+
+This major release introduces changes to almost every module in `rain`. These changes are described below, organized by the affected module, sorted in order of importance.
+
+### `Networking` module
+
+The entire `Networking` module has been re-imagined.
+
+#### Inheritance and subtyping
+
+Inerhitance follows the pattern known as *base-specialization across protocol layers*, which is described below.
+
+Type \ Protocol|None|TCP (from None)|Request-Response (from TCP)|HTTP (from Request-Response)|SMTP (from Request-Response)
+-|-|-|-|-|-
+`Socket` (base)|X|X|X|X|X
+`Client` (`Socket` specialization)|X|X|X|X|X
+`Worker` (`Socket` specialization)|X|X|X|X|X
+`Server` (`Socket` specialization)|X|X|X|X|X
+`Message` (base)|||X|X|X
+`Request` (`Message` specialization)|||X|X|X
+`Response` (`Message` specialization)|||X|X|X
+
+Sockets are still divided into three specializations: `Client`, `Server`, and `Worker` (renamed from `Slave`), all of which derive (eventually) from the base `Socket`. Each specialization defines their own contracts and interfaces. Networking protocols are represented as layers, where each layer provides its own implementation of the protocol `Socket` and the protocol specializations, each of which derive from the layer below. The base layer specializations derive from the top-layer protocol `Sockets`, instead of `virtual`ly inheriting each layer’s protocol `Socket` multiple times.
+
+Higher-level protocol layers in `RequestResponse`, `Http`, and `Smtp` also define their own representations of `Request` and `Response`, whose commonalities are shared in their common superclass `Message`, defined for each protocol. Again, `Request` and `Response` are specializations of `Message`, whose inheritance pattern follows that of `Socket` and its specializations across protocol layers. That is, `Http::Request` inherits `RequestResponse::Request` which inherits `Http::Message` which inherits `RequestResponse::Message`.
+
+Each of these base-specialization inheritance patterns across protocol layers is actually implemented as inheritance between *interface* classes, which define the behavior for that type of object, but are not meant to be directly instantiated. Instead, the concrete types such as `Http::Client` is itself derived from `Http::ClientInterface`, the latter of which follows the base-specialization inheritance pattern. Most of the time, the concrete type is simply a typedef of the interface. `Message`, `Request`, and `Response` also follow this *interface-concrete* pattern.
+
+The classes implemented as part of the *base-specialization across protocol layers* are listed above in the chart. An ‘X’ indicates that that specialization or base exists on that protocol layer. Each protocol also indicates the protocol layer it is derived from, which each type indicates whether it is a base, or the base it is specialized from.
+
+All inheritance is public unless otherwise specialized. `Socket` specializations tend to hide functionality, but this could be improved by specialization shared functionality in an additional protocol layer prior to `TCP`.
+
+Below, changes to each protocol layer is summarized.
+
+#### No protocol
+
+* `Socket`s are now dual-stack, non-blocking, and no-linger by default.
+* `Socket`s can now be interrupted, by supplying a connected `Socket` pair, through which all blocking calls are also called on. By breaking either of this pair, all future blocking calls are interrupted.
+* There are now three modes to closing a socket: `shutdown`, `close`, and `abort`. `shutdown` shuts down either the read or write or both. `close` attempts to gracefully close by issuing a `shutdown` on write, then reading until graceful close from the peer, then aborting. Aborts call the kernel `::close` on the file descriptor. `close` may block during reading, and thus is supplied with a timeout.
+* `connect` now has the option to parallel-connect, which spawns multiple `Socket`s and `std::thread`s, each of which attempts to connect to the address independently. The first to succeed is swapped with the current socket file descriptor, while the others are closed regardless of outcome.
+* `Socket` operations are now thread-safe, locked via `std::mutex`.
+* Timeouts no longer throw exceptions, but instead return special values. Normal error exceptions are still thrown.
+* All blocking calls are now equipped with timeouts in the form of `Time::Timeout`.
+* All networking errors are located in the `Networking` namespace, as most networking errors are shared between modules.
+* Blocking calls are now implemented through `poll` rather than `select`.
+
+All address/DNS resolution libraries have been placed into `Networking::Resolve`. Similarly to the blocking calls on `Socket`, blocking resolution is now supplied with a timeout. Since resolvers are typically synchronous without timeout, the `Resolve` timeouts simply leave a dangling thread to finish the resolver call while control flow returns to the caller. `getAddressInfo` now returns a list of `AddressInfo`s, a modern interface for the `addrinfo` struct.
+
+`Server`s now implement their interrupt pair with all spawned `Worker`s, such that interrupting the server will interrupt all its `Worker`s. Additionally, all dynamic memory is now managed via smart pointers. `Worker`s now store the connection `AddressInfo` during construction by the `Server`. This is enfored across all `Worker`s as it is enforced in the no protocol `Worker` interface from which all other `Worker`s derive from. In addition, server behavior is now specified in the `Worker` via polymorphic overriding of `virtual` functions on the `Worker`.
+
+#### TCP protocol
+
+The TCP protocol is a new protocol layer with enforced `TCP`, `STREAM`-style sockets. All TCP `Socket`s multiple-inherit `std::iostream`, and can be streamed to/from for `send`/`recv`. While normal `send`/`recv` throw, the stream operators on a TCP `Socket` only set the stream as not good.
+
+Streamability is implemented with a `send`/`recv` buffer wrapped in a `std::streambuf` supplied to the superclass `std::iostream`.
+
+#### Request-Response protocol
+
+Request-Response (R/R) protocols not only establish the Message-Request-Response base-specialization pattern (M/R/R), but also allow for request/response *pre/post-processing*. `send`/`recv` now use the stream operators and do not throw. In addition, a `maxRecvIdleDuration` can be specified for the maximum time between receiving two valid requests, and a `sendOnceTimeoutDuration` can be specified for the maximum time for attempting to `send` any data.
+
+The stream operators and `send`/`recv` on R/R `Sockets` support the relevant timeouts and pre/post-processing by overriding virtual stream operators from the TCP `Socket`. Pre-processing allows for an incoming request/response to be pre-processed before it is received internally, while post-processing allows for an outgoing request/response to be processed before it is sent externally. `Client` and `Worker` support pre/post-processing symmetrically, since `Client`s receive `Response`s and send `Request`s while `Worker`s do the opposite.
+
+M/R/Rs are streamable via stream operators on `std::iostream`s. All `Socket` `send`/`recv` on M/R/R types go through `sendWith`/`recvWith` on the M/R/R type, where the pre/post-processing happens. Downstream M/R/R subtypes may extend pre/post-processing by extending the *template-tagged chain* via polymorphic overriding in `sendWithImpl`/`recvWithImpl`.
+
+#### HTTP protocol
+
+Common types such as `Headers`, `TransferEncoding`, `Method`, `StatusCode`, and `Version` are now strongly typed via `enum`s. In addition, R/R parsing is now stream-based as the HTTP `Socket`s inherit from the streamable TCP `Socket`s. `Worker`s now delegate `Request` processing via a *template-tagged chain*, where subclasses can prepend to the chain and optionally return a `PreResponse`. The `PreResponse` dictates whether the `Worker` should return a response, and whether it should close afterwards.
+
+Most `PreResponse` chain matching is implemented with a combination of checking the `Request` `Method` and `std::regex` matching on the target path.
+
+* `Transfer-Encoding: chunked` is now supported.
+* Backwards-compatibility with HTTP/0.9 and HTTP/1.0 is now supported. By default, `Server`s operate in HTTP/1.1.
+* Includes a full implementation for `Client` now and supports parsing of both R/Rs.
+
+#### SMTP protocol
+
+Similarly to the HTTP protocol, common types such as `AuthMethod`, `Command`, `Mailbox`, and `StatusCode` have now been strongly typed, and R/R parsing is also stream-based. `Request` handler delegation is not implemented via a *template-tagged chain*, but instead via regular overriding of `virtual` methods. A single `virtual` method is denoted for each `Command`.
+
+* Includes a full implementation for `Client` now and supports parsing of both R/Rs.
+
+### `Error` module (renamed from `Error-Exception`)
+
+* Introduces `consumeThrowable`, which takes arbitrary *Callable* objects and wraps them in a try/catch block. Any caught exceptions are ignored, with the option to print an error message to `std::cerr`.
+* `RAIN_ERROR_LOCATION` macro identifies caller site, useful when passed to `consumeThrowable` for an error message.
+* `Exception` constructor now takes an `Error` directly, isntead of having to go through `std::error_condition`.
+* `Incrementer` implements an automatic-duration incrementer, whose affects are negated at destruction.
+
+### `Multithreading` module
+
+* `ThreadPool` tasks now are parameter-less. Any parameters should be captured via lambdas passed as tasks instead.
+* `ThreadPool` mutexes are now `mutable`, allowing for several methods to be declared `const.`
+* `ThreadPool` now uses smart pointer internals and `consumeThrowable` so that any exceptions satisfy the basic guarantee, and ideally won’t crash.
+* `ThreadPool` now utilizes new `Time::Timeout` type.
+* `UnlockGuard` performs the opposite of `std::lock_guard`, unlocking a mutex on construction and locking on destruction. This pattern is similar to the `std::condition_variable` pattern of unlocking during waits.
+
+### `String` module
+
+* Utility functions have been standardized to take as parameters either a `std::string` or a `char *` with a `std::size_t`.
+* `WaterfallParser` renamed to `KeyedParser`, and now has public interfaces which use references instead of pointers.
+* Added Base 64 encode/decode utilities for `std::string`s.
+* All functions now return a non-`const` `char *` if necessary, even if parameters are `const`.
+* Functions now make the assumption of UTF-8 narrow encoding on parameters unless specified otherwise.
+* Additional case-agnostic comparators, hashes, and equality functors have been added for usage in `std::unordered_map`, `std::unordered_set`, and case-agnostic variants.
+* `String::strcpy_s` and friends compatibility implementations have been removed as they provide little additional safety beyond the non-standard, non-safe versions. In fact, similar careful usage is required for both. In addition, CRT warnings have been disabled to allow for usage of the non-safe versions.
+
+### `Time` module
+
+* `Timeout` standardizes the timeout event representation and can be constructed from either a duration from the current time, or a time point in the future for the event to occur.
+* Added `std::ostream` overloads for common `std::chrono::duration` types.
+
+### `Algorithm` module
+
+* KMP functions now use standardized parameters for strings as in the `String` module. 
+* `computeKmpPartialMatch` now returns the partial match table directly as a `std::vector<std::size_t>`.
+* KMP searches now return a pair of `match, candidate` instead of updating the reference to a `candidate` parameter.
+* LRU cache now avoids unnecessary copying of internal key/value pairs by moving around `std::unique_ptr`s instead.
+
+### Header module organization and smaller modules
+
+* Headers with the same name as a directory in the same level now only include all files from that directory.
+* General utility functions in a certain module are now located in `module/module.hpp` instead of just `module.hpp`, since `module.hpp` is used for the above purpose.
+* `Debug` module has now been moved in with the `Platform` module.
+* `Filesystem::subpath` has been renamed to `Filesystem::isSubpath`, and now converts to canonical paths internally.
+* Defined the `_zu` `std::size_t` literal and `_re` `std::regex` literal in the inline namespace `Literal`. `using namespace Literal` now also imports literals from `std::literals`.
+* `memmem` compatibility implementation is removed as KMP search is strictly faster, and the interface is more modern.
+* `Platform` now supports only three major platforms: Windows, MacOS, and Linux. These are now defined as `enum class`es and have `std::ostream` overloads.
+* `Time::sleepMs` removed as it provided little additional utility now with the import of `std::literals`.
+* Windows module now also defines `NOMINMAX`, `UNICODE`, `_UNICODE`, and `_WIN32_WINNT` prior to including `Windows.h`. `_WIN32_WINNT`, the minimum version `rain` can run on, is specified to be Windows 7.
+
+### Tests
+
+* Each test primarily tests one module within `rain`. Tests have been renamed to be the namespace path to that module.
+* Many important modules now have tests.
+
+### Visual Studio Code integration
+
+* In-IDE debugging now debugs x64 builds on any platform.
+* Added tasks for release x64 builds.
+* Build tasks on Windows are no longer specified in `.vscode/tasks.json`. Instead, `.vscode/tasks.json` calls `build/build.bat`.
+* `build/increment-build.bat` renamed to `build/increment-version-build.bat`.
+* Removed `yzhang.markdown-all-in-one` from extension recommendations.
+
+### `cl.exe` Windows command-line build
+
+* `build/VsDevCmd.default.bat`, which used to call `VsDevCmd.bat` to initialize the Visual Studio command-line, has now been replaced with `build/vcvarsall.bat` and `build/vcvarsall.DEFAULT.bat`. The former is `.gitignore`d, and may override the latter in specifying the local path to `vcvarsall.bat`. Both are called by `build/build.bat` to initialize the Visual Studio command-line.
+* Removed `build/make.bat` as a proxy for calling WSL `make`.
+* `build/build.bat` calls `cl.exe` with identical options as in the Visual Studio projects.
+
+### Visual Studio integration
+
+* `rain` template projects now use a common property page `build/rain.props`, with additional property pages `build/rain-debug.props` and `build/rain-release.props` set based on build configuration.
+* Since tests were all changed and renamed, all associated projects have been re-added to the Visual Studio solution.
+* `rain` template project icon changed.
+
 ## 6.6.0
 
 * Rename header filenames to singular instead of plural.
@@ -85,7 +242,7 @@
 
 ## 6.4.0
 
-* Don't sort `using` in `.clang-format`.
+* Don’t sort `using` in `.clang-format`.
 * Fix `make noinc`.
 * Define `NOMINMAX` where it matters.
 * Restructure `Networking` inheritance with fewer templates, around `RequestResponse` `Server` and `Socket`.
@@ -223,7 +380,7 @@ Implemented sending of `HttpResponse` and `HttpRequest`.
 * Have `ThreadPool` use `std::function` to allow lambdas with captures to be passed as `Task`s.
 * Create skeleton implementation for `HttpPayload`, `HttpRequest`, `HttpResponse`, `HttpSocket`, `HttpClient`.
 * Implement `CustomHttpServerSlave` and `CustomHttpServer` to allow for subclassing.
-* Create reference `HttpServerSlave` and `HttpServer` implementations which don't process requests just yet.
+* Create reference `HttpServerSlave` and `HttpServer` implementations which don’t process requests just yet.
 
 ## 6.0.4
 

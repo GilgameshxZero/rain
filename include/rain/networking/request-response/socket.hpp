@@ -1,109 +1,208 @@
+// The R/R Socket protocol implements Workers/Clients where Clients send
+// Requests and Workers send Responses.
+//
+// The R/R Socket protocol is abstract and cannot be instantiated directly.
+// Thus, with the exception of Socket, only interface implementations are
+// provided.
 #pragma once
 
-#include "../socket.hpp"
+#include "../tcp/socket.hpp"
 
 namespace Rain::Networking::RequestResponse {
-	// Class with additional functions to send/receive requests/responses.
-	template <typename RequestType, typename ResponseType>
-	class Socket : virtual protected Networking::Socket {
+	// The R/R Socket protocol implements Workers/Clients where Clients send
+	// Requests and Workers send Responses.
+	//
+	// All connections begin with a Client Request.
+	template <
+		typename ProtocolRequest,
+		typename ProtocolResponse,
+		typename ProtocolClock = std::chrono::steady_clock>
+	class Socket : public Tcp::Socket {
 		public:
-		// Request/response sockets have a buffer for their request/response
-		// parsing.
-		std::size_t const BUF_SZ;
-		char *buf;
-		std::chrono::milliseconds const
-			RECV_TIMEOUT_MS,	// If no data is sent over this period, the socket will
-												// likely be closed. If data is sent every period, then
-												// the socket is guaranteed to be open.
-			SEND_MS_PER_KB,	 // `send` timeout scales linearly with amount of data
-											 // sent...
-			SEND_TIMEOUT_MS_LOWER;	// ...down to a lower limit.
+		typedef ProtocolRequest Request;
+		typedef ProtocolResponse Response;
+		typedef ProtocolClock Clock;
+		typedef typename Clock::duration Duration;
+		typedef typename Request::Message Message;
 
-		// Need to define default constructor on this virtual base class to ensure
-		// that subclasses can more easily declare default constructors via `using`.
-		Socket(std::size_t BUF_SZ = 16384,
-			std::chrono::milliseconds const &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(5000),
-			std::chrono::milliseconds const &SEND_MS_PER_KB =
-				std::chrono::milliseconds(5000),
-			std::chrono::milliseconds const &SEND_TIMEOUT_MS_LOWER =
-				std::chrono::milliseconds(5000))
-				: Networking::Socket(),
-					BUF_SZ(BUF_SZ),
-					buf(new char[BUF_SZ]),
-					RECV_TIMEOUT_MS(RECV_TIMEOUT_MS),
-					SEND_MS_PER_KB(SEND_MS_PER_KB),
-					SEND_TIMEOUT_MS_LOWER(SEND_TIMEOUT_MS_LOWER) {}
-		Socket(Networking::Socket &socket,
-			std::size_t BUF_SZ,
-			std::chrono::milliseconds const &RECV_TIMEOUT_MS,
-			std::chrono::milliseconds const &SEND_MS_PER_KB,
-			std::chrono::milliseconds const &SEND_TIMEOUT_MS_LOWER)
-				: Networking::Socket(std::move(socket)),
-					BUF_SZ(BUF_SZ),
-					buf(new char[BUF_SZ]),
-					RECV_TIMEOUT_MS(RECV_TIMEOUT_MS),
-					SEND_MS_PER_KB(SEND_MS_PER_KB),
-					SEND_TIMEOUT_MS_LOWER(SEND_TIMEOUT_MS_LOWER) {}
-		~Socket() { delete[] buf; }
+		private:
+		typedef Socket<Request, Response, Clock> ThisSocket;
 
-		// Return true when the Socket needs to be aborted.
-		bool send(RequestType &req) noexcept { return req.sendWith(*this); }
-		bool send(ResponseType &res) noexcept { return res.sendWith(*this); }
-		bool recv(RequestType &req) noexcept { return req.recvWith(*this); }
-		bool recv(ResponseType &res) noexcept { return res.recvWith(*this); }
+		// Request idle timeout. There can be at most this duration between the
+		// finishing sending of a R/R and the finishing receiving of a R/R.
+		Duration const maxRecvIdleDuration,
+			// Timeout for sendOnce during sending a R/R.
+			sendOnceTimeoutDuration;
 
-		// Override base Socket send and recv to take into account the timeout
-		// options. In addition, returns true on failure or timeout.
-		bool send(char const *msg,
-			std::size_t len = 0,
-			Networking::Socket::SendFlag flags =
-				Networking::Socket::SendFlag::NONE) const noexcept {
-			if (len == 0) {
-				len = std::strlen(msg);
+		// Along with maxRecvIdleDuration, tracks the timeout of the next recv
+		// operation on a R/R.
+		Time::Timeout<Clock> recvTimeout;
+
+		public:
+		// Timeout exceptions.
+		enum class Error : int { TIMEOUT_RECV = 1, TIMEOUT_SEND };
+		class ErrorCategory : public std::error_category {
+			public:
+			char const *name() const noexcept {
+				return "Rain::Networking::RequestResponse::Socket";
 			}
-
-			try {
-				return Networking::Socket::send(msg,
-								 len,
-								 flags,
-								 std::max(
-									 std::chrono::milliseconds(len / 1000 * this->SEND_MS_PER_KB),
-									 this->SEND_TIMEOUT_MS_LOWER)) < len;
-			} catch (...) {
-				return true;
+			std::string message(int error) const noexcept {
+				switch (static_cast<Error>(error)) {
+					case Error::TIMEOUT_RECV:
+						return "Socked timed out while idling for recv.";
+					case Error::TIMEOUT_SEND:
+						return "Socket timed out while idling for send.";
+					default:
+						return "Generic.";
+				}
 			}
-		}
-		bool send(std::string const &s,
-			Networking::Socket::SendFlag flags =
-				Networking::Socket::SendFlag::NONE) const noexcept {
-			return this->send(s.c_str(), s.length(), flags);
-		}
-		// Returns 0 on error or timeout.
-		std::size_t recv(char *buf,
-			std::size_t len,
-			Networking::Socket::RecvFlag flags =
-				Networking::Socket::RecvFlag::NONE) const noexcept {
-			try {
-				// This may be a different buf than the one in the Socket.
-				return Networking::Socket::recv(buf, len, flags, this->RECV_TIMEOUT_MS);
-			} catch (...) {
+		};
+		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+
+		public:
+		// Implements similar constructor arguments as TCP protocol sockets. Again,
+		// specification is ignored.
+		//
+		// Two additional constructor arguments specify the timeout durations w.r.t.
+		// R/R.
+		Socket(
+			Specification::Specification,
+			bool interruptable = true,
+			Specification::ProtocolFamily pf = Specification::ProtocolFamily::INET6,
+			std::size_t recvBufferLen = 1_zu << 10,
+			std::size_t sendBufferLen = 1_zu << 10,
+			Duration maxRecvIdleDuration = 60s,
+			Duration sendOnceTimeoutDuration = 60s)
+				: Tcp::Socket(
+						Specification::Specification(),
+						interruptable,
+						pf,
+						recvBufferLen,
+						sendBufferLen),
+					maxRecvIdleDuration(maxRecvIdleDuration),
+					sendOnceTimeoutDuration(sendOnceTimeoutDuration),
+					recvTimeout(maxRecvIdleDuration) {}
+		Socket(Socket const &) = delete;
+		Socket &operator=(Socket const &) = delete;
+		Socket(Socket &&other)
+				: Tcp::Socket(std::move(other)),
+					maxRecvIdleDuration(other.maxRecvIdleDuration),
+					sendOnceTimeoutDuration(other.sendOnceTimeoutDuration),
+					recvTimeout(other.recvTimeout) {}
+
+		// An additional constructor is called by Worker with a base Socket from
+		// accept.
+		Socket(
+			Networking::Socket &&socket,
+			std::size_t recvBufferLen = 1_zu << 10,
+			std::size_t sendBufferLen = 1_zu << 10,
+			Duration maxRecvIdleDuration = 60s,
+			Duration sendOnceTimeoutDuration = 60s)
+				: Tcp::Socket(std::move(socket), recvBufferLen, sendBufferLen),
+					maxRecvIdleDuration(maxRecvIdleDuration),
+					sendOnceTimeoutDuration(sendOnceTimeoutDuration),
+					recvTimeout(maxRecvIdleDuration) {}
+
+		protected:
+		// Hide TCP send/recv only for subclasses (interface limiters need access).
+		// These call the later virtual internal send/recvs.
+		using Tcp::Socket::sendOnce;
+		using Tcp::Socket::send;
+		using Tcp::Socket::recv;
+
+		// Override TCP send/recv with proper timeout.
+		//
+		// Always succeeds on return, or throws on timeout/failure. Timeout in an
+		// R/R subclass should always abort the Socket. recvTimeout must be updated
+		// externally on recv of a full R/R.
+		//
+		// M/R/R should be friended so that they can access these protected
+		// functions.
+		virtual std::size_t sendOnce(char const *msg, std::size_t msgLen) override {
+			if (msgLen == 0) {
 				return 0;
 			}
+
+			std::size_t bytesSent = Networking::Socket::sendOnce(
+				msg,
+				msgLen,
+				Time::Timeout<Clock>(this->sendOnceTimeoutDuration),
+				SendFlag::NONE);
+
+			if (bytesSent == 0) {
+				// Timed out waiting for poll WRITE_NORMAL.
+				throw Exception(Error::TIMEOUT_SEND);
+			}
+			return bytesSent;
+		}
+		virtual std::size_t recv(char *buffer, std::size_t bufferLen) override {
+			std::size_t recvStatus = Networking::Socket::recv(
+				buffer, bufferLen, this->recvTimeout, RecvFlag::NONE);
+			if (recvStatus == SIZE_MAX) {
+				throw Exception(Error::TIMEOUT_RECV);
+			}
+			return recvStatus;
 		}
 
-		// Expose relevant functions.
-		using Networking::Socket::accept;
-		using Networking::Socket::bind;
-		using Networking::Socket::close;
-		using Networking::Socket::connect;
-		using Networking::Socket::getFamily;
-		using Networking::Socket::getNativeSocket;
-		using Networking::Socket::getProtocol;
-		using Networking::Socket::getService;
-		using Networking::Socket::getType;
-		using Networking::Socket::isValid;
-		using Networking::Socket::listen;
-		using Networking::Socket::shutdown;
+		public:
+		// All send/recv on R/Rs redirect here, which go to sendWith/recvWith.
+		//
+		// Enable subclass postprocessing by letting them overload stream operators,
+		// through which all send/recv happens.
+		virtual ThisSocket &operator<<(Request &req) {
+			req.sendWith(*this);
+			return *this;
+		}
+		virtual ThisSocket &operator<<(Response &res) {
+			res.sendWith(*this);
+			return *this;
+		}
+		ThisSocket &operator<<(Request &&req) { return *this << req; }
+		ThisSocket &operator<<(Response &&res) { return *this << res; }
+		virtual ThisSocket &operator>>(Request &req) {
+			req.recvWith(*this);
+			this->recvTimeout = {this->maxRecvIdleDuration};
+			return *this;
+		}
+		virtual ThisSocket &operator>>(Response &res) {
+			res.recvWith(*this);
+			this->recvTimeout = {this->maxRecvIdleDuration};
+			return *this;
+		}
+		ThisSocket &operator>>(Request &&req) { return *this >> req; }
+		ThisSocket &operator>>(Response &&res) { return *this >> res; }
+
+		// Publicly, R/R Sockets can send/recv R/Rs, which also update the internal
+		// recvTimeout accordingly. R/R Sockets can also send/recv R/Rs. These
+		// utilities also track timeouts for the R/R Socket. Like the
+		// sendWith/recvWith functions, always returns with success or throws on
+		// timeout/failure.
+		//
+		// Sockets are upcasted to iostreams for R/R send/recv, avoiding circular
+		// dependency b/t M/R/R and Socket and allowing parsing code to reside with
+		// M/R/R.
+		//
+		// send/recv are aliased to no more than the stream operators themselves.
+		void send(Request &req) { *this << req; }
+		void send(Response &res) { *this << res; }
+
+		// rvalue overloads for inline R/R construction.
+		void send(Request &&req) { this->send(req); }
+		void send(Response &&res) { this->send(res); }
+
+		// NRVO/move guaranteed at least.
+		Request recvRequest() {
+			Request req;
+			*this >> req;
+			return req;
+		}
+		Response recvResponse() {
+			Response res;
+			*this >> res;
+			return res;
+		}
+
+		void recv(Request &req) { *this >> req; }
+		void recv(Response &res) { *this >> res; }
 	};
 }
