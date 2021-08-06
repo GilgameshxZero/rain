@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.4
+
+* Update `RAIN_VERSION_REVISION` to `4` from `0`.
+
 ## 7.0.3
 
 * Replace `build/build.bat` with more generic format allowing for child projects to use a very similar `build.bat` while only replacing `%PROJECT_NAME%`.
