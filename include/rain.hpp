@@ -2,63 +2,27 @@
 #pragma once
 
 // Versioning.
-#define RAIN_VERSION_MAJOR 6
-#define RAIN_VERSION_MINOR 6
+#define RAIN_VERSION_MAJOR 7
+#define RAIN_VERSION_MINOR 0
 #define RAIN_VERSION_REVISION 0
 
-// This is necessary for struct addrinfo.
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+// Disable secure warnings; the caller should be aware of out-of-bounds errors
+// when calling any not-bound-checked function.
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 #include "rain/build.hpp"
 
 #include "rain/algorithm.hpp"
-#include "rain/algorithm/kmp.hpp"
-#include "rain/algorithm/lru.hpp"
-#include "rain/debug.hpp"
-#include "rain/error-exception/exception.hpp"
+#include "rain/error.hpp"
 #include "rain/filesystem.hpp"
 #include "rain/gdi-plus.hpp"
 #include "rain/literal.hpp"
-#include "rain/memmem.hpp"
-#include "rain/multithreading/thread-pool.hpp"
-#include "rain/networking/client.hpp"
-#include "rain/networking/host.hpp"
-#include "rain/networking/http/body.hpp"
-#include "rain/networking/http/client.hpp"
-#include "rain/networking/http/header.hpp"
-#include "rain/networking/http/payload.hpp"
-#include "rain/networking/http/request.hpp"
-#include "rain/networking/http/response.hpp"
-#include "rain/networking/http/server.hpp"
-#include "rain/networking/http/slave.hpp"
-#include "rain/networking/http/socket.hpp"
-#include "rain/networking/native-socket.hpp"
-#include "rain/networking/request-response/client.hpp"
-#include "rain/networking/request-response/request.hpp"
-#include "rain/networking/request-response/response.hpp"
-#include "rain/networking/request-response/server.hpp"
-#include "rain/networking/request-response/slave.hpp"
-#include "rain/networking/request-response/socket.hpp"
-#include "rain/networking/server.hpp"
-#include "rain/networking/slave.hpp"
-#include "rain/networking/smtp/client.hpp"
-#include "rain/networking/smtp/payload.hpp"
-#include "rain/networking/smtp/request.hpp"
-#include "rain/networking/smtp/response.hpp"
-#include "rain/networking/smtp/server.hpp"
-#include "rain/networking/smtp/slave.hpp"
-#include "rain/networking/smtp/socket.hpp"
-#include "rain/networking/socket.hpp"
+#include "rain/multithreading.hpp"
+#include "rain/networking.hpp"
 #include "rain/platform.hpp"
 #include "rain/string.hpp"
-#include "rain/string/command-line-parser.hpp"
-#include "rain/string/waterfall-parser.hpp"
 #include "rain/time.hpp"
 #include "rain/type.hpp"
 #include "rain/windows.hpp"
-
-#include <cassert>
-#include <fstream>
-#include <iostream>

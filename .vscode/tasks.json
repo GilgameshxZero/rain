@@ -1,197 +1,60 @@
 {
 	"version": "2.0.0",
 	"tasks": [{
-			"type": "shell",
-			"label": "build-debug",
-			"options": { "cwd": "${workspaceFolder}/build" },
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-
-			"command": "make",
-			"args": [
-				"${fileBasenameNoExtension}"
-			],
-			"problemMatcher": ["$gcc"],
-
-			"windows": {
-				"command": "CALL",
-				"args": [
-					// Setup command line to use cl.exe.
-					"VsDevCmd.default.bat",
-					"-arch=amd64",
-					"2>",
-					"NUL",
-					"&",
-					"CALL",
-					"VsDevCmd.local.bat",
-					"-arch=amd64",
-					"2>",
-					"NUL",
-					"&",
-
-					// Increment build.
-					"increment-build",
-					"&",
-
-					// Create directories if they don't exist yet.
-					"MKDIR",
-					"..\\bin",
-					"2>",
-					"NUL",
-					"&",
-					"MKDIR",
-					"..\\obj",
-					"2>",
-					"NUL",
-					"&",
-
-					// Compile and link.
-					"cl",
-					"/I../include/", // Rain include files.
-					"/std:c++17", // Use C++ 17 standard.
-					"/Zi", // Generate debug info as PDB file.
-					"/MDd", // Generate debug exe.
-					"/permissive-", // Strict standards-conforming behavior.
-					"/Fo../obj/", // Object file location.
-					"/Fd../bin/", // Move the PDB file created by /Z*
-
-					"/EHsc", // Enables stack unwinding and that externs never throw exceptions.
-					"/W3", // Display warnings up to level 3. Level 4 warnings disable include file paths that go up the tree.
-					"/FC", // Display full path of source code in diagnostics.
-					"/GS", // Checks buffer security.
-					"/Zf", // Faster PDB generation.
-					"/sdl", // Security warnings.
-					"/MP8", // Up to 8 copies of cl.exe to speed up compilation.
-					"/nologo", // Suppress cl.exe startup banner.
-
-					// Source files.
-					"${file}",
-
-					// Linker options.
-					"/link", // Options after this are passed to the linker.
-					"/DEBUG",
-					"/OUT:../bin/${fileBasenameNoExtension}-debug-x64.exe", // Rename output exe.
-					"/PDB:../bin/${fileBasenameNoExtension}-debug-x64.pdb", // PDB location.
-					"/NOLOGO"
-				],
-				"problemMatcher": ["$msCompile"]
-			}
+		/* Remove the intermediates directory obj/ and the output directory bin/. */
+		"type": "shell",
+		"label": "clean",
+		"options": { "cwd": "${workspaceFolder}/build" },
+		"presentation": {
+			"clear": true
 		},
-		{
-			"type": "shell",
-			"label": "build-release",
-			"options": { "cwd": "${workspaceFolder}/build" },
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
 
-			"command": "make",
-			"args": [
-				"${fileBasenameNoExtension}",
-				"RELEASE=1"
-			],
-			"problemMatcher": ["$gcc"],
+		"command": "make",
+		"args": ["clean"],
 
-			"windows": {
-				"command": "CALL",
-				"args": [
-					// Setup command line to use cl.exe.
-					"VsDevCmd.default.bat",
-					"-arch=amd64",
-					"2>",
-					"NUL",
-					"&",
-					"CALL",
-					"VsDevCmd.local.bat",
-					"-arch=amd64",
-					"2>",
-					"NUL",
-					"&",
-
-					// Increment build.
-					"increment-build",
-					"&",
-
-					// Create directories if they don't exist yet.
-					"MKDIR",
-					"..\\bin",
-					"2>",
-					"NUL",
-					"&",
-					"MKDIR",
-					"..\\obj",
-					"2>",
-					"NUL",
-					"&",
-
-					// Compile and link.
-					"cl",
-					"/I../include/", // Rain include files.
-					"/std:c++17", // Use C++ 17 standard.
-					"/Zi", // Generate debug info as PDB file.
-					"/MT", // Generate release exe.
-					"/permissive-", // Strict standards-conforming behavior.
-					"/Fo../obj/", // Object file location.
-					"/Fd../bin/", // Move the PDB file created by /Z*
-
-					"/EHsc", // Enables stack unwinding and that externs never throw exceptions.
-					"/W3", // Display warnings up to level 3. Level 4 warnings disable include file paths that go up the tree.
-					"/FC", // Display full path of source code in diagnostics.
-					"/GS", // Checks buffer security.
-					"/Zf", // Faster PDB generation.
-					"/sdl", // Security warnings.
-					"/MP8", // Up to 8 copies of cl.exe to speed up compilation.
-					"/nologo", // Suppress cl.exe startup banner.
-
-					"/Oi",
-					"/O2", // Optimize for speed
-					"/GL",
-					"/Gy",
-					"/Gm-",
-
-					// Source files.
-					"${file}",
-
-					// Linker options.
-					"/link", // Options after this are passed to the linker.
-					"/NXCOMPAT",
-					"/OPT:ICF",
-					"/OPT:REF",
-					"/OUT:../bin/${fileBasenameNoExtension}-release-x64.exe", // Rename output exe.
-					"/PDB:../bin/${fileBasenameNoExtension}-release-x64.pdb", // PDB location.
-					"/NOLOGO"
-				],
-				"problemMatcher": ["$msCompile"]
-			}
-		},
-		{
-			"type": "shell",
-			"label": "clean",
-			"options": { "cwd": "${workspaceFolder}/build" },
-
-			"command": "make",
-			"args": [
-				"clean"
-			],
-
-			"windows": {
-				"command": "RMDIR",
-				"args": [
-					"/Q",
-					"/S",
-					"..\\bin",
-					"..\\obj",
-				]
-			}
-		},
-		// Bypasses permissions problems in launching external console on MacOS.
-		{
-			"label": "external-terminal-osx",
-			"type": "shell",
-			"command": "osascript -e 'tell application \"Terminal\"\ndo script \"echo hello\"\nend tell'"
+		"windows": {
+			"command": "RMDIR",
+			"args": ["/Q", "/S", "..\\bin", "..\\obj"]
 		}
-	]
+	}, {
+		/* Build the open file (must be within test/) in debug mode. */
+		"type": "shell",
+		"label": "build-debug-x64",
+		"options": { "cwd": "${workspaceFolder}/build" },
+		"presentation": {
+			"clear": true
+		},
+
+		/* Default build task. */
+		"group": { "kind": "build", "isDefault": true },
+
+		"command": "make",
+		"args": ["${fileBasenameNoExtension}"],
+		"problemMatcher": ["$gcc"],
+
+		"windows": {
+			"command": "build",
+			"args": ["${fileBasenameNoExtension}"],
+			"problemMatcher": ["$msCompile"]
+		}
+	}, {
+		/* Build the open file (must be within test/) in release mode. */
+		"type": "shell",
+		"label": "build-release-x64",
+		"options": { "cwd": "${workspaceFolder}/build" },
+		"presentation": {
+			"clear": true
+		},
+		"group": "build",
+
+		"command": "make",
+		"args": ["${fileBasenameNoExtension}", "RELEASE=1"],
+		"problemMatcher": ["$gcc"],
+
+		"windows": {
+			"command": "build",
+			"args": ["${fileBasenameNoExtension}", "release"],
+			"problemMatcher": ["$msCompile"]
+		}
+	}]
 }

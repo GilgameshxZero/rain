@@ -1,117 +1,141 @@
+// Response-specific SMTP parsing.
 #pragma once
 
-#include "../../algorithm/kmp.hpp"
 #include "../request-response/response.hpp"
-#include "payload.hpp"
+#include "message.hpp"
+#include "status-code.hpp"
+
+#include <vector>
 
 namespace Rain::Networking::Smtp {
-	// Forward declaration.
-	class Request;
-
-	class Response : public Payload,
-									 public RequestResponse::Response<Request, Response> {
+	template <typename ProtocolMessage>
+	class ResponseInterface
+			: public RequestResponse::ResponseInterface<ProtocolMessage> {
 		public:
-		std::size_t code;
-		std::vector<std::vector<std::string>> extensions;
+		typedef ProtocolMessage Message;
 
-		Response(std::size_t code = 250, std::string const &parameter = "")
-				: Payload(parameter),
-					RequestResponse::Response<Request, Response>(),
-					code(code) {}
+		private:
+		// SuperInterface aliases the superclass.
+		typedef RequestResponse::ResponseInterface<Message> SuperInterface;
 
-		// Superclass behavior.
-		bool sendWith(
-			RequestResponse::Socket<Request, Response> &socket) noexcept override {
-			try {
-				socket.send(std::to_string(this->code));
-				if (!this->parameter.empty()) {
-					socket.send(this->extensions.empty() ? " " : "-");
-					socket.send(this->parameter);
-				}
-				socket.send("\r\n");
-				for (std::size_t a = 0; a < this->extensions.size(); a++) {
-					socket.send(std::to_string(this->code));
-					socket.send(a == this->extensions.size() - 1 ? " " : "-");
-					socket.send(this->extensions[a][0]);
-					for (std::size_t b = 1; b < this->extensions[a].size(); b++) {
-						socket.send(" ");
-						socket.send(this->extensions[a][b]);
-					}
-					socket.send("\r\n");
-				}
-				return false;
-			} catch (...) {
-				return true;
+		// Interface aliases this class.
+		typedef ResponseInterface<Message> Interface;
+
+		protected:
+		// Tag aliases for sendWith/recvWith convenience.
+		typedef typename SuperInterface::InterfaceTag SuperTag;
+		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
+
+		public:
+		// Exception class carries over most errors from Message parsing.
+		enum class Error { INVALID_STATUS_CODE = 1, LINES_LIMIT_EXCEEDED };
+		class ErrorCategory : public std::error_category {
+			public:
+			char const *name() const noexcept {
+				return "Rain::Networking::Smtp::Response";
 			}
+			std::string message(int error) const noexcept {
+				switch (static_cast<Error>(error)) {
+					case Error::INVALID_STATUS_CODE:
+						return "Invalid status code.";
+					case Error::LINES_LIMIT_EXCEEDED:
+						return "Too many lines in response.";
+					default:
+						return "Generic.";
+				}
+			}
+		};
+		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+
+		// Three-digit status code from RFC 821.
+		StatusCode statusCode;
+
+		// Lines in the response.
+		std::vector<std::string> lines;
+
+		// Carry over constructor which recvs from a Socket.
+		template <typename... MessageArgs>
+		ResponseInterface(
+			StatusCode statusCode = StatusCode::REQUEST_COMPLETED,
+			// No lines will simply take the reason phrase from statusCode on a single
+			// line.
+			std::vector<std::string> &&lines = {},
+			MessageArgs &&...args)
+				: SuperInterface(
+						// bind version to rvalue reference to be perfect forwarded by
+						// SuperInterface to Message.
+						std::forward<MessageArgs>(args)...),
+					statusCode(statusCode),
+					lines(std::move(lines)) {}
+		ResponseInterface(ResponseInterface &&other)
+				: SuperInterface(std::move(other)),
+					statusCode(other.statusCode),
+					lines(std::move(other.lines)) {}
+
+		// Not copyable.
+		ResponseInterface(ResponseInterface const &) = delete;
+		ResponseInterface &operator=(ResponseInterface const &) = delete;
+
+		private:
+		// Provided for subclass override.
+		virtual void sendWithImpl(InterfaceTag, std::ostream &){};
+		virtual void recvWithImpl(InterfaceTag, std::istream &){};
+
+		// Overrides for Super versions implement protocol behavior.
+		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
+			this->sendWithImpl(InterfaceTag(), stream);
+
+			// If no lines, append the default reason phrase.
+			if (this->lines.empty()) {
+				this->lines.push_back(this->statusCode.getReasonPhrase());
+			}
+
+			// For every line but the final, send CODE-line.
+			for (std::size_t index = 0; index + 1 < this->lines.size(); index++) {
+				stream << this->statusCode << "-" << this->lines[index] << "\r\n";
+			}
+			stream << this->statusCode << " " << this->lines.back() << "\r\n";
+			stream.flush();
 		}
-		bool recvWith(
-			RequestResponse::Socket<Request, Response> &socket) noexcept override {
-			try {
-				static char const *CRLF = "\r\n";
-				static std::size_t const PART_MATCH_CRLF[] = {
-					(std::numeric_limits<std::size_t>::max)(), 0, 0};
+		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
+			this->recvWithImpl(InterfaceTag(), stream);
 
-				// Parse the entire header.
-				// State of newline search.
-				std::size_t kmpCand = 0;
-				char *curRecv = socket.buf,	 // Last search position.
-					*curParse = socket.buf, *newline;
-				bool isLastLine;
-
-				// Keep on calling recv until we find get the full response.
-				this->code = 0;
-				while (true) {
-					std::size_t bufRemaining = socket.BUF_SZ - (curRecv - socket.buf);
-					if (bufRemaining == 0) {
-						return true;
-					}
-					std::size_t recvLen = socket.recv(curRecv,
-						bufRemaining,
-						Networking::Socket::RecvFlag::NONE);
-					if (recvLen == 0) {
-						return true;
-					}
-
-					// Look to parse an additional line.
-					while (
-						(newline = Algorithm::cStrSearchKmp(
-							 curRecv, recvLen, CRLF, 2, PART_MATCH_CRLF, &kmpCand)) != NULL) {
-						// Found full line since curParse.
-						isLastLine = curParse[3] == ' ';
-						curParse[3] = '\0';
-						*newline = '\0';
-						if (this->code == 0) {
-							// First line.
-							this->code = static_cast<std::size_t>(std::strtoll(curParse, NULL, 10));
-							this->parameter = std::string(curParse + 4);
-						} else {
-							// Extension line.
-							this->extensions.emplace_back(std::vector<std::string>());
-							for (char *space = curParse + 4, *prevSpace = curParse + 4;
-									 space != newline + 1;
-									 space++) {
-								if (*space == ' ' || *space == '\0') {
-									*space = '\0';
-									this->extensions.back().emplace_back(std::string(prevSpace));
-									prevSpace = space + 1;
-								}
-							}
-						}
-						curParse = newline + 2;
-						if (isLastLine) {
-							break;
-						}
-					}
-					curRecv += recvLen;
-					if (isLastLine) {
-						break;
-					}
+			// Receive line-by-line, up to 4K bytes total.
+			std::size_t totalBytes = 0;
+			while (totalBytes < (1_zu << 12)) {
+				try {
+					// statusCode is always the first three characters.
+					std::string statusCodeStr(3, '\0');
+					stream.read(&statusCodeStr[0], statusCodeStr.length());
+					this->statusCode = StatusCode(statusCodeStr);
+				} catch (...) {
+					throw Exception(Error::INVALID_STATUS_CODE);
 				}
 
-				return false;
-			} catch (...) {
-				return true;
+				// The next character determines whether it is the final line.
+				char statusDelimiter = static_cast<char>(stream.get());
+
+				// Each line can be at most ~1K characters.
+				this->lines.emplace_back(1_zu << 10, '\0');
+				stream.getline(&this->lines.back()[0], this->lines.back().length());
+				// -2 to discard the \r\0.
+				this->lines.back().resize(
+					std::max(std::streamsize(0), stream.gcount() - 2));
+				totalBytes += this->lines.back().length();
+
+				// Exit if last line.
+				if (statusDelimiter == ' ') {
+					return;
+				}
 			}
+
+			// If here, the response is too large.
+			throw Exception(Error::LINES_LIMIT_EXCEEDED);
 		}
+
+		private:
 	};
+
+	// Response final specialization.
+	typedef ResponseInterface<Message> Response;
 }

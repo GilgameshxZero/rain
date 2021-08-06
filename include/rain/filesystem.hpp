@@ -1,20 +1,24 @@
-/*
-Replaces the <filesystem> STL header with additional utilities.
-*/
-
+// Utilities for std::filesystem.
 #pragma once
 
 #include <filesystem>
 
 namespace Rain::Filesystem {
-	/*
-	Returns true iff needle is under the haystack directory path.
-	Safe only with absolute paths.
-	*/
-	inline bool subpath(std::filesystem::path const &haystack,
-		std::filesystem::path const &needle) {
+	// Returns true if descendent path is under the directory subtree of the
+	// ancestor path.
+	//
+	// Does not require canonical paths.
+	inline bool isSubpath(
+		std::filesystem::path const &descendant,
+		std::filesystem::path const &ancestor) {
+		std::filesystem::path canonDescendant(
+			std::filesystem::canonical(descendant)),
+			canonAncestor(std::filesystem::canonical(ancestor));
 		return std::mismatch(
-						 needle.begin(), needle.end(), haystack.begin(), haystack.end())
-						 .second == haystack.end();
+						 canonDescendant.begin(),
+						 canonDescendant.end(),
+						 canonAncestor.begin(),
+						 canonAncestor.end())
+						 .second == canonAncestor.end();
 	}
 }

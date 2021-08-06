@@ -1,34 +1,23 @@
-/*
-Include Gdiplus while linking the correct libraries and resolving min/max.
-*/
-
+// Include Gdiplus while linking the correct libraries and resolving min/max.
 #pragma once
 
 #include "platform.hpp"
-#include "windows.hpp"
 
-// Inform the linker we expect this library.
-#ifdef RAIN_WINDOWS
+#ifdef RAIN_PLATFORM_WINDOWS
+
 #pragma comment(lib, "Gdiplus.lib")
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+#include "algorithm/algorithm.hpp"
+#include "windows.hpp"
 
-/*
-min/max are defined within Gdiplus as well, and this avoids double definition errors.
-*/
-#include "algorithm.hpp"
-
+// min/max are defined within Gdiplus as well, and this avoids double definition
+// errors.
 namespace Gdiplus {
 	using std::max;
 	using std::min;
 }
 
-/*
-These includes must be in this order.
-TODO: Why?
-*/
+// Objidl.h and Windows.h must be included before Gdiplus.h.
 #include <Objidl.h>
 
 #include <Gdiplus.h>

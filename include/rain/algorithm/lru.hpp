@@ -1,71 +1,85 @@
-/*
-Thread-safe base class with immutable LRU cache behavior. Can be subclassed.
-*/
-
+// Thread-safe least-recently-used cache implemented with a linked list +
+// hashmap. O(1) average access.
 #pragma once
 
-#include "../error-exception/exception.hpp"
-#include "../type.hpp"
-
 #include <list>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 
 namespace Rain::Algorithm {
-	/*
-	KeyType should be light. ValueType can be heavier, but the cache is immutable
-	w.r.t. ValueType.
-	*/
-	template <typename KeyType, typename ValueType>
-	class LruCache
-			: private std::unordered_map<KeyType,
-					typename std::list<std::pair<KeyType, ValueType>>::iterator> {
+	// Thread-safe LRU cache. Keys should be light and copy-constructable.
+	template <typename Key, typename Value>
+	class LruCache : private std::unordered_map<
+										 Key,
+										 typename std::list<
+											 std::unique_ptr<std::pair<Key, Value>>>::iterator> {
 		private:
-		// Shorthand typedefs.
-		typedef std::list<std::pair<KeyType, ValueType>> ListType;
-		typedef std::unordered_map<KeyType, typename ListType::iterator> Super;
+		// Shorthands.
+		typedef std::list<std::unique_ptr<std::pair<Key, Value>>> List;
+		typedef std::unordered_map<Key, typename List::iterator> Super;
+
+		// Linked list storing key/value pairs, in LRU order.
+		List lruList;
+
+		// Mutex locks operations on the linked list.
+		std::mutex lruListMtx;
 
 		public:
+		// Key/value pair capacity of the cache. Zero = unlimited, which is a little
+		// meaningless.
 		std::size_t const capacity;
 
-		// Zero capacity means infinite, which is a little meaningless.
 		LruCache(std::size_t capacity = 0) : capacity(capacity) {}
 
-		// Overload for member access.
-		ValueType &at(KeyType const &key) {
-			std::lock_guard<std::mutex> lck(this->mtx);
-			
-			// Throws exception if key is not in cache.
-			typename ListType::iterator &it = Super::at(key);
+		// Overloaded for member access related functions on the base
+		// std::unordered_map.
+		Value &at(Key const &key) {
+			std::lock_guard<std::mutex> lck(this->lruListMtx);
 
-			this->lru.push_front(*it);
-			this->lru.erase(it);
-			it = this->lru.begin();
-			return this->lru.begin()->second;
+			// Throws exception from std::unordered_map if key is not in cache.
+			typename List::iterator &it = Super::at(key);
+
+			// Move this key/value pair to the beginning of the linked list. Update
+			// the unordered_map to match.
+			this->lruList.splice(this->lruList.begin(), this->lruList, it);
+
+			return this->lruList.front()->second;
 		}
 
-		// Custom function for LruCache.
-		std::pair<typename Super::iterator, bool> insert_or_assign(
-			KeyType const &key,
-			ValueType const &value) {
-			std::lock_guard<std::mutex> lck(this->mtx);
+		// Insert a new key/value pair, or update an existing pair. In either case,
+		// move the pair to the front of the cache.
+		std::pair<typename Super::iterator, bool> insertOrAssign(
+			Key const &key,
+			Value const &value) {
+			std::lock_guard<std::mutex> lck(this->lruListMtx);
+
 			typename Super::iterator const &it = Super::find(key);
-			if (it != Super::end()) {	 // If key already exists, replace it.
-				this->lru.erase(it->second);
+
+			// If key exists, erase it to prepare for update later.
+			if (it != Super::end()) {
+				this->lruList.erase(it->second);
 				Super::erase(it);
 			}
-			if (Super::size() == this->capacity) {	// Evict LRU if over capacity.
-				Super::erase(this->lru.back().first);
-				this->lru.pop_back();
+
+			// Evict from LRU if over capacity.
+			if (Super::size() == this->capacity) {
+				Super::erase(this->lruList.back()->first);
+				this->lruList.pop_back();
 			}
 
-			// Insert new key.
-			this->lru.push_front(std::make_pair(key, value));
-			return Super::insert(std::make_pair(key, this->lru.begin()));
+			// Insert new key with value.
+			this->lruList.push_front(
+				std::make_unique<std::pair<Key, Value>>(key, value));
+			return Super::insert(std::make_pair(key, this->lruList.begin()));
 		}
 
-		private:
-		ListType lru;
-		std::mutex mtx;
+		// Destructor needs to free all dynamically-allocated memory in the linked
+		// list.
+		~LruCache() {
+			while (this->lruList.size() > 0) {
+				this->lruList.pop_back();
+			}
+		}
 	};
 }

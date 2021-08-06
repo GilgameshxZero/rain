@@ -1,35 +1,38 @@
-// Provides platform-independent NativeSocket and NATIVE_SOCKET_INVALID.
+// Includes all relevant headers to implement the NativeSocket type, which
+// abstracts away the platform differences between naive socket handles.
 #pragma once
 
 #include "../platform.hpp"
 
-#ifdef RAIN_WINDOWS
+#ifdef RAIN_PLATFORM_WINDOWS
+
+// Links ws2_32.dll which includes implementation for Winsock 2. Not necessarily
+// x86 as the name suggests.
+#pragma comment(lib, "Ws2_32.lib")
+
 #include "../windows.hpp"
 
-#ifndef _WIN32_WINNT
-// Windows XP.
-#define _WIN32_WINNT 0x0501
-#endif
-
-#ifndef _WINSOCKAPI_
-#define _WINSOCKAPI_
-#endif
-
-#pragma comment(lib, "Ws2_32.lib")
 #include <iphlpapi.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
 #else
-// Assume that any non-Windows platform uses POSIX-style sockets.
+
+// Non-Windows networking is supported via POSIX-style sockets.
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <poll.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #endif
 
 namespace Rain::Networking {
-#ifdef RAIN_WINDOWS
+	// Abstraction of platform socket. Error/invalid differences between
+	// platforms.
+#ifdef RAIN_PLATFORM_WINDOWS
 	typedef SOCKET NativeSocket;
 	static NativeSocket const NATIVE_SOCKET_INVALID = INVALID_SOCKET;
 	static int const NATIVE_SOCKET_ERROR = SOCKET_ERROR;

@@ -1,66 +1,78 @@
+// Server specialization for R/R protocol Sockets.
 #pragma once
 
-#include "../server.hpp"
-#include "socket.hpp"
+#include "../tcp/server.hpp"
 
 namespace Rain::Networking::RequestResponse {
-	template <typename SlaveType, typename RequestType, typename ResponseType>
-	class Server
-			: virtual protected RequestResponse::Socket<RequestType, ResponseType>,
-				public Networking::Server<SlaveType> {
-		// Shorthand for overriding virtuals in subclasses.
+	// Server specialization for R/R protocol Sockets.
+	//
+	// No support for pre/post-processing.
+	template <typename ProtocolSocket, typename ProtocolWorker>
+	class ServerInterface
+			: public Tcp::ServerInterface<ProtocolSocket, ProtocolWorker> {
 		public:
-		typedef SlaveType Slave;
-		typedef RequestType Request;
-		typedef ResponseType Response;
+		typedef ProtocolSocket Socket;
+		typedef ProtocolWorker Worker;
 
-		// Constructor.
-		Server(std::size_t maxThreads = 128,
-			std::size_t BUF_SZ = 16384,
-			std::chrono::milliseconds const &ACCEPT_TIMEOUT_MS =
-				std::chrono::milliseconds(5000),
-			std::chrono::milliseconds const &RECV_TIMEOUT_MS =
-				std::chrono::milliseconds(5000),
-			std::chrono::milliseconds const &SEND_MS_PER_KB =
-				std::chrono::milliseconds(5000),
-			std::chrono::milliseconds const &SEND_TIMEOUT_MS_LOWER =
-				std::chrono::milliseconds(5000))
-				: Networking::Socket(),
-					RequestResponse::Socket<RequestType, ResponseType>(BUF_SZ,
-						RECV_TIMEOUT_MS,
-						SEND_MS_PER_KB,
-						SEND_TIMEOUT_MS_LOWER),
-					Networking::Server<SlaveType>(maxThreads, ACCEPT_TIMEOUT_MS) {}
-					
-		using Networking::Server<SlaveType>::getFamily;
-		using Networking::Server<SlaveType>::getNativeSocket;
-		using Networking::Server<SlaveType>::getProtocol;
-		using Networking::Server<SlaveType>::getType;
-		using Networking::Server<SlaveType>::isValid;
-		using Networking::Server<SlaveType>::getService;
-
-		protected:
-		// Subclass behavior. Return true to abort Slave.
-		virtual bool onRequest(Slave &, Request &) noexcept { return false; };
+		// Alias Socket templates.
+		using typename Socket::Request;
+		using typename Socket::Response;
+		using typename Socket::Clock;
+		using typename Socket::Duration;
+		using typename Socket::Message;
 
 		private:
-		// Superclass behavior.
-		Slave *onServerAccept(Networking::Socket &acceptedSocket) override {
-			return new Slave(acceptedSocket,
-				this->BUF_SZ,
-				this->RECV_TIMEOUT_MS,
-				this->SEND_MS_PER_KB,
-				this->SEND_TIMEOUT_MS_LOWER);
+		// SuperInterface aliases the superclass.
+		typedef Tcp::ServerInterface<Socket, Worker> SuperInterface;
+
+		public:
+		// Interface aliases this class.
+		typedef ServerInterface<Socket, Worker> Interface;
+
+		private:
+		// Hold a copy of Worker constructor arguments for future construction.
+		Duration const maxRecvIdleDuration, sendOnceTimeoutDuration;
+
+		public:
+		// R/R Socket parameters in Server constructor are relayed to each
+		// constructed Worker.
+		template <typename... SocketArgs>
+		ServerInterface(
+			std::size_t maxThreads = 1024,
+			Specification::ProtocolFamily pf = Specification::ProtocolFamily::INET6,
+			std::size_t recvBufferLen = 1_zu << 10,
+			std::size_t sendBufferLen = 1_zu << 10,
+			Duration maxRecvIdleDuration = 60s,
+			Duration sendOnceTimeoutDuration = 60s,
+			SocketArgs &&...args)
+				: SuperInterface(
+						maxThreads,
+						// Relay worker construction arguments.
+						pf,
+						recvBufferLen,
+						sendBufferLen,
+						// These don't matter but must be passed for server Socket
+						// construction.
+						60s,
+						60s,
+						std::forward<SocketArgs>(args)...),
+					maxRecvIdleDuration(maxRecvIdleDuration),
+					sendOnceTimeoutDuration(sendOnceTimeoutDuration) {}
+		ServerInterface(ServerInterface const &) = delete;
+		ServerInterface &operator=(ServerInterface const &) = delete;
+
+		private:
+		// Override Worker construction with all saved Worker parameters.
+		virtual std::unique_ptr<Worker> workerFactory(
+			std::shared_ptr<std::pair<Networking::Socket, Resolve::AddressInfo>>
+				acceptRes) override {
+			return std::make_unique<Worker>(
+				acceptRes->second,
+				std::move(acceptRes->first),
+				SuperInterface::recvBufferLen,
+				SuperInterface::sendBufferLen,
+				this->maxRecvIdleDuration,
+				this->sendOnceTimeoutDuration);
 		}
-		void onBeginSlaveTask(Slave &slave) noexcept override {
-			// Respond to requests forever until either the request or response tells
-			// us to abort.
-			while (true) {
-				Request req;
-				if (slave.recv(req) || this->onRequest(slave, req)) {
-					break;
-				}
-			}
-		};
 	};
 }

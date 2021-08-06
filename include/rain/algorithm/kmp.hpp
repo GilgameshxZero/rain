@@ -1,82 +1,123 @@
+// Knuth-Morris-Pratt O(N+M) single perfect string-matching algorithm.
 #pragma once
 
-#include "../algorithm.hpp"
 #include "../platform.hpp"
-#include "../type.hpp"
+#include "../string/string.hpp"
+#include "algorithm.hpp"
 
 #include <limits>
+#include <vector>
 
 namespace Rain::Algorithm {
-	/*
-	Compute partial match table (also known as the failure function) (used in KMP)
-	for a string. partialMatch must be at least sLen + 1 in length.
+	// Compute partial match table (also known as the failure function) (used in
+	// KMP) for a string.
+	//
+	// The partial match table specifies where to "rewind" the matching process to
+	// if it failes on a given character.
+	inline std::vector<std::size_t> computeKmpPartialMatch(
+		char const *const cStr,
+		std::size_t const cStrLen) {
+		std::vector<std::size_t> partialMatch(cStrLen + 1);
 
-	The partial match table specifies where to "rewind" the matching process to if
-	it failes on a given character.
-	*/
-	inline void computeKmpPartialMatch(char const *const s,
-		std::size_t sLen,
-		std::size_t *partialMatch) {
 		// This represents -1, i.e. we can resume matching for the first character
 		// of the string at the next position in the text.
-		partialMatch[0] = std::numeric_limits<std::size_t>::max();
+		partialMatch[0] = SIZE_MAX;
 
+		// How far into search string s we must begin (to our best knowledge) if we
+		// mismatch.
 		std::size_t candidate = 0;
-		for (std::size_t a = 1; a < sLen; a++) {
-			if (s[a] == s[candidate]) {
+
+		for (std::size_t a = 1; a < cStrLen; a++) {
+			if (cStr[a] == cStr[candidate]) {
 				partialMatch[a] = partialMatch[candidate];
 			} else {
 				partialMatch[a] = candidate;
-				while (candidate != std::numeric_limits<std::size_t>::max() &&
-					s[a] != s[candidate]) {
+				while (candidate != SIZE_MAX && cStr[a] != cStr[candidate]) {
 					candidate = partialMatch[candidate];
 				}
 			}
 			candidate++;
 		}
 
-		partialMatch[sLen] = candidate;
+		partialMatch[cStrLen] = candidate;
+		return partialMatch;
+	}
+	inline std::vector<std::size_t> computeKmpPartialMatch(std::string const &s) {
+		return computeKmpPartialMatch(s.c_str(), s.length());
 	}
 
-	// Overloads of computeKmpPartialMatch based for ease-of-use.
-
-	// KMP string search while storing candidate state.
-	inline char *cStrSearchKmp(char const *haystack,
-		std::size_t haystackLen,
+	// KMP search for needle in haystack, in O(N+M). Optionally pass a candidate
+	// parameter if want to continue from a previous search. Returns a pair of
+	// (match, candidate). The match is nullptr if no match found, otherwise
+	// returns a char * to the first character of the first match found. The
+	// candidate is the updated candidate at the termination of the search.
+	inline std::pair<char *, std::size_t> kmpSearch(
+		char const *const haystack,
+		std::size_t const haystackLen,
 		char const *const needle,
 		std::size_t const needleLen,
-		std::size_t const *partialMatch,
-		std::size_t *candidate) {
+		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::size_t candidate = 0) {
+		// Use these variables, which are set based on whether or not default
+		// partialMatch and candidate were passed in.
+		std::vector<std::size_t> const &partialMatchProxy =
+			partialMatch.size() == 0 ? computeKmpPartialMatch(needle) : partialMatch;
+
+		char const *searchResult = nullptr;
 		for (std::size_t a = 0; a < haystackLen;) {
-			if (haystack[a] == needle[*candidate]) {
+			if (haystack[a] == needle[candidate]) {
 				a++;
-				(*candidate)++;
-				if (*candidate == needleLen) {
-					return const_cast<char *>(haystack) + a - *candidate;
+				candidate++;
+				if (candidate == needleLen) {
+					searchResult = haystack + a - candidate;
 				}
 			} else {
-				*candidate = partialMatch[*candidate];
-				if (*candidate == std::numeric_limits<std::size_t>::max()) {
+				// Use the partial match table to resume if a match fails.
+				candidate = partialMatchProxy[candidate];
+				if (candidate == SIZE_MAX) {
 					a++;
-					(*candidate)++;
+					candidate = 0;
 				}
 			}
 		}
 
-		return NULL;
+		return std::make_pair(const_cast<char *>(searchResult), candidate);
 	}
-
-	// Knuth-Morris-Pratt string search: an O(m+n) version of strstr.
-	inline char *cStrSearchKmp(char const *haystack,
+	inline std::pair<char *, std::size_t> kmpSearch(
+		char const *const haystack,
 		std::size_t haystackLen,
+		std::string const &needle,
+		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::size_t candidate = 0) {
+		return kmpSearch(
+			haystack,
+			haystackLen,
+			needle.c_str(),
+			needle.length(),
+			partialMatch,
+			candidate);
+	}
+	inline std::pair<std::size_t, std::size_t> kmpSearch(
+		std::string const &haystack,
 		char const *const needle,
-		std::size_t const needleLen) {
-		std::size_t *partialMatch = new std::size_t[needleLen + 1];
-		computeKmpPartialMatch(needle, needleLen, partialMatch);
-		std::size_t candidate = 0;
-		char *result = cStrSearchKmp(
-			haystack, haystackLen, needle, needleLen, partialMatch, &candidate);
-		delete[] partialMatch;
-		return result;
+		std::size_t const needleLen,
+		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::size_t candidate = 0) {
+		std::pair<char *, std::size_t> searchRes = kmpSearch(
+			haystack.c_str(),
+			haystack.length(),
+			needle,
+			needleLen,
+			partialMatch,
+			candidate);
+		return std::make_pair(searchRes.first - haystack.c_str(), searchRes.second);
+	}
+	inline std::pair<std::size_t, std::size_t> kmpSearch(
+		std::string const &haystack,
+		std::string const &needle,
+		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::size_t candidate = 0) {
+		return kmpSearch(
+			haystack, needle.c_str(), needle.length(), partialMatch, candidate);
 	}
 }
