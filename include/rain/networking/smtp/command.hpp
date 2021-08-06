@@ -113,12 +113,12 @@ namespace Rain::Networking::Smtp {
 }
 
 // Stream operators.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Smtp::Command command) {
 	return stream << static_cast<std::string>(command);
 }
-std::istream &operator>>(
+inline std::istream &operator>>(
 	std::istream &stream,
 	Rain::Networking::Smtp::Command &command) {
 	// Any stream-in operations should not be subject to failure from a long line.

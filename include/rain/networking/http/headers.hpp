@@ -107,7 +107,7 @@ namespace Rain::Networking::Http {
 }
 
 // Stream operators.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Http::Headers const &headers) {
 	for (std::pair<std::string const, std::string> const &keyValue : headers) {
@@ -115,7 +115,7 @@ std::ostream &operator<<(
 	}
 	return stream;
 }
-std::istream &operator>>(
+inline std::istream &operator>>(
 	std::istream &stream,
 	Rain::Networking::Http::Headers &headers) {
 	// TODO: Optimize for string copying.

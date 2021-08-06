@@ -45,10 +45,10 @@ namespace Rain::Networking::Specification {
 	};
 
 	// Converts PF/AF.
-	AddressFamily PfToAf(ProtocolFamily pf) {
+	inline AddressFamily PfToAf(ProtocolFamily pf) {
 		return static_cast<AddressFamily>(pf);
 	}
-	ProtocolFamily AfToPf(AddressFamily af) {
+	inline ProtocolFamily AfToPf(AddressFamily af) {
 		return static_cast<ProtocolFamily>(af);
 	}
 

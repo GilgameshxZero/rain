@@ -99,7 +99,7 @@ namespace Rain::Networking::Resolve {
 	// sockaddr_storage returned by getAddressInfo. Internally uses getnameinfo,
 	// but with the numeric flags this should not trigger a reverse DNS lookup and
 	// thus should not block.
-	Host getNumericHost(sockaddr_storage const &address, std::size_t addressLen) {
+	inline Host getNumericHost(sockaddr_storage const &address, std::size_t addressLen) {
 		Wsa::prepare();
 
 		char node[NI_MAXHOST], service[NI_MAXSERV];
@@ -130,7 +130,7 @@ namespace Rain::Networking::Resolve {
 	//
 	// TODO: Implement DNS resolver for cleaner timeouts (no dangling threads).
 	template <typename Clock = std::chrono::steady_clock>
-	std::vector<AddressInfo> getAddressInfo(
+	inline std::vector<AddressInfo> getAddressInfo(
 		Host const &host,
 		Time::Timeout<Clock> const &timeout = 15s,
 		Specification::Specification const &specification = {},
@@ -267,7 +267,7 @@ namespace Rain::Networking::Resolve {
 
 	// Gets MX records for a host, and sorts them in order of priority.
 	template <typename Clock = std::chrono::steady_clock>
-	std::vector<std::pair<std::size_t, std::string>> getDnsRecordsMx(
+	inline std::vector<std::pair<std::size_t, std::string>> getDnsRecordsMx(
 		Host const &host,
 		Time::Timeout<Clock> const &timeout = 15s) {
 		Wsa::prepare();

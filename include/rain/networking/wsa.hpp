@@ -31,7 +31,7 @@ namespace Rain::Networking::Wsa {
 	// for WSACleanup on exit. This function will only run once per application,
 	// and is thread-safe. Subsequent calls return the WSADATA obtained by the
 	// first run.
-	WSADATA prepare() {
+	inline WSADATA prepare() {
 #ifdef RAIN_PLATFORM_WINDOWS
 		// Serializes function.
 		static std::mutex fncMtx;
