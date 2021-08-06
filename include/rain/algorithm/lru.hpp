@@ -10,7 +10,7 @@
 namespace Rain::Algorithm {
 	// Thread-safe LRU cache. Keys should be light and copy-constructable.
 	template <typename Key, typename Value>
-	class LruCache : private std::unordered_map<
+	class LruCache : public std::unordered_map<
 										 Key,
 										 typename std::list<
 											 std::unique_ptr<std::pair<Key, Value>>>::iterator> {
@@ -49,7 +49,7 @@ namespace Rain::Algorithm {
 
 		// Insert a new key/value pair, or update an existing pair. In either case,
 		// move the pair to the front of the cache.
-		std::pair<typename Super::iterator, bool> insertOrAssign(
+		std::pair<typename Super::iterator, bool> insert_or_assign(
 			Key const &key,
 			Value const &value) {
 			std::lock_guard<std::mutex> lck(this->lruListMtx);
@@ -63,7 +63,7 @@ namespace Rain::Algorithm {
 			}
 
 			// Evict from LRU if over capacity.
-			if (Super::size() == this->capacity) {
+			if (Super::size() == this->capacity && this->capacity != 0) {
 				Super::erase(this->lruList.back()->first);
 				this->lruList.pop_back();
 			}

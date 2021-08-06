@@ -339,13 +339,7 @@ namespace Rain::Networking::Smtp {
 		private:
 		// Subclass override.
 		virtual void onRequestException() {
-			try {
-				throw;
-			} catch (std::exception const &exception) {
-				std::cerr << exception.what();
-			} catch (...) {
-				// Do nothing.
-			}
+			Rain::Error::consumeThrowable([]() { throw; }, RAIN_ERROR_LOCATION)();
 		}
 
 		// R/R Worker overrides.
