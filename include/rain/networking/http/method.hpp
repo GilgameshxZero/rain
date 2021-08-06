@@ -79,12 +79,12 @@ namespace Rain::Networking::Http {
 }
 
 // Stream operators.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Http::Method method) {
 	return stream << static_cast<std::string>(method);
 }
-std::istream &operator>>(
+inline std::istream &operator>>(
 	std::istream &stream,
 	Rain::Networking::Http::Method &method) {
 	// Any stream-in operations should not be subject to failure from a long line.

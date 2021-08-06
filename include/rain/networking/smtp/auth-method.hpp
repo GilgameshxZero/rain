@@ -49,7 +49,7 @@ namespace Rain::Networking::Smtp {
 
 // Stream operators. istream operator>> will take a token in the format
 // HTTP/-.-.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Smtp::AuthMethod authMethod) {
 	return stream << static_cast<std::string>(authMethod);

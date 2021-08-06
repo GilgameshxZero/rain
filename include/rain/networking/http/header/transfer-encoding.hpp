@@ -52,7 +52,7 @@ namespace Rain::Networking::Http::Header {
 }
 
 // Stream operator.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Http::Header::TransferEncoding transferEncoding) {
 	return stream << static_cast<std::string>(transferEncoding);

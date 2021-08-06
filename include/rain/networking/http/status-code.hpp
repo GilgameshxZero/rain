@@ -369,7 +369,7 @@ namespace Rain::Networking::Http {
 }
 
 // Stream operator.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Http::StatusCode statusCode) {
 	return stream << static_cast<std::string>(statusCode);

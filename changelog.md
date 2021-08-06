@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.5
+
+* Inline additional stream operator free functions in `Networking`.
+
 ## 7.0.4
 
 * Update `RAIN_VERSION_REVISION` to `4` from `0`.

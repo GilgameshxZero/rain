@@ -75,7 +75,7 @@ namespace Rain::Networking::Http {
 
 // Stream operator. Cannot stream in >> directly, since need to know
 // Content-Length/Transfer-Encoding.
-std::ostream &operator<<(
+inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Http::Body &body) {
 	// Will set failbit on stream if rdbuf is empty. So, only execute if rdbuf is
