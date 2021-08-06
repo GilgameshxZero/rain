@@ -157,13 +157,7 @@ namespace Rain::Networking::Http {
 		// Called within catch handler when any chain elements throw. Must not
 		// throw.
 		virtual void onRequestException() {
-			try {
-				throw;
-			} catch (std::exception const &exception) {
-				std::cerr << exception.what();
-			} catch (...) {
-				// Do nothing.
-			}
+			Rain::Error::consumeThrowable([]() { throw; }, RAIN_ERROR_LOCATION)();
 		}
 
 		// R/R Worker overrides.
