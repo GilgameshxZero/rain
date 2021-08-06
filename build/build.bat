@@ -11,32 +11,35 @@ IF NOT DEFINED VSCMD_VER (
 	CALL vcvarsall x64
 )
 
+@REM Call different command line options based on whether we are building debug or release.
+SETLOCAL ENABLEDELAYEDEXPANSION
+
+SET "PROJECT_NAME=%1"
+SET "BUILD_TYPE=%2"
+
 @REM Create relevant directories.
 IF NOT EXIST ..\bin\ (
 	MD ..\bin\
 )
-IF NOT EXIST ..\obj\%1\ (
-	MD ..\obj\%1\
+IF NOT EXIST ..\obj\%PROJECT_NAME%\ (
+	MD ..\obj\%PROJECT_NAME%\
 )
 
 @REM Increment build version number.
 CALL increment-version-build
 
-@REM Call different command line options based on whether we are building debug or release.
-SETLOCAL ENABLEDELAYEDEXPANSION
-
-SET "COMPILE_OP_COMMON=/I../include/ /std:c++17 /D _CONSOLE /Fa..\obj\%1\ /Fd..\obj\%1\%1.pdb /Fo..\obj\%1\%1 /Fp..\obj\%1\%1 /fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /GS /W3 /WX- /sdl /diagnostics:column /Zf /EHsc /Gm- /nologo"
+SET "COMPILE_OP_COMMON=/I../include/ /std:c++17 /D _CONSOLE /Fa..\obj\%PROJECT_NAME%\ /Fd..\obj\%PROJECT_NAME%\%PROJECT_NAME%.pdb /Fo..\obj\%PROJECT_NAME%\ /Fp..\obj\%PROJECT_NAME%\%PROJECT_NAME%.pch /fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /GS /W3 /WX- /sdl /diagnostics:column /Zf /EHsc /Gm- /nologo"
 SET "COMPILE_OP_DEBUG=/D _DEBUG /MDd /Od /RTC1 /JMC /ZI"
 SET "COMPILE_OP_RELEASE=/D NDEBUG /MT /O2 /Oi /GL /Gy /Zi"
-SET "COMPILE_FILES=..\test\%1.cpp"
+SET "COMPILE_FILES=..\test\%PROJECT_NAME%.cpp"
 
-SET "LINK_OP_COMMON=/link /OUT:..\bin\%1.exe /PDB:..\obj\%1\%1.pdb /ILK:..\obj\%1\%1.ilk /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /MANIFESTFILE:..\obj\%1\%1.exe.intermediate.manifest /LTCGOUT:..\obj\%1\%1.iobj /SUBSYSTEM:CONSOLE /NOLOGO"
+SET "LINK_OP_COMMON=/link /OUT:..\bin\%PROJECT_NAME%.exe /PDB:..\obj\%PROJECT_NAME%\%PROJECT_NAME%.pdb /ILK:..\obj\%PROJECT_NAME%\%PROJECT_NAME%.ilk /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /MANIFESTFILE:..\obj\%PROJECT_NAME%\%PROJECT_NAME%.exe.intermediate.manifest /LTCGOUT:..\obj\%PROJECT_NAME%\%PROJECT_NAME%.iobj /SUBSYSTEM:CONSOLE /NOLOGO"
 SET "LINK_OP_DEBUG=/DEBUG"
 SET "LINK_OP_RELEASE=/INCREMENTAL:NO /OPT:ICF /OPT:REF /LTCG:incremental"
 SET "LINK_LIBRARIES="
 
 @REM Compile and link.
-IF "%2"=="release" (
+IF "%BUILD_TYPE%"=="release" (
 	SET "COMPILE_OP=%COMPILE_OP_COMMON% %COMPILE_OP_RELEASE%"
 	SET "LINK_OP=%LINK_OP_COMMON% %LINK_OP_RELEASE%"
 ) ELSE (

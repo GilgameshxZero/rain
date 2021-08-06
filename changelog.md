@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.0.3
+
+* Replace `build/build.bat` with more generic format allowing for child projects to use a very similar `build.bat` while only replacing `%PROJECT_NAME%`.
+* Enforce 80-character line limit on `build/makefile`.
+* `inline` `Literal::_zu`, `Literal::_re`, and `strcasecmp` as they caused problems with multiple definitions in child projects with more than 1 source file.
+
 ## 7.0.2
 
 Two of two updates continued from `7.0.1`.
