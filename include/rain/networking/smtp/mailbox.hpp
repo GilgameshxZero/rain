@@ -9,34 +9,13 @@ namespace Rain::Networking::Smtp {
 	// Represents an email example@example.com from RFC 5322 Section 3.4.1.
 	class Mailbox {
 		public:
-		enum class Error { EMPTY_NAME_OR_DOMAIN = 1 };
-		class ErrorCategory : public std::error_category {
-			public:
-			char const *name() const noexcept {
-				return "Rain::Networking::Smtp::Mailbox";
-			}
-			std::string message(int error) const noexcept {
-				switch (static_cast<Error>(error)) {
-					case Error::EMPTY_NAME_OR_DOMAIN:
-						return "Empty name or domain supplied to mailbox.";
-					default:
-						return "Generic.";
-				}
-			}
-		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
-
 		std::string name;
 		std::string domain;
 
-		// name@domain notation. Throws if either part is empty.
+		// name@domain notation. Default construction leaves both empty.
 		Mailbox(std::string const &str = "")
 				: name(str.substr(0, str.find('@'))),
-					domain(str.substr(std::min(str.find('@'), str.length() - 1) + 1)) {
-			if (name.empty() || domain.empty()) {
-				throw Exception(Error::EMPTY_NAME_OR_DOMAIN);
-			}
-		}
+					domain(str.substr(std::min(str.find('@'), str.length() - 1) + 1)) {}
 
 		Mailbox(std::string const &name, std::string const &domain)
 				: name(name), domain(domain) {}
@@ -57,4 +36,10 @@ namespace Rain::Networking::Smtp {
 			return std::hash<std::string>()(mailbox.operator std::string());
 		}
 	};
+}
+
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	Rain::Networking::Smtp::Mailbox const &mailbox) {
+	return stream << static_cast<std::string>(mailbox);
 }

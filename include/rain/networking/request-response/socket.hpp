@@ -28,12 +28,14 @@ namespace Rain::Networking::RequestResponse {
 		private:
 		typedef Socket<Request, Response, Clock> ThisSocket;
 
+		protected:
 		// Request idle timeout. There can be at most this duration between the
 		// finishing sending of a R/R and the finishing receiving of a R/R.
 		Duration const maxRecvIdleDuration,
 			// Timeout for sendOnce during sending a R/R.
 			sendOnceTimeoutDuration;
 
+		private:
 		// Along with maxRecvIdleDuration, tracks the timeout of the next recv
 		// operation on a R/R.
 		Time::Timeout<Clock> recvTimeout;
@@ -145,6 +147,9 @@ namespace Rain::Networking::RequestResponse {
 		}
 
 		public:
+		using Tcp::Socket::operator<<;
+		using Tcp::Socket::operator>>;
+
 		// All send/recv on R/Rs redirect here, which go to sendWith/recvWith.
 		//
 		// Enable subclass postprocessing by letting them overload stream operators,

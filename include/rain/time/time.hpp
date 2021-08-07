@@ -9,15 +9,17 @@
 #include <iostream>
 
 namespace Rain::Time {
-#ifdef RAIN_PLATFORM_WINDOWS
 	// Transform time to printable string.
 	//
 	// Provided by Rain on Windows, available on POSIX.
 	inline tm *localtime_r(time_t const *const _clock, tm *const _result) {
+#ifdef RAIN_PLATFORM_WINDOWS
 		localtime_s(_result, _clock);
 		return _result;
-	}
+#else
+		return ::localtime_r(_clock, _result);
 #endif
+	}
 }
 
 // Ease-of-stream for common durations.
@@ -31,6 +33,8 @@ inline std::ostream &operator<<(
 	std::chrono::milliseconds const &ms) {
 	return stream << ms.count() << "ms";
 }
-inline std::ostream &operator<<(std::ostream &stream, std::chrono::seconds const &s) {
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	std::chrono::seconds const &s) {
 	return stream << s.count() << "s";
 }

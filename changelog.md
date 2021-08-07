@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.0.10
+
+* Allow empty `Mailbox` construction.
+* Allow stream operators on TCP `Socket` specializations to allow sending of `std::streambuf *`.
+* Fix `AuthMethod` parsing.
+* Make `Rain::Time::localtime_r` available of every platform.
+
 ## 7.0.9
 
 Remove unused flags from `g++` command-line options in `build/makefile`.

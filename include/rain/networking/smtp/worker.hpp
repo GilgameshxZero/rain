@@ -185,15 +185,21 @@ namespace Rain::Networking::Smtp {
 		virtual PreResponse onHelo(Request &) {
 			return {StatusCode::REQUEST_COMPLETED};
 		}
+		virtual PreResponse onMailMailbox(Mailbox const &mailbox) {
+			// By default, accept all MAIL FROM.
+			this->mailFrom = mailbox;
+			return {StatusCode::REQUEST_COMPLETED};
+		}
 		virtual PreResponse onMail(Request &req) {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
 				std::string parameter(req.parameter.substr(5));
 				String::trimWhitespace(parameter);
-				this->mailFrom = Mailbox(parameter.substr(1, parameter.length() - 2));
 
-				return {StatusCode::REQUEST_COMPLETED};
+				// Delegate to another handler.
+				return this->onMailMailbox(
+					{parameter.substr(1, parameter.length() - 2)});
 			} catch (...) {
 				// Exceptions cause bad status code.
 				return {StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT};
@@ -203,7 +209,11 @@ namespace Rain::Networking::Smtp {
 		// onRcpt subhandler after parsing mailbox. Recommended to add mailbox to
 		// this->rctpTo on success.
 		virtual PreResponse onRcptMailbox(Mailbox const &mailbox) {
-			// Default behavior makes no checks.
+			// Default behavior makes no checks except that recipients cannot exceed
+			// ~1K.
+			if (this->rcptTo.size() > (1_zu << 10)) {
+				return {StatusCode::REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE};
+			}
 			this->rcptTo.insert(mailbox);
 			return {StatusCode::REQUEST_COMPLETED};
 		}
@@ -234,7 +244,7 @@ namespace Rain::Networking::Smtp {
 		}
 
 		virtual PreResponse onData(Request &) {
-			// Accept data as long as at from/to addresses have been issued already.
+			// Accept data as long as at to/from addresses have been issued already.
 			if (!this->mailFrom || this->rcptTo.size() == 0) {
 				return {StatusCode::BAD_SEQUENCE_COMMAND};
 			}
@@ -323,8 +333,9 @@ namespace Rain::Networking::Smtp {
 		virtual PreResponse onAuth(Request &req) {
 			AuthMethod authMethod;
 			try {
-				// First four characters of parameter is AuthMethod.
-				authMethod = AuthMethod(req.parameter.substr(0, 4));
+				// First token of parameter is AuthMethod.
+				authMethod =
+					AuthMethod(req.parameter.substr(0, req.parameter.find(' ')));
 			} catch (...) {
 				return {StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED};
 			}
