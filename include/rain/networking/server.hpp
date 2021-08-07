@@ -149,7 +149,7 @@ namespace Rain::Networking {
 		bool serve(
 			Host const &host = {":0"},
 			Time::Timeout<Clock> const &gaiTimeout = 60s,
-			Time::Timeout<Clock> const &acceptTimeout = 60s,
+			typename Clock::duration const &acceptTimeoutDuration = 60s,
 			Specification::Specification const &gaiSpecification =
 				{Specification::ProtocolFamily::DEFAULT,
 				 Specification::SocketType::DEFAULT,
@@ -165,7 +165,7 @@ namespace Rain::Networking {
 
 			// The accept loop takes one thread in the ThreadPool.
 			this->threadPool.queueTask(Rain::Error::consumeThrowable(
-				[this, acceptTimeout]() {
+				[this, acceptTimeoutDuration]() {
 					// Once the server begins destruction, this function must exit ASAP
 					// before the gracefulClose timeout runs out and its member variables
 					// are invalidated.
@@ -179,7 +179,7 @@ namespace Rain::Networking {
 						// with the server.
 						acceptRes.reset(
 							new std::pair<Networking::Socket, Resolve::AddressInfo>{
-								this->accept(acceptTimeout)});
+								this->accept({acceptTimeoutDuration})});
 
 						// When the server is to be closed, accept will be interrupted. We
 						// know this is the case if this->closing is true.

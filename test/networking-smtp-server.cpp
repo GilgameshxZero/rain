@@ -107,7 +107,7 @@ int main() {
 				std::cout << dataRes;
 				assert(
 					dataRes.statusCode ==
-					StatusCode::REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT);
+					StatusCode::TRANSACTION_FAILED);
 			}
 
 			{
