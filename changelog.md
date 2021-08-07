@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.0.11
+
+* Fix a critical bug in `Networking::Server::serve`, where the timeout for `accept` was not refreshed on every `accept` call, leading to servers running longer than the default timeout (1 minute) to busy-wait instead of block.
+* Update the `networking-smtp-server` test to reflect the new `DATA` default behavior to return `TRANSACTION_FAILED`.
+
 ## 7.0.10
 
 * Allow empty `Mailbox` construction.
