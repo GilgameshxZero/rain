@@ -29,7 +29,7 @@ namespace Rain::Networking::RequestResponse {
 		// Interface aliases this class.
 		typedef ServerInterface<Socket, Worker> Interface;
 
-		private:
+		protected:
 		// Hold a copy of Worker constructor arguments for future construction.
 		Duration const maxRecvIdleDuration, sendOnceTimeoutDuration;
 

@@ -66,8 +66,6 @@ namespace Rain::Networking::RequestResponse {
 		// TODO: Better access restrictions.
 		protected:
 		// Only allow a subset of streams.
-		using SuperInterface::operator<<;
-		using SuperInterface::operator>>;
 		using SuperInterface::send;
 		using SuperInterface::recv;
 		using SuperInterface::recvRequest;
@@ -77,6 +75,9 @@ namespace Rain::Networking::RequestResponse {
 		virtual void streamInImpl(Tag<Interface>, Response &) {}
 
 		public:
+		using SuperInterface::operator<<;
+		using SuperInterface::operator>>;
+
 		// Establish pre/post-processing chains via Tags on stream operators.
 		virtual Interface &operator<<(Request &req) final override {
 			this->streamOutImpl(Tag<Interface>(), req);
