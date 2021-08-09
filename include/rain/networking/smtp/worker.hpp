@@ -194,12 +194,14 @@ namespace Rain::Networking::Smtp {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
-				std::string parameter(req.parameter.substr(5));
-				String::trimWhitespace(parameter);
+				std::stringstream parameterStream(req.parameter);
+				parameterStream.ignore(
+					std::numeric_limits<std::streamsize>::max(), '<');
+				std::string mailboxStr;
+				std::getline(parameterStream, mailboxStr, '>');
 
 				// Delegate to another handler.
-				return this->onMailMailbox(
-					{parameter.substr(1, parameter.length() - 2)});
+				return this->onMailMailbox({mailboxStr});
 			} catch (...) {
 				// Exceptions cause bad status code.
 				return {StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT};
@@ -222,13 +224,14 @@ namespace Rain::Networking::Smtp {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
-				std::string parameter(req.parameter.substr(3));
-				String::trimWhitespace(parameter);
+				std::stringstream parameterStream(req.parameter);
+				parameterStream.ignore(
+					std::numeric_limits<std::streamsize>::max(), '<');
+				std::string mailboxStr;
+				std::getline(parameterStream, mailboxStr, '>');
 
-				// Delegate to another subclass handler, since RCPT should return 550 if
-				// mailbox doesn't exist.
-				return this->onRcptMailbox(
-					Mailbox(parameter.substr(1, parameter.length() - 2)));
+				// Delegate to another handler.
+				return this->onRcptMailbox({mailboxStr});
 			} catch (...) {
 				// Exceptions cause bad status code.
 				return {StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT};

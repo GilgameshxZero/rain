@@ -14,8 +14,8 @@ namespace Rain::Networking::Smtp {
 
 		// name@domain notation. Default construction leaves both empty.
 		Mailbox(std::string const &str = "")
-				: name(str.substr(0, str.find('@'))),
-					domain(str.substr(std::min(str.find('@'), str.length() - 1) + 1)) {}
+				: name(str.substr(0, str.find_last_of('@'))),
+					domain(str.substr(std::min(str.find_last_of('@'), str.length() - 1) + 1)) {}
 
 		Mailbox(std::string const &name, std::string const &domain)
 				: name(name), domain(domain) {}
