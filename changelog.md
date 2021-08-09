@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.12
+
+Parsing mailbox from RCPT and MAIL commands in SMTP server is improved, but still does not work with mailboxes containing spaces.
+
 ## 7.0.11
 
 * Fix a critical bug in `Networking::Server::serve`, where the timeout for `accept` was not refreshed on every `accept` call, leading to servers running longer than the default timeout (1 minute) to busy-wait instead of block.
