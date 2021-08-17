@@ -113,7 +113,7 @@ int main() {
 	// Connect to server with IPv6 on both sides.
 	{
 		MyServer server(":0");
-		MyClient client({"", server.host().service});
+		MyClient client(Host{"", server.host().service});
 
 		std::vector<NamedSocketSpecInterface *> sockets{&server, &client};
 		for (auto socket : sockets) {
@@ -146,7 +146,7 @@ int main() {
 		MyServer server(":0");
 
 		try {
-			MyClient client({"", server.host().service}, {});
+			MyClient client(Host{"", server.host().service}, {});
 			throw std::runtime_error(
 				"Should have thrown exception during client constructor.\n");
 		} catch (Exception const &exception) {
@@ -207,7 +207,7 @@ int main() {
 		};
 
 		MyServer server(":0");
-		MyClient client({"", server.host().service}, {});
+		MyClient client(Host{"", server.host().service}, {});
 	}
 
 	// MyWorker correctly echos messages back.
@@ -215,7 +215,7 @@ int main() {
 		std::cout << std::endl;
 		MyServer server(":0");
 		{
-			MyClient client({"", server.host().service}, {});
+			MyClient client(Host{"", server.host().service}, {});
 			client.send("Hello from the client!");
 
 			// This should not throw, since Worker should always be open longer than
@@ -231,7 +231,7 @@ int main() {
 		std::cout << std::endl;
 		std::unique_ptr<MyServer> server(new MyServer(":0"));
 		std::unique_ptr<MyClient> client(
-			new MyClient({"", server->host().service}, {}));
+			new MyClient(Host{"", server->host().service}, {}));
 		server.reset();
 		client.reset();
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
@@ -244,7 +244,7 @@ int main() {
 		auto timeBegin = std::chrono::steady_clock::now();
 		std::cout << std::endl;
 		MyServer server(":0");
-		MyClient client({"", server.host().service}, {});
+		MyClient client(Host{"", server.host().service}, {});
 		std::this_thread::sleep_for(7s);
 		std::cout << "Server workers: " << server.workers()
 							<< ", threads: " << server.threads() << std::endl;
@@ -260,7 +260,7 @@ int main() {
 		std::cout << std::endl;
 		MyServer server(":0");
 		{
-			MyClient client({"", server.host().service});
+			MyClient client(Host{"", server.host().service});
 			MyClient client2(client.peerName());
 			MyClient client3(client.peerName());
 
