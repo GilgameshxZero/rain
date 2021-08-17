@@ -3,8 +3,8 @@
 
 // Versioning.
 #define RAIN_VERSION_MAJOR 7
-#define RAIN_VERSION_MINOR 0
-#define RAIN_VERSION_REVISION 12
+#define RAIN_VERSION_MINOR 1
+#define RAIN_VERSION_REVISION 0
 
 // Disable secure warnings; the caller should be aware of out-of-bounds errors
 // when calling any not-bound-checked function.

@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 // Defines platform-independent codes.
-enum class Error : int {
+enum class Error {
 	NONE = 0,
 
 	// Example errors.

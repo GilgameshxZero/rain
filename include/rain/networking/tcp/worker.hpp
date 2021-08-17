@@ -5,42 +5,47 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::Tcp {
+	class WorkerSocketSpecInterface
+			: virtual public ConnectedSocketSpecInterface,
+				virtual public Networking::WorkerSocketSpecInterface {};
+
 	// Worker specialization for TCP protocol Sockets.
-	template <typename ProtocolSocket>
-	class WorkerInterface : public Networking::WorkerInterface<ProtocolSocket> {
-		private:
-		// SuperInterface aliases the superclass.
-		typedef Networking::WorkerInterface<ProtocolSocket> SuperInterface;
-
-		public:
-		using typename SuperInterface::Socket;
-
-		// Interface aliases this class.
-		typedef WorkerInterface<Socket> Interface;
-
-		// Workers can only be constructed by their corresponding Server
-		// workerFactory.
-		//
-		// Must provide default arguments for the additional parameters beyond the
-		// first two, for compatibility with (unused) base Server workerFactory.
-		template <typename... SocketArgs>
-		WorkerInterface(
-			Resolve::AddressInfo const &addressInfo,
-			Networking::Socket &&socket,
-			std::size_t recvBufferLen = 1_zu << 10,
-			std::size_t sendBufferLen = 1_zu << 10,
-			SocketArgs &&...args)
-				: SuperInterface(
-						addressInfo,
-						std::move(socket),
-						recvBufferLen,
-						sendBufferLen,
-						std::forward<SocketArgs>(args)...) {}
-
-		// Workers cannot be copied nor moved.
-		WorkerInterface(WorkerInterface const &) = delete;
-		WorkerInterface &operator=(WorkerInterface const &) = delete;
+	template <typename Socket>
+	class WorkerSocketSpec : public Socket,
+													 virtual public WorkerSocketSpecInterface {
+		using Socket::Socket;
 	};
 
-	typedef WorkerInterface<Socket> Worker;
+	// Shorthand for TCP Worker.
+	template <
+		std::size_t sendBufferLen,
+		std::size_t recvBufferLen,
+		long long sendTimeoutMs,
+		long long recvTimeoutMs,
+		typename SocketFamilyInterface,
+		typename SocketTypeInterface,
+		typename SocketProtocolInterface,
+		template <typename>
+		class... SocketOptions>
+	class Worker : public WorkerSocketSpec<ConnectedSocketSpec<
+									 sendBufferLen,
+									 recvBufferLen,
+									 sendTimeoutMs,
+									 recvTimeoutMs,
+									 NamedSocketSpec<SocketSpec<Networking::Worker<
+										 SocketFamilyInterface,
+										 SocketTypeInterface,
+										 SocketProtocolInterface,
+										 SocketOptions...>>>>> {
+		using WorkerSocketSpec<ConnectedSocketSpec<
+			sendBufferLen,
+			recvBufferLen,
+			sendTimeoutMs,
+			recvTimeoutMs,
+			NamedSocketSpec<SocketSpec<Networking::Worker<
+				SocketFamilyInterface,
+				SocketTypeInterface,
+				SocketProtocolInterface,
+				SocketOptions...>>>>>::WorkerSocketSpec;
+	};
 }

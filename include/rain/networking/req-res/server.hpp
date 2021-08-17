@@ -1,19 +1,21 @@
-// Server specialization for TCP protocol Sockets.
+// Server specialization for R/R protocol Sockets.
 #pragma once
 
-#include "../server.hpp"
+#include "../tcp/server.hpp"
 #include "socket.hpp"
 
-namespace Rain::Networking::Tcp {
+namespace Rain::Networking::ReqRes {
 	class ServerSocketSpecInterfaceInterface
 			: virtual public NamedSocketSpecInterface,
-				virtual public Networking::ServerSocketSpecInterfaceInterface {};
+				virtual public Tcp::ServerSocketSpecInterfaceInterface {};
 
+	// Server specialization for R/R protocol Sockets.
+	//
+	// No support for pre/post-processing.
 	template <typename WorkerSocketSpec>
 	class ServerSocketSpecInterface
 			: virtual public ServerSocketSpecInterfaceInterface,
-				virtual public Networking::ServerSocketSpecInterface<WorkerSocketSpec> {
-	};
+				virtual public Tcp::ServerSocketSpecInterface<WorkerSocketSpec> {};
 
 	// Server specialization for TCP protocol Sockets.
 	template <typename WorkerSocketSpec, typename Socket>
@@ -34,7 +36,7 @@ namespace Rain::Networking::Tcp {
 		class... SocketOptions>
 	class Server : public ServerSocketSpec<
 									 WorkerSocketSpec,
-									 NamedSocketSpec<SocketSpec<Networking::Server<
+									 NamedSocketSpec<SocketSpec<Tcp::Server<
 										 WorkerSocketSpec,
 										 SocketFamilyInterface,
 										 SocketTypeInterface,
@@ -42,7 +44,7 @@ namespace Rain::Networking::Tcp {
 										 SocketOptions...>>>> {
 		using ServerSocketSpec<
 			WorkerSocketSpec,
-			NamedSocketSpec<SocketSpec<Networking::Server<
+			NamedSocketSpec<SocketSpec<Tcp::Server<
 				WorkerSocketSpec,
 				SocketFamilyInterface,
 				SocketTypeInterface,

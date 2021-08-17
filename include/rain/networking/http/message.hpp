@@ -1,34 +1,19 @@
 // Generic message format for RFC 822 TCP-based HTTP.
-/*
-generic-message = start-line
-									*(message-header CRLF)
-									CRLF
-									[ message-body ]
-start-line      = Request-Line | Status-Line
-*/
+// generic-message = start-line
+//									*(message-header CRLF)
+//									CRLF
+//									[ message-body ]
+// start-line      = Request-Line | Status-Line
 #pragma once
 
 #include "../../string.hpp"
-#include "../request-response/message.hpp"
+#include "../req-res/message.hpp"
 #include "body.hpp"
 #include "headers.hpp"
 #include "version.hpp"
 
 namespace Rain::Networking::Http {
-	// Messages must be able to be sent multiple times.
-	class MessageInterface : public RequestResponse::MessageInterface {
-		private:
-		// SuperInterface aliases the superclass.
-		typedef RequestResponse::MessageInterface SuperInterface;
-
-		// Interface aliases this class.
-		typedef MessageInterface Interface;
-
-		protected:
-		// Tag aliases for sendWith/recvWith convenience.
-		typedef typename SuperInterface::InterfaceTag SuperTag;
-		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
-
+	class MessageSpecInterface : virtual public ReqRes::MessageInterface {
 		public:
 		enum class Error {
 			MALFORMED_TRANSFER_ENCODING = 1,
@@ -58,89 +43,7 @@ namespace Rain::Networking::Http {
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
 
-		// Version of the start line is shared b/t R/R.
-		Version version;
-
-		// Header block.
-		Headers headers;
-
-		// Body is an uncopyable ostream wrapping a custom streambuf.
-		Body body;
-
-		// Constructor arguments passed in from R/R. Move construct heavy arguments
-		// with rvalue references.
-		MessageInterface(
-			Headers &&headers = Headers(),
-			Body &&body = Body(),
-			Version version = Version::_1_1)
-				: version(version),
-					headers(std::move(headers)),
-					body(std::move(body)) {}
-
-		// Not copyable.
-		MessageInterface(MessageInterface const &) = delete;
-		MessageInterface &operator=(MessageInterface const &) = delete;
-
-		// Must enable move construct for PreResponse.
-		MessageInterface(MessageInterface &&other)
-				: SuperInterface(std::move(other)),
-					version(other.version),
-					headers(std::move(other.headers)),
-					body(std::move(other.body)),
-					bodyTransferEncodingStreamBufs(
-						std::move(other.bodyTransferEncodingStreamBufs)) {}
-
-		// Pre/post-processors.
-		public:
-		// Process sets Content-Length if possible.
-		void ppEstimateContentLength() {
-			std::vector<Header::TransferEncoding> transferEncoding =
-				this->headers.transferEncoding();
-
-			// Set Content-Length if not yet set and Transfer-Encoding is identity and
-			// res.body's length can be determined.
-			if (
-				this->headers.find("Content-Length") == this->headers.end() &&
-				(transferEncoding.size() == 0 ||
-				 transferEncoding.back() == Header::TransferEncoding::IDENTITY)) {
-				// body.inAvail must return -1 if no characters, 0 if indeterminate, or
-				// an accurate number otherwise.
-				std::streamsize inAvail = this->body.inAvail();
-				if (inAvail != 0) {
-					this->headers.contentLength(inAvail == -1 ? 0 : inAvail);
-				}
-			}
-		}
-
-		// Process set default Content-Type if non-empty body.
-		void ppDefaultContentType() {
-			if (
-				this->body.inAvail() > 0 &&
-				this->headers.find("Content-Type") == this->headers.end()) {
-				this->headers["Content-Type"] = "text/plain; charset=utf-8";
-			}
-		}
-
-		// Implementations of sendWith/recvWith from R/R MessageInterface.
-		private:
-		// Provided for subclass override.
-		virtual void sendWithImpl(InterfaceTag, std::ostream &) = 0;
-		virtual void recvWithImpl(InterfaceTag, std::istream &) = 0;
-
-		// Overrides for Super versions implement protocol behavior.
-		//
-		// Essentially no-op to allow for tight integration with R/R.
-		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
-			this->sendWithImpl(InterfaceTag(), stream);
-		}
-		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
-			this->recvWithImpl(InterfaceTag(), stream);
-		}
-
 		protected:
-		// Dynamic storage for streambufs created for body parsing.
-		std::vector<std::unique_ptr<std::streambuf>> bodyTransferEncodingStreamBufs;
-
 		// streambufs which interpret a single layer of Transfer-Encoding, given the
 		// right initial settings.
 		class IdentityTransferEncodingIStreamBuf : public std::streambuf {
@@ -282,8 +185,84 @@ namespace Rain::Networking::Http {
 			}
 		};
 
+		public:
+		virtual void recvBody(std::istream &stream) = 0;
+		virtual void ppEstimateContentLength(bool) = 0;
+		virtual void ppDefaultContentType() = 0;
+	};
+
+	template <typename Message>
+	class MessageSpec : public Message, virtual public MessageSpecInterface {
+		public:
+		// Version of the start line is shared b/t R/R.
+		Version version;
+
+		// Header block.
+		Headers headers;
+
+		// Body is an uncopyable ostream wrapping a custom streambuf.
+		Body body;
+
+		private:
+		// Dynamic storage for streambufs created for body parsing.
+		std::vector<std::unique_ptr<std::streambuf>> bodyTransferEncodingStreamBufs;
+
+		public:
+		// Constructor arguments passed in from R/R. Move construct heavy arguments
+		// with rvalue references.
+		MessageSpec(Headers &&headers = {}, Body &&body = {}, Version version = {})
+				: version(version),
+					headers(std::move(headers)),
+					body(std::move(body)) {}
+
+		// Must enable move construct for PreResponse.
+		MessageSpec(MessageSpec &&other)
+				: Message(std::move(other)),
+					version(other.version),
+					headers(std::move(other.headers)),
+					body(std::move(other.body)),
+					bodyTransferEncodingStreamBufs(
+						std::move(other.bodyTransferEncodingStreamBufs)) {}
+
+		// Pre/post-processors.
+		public:
+		// Process sets Content-Length if possible.
+		virtual void ppEstimateContentLength(bool allowZero) override {
+			std::vector<Header::TransferEncoding> transferEncoding =
+				this->headers.transferEncoding();
+
+			// Set Content-Length if not yet set and Transfer-Encoding is identity and
+			// res.body's length can be determined.
+			if (
+				this->headers.find("Content-Length") == this->headers.end() &&
+				(transferEncoding.size() == 0 ||
+				 transferEncoding.back() == Header::TransferEncoding::IDENTITY)) {
+				// body.inAvail must return -1 if no characters, 0 if indeterminate, or
+				// an accurate number otherwise.
+				std::streamsize inAvail = this->body.inAvail();
+
+				// Set Content-Length if body is determinate.
+				if (inAvail == -1 && allowZero) {
+					this->headers.contentLength(0);
+				} else if (inAvail > 0) {
+					this->headers.contentLength(inAvail);
+				}
+			}
+		}
+
+		// Process set default Content-Type if non-empty body.
+		virtual void ppDefaultContentType() override {
+			if (
+				this->headers.contentLength() > 0 &&
+				this->headers.find("Content-Type") == this->headers.end()) {
+				this->headers.contentType(
+					MediaType(MediaType::OCTET_STREAM, "charset=UTF-8"));
+			}
+		}
+
+		protected:
 		// Body parsing function shared between R/R.
-		void recvBody(std::istream &stream) {
+		virtual void recvBody(std::istream &stream) override {
 			// Create streambuf for body based on Transfer-Encoding and
 			// Content-Length.
 			std::vector<Header::TransferEncoding> transferEncoding;
@@ -353,6 +332,4 @@ namespace Rain::Networking::Http {
 			this->body = Body(curStreamBuf);
 		}
 	};
-
-	typedef MessageInterface Message;
 }

@@ -3,7 +3,7 @@
 
 #include "../../algorithm/kmp.hpp"
 #include "../../string/base-64.hpp"
-#include "../request-response/worker.hpp"
+#include "../req-res/worker.hpp"
 #include "auth-method.hpp"
 #include "mailbox.hpp"
 #include "socket.hpp"
@@ -13,98 +13,10 @@
 
 namespace Rain::Networking::Smtp {
 	// SMTP Worker specialization.
-	template <typename ProtocolSocket>
-	class WorkerInterface
-			: public RequestResponse::WorkerInterface<ProtocolSocket> {
-		public:
-		typedef ProtocolSocket Socket;
-
-		// Alias Socket templates.
-		using typename Socket::Request;
-		using typename Socket::Response;
-		using typename Socket::Clock;
-		using typename Socket::Duration;
-		using typename Socket::Message;
-
-		private:
-		// SuperInterface aliases the superclass.
-		typedef RequestResponse::WorkerInterface<Socket> SuperInterface;
-
-		public:
-		template <typename TagType>
-		using Tag = typename SuperInterface::template Tag<TagType>;
-
-		// Interface aliases this class.
-		typedef WorkerInterface<Socket> Interface;
-
-		// Same constructor as R/R Worker.
-		template <typename... SocketArgs>
-		WorkerInterface(
-			Resolve::AddressInfo const &addressInfo,
-			Networking::Socket &&socket,
-			std::size_t recvBufferLen = 1_zu << 10,
-			std::size_t sendBufferLen = 1_zu << 10,
-			Duration maxRecvIdleDuration = 60s,
-			Duration sendOnceTimeoutDuration = 60s,
-			SocketArgs &&...args)
-				: SuperInterface(
-						addressInfo,
-						std::move(socket),
-						recvBufferLen,
-						sendBufferLen,
-						maxRecvIdleDuration,
-						sendOnceTimeoutDuration,
-						std::forward<SocketArgs>(args)...) {}
-		~WorkerInterface() {}
-
-		WorkerInterface(WorkerInterface const &) = delete;
-		WorkerInterface &operator=(WorkerInterface const &) = delete;
-
+	class WorkerSocketSpecInterfaceInterface
+			: virtual public ConnectedSocketSpecInterface,
+				virtual public ReqRes::WorkerSocketSpecInterfaceInterface {
 		protected:
-		// Internal state.
-		std::optional<Mailbox> mailFrom;
-		std::unordered_set<Mailbox, HashMailbox> rcptTo;
-
-		// Subclass handlers return PreResponses which allow for no response, or
-		// close after response.
-		class PreResponse {
-			private:
-			std::optional<Response> optional;
-
-			public:
-			bool toClose;
-
-			// Default constructor means that no response is returned and the
-			// connection is aborted.
-			PreResponse() : optional(), toClose(true) {}
-
-			// A PreResponse with a Response will always be sent. The connection will
-			// be gracefully closed afterwards if toClose is set.
-			template <typename... MessageArgs>
-			PreResponse(
-				StatusCode statusCode,
-				std::vector<std::string> &&lines = {},
-				bool toClose = false,
-				MessageArgs &&...args)
-					: optional(
-							std::in_place,
-							statusCode,
-							std::move(lines),
-							std::forward<MessageArgs>(args)...),
-						toClose(toClose) {}
-			PreResponse(PreResponse const &) = delete;
-			PreResponse &operator=(PreResponse const &) = delete;
-			PreResponse(PreResponse &&other)
-					: optional(std::move(other.optional)), toClose(other.toClose) {}
-
-			Response &value() { return this->optional.value(); }
-
-			constexpr explicit operator bool() const noexcept {
-				return this->optional.operator bool();
-			}
-		};
-
-		private:
 		// Custom streambuf which reads data after DATA.
 		class DataIStreamBuf : public std::streambuf {
 			private:
@@ -174,23 +86,86 @@ namespace Rain::Networking::Smtp {
 				return traits_type::to_int_type(*this->gptr());
 			}
 		};
+	};
+
+	template <typename RequestMessageSpec, typename ResponseMessageSpec>
+	class WorkerSocketSpecInterface
+			: virtual public WorkerSocketSpecInterfaceInterface,
+				virtual public ReqRes::
+					WorkerSocketSpecInterface<RequestMessageSpec, ResponseMessageSpec> {
+		protected:
+		class ResponseAction {
+			public:
+			std::optional<ResponseMessageSpec> response;
+
+			// If true, closes after the ResponseMessageSpec is sent, or aborts with
+			// no ResponseMessageSpec.
+			bool toClose;
+
+			// Close.
+			ResponseAction() : toClose(true), response() {}
+
+			// Send response, optionally close.
+			ResponseAction(ResponseMessageSpec &&response, bool toClose = false)
+					: response(std::forward<ResponseMessageSpec>(response)),
+						toClose(toClose) {}
+
+			// Don't send response, optionally close.
+			ResponseAction(std::nullptr_t, bool toClose)
+					: response(), toClose(toClose) {}
+
+			ResponseAction(ResponseAction const &) = delete;
+			ResponseAction &operator=(ResponseAction const &) = delete;
+			ResponseAction(ResponseAction &&other) = delete;
+			ResponseAction &operator=(ResponseAction &&) = delete;
+		};
+	};
+
+	template <
+		typename RequestMessageSpec,
+		typename ResponseMessageSpec,
+		typename Socket>
+	class WorkerSocketSpec : public Socket,
+													 virtual public WorkerSocketSpecInterface<
+														 RequestMessageSpec,
+														 ResponseMessageSpec>,
+													 virtual public WorkerSocketSpecInterfaceInterface {
+		using Socket::Socket;
+
+		protected:
+		protected:
+		// Import dependent names. Must prefix with Http:: to specify the templated
+		// dependent typename, otherwise compiler will interpret this as the Tcp::
+		// non-templated non-dependent typename during phase 1 of name resolution.
+		using typename Smtp::WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>::ResponseAction;
+
+		// Shorthands available for the subclass.
+		using Request = RequestMessageSpec;
+		using Response = ResponseMessageSpec;
+
+		// Internal state.
+		std::optional<Mailbox> mailFrom;
+		std::unordered_set<Mailbox, HashMailbox> rcptTo;
 
 		// Protected to allow for overrides to call if necessary.
-		protected:
+
 		// Delegate handlers for subclass overriding.
 		virtual bool onInitialResponse() override {
-			*this << Response(StatusCode::SERVICE_READY);
+			this->send(ResponseMessageSpec{StatusCode::SERVICE_READY});
 			return false;
 		}
-		virtual PreResponse onHelo(Request &) {
-			return {StatusCode::REQUEST_COMPLETED};
+		virtual ResponseAction onHelo(RequestMessageSpec &) {
+			return {{StatusCode::REQUEST_COMPLETED}};
 		}
-		virtual PreResponse onMailMailbox(Mailbox const &mailbox) {
-			// By default, accept all MAIL FROM.
+		virtual ResponseAction onMailMailbox(Mailbox const &mailbox) {
+			// By default, accept all MAIL FROM, replacing earlier commands with this
+			// one.
 			this->mailFrom = mailbox;
-			return {StatusCode::REQUEST_COMPLETED};
+			return {{StatusCode::REQUEST_COMPLETED}};
 		}
-		virtual PreResponse onMail(Request &req) {
+		virtual ResponseAction onMail(RequestMessageSpec &req) {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
@@ -204,23 +179,20 @@ namespace Rain::Networking::Smtp {
 				return this->onMailMailbox({mailboxStr});
 			} catch (...) {
 				// Exceptions cause bad status code.
-				return {StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT};
+				return {{StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT}};
 			}
 		}
 
-		// onRcpt subhandler after parsing mailbox. Recommended to add mailbox to
-		// this->rctpTo on success.
-		virtual PreResponse onRcptMailbox(Mailbox const &mailbox) {
-			// Default behavior makes no checks except that recipients cannot exceed
-			// ~1K.
+		// onRcpt subhandler after parsing mailbox.
+		virtual ResponseAction onRcptMailbox(Mailbox const &mailbox) {
 			if (this->rcptTo.size() > (1_zu << 10)) {
-				return {StatusCode::REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE};
+				return {{StatusCode::REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE}};
 			}
 			this->rcptTo.insert(mailbox);
-			return {StatusCode::REQUEST_COMPLETED};
+			return {{StatusCode::REQUEST_COMPLETED}};
 		}
 
-		virtual PreResponse onRcpt(Request &req) {
+		virtual ResponseAction onRcpt(RequestMessageSpec &req) {
 			try {
 				// Parse the parameter between the <, >. Does not modify the original
 				// parameter.
@@ -234,79 +206,84 @@ namespace Rain::Networking::Smtp {
 				return this->onRcptMailbox({mailboxStr});
 			} catch (...) {
 				// Exceptions cause bad status code.
-				return {StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT};
+				return {{StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT}};
 			}
 		}
 
-		// Subclasses override this to return a Response in response to a data
-		// istream.
-		virtual PreResponse onDataStream(std::istream &stream) {
+		// Subclasses override this to return a ResponseMessageSpec in response to a
+		// data istream.
+		virtual ResponseAction onDataStream(std::istream &stream) {
 			// Ignore all the data, then reject it.
 			stream.ignore(std::numeric_limits<std::streamsize>::max());
-			return {StatusCode::TRANSACTION_FAILED};
+			return {{StatusCode::TRANSACTION_FAILED}};
 		}
 
-		virtual PreResponse onData(Request &) {
+		virtual ResponseAction onData(RequestMessageSpec &) {
 			// Accept data as long as at to/from addresses have been issued already.
 			if (!this->mailFrom || this->rcptTo.size() == 0) {
-				return {StatusCode::BAD_SEQUENCE_COMMAND};
+				return {{StatusCode::BAD_SEQUENCE_COMMAND}};
 			}
 
 			// Send a 354, and set up the stream for streaming the data.
-			*this << Response(StatusCode::START_MAIL_INPUT);
+			this->send(ResponseMessageSpec{StatusCode::START_MAIL_INPUT});
 
 			std::unique_ptr<std::streambuf> dataIStreamBuf(new DataIStreamBuf(this));
 			std::istream stream(dataIStreamBuf.get());
 
-			// Return no Response without closing.
+			// Return no ResponseMessageSpec without closing.
 			return this->onDataStream(stream);
 		}
 
-		protected:
-		virtual PreResponse onRset(Request &) {
+		virtual ResponseAction onRset(RequestMessageSpec &) {
 			this->mailFrom.reset();
 			this->rcptTo.clear();
-			return {StatusCode::REQUEST_COMPLETED, {{"OK"s}}};
+			return {{StatusCode::REQUEST_COMPLETED, {{"OK"s}}}};
 		}
-		virtual PreResponse onNoop(Request &) {
-			return {StatusCode::REQUEST_COMPLETED, {{"OK"s}}};
+		virtual ResponseAction onNoop(RequestMessageSpec &) {
+			return {{StatusCode::REQUEST_COMPLETED, {{"OK"s}}}};
 		}
-		virtual PreResponse onQuit(Request &) {
-			return {StatusCode::SERVICE_CLOSING, {}, true};
+		virtual ResponseAction onQuit(RequestMessageSpec &) {
+			return {{StatusCode::SERVICE_CLOSING}, true};
 		}
-		virtual PreResponse onSend(Request &) {
-			return {StatusCode::COMMAND_NOT_IMPLEMENTED};
+		virtual ResponseAction onSend(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_NOT_IMPLEMENTED}};
 		}
-		virtual PreResponse onSoml(Request &) {
-			return {StatusCode::COMMAND_NOT_IMPLEMENTED};
+		virtual ResponseAction onSoml(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_NOT_IMPLEMENTED}};
 		}
-		virtual PreResponse onSaml(Request &) {
-			return {StatusCode::COMMAND_NOT_IMPLEMENTED};
+		virtual ResponseAction onSaml(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_NOT_IMPLEMENTED}};
 		}
-		virtual PreResponse onVrfy(Request &) {
-			return {StatusCode::CANNOT_VERIFY};
+		virtual ResponseAction onVrfy(RequestMessageSpec &) {
+			return {{StatusCode::CANNOT_VERIFY}};
 		}
-		virtual PreResponse onExpn(Request &) {
-			return {StatusCode::COMMAND_NOT_IMPLEMENTED};
+		virtual ResponseAction onExpn(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_NOT_IMPLEMENTED}};
 		}
-		virtual PreResponse onHelp(Request &) { return {StatusCode::HELP_MESSAGE}; }
-		virtual PreResponse onTurn(Request &) {
-			return {StatusCode::COMMAND_NOT_IMPLEMENTED};
+		virtual ResponseAction onHelp(RequestMessageSpec &) {
+			return {{StatusCode::HELP_MESSAGE}};
+		}
+		virtual ResponseAction onTurn(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_NOT_IMPLEMENTED}};
 		}
 
-		virtual PreResponse onEhlo(Request &req) { return this->onHelo(req); }
+		virtual ResponseAction onEhlo(RequestMessageSpec &req) {
+			return this->onHelo(req);
+		}
 
 		// AUTH delegates to virtual method handlers after parsing.
-		virtual PreResponse onAuthPlain(Request &) {
-			return {StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED};
+		virtual ResponseAction onAuthPlain(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 		}
 		// Allow subclass override to provide authentication on username/password
 		// from AUTH LOGIN.
-		virtual PreResponse onAuthLogin(std::string const &, std::string const &) {
+		virtual ResponseAction onAuthLogin(
+			std::string const &,
+			std::string const &) {
 			// Reject all by default.
-			return {StatusCode::AUTHENTICATION_INVALID};
+			return {{StatusCode::AUTHENTICATION_INVALID}};
 		}
-		virtual PreResponse onAuthLogin(Request &) {
+		virtual ResponseAction onAuthLogin(RequestMessageSpec &) {
 			// Default AUTH LOGIN handler parses for username and password and sends
 			// to delegate handler.
 
@@ -317,11 +294,13 @@ namespace Rain::Networking::Smtp {
 
 			// Client AUTH username/password can be at most ~1K.
 			std::string usernameB64(1_zu << 10, '\0'), passwordB64(1_zu << 10, '\0');
-			*this << Response(StatusCode::SERVER_CHALLENGE, {{usernamePromptB64}});
+			this->send(ResponseMessageSpec{
+				StatusCode::SERVER_CHALLENGE, {{usernamePromptB64}}});
 			this->getline(&usernameB64[0], usernameB64.length());
 			// -2 for \r delimiter.
 			usernameB64.resize(std::max(std::streamsize(0), this->gcount() - 2));
-			*this << Response(StatusCode::SERVER_CHALLENGE, {{passwordPromptB64}});
+			this->send(ResponseMessageSpec{
+				StatusCode::SERVER_CHALLENGE, {{passwordPromptB64}}});
 			this->getline(&passwordB64[0], passwordB64.length());
 			passwordB64.resize(std::max(std::streamsize(0), this->gcount() - 2));
 
@@ -330,17 +309,17 @@ namespace Rain::Networking::Smtp {
 									password = String::Base64::decode(passwordB64);
 			return this->onAuthLogin(username, password);
 		}
-		virtual PreResponse onAuthCramMd5(Request &) {
-			return {StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED};
+		virtual ResponseAction onAuthCramMd5(RequestMessageSpec &) {
+			return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 		}
-		virtual PreResponse onAuth(Request &req) {
+		virtual ResponseAction onAuth(RequestMessageSpec &req) {
 			AuthMethod authMethod;
 			try {
 				// First token of parameter is AuthMethod.
 				authMethod =
 					AuthMethod(req.parameter.substr(0, req.parameter.find(' ')));
 			} catch (...) {
-				return {StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED};
+				return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 			}
 
 			switch (authMethod) {
@@ -351,25 +330,36 @@ namespace Rain::Networking::Smtp {
 				case AuthMethod::CRAM_MD5:
 					return this->onAuthCramMd5(req);
 				default:
-					return {StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED};
+					return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 			}
 		}
 
 		private:
 		// Subclass override.
-		virtual void onRequestException() {
-			Rain::Error::consumeThrowable([]() { throw; }, RAIN_ERROR_LOCATION)();
+		virtual bool onCommandException() {
+			Rain::Error::consumeThrowable(
+				[this]() {
+					this->send(
+						ResponseMessageSpec{StatusCode::REQUEST_ABORTED_LOCAL_ERROR});
+					this->shutdown();
+					throw;
+				},
+				RAIN_ERROR_LOCATION)();
+			return true;
 		}
 
 		// R/R Worker overrides.
 		//
-		// Handle non-error Request. Must not throw. Invokes chains in order.
-		virtual bool onRequest(Request &req) final override {
+		// Handle non-error RequestMessageSpec. Must not throw. Invokes chains in
+		// order.
+		virtual bool onRequest(RequestMessageSpec &req) final override {
 			// Get PreResponse based on the command.
-			PreResponse preRes = [this, &req]() -> PreResponse {
+			auto result = [this, &req]() -> ResponseAction {
 				try {
 					switch (req.command) {
 						case Command::HELO:
+						// Default never occurs since req.command is enforced.
+						default:
 							return this->onHelo(req);
 						case Command::MAIL:
 							return this->onMail(req);
@@ -401,81 +391,94 @@ namespace Rain::Networking::Smtp {
 						case Command::EHLO:
 							return this->onEhlo(req);
 						case Command::AUTH:
-						// Default never occurs since req.command is enforced.
-						default:
 							return this->onAuth(req);
 					}
 				} catch (...) {
 					// Any exceptions during processing are caught to the subclass
 					// handler.
-					this->onRequestException();
-
-					// Return empty PreResponse with toClose true to abort.
-					return {};
+					return {nullptr, this->onCommandException()};
 				}
 			}();
 
-			// If the PreResponse doesn't contain a Response, abort if toClose, or
-			// just listen for next Request.
-			if (!preRes) {
-				if (preRes.toClose) {
-					this->abort();
+			if (result.response) {
+				try {
+					this->send(result.response.value());
+				} catch (...) {
 					return true;
-				} else {
-					return false;
 				}
 			}
 
-			// PreRes contains a response. Send and possibly close. Postprocessor
-			// chain invoked automatically.
-			*this << preRes.value();
-
-			if (preRes.toClose) {
-				this->close();
+			if (result.toClose) {
+				Rain::Error::consumeThrowable([this]() { this->shutdown(); })();
 				return true;
 			}
 			return false;
 		};
 
 		// Catch exceptions during request receiving. Must not throw.
-		virtual void onRecvRequestException() final override {
+		virtual void onRequestException() final override {
 			try {
 				throw;
-			} catch (typename Request::Exception const &exception) {
+			} catch (typename RequestMessageSpec::Exception const &exception) {
 				switch (exception.getError()) {
-					case Request::Error::SYNTAX_ERROR_COMMAND:
-						*this << Response(StatusCode::SYNTAX_ERROR_COMMAND);
+					case RequestMessageSpec::Error::SYNTAX_ERROR_COMMAND:
+						this->send(ResponseMessageSpec{StatusCode::SYNTAX_ERROR_COMMAND});
 						break;
 					default:
-						*this << Response(StatusCode::TRANSACTION_FAILED);
+						this->send(ResponseMessageSpec{StatusCode::TRANSACTION_FAILED});
 						break;
 				}
 
 				// Graceful close so peer can see message.
-				this->close();
+				Rain::Error::consumeThrowable([this]() { this->shutdown(); })();
 			}
-		}
 
-		// Continue pp chains.
-		private:
-		virtual void streamOutImpl(Tag<Interface>, Response &) {}
-		virtual void streamInImpl(Tag<Interface>, Request &) {}
-
-		virtual void streamOutImpl(Tag<SuperInterface>, Response &res)
-			final override {
-			this->streamOutImpl(Tag<Interface>(), res);
-			// No postprocessors.
+			// No exceptions should leak through here. Any exceptions leaking through
+			// will get caught by consumeThrowable on ReqRes Worker.
 		}
-		virtual void streamInImpl(Tag<SuperInterface>, Request &req)
-			final override {
-			// No preprocessors.
-			this->streamInImpl(Tag<Interface>(), req);
-		}
-
-		public:
-		using SuperInterface::operator<<;
-		using SuperInterface::operator>>;
 	};
 
-	typedef WorkerInterface<Socket> Worker;
+	// Shorthand for SMTP Worker.
+	template <
+		typename RequestMessageSpec,
+		typename ResponseMessageSpec,
+		std::size_t sendBufferLen,
+		std::size_t recvBufferLen,
+		long long sendTimeoutMs,
+		long long recvTimeoutMs,
+		typename SocketFamilyInterface,
+		typename SocketTypeInterface,
+		typename SocketProtocolInterface,
+		template <typename>
+		class... SocketOptions>
+	class Worker
+			: public WorkerSocketSpec<
+					RequestMessageSpec,
+					ResponseMessageSpec,
+					ConnectedSocketSpec<NamedSocketSpec<SocketSpec<ReqRes::Worker<
+						RequestMessageSpec,
+						ResponseMessageSpec,
+						sendBufferLen,
+						recvBufferLen,
+						sendTimeoutMs,
+						recvTimeoutMs,
+						SocketFamilyInterface,
+						SocketTypeInterface,
+						SocketProtocolInterface,
+						SocketOptions...>>>>> {
+		using WorkerSocketSpec<
+			RequestMessageSpec,
+			ResponseMessageSpec,
+			ConnectedSocketSpec<NamedSocketSpec<SocketSpec<ReqRes::Worker<
+				RequestMessageSpec,
+				ResponseMessageSpec,
+				sendBufferLen,
+				recvBufferLen,
+				sendTimeoutMs,
+				recvTimeoutMs,
+				SocketFamilyInterface,
+				SocketTypeInterface,
+				SocketProtocolInterface,
+				SocketOptions...>>>>>::WorkerSocketSpec;
+	};
 }

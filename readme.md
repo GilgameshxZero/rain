@@ -16,55 +16,37 @@ The `rain` library utilizes the C++17 standard (or newer) and any projects built
 
 All library code is under `include/`. Since `rain` is header-only, no specialized build options are necessary. Either copy the contents of `include/` into the directory of the source file containing `main`, or add `include/` to the include paths for the compiler.
 
-Below are instructions for adding additional include paths.
-
-### `g++`
-
-`g++` uses the `-I` switch to specify additional include paths.
-
-### Visual Studio
-
-Within Visual Studio 2019, each project contains configuration properties accessible via a context menu on the project. Under the project’s Property Pages, the Include Directories setting under the VC++ Directories submenu specifies the include path settings to be updated.
-
-![](readme.md-assets/usage-visual-studio-include-directories.png)
-
-### `cl.exe` (Visual C++ command line)
-
-Very similar to `g++`, `cl.exe` uses the `\I` flag to specify additional include directories.
-
-### Visual Studio Code
-
-Visual Studio Code build tasks invoke a command-line compiler of choice. Please refer to the documentation for those compilers.
+Unfortunately, `g++ v9.3.0` won’t build `rain` and later versions of `g++` up to `v11.2` all contain a constructor virtual dispatch bug which causes incorrect behavior. To build on POSIX-like platforms, use `clang` instead. On MacOS, `apple-clang` contains a bug with `std::function`; thus, build with an independent `clang` source, such as that from `homebrew`.
 
 ## Build
 
 To run the tests under `test/`, one needs to invoke one of several build procedures under `build/`. By default, the target is `x64`. Depending on the platform/development environment, one or multiple of these may be available.
 
-### `g++` (Windows WSL, MacOS, Linux)
+### `make`
 
 `build/makefile` contains several functions for building:
 
-* `all`: Build all the tests into `bin/`.
-* `noinc`: Similar to `make all`, but skip incrementing the build number in `include/rain/build.hpp`.
-* `run TEST=$TEST_NAME`: Builds and runs a single test with the name `$TEST_NAME`.
 * `runall`:  Builds and runs all tests in `test/` consecutively.
+* `run TEST=$TEST_NAME`: Builds and runs a single test with the name `$TEST_NAME`.
+* `all`: Build all the tests into `bin/`.
+* `$TEST_NAME`: Build a single test with the name `$TEST_NAME`.
 * `clean`: Deletes the `bin/` and `obj/` intermediates directories.
 
 Builds default to debug. Specify `RELEASE=1` to build with release optimization. Specify `INSTRUMENT=1` to build with instrumentation options.
 
-### Visual Studio (Windows)
+### Visual Studio
 
 Each test is given its own project under the `build/rain.sln` solution for Visual Studio 2019.
 
-All tests and new tests follow the project template specified in `build/rain.template/`. For information on developing new tests using this template, please see the ‘Development’ section later.
+All tests and new tests follow the project template specified in `build/rain.template/`.
 
-### `cl.exe` (Windows)
+### `cl.exe`
 
-Command-line builds on Windows are supported via `cl.exe`.
+Command-line builds on Windows are supported via `cl.exe`, or with the pre-specified options in `build/build.bat`.
 
-Alternatively, `build/build.bat` builds with the same options as the Visual Studio build. It takes two arguments: the name of the test (e.g. `platform`), and “release” for a release build.
+### Visual Studio Code
 
-### Visual Studio Code (Windows, MacOS, Linux)
+Visual Studio Code delegates to either the `make`-based or `cl.exe`-based command-line procedures with two launch options: `windows-debug-x64` and `posix-debug-x64`.
 
 Visual Studio Code utilizes `build/build.bat` or `build/makefile` with two launch options: `windows-debug-x64` and `posix-debug-x64`.
 
@@ -73,15 +55,3 @@ An additional task `clean` is configured to remove the `bin/` and `obj/` directo
 ## Development
 
 The style guide is implicitly specified in `.clang-format`. Additionally, please place `const` specifiers after type specifiers, i.e. write `char const *tmp` instead of `const char *tmp`.
-
-The following are additional guidelines for development in select environments.
-
-### Visual Studio
-
-New tests should be added to the `build/rain.sln` solution as a new project with the same name as the test. The project should inherit settings default in the `rain` project template at `build/rain.template/`.
-
-To import the template into Visual Studio, zip the folder into `rain.zip` and copy the zip file to `%USERPROFILE%\Documents\Visual Studio 2019\Templates\ProjectTemplates\Visual C++ Project\`.
-
-### Visual Studio Code
-
-Recommended VSCode settings are stored in `.vscode/settings.default.json`. `.vscode/settings.json` is gitignored by default.

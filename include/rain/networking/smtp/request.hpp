@@ -1,29 +1,14 @@
 // Request-specific SMTP parsing.
 #pragma once
 
-#include "../request-response/request.hpp"
+#include "../req-res/request.hpp"
 #include "command.hpp"
 #include "message.hpp"
 
 namespace Rain::Networking::Smtp {
-	template <typename ProtocolMessage>
-	class RequestInterface
-			: public RequestResponse::RequestInterface<ProtocolMessage> {
-		public:
-		typedef ProtocolMessage Message;
-
-		private:
-		// SuperInterface aliases the superclass.
-		typedef RequestResponse::RequestInterface<Message> SuperInterface;
-
-		// Interface aliases this class.
-		typedef RequestInterface<Message> Interface;
-
-		protected:
-		// Tag aliases for sendWith/recvWith convenience.
-		typedef typename SuperInterface::InterfaceTag SuperTag;
-		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
-
+	class RequestMessageSpecInterface
+			: virtual public MessageSpecInterface,
+				virtual public ReqRes::RequestMessageSpecInterface {
 		public:
 		// Exception class required for catching from R/R onWork.
 		enum class Error { SYNTAX_ERROR_COMMAND = 1 };
@@ -42,7 +27,12 @@ namespace Rain::Networking::Smtp {
 			}
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+	};
 
+	template <typename Message>
+	class RequestMessageSpec : public Message,
+														 virtual public RequestMessageSpecInterface {
+		public:
 		// Command/verb of Request.
 		Command command;
 
@@ -50,37 +40,19 @@ namespace Rain::Networking::Smtp {
 		std::string parameter;
 
 		// Carry over constructor which recvs from a Socket.
-		template <typename... MessageArgs>
-		RequestInterface(
+		RequestMessageSpec(
 			Command command = Command::HELO,
-			std::string const &parameter = "",
-			MessageArgs &&...args)
-				: SuperInterface(
-						// bind version to rvalue reference to be perfect forwarded by
-						// SuperInterface to Message.
-						std::forward<MessageArgs>(args)...),
-					command(command),
-					parameter(parameter) {}
-		RequestInterface(RequestInterface &&other)
-				: SuperInterface(std::move(other)),
+			std::string const &parameter = "")
+				: Message(), command(command), parameter(parameter) {}
+		RequestMessageSpec(RequestMessageSpec &&other)
+				: Message(std::move(other)),
 					command(other.command),
 					parameter(std::move(other.parameter)) {}
-
-		// Not copyable.
-		RequestInterface(RequestInterface const &) = delete;
-		RequestInterface &operator=(RequestInterface const &) = delete;
-
-		private:
-		// Provided for subclass override.
-		virtual void sendWithImpl(InterfaceTag, std::ostream &){};
-		virtual void recvWithImpl(InterfaceTag, std::istream &){};
 
 		// Overrides for Super versions implement protocol behavior.
 		//
 		// Calls (almost) no-op Message sendWith/recvWith to check transmissability.
-		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
-			this->sendWithImpl(InterfaceTag(), stream);
-
+		virtual void sendWith(std::ostream &stream) override {
 			stream << this->command;
 			if (!this->parameter.empty()) {
 				stream << " " << this->parameter;
@@ -88,9 +60,7 @@ namespace Rain::Networking::Smtp {
 			stream << "\r\n";
 			stream.flush();
 		}
-		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
-			this->recvWithImpl(InterfaceTag(), stream);
-
+		virtual void recvWith(std::istream &stream) override {
 			// Command is always first four characters.
 			try {
 				std::string commandStr(4, '\0');
@@ -111,6 +81,8 @@ namespace Rain::Networking::Smtp {
 		}
 	};
 
-	// Request final specialization.
-	typedef RequestInterface<Message> Request;
+	// Shorthand.
+	class Request : public RequestMessageSpec<MessageSpec<ReqRes::Request>> {
+		using RequestMessageSpec<MessageSpec<ReqRes::Request>>::RequestMessageSpec;
+	};
 }

@@ -1,29 +1,14 @@
 // Request-specific HTTP parsing.
 #pragma once
 
-#include "../request-response/request.hpp"
+#include "../req-res/request.hpp"
 #include "message.hpp"
 #include "method.hpp"
 
 namespace Rain::Networking::Http {
-	template <typename ProtocolMessage>
-	class RequestInterface
-			: public RequestResponse::RequestInterface<ProtocolMessage> {
-		public:
-		typedef ProtocolMessage Message;
-
-		private:
-		// SuperInterface aliases the superclass.
-		typedef RequestResponse::RequestInterface<Message> SuperInterface;
-
-		// Interface aliases this class.
-		typedef RequestInterface<Message> Interface;
-
-		protected:
-		// Tag aliases for sendWith/recvWith convenience.
-		typedef typename SuperInterface::InterfaceTag SuperTag;
-		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
-
+	class RequestMessageSpecInterface
+			: virtual public MessageSpecInterface,
+				virtual public ReqRes::RequestMessageSpecInterface {
 		public:
 		// Exception class required for catching from R/R onWork.
 		enum class Error {
@@ -57,7 +42,12 @@ namespace Rain::Networking::Http {
 			}
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+	};
 
+	template <typename Message>
+	class RequestMessageSpec : public Message,
+														 virtual public RequestMessageSpecInterface {
+		public:
 		// Method/verb of request.
 		Method method;
 
@@ -65,42 +55,32 @@ namespace Rain::Networking::Http {
 		std::string target;
 
 		// Carry over constructor which recvs from a Socket.
-		template <typename... MessageArgs>
-		RequestInterface(
-			Method method = Method::GET,
+		RequestMessageSpec(
+			Method method = {},
 			std::string const &target = "/",
-			Headers &&headers = Headers(),
-			Body &&body = Body(),
-			Version version = Version::_1_1,
-			MessageArgs &&...args)
-				: SuperInterface(
+			Headers &&headers = {},
+			Body &&body = {},
+			Version version = {})
+				: Message(
 						// bind version to rvalue reference to be perfect forwarded by
 						// SuperInterface to Message.
 						std::move(headers),
 						std::move(body),
-						version,
-						std::forward<MessageArgs>(args)...),
+						version),
 					method(method),
 					target(target) {}
-		RequestInterface(RequestInterface &&other)
-				: SuperInterface(std::move(other)),
+		RequestMessageSpec(RequestMessageSpec &&other)
+				: Message(std::move(other)),
 					method(other.method),
 					target(std::move(other.target)) {}
-
-		// Not copyable.
-		RequestInterface(RequestInterface const &) = delete;
-		RequestInterface &operator=(RequestInterface const &) = delete;
-
-		private:
-		// Provided for subclass override.
-		virtual void sendWithImpl(InterfaceTag, std::ostream &){};
-		virtual void recvWithImpl(InterfaceTag, std::istream &){};
 
 		// Overrides for Super versions implement protocol behavior.
 		//
 		// Calls (almost) no-op Message sendWith/recvWith to check transmissability.
-		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
-			this->sendWithImpl(InterfaceTag(), stream);
+		virtual void sendWith(std::ostream &stream) override {
+			// pp-chain.
+			this->ppEstimateContentLength(false);
+			this->ppDefaultContentType();
 
 			// Startline/request line.
 			switch (this->version) {
@@ -123,9 +103,7 @@ namespace Rain::Networking::Http {
 
 			stream.flush();
 		}
-		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
-			this->recvWithImpl(InterfaceTag(), stream);
-
+		virtual void recvWith(std::istream &stream) override {
 			// Receive startline. Take care to limit token length to avoid suffering
 			// from maliciously long tokens.
 			try {
@@ -186,6 +164,8 @@ namespace Rain::Networking::Http {
 		}
 	};
 
-	// Request final specialization.
-	typedef RequestInterface<Message> Request;
+	// Shorthand.
+	class Request : public RequestMessageSpec<MessageSpec<ReqRes::Request>> {
+		using RequestMessageSpec<MessageSpec<ReqRes::Request>>::RequestMessageSpec;
+	};
 }

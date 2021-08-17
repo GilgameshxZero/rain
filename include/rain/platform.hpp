@@ -24,7 +24,7 @@
 #endif
 
 #ifdef NDEBUG
-#define RAIN_DEBUG_NDEBUG
+#define RAIN_PLATFORM_NDEBUG
 #endif
 
 namespace Rain::Platform {
@@ -45,7 +45,7 @@ namespace Rain::Platform {
 
 	// Returns whether the code was built in debug mode.
 	inline bool isDebug() noexcept {
-#ifdef RAIN_DEBUG_NDEBUG
+#ifdef RAIN_PLATFORM_NDEBUG
 		return false;
 #else
 		return true;
@@ -68,7 +68,7 @@ inline std::ostream &operator<<(
 			stream << "Linux";
 			break;
 		default:
-			stream << "None";
+			stream << "Other";
 			break;
 	}
 

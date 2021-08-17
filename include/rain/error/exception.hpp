@@ -26,7 +26,7 @@ namespace Rain::Error {
 
 		public:
 		// Construct an exception with just the error code, in the format "CATEGORY,
-		// ERROR: MESSAGE"
+		// ERROR: MESSAGE".
 		Exception(Error const &error = static_cast<Error>(0))
 				: error(error),
 					explanation(

@@ -11,53 +11,47 @@
 using namespace Rain::Literal;
 
 // Sleep for some time since the time of execution using sleep_until.
-template <typename Clock = std::chrono::steady_clock>
 void sleep(
 	// Default to sleeping for 3s.
 	//
 	// Okay to use const reference, since the Timeout constructor is evaluated at
 	// execution.
-	Rain::Time::Timeout<Clock> const &timeout = 3s) {
+	Rain::Time::Timeout const &timeout = 3s) {
 	// May block indefinitely on faulty implementations of sleep_until with passed
 	// time.
-	std::this_thread::sleep_until(timeout.getTimeoutTime());
+	std::this_thread::sleep_until(timeout.asTimepoint());
 }
 
 int main() {
 	// Sleep for 1s using sleep_for directly.
 	{
-		auto timeBegin = std::chrono::steady_clock::now();
-
 		std::cout << "Sleeping for 1s..." << std::endl;
 		Rain::Time::Timeout timeout(1s);
-		std::this_thread::sleep_for(timeout.getTimeUntilTimeout());
-
+		auto timeBegin = std::chrono::steady_clock::now();
+		std::this_thread::sleep_for(timeout.asDuration());
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl << std::endl;
 		assert(timeElapsed > 0.9s && timeElapsed < 1.1s);
-		assert(timeout.hasPassed());
+		assert(timeout.isPassed());
 	}
 
 	// Sleep for 1s using sleep_until directly.
 	{
-		auto timeBegin = std::chrono::steady_clock::now();
-
 		std::cout << "Sleeping for 1s..." << std::endl;
 		Rain::Time::Timeout timeout(1s);
-		std::this_thread::sleep_until(timeout.getTimeoutTime());
-
+		auto timeBegin = std::chrono::steady_clock::now();
+		std::this_thread::sleep_until(timeout.asTimepoint());
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl << std::endl;
 		assert(timeElapsed > 0.9s && timeElapsed < 1.1s);
-		assert(timeout.hasPassed());
+		assert(timeout.isPassed());
 	}
 
 	// Default timeout arguments declared as const references should be evaluated
 	// at execution as expected.
 	{
-		auto timeBegin = std::chrono::steady_clock::now();
-
 		std::cout << "Sleeping for 3s..." << std::endl;
+		auto timeBegin = std::chrono::steady_clock::now();
 		sleep();
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl << std::endl;
@@ -66,9 +60,8 @@ int main() {
 
 	// Timeout should be able to be constructed inline using list-initialization.
 	{
-		auto timeBegin = std::chrono::steady_clock::now();
-
 		std::cout << "Sleeping for 2s..." << std::endl;
+		auto timeBegin = std::chrono::steady_clock::now();
 		sleep({2s});
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl << std::endl;
@@ -77,9 +70,8 @@ int main() {
 
 	// Default-constructed timeouts expire immediately.
 	{
-		auto timeBegin = std::chrono::steady_clock::now();
-
 		std::cout << "Waking immediately..." << std::endl;
+		auto timeBegin = std::chrono::steady_clock::now();
 		sleep({0s});
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl << std::endl;

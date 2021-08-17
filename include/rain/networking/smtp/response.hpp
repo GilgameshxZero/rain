@@ -1,31 +1,16 @@
 // Response-specific SMTP parsing.
 #pragma once
 
-#include "../request-response/response.hpp"
+#include "../req-res/response.hpp"
 #include "message.hpp"
 #include "status-code.hpp"
 
 #include <vector>
 
 namespace Rain::Networking::Smtp {
-	template <typename ProtocolMessage>
-	class ResponseInterface
-			: public RequestResponse::ResponseInterface<ProtocolMessage> {
-		public:
-		typedef ProtocolMessage Message;
-
-		private:
-		// SuperInterface aliases the superclass.
-		typedef RequestResponse::ResponseInterface<Message> SuperInterface;
-
-		// Interface aliases this class.
-		typedef ResponseInterface<Message> Interface;
-
-		protected:
-		// Tag aliases for sendWith/recvWith convenience.
-		typedef typename SuperInterface::InterfaceTag SuperTag;
-		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
-
+	class ResponseMessageSpecInterface
+			: virtual public MessageSpecInterface,
+				virtual public ReqRes::ResponseMessageSpecInterface {
 		public:
 		// Exception class carries over most errors from Message parsing.
 		enum class Error { INVALID_STATUS_CODE = 1, LINES_LIMIT_EXCEEDED };
@@ -46,7 +31,12 @@ namespace Rain::Networking::Smtp {
 			}
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+	};
 
+	template <typename Message>
+	class ResponseMessageSpec : public Message,
+															virtual public ResponseMessageSpecInterface {
+		public:
 		// Three-digit status code from RFC 821.
 		StatusCode statusCode;
 
@@ -54,37 +44,19 @@ namespace Rain::Networking::Smtp {
 		std::vector<std::string> lines;
 
 		// Carry over constructor which recvs from a Socket.
-		template <typename... MessageArgs>
-		ResponseInterface(
+		ResponseMessageSpec(
 			StatusCode statusCode = StatusCode::REQUEST_COMPLETED,
 			// No lines will simply take the reason phrase from statusCode on a single
 			// line.
-			std::vector<std::string> &&lines = {},
-			MessageArgs &&...args)
-				: SuperInterface(
-						// bind version to rvalue reference to be perfect forwarded by
-						// SuperInterface to Message.
-						std::forward<MessageArgs>(args)...),
-					statusCode(statusCode),
-					lines(std::move(lines)) {}
-		ResponseInterface(ResponseInterface &&other)
-				: SuperInterface(std::move(other)),
+			std::vector<std::string> &&lines = {})
+				: Message(), statusCode(statusCode), lines(std::move(lines)) {}
+		ResponseMessageSpec(ResponseMessageSpec &&other)
+				: Message(std::move(other)),
 					statusCode(other.statusCode),
 					lines(std::move(other.lines)) {}
 
-		// Not copyable.
-		ResponseInterface(ResponseInterface const &) = delete;
-		ResponseInterface &operator=(ResponseInterface const &) = delete;
-
-		private:
-		// Provided for subclass override.
-		virtual void sendWithImpl(InterfaceTag, std::ostream &){};
-		virtual void recvWithImpl(InterfaceTag, std::istream &){};
-
 		// Overrides for Super versions implement protocol behavior.
-		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
-			this->sendWithImpl(InterfaceTag(), stream);
-
+		virtual void sendWith(std::ostream &stream) override {
 			// If no lines, append the default reason phrase.
 			if (this->lines.empty()) {
 				this->lines.push_back(this->statusCode.getReasonPhrase());
@@ -97,9 +69,7 @@ namespace Rain::Networking::Smtp {
 			stream << this->statusCode << " " << this->lines.back() << "\r\n";
 			stream.flush();
 		}
-		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
-			this->recvWithImpl(InterfaceTag(), stream);
-
+		virtual void recvWith(std::istream &stream) override {
 			// Receive line-by-line, up to 4K bytes total.
 			std::size_t totalBytes = 0;
 			while (totalBytes < (1_zu << 12)) {
@@ -132,10 +102,11 @@ namespace Rain::Networking::Smtp {
 			// If here, the response is too large.
 			throw Exception(Error::LINES_LIMIT_EXCEEDED);
 		}
-
-		private:
 	};
 
-	// Response final specialization.
-	typedef ResponseInterface<Message> Response;
+	// Shorthand.
+	class Response : public ResponseMessageSpec<MessageSpec<ReqRes::Response>> {
+		using ResponseMessageSpec<
+			MessageSpec<ReqRes::Response>>::ResponseMessageSpec;
+	};
 }

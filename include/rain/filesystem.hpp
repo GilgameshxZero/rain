@@ -2,12 +2,13 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
 
 namespace Rain::Filesystem {
 	// Returns true if descendent path is under the directory subtree of the
 	// ancestor path.
 	//
-	// Does not require canonical paths.
+	// Internally converts to canonical paths.
 	inline bool isSubpath(
 		std::filesystem::path const &descendant,
 		std::filesystem::path const &ancestor) {
@@ -21,4 +22,11 @@ namespace Rain::Filesystem {
 						 canonAncestor.end())
 						 .second == canonAncestor.end();
 	}
+
+	// Hash std::filesystem::path.
+	struct HashPath {
+		std::size_t operator()(std::filesystem::path const &path) const {
+			return std::hash<std::string>{}(path.string());
+		}
+	};
 }
