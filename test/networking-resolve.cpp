@@ -1,7 +1,7 @@
 // Test the asynchronous getAddressInfo from rain/networking/resolve.hpp.
 #include <rain/literal.hpp>
-
 #include <rain/networking/resolve.hpp>
+#include <rain/time/time.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -12,11 +12,11 @@ int main() {
 
 	// google.com should have both IPv4 and IPv6 addresses.
 	{
-		auto addressInfos = Resolve::getAddressInfo({"google.com"});
+		auto addressInfos = getAddressInfos({"google.com"});
 		std::vector<Host> hosts;
-		for (Resolve::AddressInfo const &addressInfo : addressInfos) {
+		for (AddressInfo const &addressInfo : addressInfos) {
 			hosts.emplace_back(
-				Resolve::getNumericHost(addressInfo.address, addressInfo.addressLen));
+				getNumericHost(addressInfo.address, addressInfo.addressLen));
 		}
 
 		// At least 1 IPv4.
@@ -30,11 +30,11 @@ int main() {
 
 	// Specifying port on the Host.
 	{
-		auto addressInfos = Resolve::getAddressInfo({"cock.li:80"});
+		auto addressInfos = getAddressInfos({"cock.li:80"});
 		std::vector<Host> hosts;
-		for (Resolve::AddressInfo const &addressInfo : addressInfos) {
+		for (AddressInfo const &addressInfo : addressInfos) {
 			hosts.emplace_back(
-				Resolve::getNumericHost(addressInfo.address, addressInfo.addressLen));
+				getNumericHost(addressInfo.address, addressInfo.addressLen));
 		}
 
 		for (Host const &host : hosts) {
@@ -45,17 +45,17 @@ int main() {
 	// PASSIVE binding address ":0". Cannot use ":" since that leaves both
 	// node/service as nullptr.
 	{
-		auto addressInfos = Resolve::getAddressInfo(
+		auto addressInfos = getAddressInfos(
 			{":0"},
-			{15s},
 			{},
-			Resolve::AddressInfoFlag::V4MAPPED |
-				Resolve::AddressInfoFlag::ADDRCONFIG | Resolve::AddressInfoFlag::ALL |
-				Resolve::AddressInfoFlag::PASSIVE);
+			{},
+			{},
+			AddressInfo::Flag::V4MAPPED | AddressInfo::Flag::ADDRCONFIG |
+				AddressInfo::Flag::ALL | AddressInfo::Flag::PASSIVE);
 		std::vector<Host> hosts;
-		for (Resolve::AddressInfo const &addressInfo : addressInfos) {
+		for (AddressInfo const &addressInfo : addressInfos) {
 			hosts.emplace_back(
-				Resolve::getNumericHost(addressInfo.address, addressInfo.addressLen));
+				getNumericHost(addressInfo.address, addressInfo.addressLen));
 		}
 
 		// Dual stack IPv4 & IPv6.
@@ -64,35 +64,32 @@ int main() {
 
 	// Addresses for connecting to localhost.
 	{
-		auto addressInfos = Resolve::getAddressInfo({"localhost:80"});
+		auto addressInfos = getAddressInfos({"localhost:80"});
 		std::vector<Host> hosts;
-		for (Resolve::AddressInfo const &addressInfo : addressInfos) {
+		for (AddressInfo const &addressInfo : addressInfos) {
 			hosts.emplace_back(
-				Resolve::getNumericHost(addressInfo.address, addressInfo.addressLen));
+				getNumericHost(addressInfo.address, addressInfo.addressLen));
 		}
 
 		assert(!hosts.empty());
 	}
 
-	// Zero timeout should return immediately and no hosts.
+	// Error domain name.
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
-		auto addressInfos = Resolve::getAddressInfo({"google.com:80"}, {0s});
-		std::vector<Host> hosts;
-		for (Resolve::AddressInfo const &addressInfo : addressInfos) {
-			hosts.emplace_back(
-				Resolve::getNumericHost(addressInfo.address, addressInfo.addressLen));
-		}
-
+		auto addressInfos = getAddressInfos({"not-a-real-domain-name"});
+		assert(addressInfos.size() == 0);
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
-		assert(timeElapsed < 0.1s);
-		assert(hosts.empty());
+		std::cout << "Time elapsed: " << timeElapsed << std::endl;
+
+		// Failed DNS lookups can take a while.
+		assert(timeElapsed < 3s);
 	}
 
 	// MX record lookup.
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
-		auto mxRecords = Resolve::getDnsRecordsMx({"cock.li"});
+		auto mxRecords = getMxRecords({"cock.li"});
 		for (auto const &mxRecord : mxRecords) {
 			std::cout << mxRecord.first << " " << mxRecord.second << std::endl;
 		}
@@ -105,35 +102,29 @@ int main() {
 	// MX record lookup.
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
-		auto mxRecords = Resolve::getDnsRecordsMx({"gmail.com"});
+		auto mxRecords = getMxRecords({"gmail.com"});
 		for (auto const &mxRecord : mxRecords) {
 			std::cout << mxRecord.first << " " << mxRecord.second << std::endl;
 		}
 		assert(mxRecords.size() == 5);
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed << std::endl;
-		assert(timeElapsed < 1s);
-	}
-
-	// MX record timeout.
-	{
-		auto timeBegin = std::chrono::steady_clock::now();
-		auto mxRecords = Resolve::getDnsRecordsMx({"gmail.com"}, {0s});
-		assert(mxRecords.size() == 0);
-		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
-		std::cout << "Time elapsed: " << timeElapsed << std::endl;
-		assert(timeElapsed < 0.1s);
+		assert(timeElapsed < 2s);
 	}
 
 	// MX record error.
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
-		auto mxRecords = Resolve::getDnsRecordsMx({"not-a-real-domain-name"});
-		assert(mxRecords.size() == 0);
+		try {
+			auto mxRecords = getMxRecords({"not-a-real-domain-name"});
+			assert(mxRecords.size() == 0);
+		} catch (std::exception const &exception) {
+			std::cout << exception.what();
+		}
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed << std::endl;
 
-		// Failed DNS lookups can take a while on Windows.
+		// Failed DNS lookups can take a while.
 		assert(timeElapsed < 2s);
 	}
 

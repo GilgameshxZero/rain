@@ -7,13 +7,9 @@
 
 #ifdef RAIN_PLATFORM_WINDOWS
 
-// Rain utilizes Unicode in system calls, UTF-8 internally.
-#ifndef UNICODE
-#define UNICODE
-#endif
-
-#ifndef _UNICODE
-#define _UNICODE
+// Rain utilizes ANSI Windows functions internally.
+#ifdef UNICODE
+#undef UNICODE
 #endif
 
 // Prevents Windows.h from automatically include Winsock 1.1; Rain uses

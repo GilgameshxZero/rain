@@ -1,5 +1,70 @@
 # Changelog
 
+## 7.1.0 “Rosario”
+
+This “minor” release introduces sweeping inheritance and public interface changes to the `Networking` module as well as small changes to other components.
+
+### Networking inheritance revamp
+
+The primary goal of this revamp is to enable selective, compile-time verification of different types of sockets and their imbued properties, and satisfy LSP inheritance. To this end, the socket inheritance is separated into four broad types of classes:
+
+* Socket options, postfixed with `SocketOption`.
+* Resource-holding sockets, postfixed with `Socket`. There is only one class of this type.
+* Family/Type/Protocol interfaces (F/T/P), postfixed with F/T/P-`Interface`.
+* Socket specializations, postfixed with `SocketSpec`.
+
+In addition, each class has an `Interface` class associated with, named with `Interface` postpended to the class name. Interfaces must have default constructors, must be virtually inherited, and define available functions on that class as well as enable any code-sharing amongst subclasses. Classes which are further templated have a second `InterfaceInterface` class, where the second interface is any commonalities between all template versions of the templated `Interface` class.
+
+A Socket is built by first specifying the F/T/P interfaces, which define the `family()`, `type()`, and `protocol()` virtual functions, then subclassing with `Socket` to RAII-style manage the platform socket resource. One difference from previous `rain` versions is that `Socket` can no longer be moved at all in order to avoid unnecessary kernel calls and socket creations. Then, the socket options are specified; these have their constructors call `setsockopt` on the underlying socket with the appropriate parameters. Finally, additionally functionality is appended with the socket specialization classes. Both socket option and specialization classes all template inherit from a resource-holding Socket; thus, a final specified Socket is built as many layers of templated classes.
+
+Each protocol layer defines six socket specializations: `SocketSpec`, `NamedSocketSpec`, `ConnectedSocketSpec`, `ClientSocketSpec`, `WorkerSocketSpec`, and `ServerSocketSpec`. Named sockets inherit the base socket; connected sockets inherit the named sockets, and client and worker sockets are connected while server sockets inherit from the named sockets only. A protocol layer built atop another one will have each of its socket specializations additionally inherit the lower layer’s corresponding socket specialization.
+
+In this way, a socket instance can be stored as a pointer or reference in any of its socket specialization, socket option, socket, or F/T/P superclasses.
+
+All socket specializations additionally follow RAII convensions: connected sockets must be connected at construction; server sockets must be bound and listening at construction. Additionally, original socket functionality from `socket.hpp` has now been split to its corresponding specialization file depending on where it is needed.
+
+A similar inheritance was used for the M/R/R classes, which also follow a similar naming scheme. The pre/post-processing chains have been scrapped for a much simpler “call super” pattern. Now, pp-chains may be appended either in the M/R/R classes during send/recv via virtual dispatch, or in the client/worker classes during their send/recv.
+
+Finally, request handling in HTTP is overhauled to enable simpler syntax for defining request filters and handlers. See the tests for examples.
+
+### Networking bugfixes
+
+* `send` no longer raises `SIGPIPE` occasionally on POSIX.
+* `accept`ed sockets are now correctly marked non-blocking once accepted.
+* Connecting to MX records now correctly tries them in order of priority instead of all at the same time, preventing waiting for the timeout of the longest-to-connect.
+* `send`/`recv` do not fail on other flags set from `poll`. However, `connect` fails if additional flags were set in addition to `WRITE_NORMAL`.
+
+### Smaller changes to Networking
+
+* Removed timeouts on `Resolve` since it is reasonable to expect a DNS response in reasonable time on most implementations, and the MX record resolution was leaking memory in the form of circular `std::shared_ptr` references.
+* WSA code is now stored as an automatic-duration global variable which performs necessary startup and cleanup on Windows.
+* Now can move a `std::stringbuf` directly into `Body`.
+* `RequestResponse` renamed to `ReqRes`.
+* Add functions to observe workers and threads count in a server from its underlying threadpool.
+
+### Smaller changes
+
+* Revamp LRU cache to avoid any copying of keys or values, and remove the meaningless private inheritance.
+* `consumeThrowable` now properly works as expected with moved callables as well as mutable lambdas.
+* Added error messages for custom errors in `Networking::Exception`.
+* Add hash function for `std::filesystem::path`.
+* Do not redefine `STRINGIFY` and `STRINGIFY_INNER` if already defined.
+* Macro `RAIN_FUNCTIONAL_RESOLVE_OVERLOAD` resolves and overloaded name for passing as a callable parameter.
+* Add `MediaType` to Networking representing a MIME Type.
+* `RAIN_DEBUG_NDEBUG` renamed to `RAIN_PLATFORM_NDEBUG`.
+* `localtime_r` is now a function in `Rain::Time` on every platform.
+* `Timeout` uses `steady_clock` by design instead of a templated clock.
+* Time output to streams defaults to `ms`.
+* Remove `_UNICODE` preprocessor.
+* Revamped tests in accordance with the new changes.
+
+### Build procedure
+
+* Updated `readme.md` to reflect changes in build procedure and note incompatibility with `g++` and `apple-clang`.
+* Ignore Warning 4250 on Visual Studio project build procedures, since inheritance by dominance is an intended trait of the Networking module.
+* Clean up `build/makefile` and default to `clang++` and allow override by setting environment variable `CXX`.
+* Remove `*.filters` from Visual Studio projects and template.
+
 ## 7.0.12
 
 Parsing mailbox from RCPT and MAIL commands in SMTP server is improved, but still does not work with mailboxes containing spaces.

@@ -1,8 +1,7 @@
 // Test for Multithreading::ThreadPool.
 #include <rain/literal.hpp>
-#include <rain/time.hpp>
-
 #include <rain/multithreading/thread-pool.hpp>
+#include <rain/time.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -15,16 +14,14 @@ int main() {
 
 	// Two types of tasks which both increment the counter, one which prints the
 	// counter as well.
-	Rain::Multithreading::ThreadPool::Task task([&counter]() noexcept {
-		std::this_thread::sleep_for(500ms);
+	auto task = [&counter]() noexcept {
+		std::this_thread::sleep_for(1s);
 		counter++;
-		std::this_thread::sleep_for(500ms);
-	});
-	Rain::Multithreading::ThreadPool::Task printTask([&counter]() noexcept {
-		std::this_thread::sleep_for(500ms);
-		std::cout << ++counter << "\n";
-		std::this_thread::sleep_for(500ms);
-	});
+	};
+	auto printTask = [&counter, task]() noexcept {
+		task();
+		std::cout << counter << "\n";
+	};
 
 	// 25 tasks, 8 threads; so expect 4 "rounds" of tasks. Test general behavior.
 	{

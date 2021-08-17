@@ -6,6 +6,7 @@
 #include "../../literal.hpp"
 #include "../../string/string.hpp"
 #include "../host.hpp"
+#include "../media-type.hpp"
 #include "header.hpp"
 
 #include <unordered_map>
@@ -63,18 +64,32 @@ namespace Rain::Networking::Http {
 		// Invalid value for contentLength is SIZE_MAX.
 		std::size_t contentLength() {
 			auto it = this->find("Content-Length");
-			return it == this->end() ? 0
-															 : std::strtoumax(it->second.c_str(), NULL, 10);
+			return it == this->end()
+				? 0
+				: std::strtoumax(it->second.c_str(), nullptr, 10);
 		}
 		void contentLength(std::size_t value) {
 			this->operator[]("Content-Length") = std::to_string(value);
 		}
 
+		MediaType contentType() {
+			auto it = this->find("Content-Type");
+			return it == this->end() ? MediaType() : MediaType(it->second);
+		}
+		void contentType(MediaType const &value) {
+			this->operator[]("Content-Type") = static_cast<std::string>(value);
+		}
+
 		Host host() {
 			auto it = this->find("Host");
-			return it == this->end() ? Host() : Host{it->second};
+			return it == this->end() ? Host() : Host(it->second);
 		}
 		void host(Host const &value) { this->operator[]("Host") = value; }
+
+		std::string server() { return this->find("Server")->second; }
+		void server(std::string const &value) {
+			this->operator[]("Server") = value;
+		}
 
 		std::vector<Header::TransferEncoding> transferEncoding() {
 			auto it = this->find("Transfer-Encoding");
@@ -94,6 +109,10 @@ namespace Rain::Networking::Http {
 			return transferEncoding;
 		}
 		void transferEncoding(std::vector<Header::TransferEncoding> const &value) {
+			if (value.empty()) {
+				return;
+			}
+
 			std::string &transferEncoding = this->operator[]("Transfer-Encoding");
 
 			for (Header::TransferEncoding const &transferEncodingSingle : value) {

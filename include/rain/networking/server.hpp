@@ -1,247 +1,276 @@
-// Socket specialization: the templated Server interface, and its protocol
-// implementation with the basic Socket.
+// ServerSocket subclasses NamedSocket(Interface) with the additional
+// requirement to bind and listen on construct.
 #pragma once
 
-#include "../error.hpp"
+#include "../error/consume-throwable.hpp"
 #include "../literal.hpp"
 #include "../multithreading/thread-pool.hpp"
 #include "../time/timeout.hpp"
+#include "client.hpp"
 #include "socket.hpp"
 #include "worker.hpp"
 
-#include <set>
-
 namespace Rain::Networking {
-	// Socket specialization: the templated Server interface, and its protocol
-	// implementation with the basic Socket.
-	//
-	// Servers satisfy the same NTA contract as Sockets and ThreadPools, but is
-	// NOT thread-safe. A Server whose Workers are NBTA, and only controlled from
-	// one thread, is NBTA.
-	//
-	// The SocketArgs template contains arguments beyond the base protocol Socket
-	// (new arguments implemented by the protocol Socket) passed to both the
-	// Server Socket and the Worker Sockets. The subclassed Server can define what
-	// each of those are in the constructor and workerFactory.
-	template <typename ProtocolSocket, typename ProtocolWorker>
-	class ServerInterface : public ProtocolSocket {
+	// InterfaceInterfaces hold commonalities behind templated Interfaces as well
+	// as introduce otherwise dependent names.
+	class ServerSocketSpecInterfaceInterface
+			: virtual public NamedSocketSpecInterface {
+		protected:
+		// Code-sharing: bind.
+		static void bind(
+			NativeSocket nativeSocket,
+			AddressInfo const &addressInfo) {
+			validateSystemCall(::bind(
+				nativeSocket,
+				reinterpret_cast<sockaddr const *>(&addressInfo.address),
+				static_cast<socklen_t>(addressInfo.addressLen)));
+		}
+		static void bind(
+			NativeSocket nativeSocket,
+			std::vector<AddressInfo> const &addressInfos) {
+			// Try all addresses in order, unlike Client which is parallel.
+			for (AddressInfo const &addressInfo : addressInfos) {
+				if (
+					::bind(
+						nativeSocket,
+						reinterpret_cast<sockaddr const *>(&addressInfo.address),
+						static_cast<socklen_t>(addressInfo.addressLen)) !=
+					NATIVE_SOCKET_ERROR) {
+					return;
+				}
+			}
+
+			// All binds failed.
+			throw Exception(getSystemError());
+		}
+		static void bind(
+			NativeSocket nativeSocket,
+			Host const &host,
+			Family family,
+			Type type,
+			Protocol protocol,
+			AddressInfo::Flag flags = AddressInfo::Flag::V4MAPPED |
+				AddressInfo::Flag::ADDRCONFIG | AddressInfo::Flag::ALL |
+				AddressInfo::Flag::PASSIVE) {
+			ServerSocketSpecInterfaceInterface::bind(
+				nativeSocket, getAddressInfos(host, family, type, protocol, flags));
+		}
+
 		public:
-		typedef ProtocolSocket Socket;
-		typedef ProtocolWorker Worker;
-		typedef ServerInterface<Socket, Worker> Interface;
+		virtual std::size_t workers() = 0;
+		virtual std::size_t threads() = 0;
+	};
 
+	template <typename WorkerSocketSpec>
+	class ServerSocketSpecInterface
+			: virtual public ServerSocketSpecInterfaceInterface {
+		protected:
+		// Override to build WorkerSockets.
+		virtual WorkerSocketSpec makeWorker(
+			NativeSocket nativeSocket,
+			SocketInterface *interrupter) = 0;
+	};
+
+	// ServerSocket subclasses NamedSocket(Interface) with the additional
+	// requirement to bind and listen on construct.
+	//
+	// This is not a resource-managing class, and should be used after socket
+	// options are set on a resource-managing Socket.
+	//
+	// The template Socket should be a Networking::Socket with a default
+	// constructor.
+	template <typename WorkerSocketSpec, typename Socket>
+	class ServerSocketSpec
+			: public Socket,
+				virtual public ServerSocketSpecInterface<WorkerSocketSpec>,
+				virtual public ServerSocketSpecInterfaceInterface {
 		private:
-		// Servers create an interrupt pair on construction, and this must not be
-		// altered, as Workers inherit this and depend on it. Interrupts to the
-		// server are to be issued via Server close or abort.
-		using Socket::setInterruptPair;
-		using Socket::setNewInterruptPair;
-
-		// abort and close are overriden on ServerInterface.
-		using Socket::abort;
-		// Shutdown will throw on Server.
-		using Socket::shutdown;
-		using Socket::close;
-		using Socket::connect;
-		using Socket::bind;
-		using Socket::listen;
-		using Socket::accept;
-		using Socket::send;
-		using Socket::sendOnce;
-		using Socket::recv;
-		using Socket::interrupt;
-
-		private:
-		// Each worker is given its own Task.
+		// accept thread and worker threads are spawned with ThreadPool (infinite
+		// capacity).
 		Multithreading::ThreadPool threadPool;
 
-		std::set<std::unique_ptr<Worker>> workers;
-		std::mutex workersMtx;
+		// Socket pair created for interrupts.
+		std::pair<
+			std::unique_ptr<
+				Client<Ipv4FamilyInterface, StreamTypeInterface, TcpProtocolInterface>>,
+			std::unique_ptr<Networking::Socket<
+				Ipv4FamilyInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface>>>
+			interrupter;
 
-		// This bit is set when the server has initiated closing to facilitate
-		// shutting down the accept thread.
-		bool closing = false;
+		// listen & accept on a bound Socket, in an std::async.
+		void serve(int backlog = 200) {
+			validateSystemCall(::listen(this->nativeSocket(), backlog));
 
-		public:
-		// By default, Server is a valid, interruptable IPv6 socket with dual-stack
-		// support.
-		template <typename... SocketArgs>
-		ServerInterface(
-			Specification::Specification const &specification =
-				{Specification::ProtocolFamily::INET6,
-				 Specification::SocketType::STREAM,
-				 Specification::SocketProtocol::TCP},
-			std::size_t maxThreads = 1024,
-			SocketArgs &&...args)
-				: Socket(specification, true, std::forward<SocketArgs>(args)...),
-					threadPool(maxThreads) {}
-
-		// Block for threads (including accept thread) to exit.
-		template <typename Clock = std::chrono::steady_clock>
-		bool blockForTasks(Time::Timeout<Clock> const &timeout = {}) {
-			return this->threadPool.blockForTasks(timeout);
-		}
-
-		// Abort the server, and consumes any exceptions. Then, like any class which
-		// utilizes ThreadPool, waits on all threads to exit.
-		virtual ~ServerInterface() {
-			Rain::Error::consumeThrowable(
-				[this]() {
-					this->abort();
-					this->blockForTasks();
-				},
-				RAIN_ERROR_LOCATION)();
-		}
-
-		// Servers cannot be moved nor copied. Move semantics are not auto-generated
-		// by compiler.
-		ServerInterface(ServerInterface const &) = delete;
-		ServerInterface &operator=(ServerInterface const &) = delete;
-
-		// Attempt to gracefully close the server by first issuing a shutdown, then
-		// a graceful close to all Workers. Wait for all threads to exit, up to a
-		// timeout, then closes the server. Returns false if all threads exited,
-		// true otherwise. A negative timeout blocks indefinitely.
-		template <typename Clock = std::chrono::steady_clock>
-		bool close(Time::Timeout<Clock> const &timeout = 60s) {
-			// Disallow accepting any more clients after the next one. Disable new
-			// Tasks.
-			this->closing = true;
-
-			// Interrupt all workers, then abort them if they don't themselves after a
-			// timeout.
-			this->interrupt();
-
-			// Wait for all threads to finish now that all Workers are closed.
-			bool threadBlockTimeout = this->blockForTasks(timeout);
-
-			// Abort any remaining workers. This does not ensure that all threads are
-			// closed.
+			// Connect the interrupter pair.
 			{
-				std::lock_guard<std::mutex> workersLckGuard(this->workersMtx);
-				for (auto it = this->workers.begin(); it != this->workers.end(); it++) {
-					(*it)->abort();
-				}
+				NamedSocketSpec<Networking::Socket<
+					Ipv4FamilyInterface,
+					StreamTypeInterface,
+					TcpProtocolInterface>>
+					interrupterServer;
+				ServerSocketSpecInterfaceInterface::bind(
+					interrupterServer.nativeSocket(),
+					{"localhost:0"},
+					interrupterServer.family(),
+					interrupterServer.type(),
+					interrupterServer.protocol());
+				validateSystemCall(::listen(interrupterServer.nativeSocket(), 1));
+				auto future =
+					std::async(std::launch::async, [this, &interrupterServer]() {
+						AddressInfo acceptedAddress;
+						socklen_t addressLen = sizeof(acceptedAddress.address);
+						interrupterServer.poll(PollFlag::READ_NORMAL);
+						this->interrupter.second.reset(
+							new Networking::Socket<
+								Ipv4FamilyInterface,
+								StreamTypeInterface,
+								TcpProtocolInterface>(validateSystemCall(::accept(
+								interrupterServer.nativeSocket(),
+								reinterpret_cast<sockaddr *>(&acceptedAddress.address),
+								&addressLen))));
+
+						// Discard the accepted address.
+					});
+				this->interrupter.first.reset(
+					new Client<
+						Ipv4FamilyInterface,
+						StreamTypeInterface,
+						TcpProtocolInterface>(interrupterServer.name()));
 			}
 
-			// Regardless of whether the threads exited gracefully, abort the server.
-			Socket::abort();
-			return threadBlockTimeout;
-		}
+			// If no exception, the socket pair is connected. The first is a
+			// ClientSocket and is send/recv-able. So, poll with the second with
+			// READ_NORMAL, and interrupt by sending on the first.
 
-		// Abort aggressively all workers and the server, and doesn't wait for
-		// threads.
-		void abort() {
-			this->closing = true;
-			this->interrupt();
-			{
-				std::lock_guard<std::mutex> workersLckGuard(this->workersMtx);
-				for (auto it = this->workers.begin(); it != this->workers.end(); it++) {
-					(*it)->abort();
-				}
-			}
-			Socket::abort();
-		}
+			// Begin accepting on this server. The server thread must be extremely
+			// resiliant to exceptions.
+			this->threadPool.queueTask([this]() {
+				while (true) {
+					// If poll throws, it is unlikely the server can be restarted anyway.
+					auto flag = SocketInterface::poll(
+						{this, this->interrupter.second.get()},
+						{PollFlag::READ_NORMAL, PollFlag::READ_NORMAL},
+						{})[0];
+					if (flag != PollFlag::READ_NORMAL) {
+						break;
+					}
 
-		// Bind, listen, and accept continuously until server is closed. Return
-		// false on success, true on timeout.
-		template <typename Clock = std::chrono::steady_clock>
-		bool serve(
-			Host const &host = {":0"},
-			Time::Timeout<Clock> const &gaiTimeout = 60s,
-			typename Clock::duration const &acceptTimeoutDuration = 60s,
-			Specification::Specification const &gaiSpecification =
-				{Specification::ProtocolFamily::DEFAULT,
-				 Specification::SocketType::DEFAULT,
-				 Specification::SocketProtocol::DEFAULT},
-			Resolve::AddressInfoFlag gaiFlags = Resolve::AddressInfoFlag::V4MAPPED |
-				Resolve::AddressInfoFlag::ADDRCONFIG | Resolve::AddressInfoFlag::ALL |
-				Resolve::AddressInfoFlag::PASSIVE,
-			int backlog = 200) {
-			if (Socket::bind(host, gaiTimeout, gaiSpecification, gaiFlags)) {
-				return true;
-			}
-			this->listen(backlog);
+					NativeSocket nativeSocket = validateSystemCall(
+						::accept(this->nativeSocket(), nullptr, nullptr));
 
-			// The accept loop takes one thread in the ThreadPool.
-			this->threadPool.queueTask(Rain::Error::consumeThrowable(
-				[this, acceptTimeoutDuration]() {
-					// Once the server begins destruction, this function must exit ASAP
-					// before the gracefulClose timeout runs out and its member variables
-					// are invalidated.
-					std::shared_ptr<std::pair<Networking::Socket, Resolve::AddressInfo>>
-						acceptRes;
-					while (true) {
-						// Result from accept is constructed dynamically to be freed later
-						// by the worker task.
-						//
-						// Workers inherit the interruptPair, so they get interrupted
-						// with the server.
-						acceptRes.reset(
-							new std::pair<Networking::Socket, Resolve::AddressInfo>{
-								this->accept({acceptTimeoutDuration})});
+					// Worker must be constructed prior to starting its task, lest the
+					// Server deconstruction cause the makeWorker virtual to be
+					// unregistered from its subclass and the thread to call the base pure
+					// virtual makeWorker.
 
-						// When the server is to be closed, accept will be interrupted. We
-						// know this is the case if this->closing is true.
-						if (this->closing) {
-							// Frees the accepted closeInterruptSocket.
-							return;
-						}
+					// std::function Task cannot store move-captures on unique_ptr.
+					try {
+						this->threadPool.queueTask(
+							Rain::Error::consumeThrowable([this, nativeSocket]() {
+								// If Worker construction fails, just consume and ignore the
+								// exception. This should be unlikely.
+								//
+								// This may fail on some platforms if socket options are set
+								// and the client disconnects almost immediately, invalidating
+								// the file descriptor. Then, socket options constructors will
+								// fail on the invalid file descriptor.
+								auto worker = this->makeWorker(
+									nativeSocket, this->interrupter.second.get());
 
-						if (acceptRes->first.isValid()) {
-							// Accepted valid Socket.
-
-							// Queue task in ThreadPool inside of which we will construct the
-							// new Worker from the newly minted Socket and run its own task in
-							// its own thread. Exceptions in the task are consumed.
-							this->threadPool.queueTask([this, acceptRes]() {
-								typename std::set<std::unique_ptr<Worker>>::iterator workerIt;
-
-								// Worker behavior is subclassed by the Worker in its
-								// constructor.
-								{
-									std::lock_guard<std::mutex> workersLckGuard(this->workersMtx);
-									workerIt =
-										this->workers.insert(this->workerFactory(acceptRes)).first;
-								}
-
-								// Exceptions in worker are consumed and cerr triggered.
+								// Failures in onWork should be logged.
 								Rain::Error::consumeThrowable(
-									[&workerIt]() {
-										// Manually upcast to trigger friend permissions.
-										static_cast<WorkerInterface<Socket> *>(workerIt->get())
-											->onWork();
+									[&worker]() {
+										// Cast to WorkerSocketSpecInterface to trigger friend
+										// permissions.
+										static_cast<WorkerSocketSpecInterface &>(worker).onWork();
 									},
 									RAIN_ERROR_LOCATION)();
-
-								// Once Worker behavior is completed, it is deleted.
-								{
-									std::lock_guard<std::mutex> lckGuard(this->workersMtx);
-									this->workers.erase(workerIt);
-								}
-							});
-						}
-
-						// accept timeout, just retry.
+							}));
+					} catch (std::exception const &exception) {
+						std::cout << exception.what();
+						this->threadPool.setMaxThreads(this->threadPool.getCThreads());
 					}
-				},
-				RAIN_ERROR_LOCATION));
-			return false;
+				}
+			});
 		}
 
-		private:
-		// Abstract because cannot infer Worker constructor signature without
-		// template.
-		//
-		// Override this to pass custom arguments to workers during construction.
-		//
-		// Must satisfy RVO for copy elision or otherwise call std::move.
-		virtual std::unique_ptr<Worker> workerFactory(
-			std::shared_ptr<std::pair<Networking::Socket, Resolve::AddressInfo>> acceptRes) {
-			return std::make_unique<Worker>(
-				acceptRes->second, std::move(acceptRes->first));
+		protected:
+		// Subclasses need to wait for worker threads to finish before destructing,
+		// since that de-virtualizes their worker constructor override and may cause
+		// worker thread to call a pure virtual.
+		void destruct() {
+			// Send interrupt, then wait for everything to destruct before anything
+			// from the class is deconstructed.
+			this->interrupter.first->send("\0", 1);
+			this->threadPool.blockForTasks();
+		}
+
+		public:
+		// On construction, Servers bind and listen and accept, asynchronously.
+		ServerSocketSpec(AddressInfo const &addressInfo, int backlog = 200) {
+			ServerSocketSpecInterfaceInterface::bind(
+				this->nativeSocket(), addressInfo);
+			this->serve(backlog);
+		}
+		ServerSocketSpec(
+			std::vector<AddressInfo> const &addressInfos,
+			int backlog = 200) {
+			ServerSocketSpecInterfaceInterface::bind(
+				this->nativeSocket(), addressInfos);
+			this->serve(backlog);
+		}
+		ServerSocketSpec(
+			Host const &host,
+			int backlog = 200,
+			AddressInfo::Flag flags = AddressInfo::Flag::V4MAPPED |
+				AddressInfo::Flag::ADDRCONFIG | AddressInfo::Flag::ALL |
+				AddressInfo::Flag::PASSIVE) {
+			ServerSocketSpecInterfaceInterface::bind(
+				this->nativeSocket(),
+				host,
+				this->family(),
+				this->type(),
+				this->protocol(),
+				flags);
+			this->serve(backlog);
+		}
+		virtual ~ServerSocketSpec() {
+			// Most-derived class must call this->destruct().
+		}
+
+		// Queries.
+		virtual std::size_t workers() override {
+			return this->threadPool.getCTasks() - 1;
+		}
+		virtual std::size_t threads() override {
+			return this->threadPool.getCThreads();
 		}
 	};
 
-	typedef ServerInterface<Socket, Worker> Server;
+	// Shorthand which includes NamedSocket and base Socket
+	// templates.
+	template <
+		typename WorkerSocketSpec,
+		typename SocketFamilyInterface,
+		typename SocketTypeInterface,
+		typename SocketProtocolInterface,
+		template <typename>
+		class... SocketOptions>
+	class Server : public ServerSocketSpec<
+									 WorkerSocketSpec,
+									 NamedSocketSpec<Socket<
+										 SocketFamilyInterface,
+										 SocketTypeInterface,
+										 SocketProtocolInterface,
+										 SocketOptions...>>> {
+		using ServerSocketSpec<
+			WorkerSocketSpec,
+			NamedSocketSpec<Socket<
+				SocketFamilyInterface,
+				SocketTypeInterface,
+				SocketProtocolInterface,
+				SocketOptions...>>>::ServerSocketSpec;
+	};
 }

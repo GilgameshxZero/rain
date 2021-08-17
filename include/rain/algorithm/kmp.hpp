@@ -56,7 +56,7 @@ namespace Rain::Algorithm {
 		std::size_t const haystackLen,
 		char const *const needle,
 		std::size_t const needleLen,
-		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::vector<std::size_t> const &partialMatch = {},
 		std::size_t candidate = 0) {
 		// Use these variables, which are set based on whether or not default
 		// partialMatch and candidate were passed in.
@@ -87,7 +87,7 @@ namespace Rain::Algorithm {
 		char const *const haystack,
 		std::size_t haystackLen,
 		std::string const &needle,
-		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::vector<std::size_t> const &partialMatch = {},
 		std::size_t candidate = 0) {
 		return kmpSearch(
 			haystack,
@@ -101,7 +101,7 @@ namespace Rain::Algorithm {
 		std::string const &haystack,
 		char const *const needle,
 		std::size_t const needleLen,
-		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::vector<std::size_t> const &partialMatch = {},
 		std::size_t candidate = 0) {
 		std::pair<char *, std::size_t> searchRes = kmpSearch(
 			haystack.c_str(),
@@ -115,7 +115,7 @@ namespace Rain::Algorithm {
 	inline std::pair<std::size_t, std::size_t> kmpSearch(
 		std::string const &haystack,
 		std::string const &needle,
-		std::vector<std::size_t> const &partialMatch = std::vector<std::size_t>(),
+		std::vector<std::size_t> const &partialMatch = {},
 		std::size_t candidate = 0) {
 		return kmpSearch(
 			haystack, needle.c_str(), needle.length(), partialMatch, candidate);

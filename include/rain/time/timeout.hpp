@@ -1,88 +1,79 @@
-// Represents a timeout event specification: either a time_point in the future,
-// a duration, or infinity (no timeout).
+// Represents a timeout event on std::chrono::steady_clock. Can either be an
+// event in the future, an event that has already passed, or an event which
+// never occurs.
 #pragma once
 
 #include <chrono>
 
 namespace Rain::Time {
-	template <typename Clock = std::chrono::steady_clock>
+	// Represents a timeout event on std::chrono::steady_clock. Can either be an
+	// event in the future, an event that has already passed, or an event which
+	// never occurs.
 	class Timeout {
 		private:
 		// Timeout is always represented as a time_point.
 		// If this is in the future, timeout has yet to occur. If this is in the
 		// past or present, timeout has already occurred. If this is
-		// Clock::time_point::min, there is no timeout.
-		typename Clock::time_point timeoutTime;
+		// Clock::time_point::max, there is no timeout.
+		std::chrono::steady_clock::time_point timeoutTimepoint;
 
 		public:
-		// Construct with time_point. By default, no timeout.
-		template <
-			typename TickRep = typename Clock::rep,
-			typename TickPeriod = typename Clock::period>
+		// Construct with time_point. By default, infinite timeout.
 		Timeout(
-			std::chrono::time_point<Clock, std::chrono::duration<TickRep, TickPeriod>>
-				timeoutTime = Clock::time_point::max())
-				: timeoutTime(timeoutTime) {}
+			std::chrono::steady_clock::time_point timeoutTimepoint =
+				std::chrono::steady_clock::time_point::max())
+				: timeoutTimepoint(timeoutTimepoint) {}
 
 		// Construct with duration.
-		template <
-			typename TickRep = typename Clock::rep,
-			typename TickPeriod = typename Clock::period>
-		Timeout(std::chrono::duration<TickRep, TickPeriod> timeUntilTimeout)
-				: timeoutTime(Clock::now() + timeUntilTimeout) {}
+		template <typename Rep, typename Period>
+		Timeout(std::chrono::duration<Rep, Period> durationUntilTimeout)
+				: Timeout(std::chrono::steady_clock::now() + durationUntilTimeout) {}
 
-		// Getters.
 		bool isInfinite() const noexcept {
-			return this->timeoutTime == Clock::time_point::max();
+			return this->timeoutTimepoint ==
+				std::chrono::steady_clock::time_point::max();
 		}
-		typename Clock::time_point getTimeoutTime() const noexcept {
-			return this->timeoutTime;
-		}
-		typename Clock::duration getTimeUntilTimeout() const noexcept {
-			return this->timeoutTime - Clock::now();
-		}
-		bool hasPassed() const noexcept {
-			if (this->isInfinite()) {
-				return false;
-			} else {
-				return this->timeoutTime <= Clock::now();
-			}
+		bool isPassed() const noexcept {
+			return this->timeoutTimepoint <= std::chrono::steady_clock::now();
 		}
 
-		// Converts the timeout event into a duration compatible with some posix
-		// functions. A negative value specifies an infinite timeout. 0 is a timeout
-		// already passed. Otherwise, timeout is represented as a duration in ms.
-		int asClassicInt() const noexcept {
+		std::chrono::steady_clock::time_point asTimepoint() const noexcept {
+			return this->timeoutTimepoint;
+		}
+		std::chrono::steady_clock::duration asDuration() const noexcept {
+			return this->timeoutTimepoint - std::chrono::steady_clock::now();
+		}
+		// POSIX functions treat -1 as infinite timeout, 0 as an immediate timeout,
+		// and otherwise the int as a duration in ms until timeout.
+		int asInt() const noexcept {
 			if (this->isInfinite()) {
 				return -1;
-			} else if (this->hasPassed()) {
+			} else if (this->isPassed()) {
 				return 0;
 			} else {
 				return static_cast<int>(
 					std::chrono::duration_cast<std::chrono::milliseconds>(
-						this->getTimeUntilTimeout())
+						this->asDuration())
 						.count());
 			}
 		}
 
 		// Conversion operators.
-		operator typename Clock::time_point() const noexcept {
-			return this->getTimeoutTime();
+		explicit operator bool() const noexcept { return this->isPassed(); }
+		operator std::chrono::steady_clock::time_point() const noexcept {
+			return this->asTimepoint();
 		}
-		operator typename Clock::duration() const noexcept {
-			return this->getTimeUntilTimeout();
+		operator std::chrono::steady_clock::duration() const noexcept {
+			return this->asDuration();
 		}
-		explicit operator int() const noexcept { return this->asClassicInt(); }
+		explicit operator int() const noexcept { return this->asInt(); }
 
-		// Comparison operators.
+		// Sparse subset of comparison operators.
 		bool operator<(Timeout const &other) const noexcept {
-			return this->timeoutTime < other.timeoutTime;
+			return this->timeoutTimepoint < other.timeoutTimepoint;
 		}
 		bool operator==(Timeout const &other) const noexcept {
-			return this->timeoutTime == other.timeoutTime;
-		}
-		bool operator>(Timeout const &other) const noexcept {
-			return this->timeoutTime > other.timeoutTime;
+			return this->timeoutTimepoint == other.timeoutTimepoint;
 		}
 	};
 }

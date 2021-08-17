@@ -1,7 +1,6 @@
 // Tests Networking::Http::Request.
-#include <rain/time/time.hpp>
-
 #include <rain/networking/http/request.hpp>
+#include <rain/time/time.hpp>
 
 #include <cassert>
 #include <iostream>

@@ -26,8 +26,14 @@
 
 // Macro for stringification. Use STRINGIFY(x) on variable x to stringify its
 // value.
+#ifndef STRINGIFY_INNER
+
 #define STRINGIFY_INNER(x) #x
+#ifndef STRINGIFY
 #define STRINGIFY(x) STRINGIFY_INNER(x)
+#endif
+
+#endif
 
 namespace Rain {
 	// strcasecmp does not exist on Windows.

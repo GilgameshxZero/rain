@@ -4,13 +4,13 @@
 
 #include "../error/consume-throwable.hpp"
 #include "../error/incrementer.hpp"
+#include "../functional.hpp"
 #include "../platform.hpp"
 #include "../time/timeout.hpp"
 #include "../type.hpp"
 
 #include <atomic>
 #include <condition_variable>
-#include <functional>
 #include <iostream>
 #include <list>
 #include <mutex>
@@ -22,11 +22,10 @@ namespace Rain::Multithreading {
 	// ThreadPool manages an upper-bounded number of threads to work on a queue of
 	// tasks.
 	//
-	// ThreadPools do NOT satisfy the NTBA (no-throw/block abort) contract but
-	// does satisfy the lesser NTA contract. A ThreadPool which is aborted (via
-	// its destructor) may block for its thread tasks, but none of them will throw
-	// outside of programmer error. A ThreadPool is only NBTA if all of its Tasks
-	// are NBTA.
+	// If any Task may block, the ThreadPool may block during destruction.
+	// Otherwise, the ThreadPool is guaranteed not to block during destruction.
+	//
+	// ThreadPool consumes any exceptions thrown by its tasks.
 	class ThreadPool {
 		public:
 		// A task is simply a callable which is executed. Parameters should be
@@ -69,12 +68,14 @@ namespace Rain::Multithreading {
 		ThreadPool(std::size_t maxThreads = 0) noexcept
 				: maxThreads(maxThreads), cIdleThreads(0), destructing(false) {}
 
-		// Forbid copy/move (implicit).
+		// Forbid copy/move.
 		ThreadPool(ThreadPool const &) = delete;
 		ThreadPool &operator=(ThreadPool const &) = delete;
+		ThreadPool(ThreadPool &&) = delete;
+		ThreadPool &operator=(ThreadPool &&) = delete;
 
 		// Getters.
-		std::size_t getCTasks() const noexcept {
+		std::size_t getCQueuedTasks() const noexcept {
 			std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
 			return this->tasks.size();
 		}
@@ -83,6 +84,12 @@ namespace Rain::Multithreading {
 			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
 			std::lock_guard<std::mutex> cIdleThreadsLckGuard(this->cIdleThreadsMtx);
 			return this->threads.size() - this->cIdleThreads;
+		}
+		std::size_t getCTasks() const noexcept {
+			std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
+			std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
+			std::lock_guard<std::mutex> cIdleThreadsLckGuard(this->cIdleThreadsMtx);
+			return this->tasks.size() + this->threads.size() - this->cIdleThreads;
 		}
 		std::size_t getCIdleThreads() const noexcept {
 			// No need to lock here, since this atomic will always be consistent by
@@ -122,77 +129,68 @@ namespace Rain::Multithreading {
 		// If Task throws, the error is ignored to stderr.
 		static void threadFnc(ThreadPool *threadPool) {
 			while (!threadPool->destructing) {
-				// Exceptions in threadFnc only occur on programmer error.
-				Error::consumeThrowable<ThreadPool *>(
-					[](ThreadPool *threadPool) {
-						// Wait until task or destruction.
-						std::unique_ptr<Task> task;
+				// Wait until task or destruction.
+				std::unique_ptr<Task> task;
 
-						// RAII incrementation in case of exception, with unique_ptr
-						// allowing for delayed initialization.
-						std::unique_ptr<Error::Incrementer<std::atomic_size_t>> incrementer;
+				// RAII incrementation in case of exception, with unique_ptr
+				// allowing for delayed initialization.
+				std::unique_ptr<Error::Incrementer<std::atomic_size_t>> incrementer;
 
-						{
-							// Before a thread idles, check to trigger a tasks done event.
-							std::unique_lock<std::mutex> tasksLck(threadPool->tasksMtx);
-							{
-								std::lock_guard<std::mutex> threadsLckGuard(
-									threadPool->threadsMtx);
-								std::lock_guard<std::mutex> cIdleThreadsLckGuard(
-									threadPool->cIdleThreadsMtx);
+				{
+					// Before a thread idles, check to trigger a tasks done event.
+					std::unique_lock<std::mutex> tasksLck(threadPool->tasksMtx);
+					{
+						std::lock_guard<std::mutex> threadsLckGuard(threadPool->threadsMtx);
+						std::lock_guard<std::mutex> cIdleThreadsLckGuard(
+							threadPool->cIdleThreadsMtx);
 
-								// Increment via constructor.
-								// If failure before destructor, the decrementing destructor
-								// will be called automatically.
-								incrementer.reset(
-									new Error::Incrementer(threadPool->cIdleThreads));
+						// Increment via constructor.
+						// If failure before destructor, the decrementing destructor
+						// will be called automatically.
+						incrementer.reset(new Error::Incrementer(threadPool->cIdleThreads));
 
-								if (
-									threadPool->tasks.empty() &&
-									threadPool->cIdleThreads == threadPool->threads.size()) {
-									threadPool->noTasksEv.notify_all();
-								}
-							}
-
-							// Idle with just the tasksLck lock.
-							threadPool->newTaskEv.wait(tasksLck, [threadPool]() {
-								return !threadPool->tasks.empty() || threadPool->destructing;
-							});
-
-							{
-								std::lock_guard<std::mutex> threadsLckGuard(
-									threadPool->threadsMtx);
-								std::lock_guard<std::mutex> cIdleThreadsLckGuard(
-									threadPool->cIdleThreadsMtx);
-
-								// Decrement via destructor.
-								incrementer.reset();
-							}
-
-							// Exit if necessary.
-							if (threadPool->destructing) {
-								return;
-							}
-
-							// Otherwise, take a task.
-							task.reset(new Task(threadPool->tasks.front()));
-							threadPool->tasks.pop();
-
-							// Release tasksMtx.
+						if (
+							threadPool->tasks.empty() &&
+							threadPool->cIdleThreads == threadPool->threads.size()) {
+							threadPool->noTasksEv.notify_all();
 						}
+					}
 
-						// Execute the task. Task pointer is automatically freed afterwards.
-						(*task)();
-					},
-					RAIN_ERROR_LOCATION)(threadPool);
+					// Idle with just the tasksLck lock.
+					threadPool->newTaskEv.wait(tasksLck, [threadPool]() {
+						return !threadPool->tasks.empty() || threadPool->destructing;
+					});
+
+					{
+						std::lock_guard<std::mutex> threadsLckGuard(threadPool->threadsMtx);
+						std::lock_guard<std::mutex> cIdleThreadsLckGuard(
+							threadPool->cIdleThreadsMtx);
+
+						// Decrement via destructor.
+						incrementer.reset();
+					}
+
+					// Exit if necessary.
+					if (threadPool->destructing) {
+						return;
+					}
+
+					// Otherwise, take a task.
+					task.reset(new Task(threadPool->tasks.front()));
+					threadPool->tasks.pop();
+
+					// Release tasksMtx.
+				}
+
+				// Execute the task. Task pointer is automatically freed afterwards.
+				Rain::Error::consumeThrowable(*task, RAIN_ERROR_LOCATION)();
 			}
 		}
 
 		// Block until all tasks completed and none are in queue, or up to a
 		// timeout. Return false if all tasks completed, or true on
 		// timeout.
-		template <typename Clock = std::chrono::steady_clock>
-		bool blockForTasks(Time::Timeout<Clock> timeout = {}) {
+		bool blockForTasks(Time::Timeout timeout = {}) {
 			// If no tasks, return immediately.
 			{
 				std::lock_guard<std::mutex> tasksLckGuard(this->tasksMtx);
@@ -207,42 +205,36 @@ namespace Rain::Multithreading {
 
 			// Otherwise, wait for event.
 			std::unique_lock<std::mutex> tasksLck(this->tasksMtx);
-			std::function<bool()> predicate([this]() {
+			auto predicate = [this]() {
 				// tasksMtx is locked in predicate.
 
 				std::lock_guard<std::mutex> threadsLckGuard(this->threadsMtx);
 				std::lock_guard<std::mutex> cIdleThreadsLckGuard(this->cIdleThreadsMtx);
 				return this->tasks.empty() &&
 					this->cIdleThreads == this->threads.size();
-			});
+			};
 
 			if (timeout.isInfinite()) {
 				this->noTasksEv.wait(tasksLck, predicate);
 				return false;
 			} else {
 				return !this->noTasksEv.wait_until(
-					tasksLck, timeout.getTimeoutTime(), predicate);
+					tasksLck, timeout.asTimepoint(), predicate);
 			}
 		}
 
 		~ThreadPool() {
-			// Exceptions only occur on programmer error.
-			Error::consumeThrowable(
-				[this]() {
-					// Break any idle threads.
-					this->destructing = true;
-					this->newTaskEv.notify_all();
+			// Break any idle threads.
+			this->destructing = true;
+			this->newTaskEv.notify_all();
 
-					// Wait on remaining busy threads to shutdown.
-					// Any tasks not completed at this point won't be completed.
-					// Do not need to lock mutexes, since only ThreadFnc may be executing
-					// here, and that does not modify this->threads.
-					for (auto it = this->threads.begin(); it != this->threads.end();
-							 it++) {
-						it->join();
-					}
-				},
-				RAIN_ERROR_LOCATION)();
+			// Wait on remaining busy threads to shutdown.
+			// Any tasks not completed at this point won't be completed.
+			// Do not need to lock mutexes, since only ThreadFnc may be executing
+			// here, and that does not modify this->threads.
+			for (auto it = this->threads.begin(); it != this->threads.end(); it++) {
+				it->join();
+			}
 		}
 	};
 }

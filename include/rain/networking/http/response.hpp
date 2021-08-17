@@ -1,29 +1,14 @@
 // Response-specific HTTP parsing.
 #pragma once
 
-#include "../request-response/response.hpp"
+#include "../req-res/response.hpp"
 #include "message.hpp"
 #include "status-code.hpp"
 
 namespace Rain::Networking::Http {
-	template <typename ProtocolMessage>
-	class ResponseInterface
-			: public RequestResponse::ResponseInterface<ProtocolMessage> {
-		public:
-		typedef ProtocolMessage Message;
-
-		private:
-		// SuperInterface aliases the superclass.
-		typedef RequestResponse::ResponseInterface<Message> SuperInterface;
-
-		// Interface aliases this class.
-		typedef ResponseInterface<Message> Interface;
-
-		protected:
-		// Tag aliases for sendWith/recvWith convenience.
-		typedef typename SuperInterface::InterfaceTag SuperTag;
-		typedef typename SuperInterface::template Tag<Interface> InterfaceTag;
-
+	class ResponseMessageSpecInterface
+			: virtual public MessageSpecInterface,
+				virtual public ReqRes::ResponseMessageSpecInterface {
 		public:
 		// Exception class carries over most errors from Message parsing.
 		enum class Error {
@@ -60,47 +45,6 @@ namespace Rain::Networking::Http {
 			}
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
-
-		// Three-digit status code from RFC 2616.
-		StatusCode statusCode;
-
-		// Human-readable reason phrase.
-		std::string reasonPhrase;
-
-		// Carry over constructor which recvs from a Socket.
-		template <typename... MessageArgs>
-		ResponseInterface(
-			StatusCode statusCode = StatusCode::OK,
-			Headers &&headers = Headers(),
-			Body &&body = Body(),
-			// An empty reason phrase will use the default one for the statusCode.
-			std::string const &reasonPhrase = "",
-			Version version = Version::_1_1,
-			MessageArgs &&...args)
-				: SuperInterface(
-						// bind version to rvalue reference to be perfect forwarded by
-						// SuperInterface to Message.
-						std::move(headers),
-						std::move(body),
-						version,
-						std::forward<MessageArgs>(args)...),
-					statusCode(statusCode),
-					reasonPhrase(reasonPhrase) {}
-		ResponseInterface(ResponseInterface &&other)
-				: SuperInterface(std::move(other)),
-					statusCode(other.statusCode),
-					reasonPhrase(std::move(other.reasonPhrase)),
-					version_0_9BodyIStreamBuf(
-						std::move(other.version_0_9BodyIStreamBuf)) {}
-
-		// Not copyable.
-		ResponseInterface(ResponseInterface const &) = delete;
-		ResponseInterface &operator=(ResponseInterface const &) = delete;
-
-		private:
-		// Provided for subclass override.
-		virtual void sendWithImpl(InterfaceTag, std::ostream &){};
-		virtual void recvWithImpl(InterfaceTag, std::istream &){};
 
 		protected:
 		// Custom streambuf for HTTP/0.9 body parsing, which prioritizes the first
@@ -160,13 +104,50 @@ namespace Rain::Networking::Http {
 				return traits_type::to_int_type(*this->gptr());
 			}
 		};
+	};
 
-		std::unique_ptr<std::streambuf> version_0_9BodyIStreamBuf;
+	template <typename Message>
+	class ResponseMessageSpec : public Message,
+															virtual public ResponseMessageSpecInterface {
+		public:
+		// Three-digit status code from RFC 2616.
+		StatusCode statusCode;
+
+		// Human-readable reason phrase.
+		std::string reasonPhrase;
 
 		private:
+		std::unique_ptr<std::streambuf> version_0_9BodyIStreamBuf;
+
+		public:
+		// Carry over constructor which recvs from a Socket.
+		ResponseMessageSpec(
+			StatusCode statusCode = {},
+			Headers &&headers = {},
+			Body &&body = {},
+			// An empty reason phrase will use the default one for the statusCode.
+			std::string const &reasonPhrase = {},
+			Version version = {})
+				: Message(
+						// bind version to rvalue reference to be perfect forwarded by
+						// SuperInterface to Message.
+						std::move(headers),
+						std::move(body),
+						version),
+					statusCode(statusCode),
+					reasonPhrase(reasonPhrase) {}
+		ResponseMessageSpec(ResponseMessageSpec &&other)
+				: Message(std::move(other)),
+					statusCode(other.statusCode),
+					reasonPhrase(std::move(other.reasonPhrase)),
+					version_0_9BodyIStreamBuf(
+						std::move(other.version_0_9BodyIStreamBuf)) {}
+
 		// Overrides for Super versions implement protocol behavior.
-		virtual void sendWithImpl(SuperTag, std::ostream &stream) final override {
-			this->sendWithImpl(InterfaceTag(), stream);
+		virtual void sendWith(std::ostream &stream) override {
+			// pp-chain.
+			this->ppEstimateContentLength(true);
+			this->ppDefaultContentType();
 
 			switch (this->version) {
 				case Version::_1_0:
@@ -193,9 +174,7 @@ namespace Rain::Networking::Http {
 			stream << this->body;
 			stream.flush();
 		}
-		virtual void recvWithImpl(SuperTag, std::istream &stream) final override {
-			this->recvWithImpl(InterfaceTag(), stream);
-
+		virtual void recvWith(std::istream &stream) override {
 			// Version. Same as in Request, reserve 11 characters.
 			std::string versionStr(11, ' ');
 			try {
@@ -280,12 +259,11 @@ namespace Rain::Networking::Http {
 				throw Exception(Error::MALFORMED_BODY);
 			}
 		}
-
-		private:
-		// Custom streambuf for HTTP/0.9 responses which need a few bytes put back
-		// to the beginning the buffer before receiving the rest from Socket.
 	};
 
-	// Response final specialization.
-	typedef ResponseInterface<Message> Response;
+	// Shorthand.
+	class Response : public ResponseMessageSpec<MessageSpec<ReqRes::Response>> {
+		using ResponseMessageSpec<
+			MessageSpec<ReqRes::Response>>::ResponseMessageSpec;
+	};
 }

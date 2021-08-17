@@ -21,12 +21,13 @@ TEST_OBJS := $(join $(addsuffix /, \
 TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
 
 # Flags for build. Debug by default.
-CXX := g++
+CXX ?= clang++
 CXXFLAGS := -I$(INCLUDE_DIR) -std=c++17 -m64 -pthread -Wall -Wextra -D_CONSOLE
 CXXFLAGS_DEBUG := -D _DEBUG -g -O0
 CXXFLAGS_RELEASE := -D NDEBUG -Ofast
-CXXFLAGS_INSTRUMENT := -fsanitize=address,undefined,leak
+CXXFLAGS_INSTRUMENT :=
 LDLIBS := -pthread -lresolv
+LDLIBS_INSTRUMENT := -fsanitize=address,undefined,leak
 
 # Default to DEBUG builds. Check if RELEASE=1 is set.
 ifeq ($(RELEASE), 1)
@@ -37,6 +38,7 @@ endif
 
 ifeq ($(INSTRUMENT), 1)
   CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_INSTRUMENT)
+	LDLIBS := $(LDLIBS) $(LDLIBS_INSTRUMENT)
 endif
 
 # -lstdc++fs is included by default on MacOS and cannot be specified on the \

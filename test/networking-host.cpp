@@ -61,5 +61,21 @@ int main() {
 		assert(stream.str() == "google.com:80");
 	}
 
+	// Copy/move semantics.
+	{
+		Host host1("google.com:80");
+
+		// Copy.
+		Host host2(host1);
+
+		assert(host1 == host2);
+
+		// Move.
+		Host host3(std::move(host1));
+
+		assert(host1 != host2);
+		assert(host3 == host2);
+	}
+
 	return 0;
 }

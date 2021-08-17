@@ -1,20 +1,19 @@
 <VSTemplate Version="3.0.0"
   xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" Type="Project">
-  <TemplateData>
-    <Name>rain</Name>
-    <Description>Rain C++ library test.</Description>
-    <Icon>rain.ico</Icon>
-    <ProjectType>VC</ProjectType>
-    <SortOrder>0</SortOrder>
-    <CreateNewFolder>true</CreateNewFolder>
-    <DefaultName>rain</DefaultName>
-    <ProvideDefaultName>true</ProvideDefaultName>
-    <LocationField>Enabled</LocationField>
-    <EnableLocationBrowseButton>true</EnableLocationBrowseButton>
-  </TemplateData>
-  <TemplateContent>
-    <Project TargetFileName="rain.vcxproj" File="rain.vcxproj" ReplaceParameters="true">
-      <ProjectItem ReplaceParameters="false" TargetFileName="$projectname$.vcxproj.filters">rain.vcxproj.filters</ProjectItem>
-    </Project>
-  </TemplateContent>
+	<TemplateData>
+		<Name>rain</Name>
+		<Description>Rain C++ library test.</Description>
+		<Icon>rain.ico</Icon>
+		<ProjectType>VC</ProjectType>
+		<SortOrder>0</SortOrder>
+		<CreateNewFolder>true</CreateNewFolder>
+		<DefaultName>rain</DefaultName>
+		<ProvideDefaultName>true</ProvideDefaultName>
+		<LocationField>Enabled</LocationField>
+		<EnableLocationBrowseButton>true</EnableLocationBrowseButton>
+	</TemplateData>
+	<TemplateContent>
+		<Project TargetFileName="rain.vcxproj" File="rain.vcxproj" ReplaceParameters="true">
+		</Project>
+	</TemplateContent>
 </VSTemplate>

@@ -2,9 +2,9 @@
 // exceptions.
 #pragma once
 
+#include "../functional.hpp"
 #include "../string/string.hpp"
 
-#include <functional>
 #include <iostream>
 
 // Retrieves caller site for debugging.
@@ -15,7 +15,7 @@ namespace Rain::Error {
 	// (optional).
 	//
 	// The return type of the callable must be default-constructable in case of
-	// throw. Namely char const * may error as its default constructor does not
+	// throw. Namely, char const * may error as its default constructor does not
 	// necessarily point to a valid location.
 	//
 	// consumeThrowable must be called with Args... matching the parameters to the
@@ -23,15 +23,20 @@ namespace Rain::Error {
 	// does not accomodate that signature.
 	//
 	// Crashes may still be caused via signal crashes (dividing by 0, etc.).
-	template <typename... Args, typename Callable>
+	template <typename Callable>
 	auto consumeThrowable(
-		Callable const &callable,
+		// Perfect forwarding rvalue-reference to allow for inline construction and
+		// later move-capture.
+		Callable &&callable,
 		// RAIN_ERROR_LOCATION will identify caller site on-throw. Otherwise, an
-		// empty location will silently consume.
+		// empty location will silently cons.ume.
 		std::string const &location = "") {
-		return [callable, location](Args... args) {
+		// Perfect-forward the callable in. Preserves mutability, copies lambdas &
+		// function pointers, but moves std::functions if requested.
+		return [capturedCallable = std::forward<Callable>(callable),
+						location](auto &&...args) mutable {
 			try {
-				return callable(std::forward<Args>(args)...);
+				return capturedCallable(std::forward<decltype(args)>(args)...);
 			} catch (std::exception const &exception) {
 				// Output exception if possible.
 				if (!location.empty()) {
@@ -40,13 +45,17 @@ namespace Rain::Error {
 			} catch (...) {
 				// Consume generic exception, do nothing.
 			}
+
 			if (!location.empty()) {
 				std::cerr << "Consumed exception at " << location << "." << std::endl;
 			}
 
 			// Gets the return type of the callable at compile-time, and invokes its
 			// default constructor at runtime.
-			return typename decltype(std::function{callable})::result_type();
+			//
+			// Allows void return type as well.
+			return decltype(capturedCallable(
+				std::forward<decltype(args)>(args)...))();
 		};
 	}
 }
