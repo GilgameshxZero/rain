@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.1
+
+Resolve Client constructor ambiguities in `server`-tests on POSIX.
+
 ## 7.1.0 “Rosario”
 
 This “minor” release introduces sweeping inheritance and public interface changes to the `Networking` module as well as small changes to other components.

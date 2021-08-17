@@ -129,7 +129,7 @@ int main() {
 
 		// Basic request to /simple.
 		{
-			MyClient client({"localhost", server.host().service});
+			MyClient client(Host{"localhost", server.host().service});
 			std::cout << client.host() << " connected to " << client.peerHost()
 								<< std::endl
 								<< std::endl;
@@ -144,7 +144,7 @@ int main() {
 
 		// Basic 404ing request.
 		{
-			MyClient client({"localhost", server.host().service});
+			MyClient client(Host{"localhost", server.host().service});
 			std::cout << client.host() << " connected to " << client.peerHost()
 								<< std::endl
 								<< std::endl;
@@ -159,7 +159,7 @@ int main() {
 
 		// Server and client ignore 0.9 headers and server ignores body.
 		{
-			MyClient client({"localhost", server.host().service});
+			MyClient client(Host{"localhost", server.host().service});
 			std::cout << client.host() << " connected to " << client.peerHost()
 								<< std::endl
 								<< std::endl;
@@ -182,7 +182,7 @@ int main() {
 
 		// Follow-up chunked request.
 		{
-			MyClient client({"localhost", server.host().service});
+			MyClient client(Host{"localhost", server.host().service});
 			std::cout << client.host() << " connected to " << client.peerHost()
 								<< std::endl
 								<< std::endl;
@@ -219,7 +219,7 @@ int main() {
 
 		// Idling over 5s will close connection.
 		{
-			MyClient client({"localhost", server.host().service});
+			MyClient client(Host{"localhost", server.host().service});
 			std::cout << client.host() << " connected to " << client.peerHost()
 								<< std::endl
 								<< std::endl;

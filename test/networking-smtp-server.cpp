@@ -85,7 +85,7 @@ int main() {
 		std::cout << "Serving on " << server.host() << std::endl;
 
 		{
-			MyClient client({"localhost", server.host().service});
+			MyClient client(Host{"localhost", server.host().service});
 			std::cout << client.host() << " connected to " << client.peerHost()
 								<< std::endl
 								<< std::endl;
