@@ -24,7 +24,9 @@
       <ConformanceMode>true</ConformanceMode>
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+
+      <!-- _CONSOLE is not defined, since rain is used with WinAPI projects as well. -->
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 
       <!-- Disable inheritance via dominance warning. -->
       <DisableSpecificWarnings>4250</DisableSpecificWarnings>
@@ -34,6 +36,8 @@
       <ProfileGuidedDatabase>$(IntDir)$(TargetName).pgd</ProfileGuidedDatabase>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies></AdditionalDependencies>
+
+      <!-- The Linker subsystem may be overwritten with pragmas. See the windows test for details. -->
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>

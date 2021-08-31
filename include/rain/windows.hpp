@@ -28,6 +28,8 @@
 #define NOMINMAX
 #endif
 
+#pragma comment(lib, "User32.lib")
+
 #include <Windows.h>
 
 #endif

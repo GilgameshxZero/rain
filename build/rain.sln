@@ -51,6 +51,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "networking-smtp-server", "n
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "networking-http-headers", "networking-http-headers\networking-http-headers.vcxproj", "{118B9847-29A8-430F-9FA8-D35E3582153E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windows", "windows\windows.vcxproj", "{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		debug|x64 = debug|x64
@@ -153,6 +155,10 @@ Global
 		{118B9847-29A8-430F-9FA8-D35E3582153E}.debug|x64.Build.0 = debug|x64
 		{118B9847-29A8-430F-9FA8-D35E3582153E}.release|x64.ActiveCfg = release|x64
 		{118B9847-29A8-430F-9FA8-D35E3582153E}.release|x64.Build.0 = release|x64
+		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.debug|x64.ActiveCfg = debug|x64
+		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.debug|x64.Build.0 = debug|x64
+		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.release|x64.ActiveCfg = release|x64
+		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.release|x64.Build.0 = release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
