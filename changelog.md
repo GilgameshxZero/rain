@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.5
+
+Set default automation shell to CMD on Windows for new VSCode update.
+
 ## 7.1.4
 
 Rename `RAIN_VERSION_BUILD` to `VERSION_BUILD` in makefile to be more consistent with derivative projects.
