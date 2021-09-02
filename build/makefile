@@ -15,10 +15,10 @@ RAIN_INCLUDES := $(filter-out $(VERSION_BUILD_INCLUDE), \
 	$(shell find $(INCLUDE_DIR) -name *.hpp))
 
 TEST_SRCS := $(wildcard $(TEST_DIR)*.cpp)
-TEST_NAMES := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
+TEST_SRC_NAMES := $(basename $(notdir $(wildcard $(TEST_DIR)*.cpp)))
 TEST_OBJS := $(join $(addsuffix /, \
-	$(addprefix $(OBJ_DIR), $(TEST_NAMES))), $(addsuffix .o, $(TEST_NAMES)))
-TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_NAMES))
+	$(addprefix $(OBJ_DIR), $(TEST_SRC_NAMES))), $(addsuffix .o, $(TEST_SRC_NAMES)))
+TEST_BINS := $(addprefix $(BIN_DIR), $(TEST_SRC_NAMES))
 
 # Flags for build. Debug by default.
 CXX ?= clang++
@@ -53,14 +53,10 @@ endif
 
 # Mark .PHONY for rules to avoid compiling files named the same as rules.
 
-# Build and run all tests in order.
-.PHONY: runall
-runall: $(TEST_NAMES)
-	@cd $(BIN_DIR); \
-	for file in $(TEST_NAMES); do \
-		printf "\n-------- $$file --------\n"; \
-		./$$file; \
-	done
+# Rules for single tests just redirect to test binaries.
+# Enable second expansion for some fancy pattern matching later.
+.SECONDEXPANSION:
+$(TEST_SRC_NAMES): $(VERSION_BUILD_INCLUDE) $(BIN_DIR)$$@
 
 # Run a single test whose name is specified by TEST.
 .PHONY: run
@@ -69,17 +65,21 @@ run: $(TEST)
 
 # Build all tests.
 .PHONY: all
-all: $(TEST_NAMES)
+all: $(TEST_SRC_NAMES)
+
+# Build and run all tests in order.
+.PHONY: run-all
+run-all: $(TEST_SRC_NAMES)
+	@cd $(BIN_DIR); \
+	for file in $(TEST_SRC_NAMES); do \
+		printf "\n-------- $$file --------\n"; \
+		./$$file; \
+	done
 
 # Delete intermediate files.
 .PHONY: clean
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
-
-# Rules for single tests just redirect to test binaries.
-# Enable second expansion for some fancy pattern matching later.
-.SECONDEXPANSION:
-$(TEST_NAMES): $(VERSION_BUILD_INCLUDE) $(BIN_DIR)$$@
 
 # Static rules to nest one directory deep inside ../obj.
 # Link rule.
@@ -88,8 +88,8 @@ $(TEST_BINS): $(BIN_DIR)% : $(OBJ_DIR)$$*/$$*.o
 	$(CXX) $< $(LDLIBS) -o $@
 
 # Compile rule. Stem % matches TEST_NAME/TEST_NAME, in which / is replaced \
-	with a space and the first word is extracted for the cpp file name.
-$(TEST_OBJS): $(OBJ_DIR)%.o : $(TEST_DIR)$$(firstword $$(subst /, ,$$*)).cpp \
+	with a space and the last word is extracted for the cpp file name.
+$(TEST_OBJS): $(OBJ_DIR)%.o : $(TEST_DIR)$$(lastword $$(subst /, ,$$*)).cpp \
 	$(RAIN_INCLUDES)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -99,6 +99,6 @@ $(VERSION_BUILD_INCLUDE): $(RAIN_INCLUDES) $(TEST_SRCS)
 	@read line < $(VERSION_BUILD_INCLUDE); \
 	TOKENS=($$line); \
 	RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
-	echo -e "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD\c" > \
+	echo "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD" > \
 		$(VERSION_BUILD_INCLUDE); \
 	echo VERSION_BUILD: $$RAIN_VERSION_BUILD.
