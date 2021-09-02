@@ -26,10 +26,10 @@ To run the tests under `test/`, one needs to invoke one of several build procedu
 
 `build/makefile` contains several functions for building:
 
-* `runall`:  Builds and runs all tests in `test/` consecutively.
+* `$TEST_NAME`: Build a single test with the name `$TEST_NAME`.
 * `run TEST=$TEST_NAME`: Builds and runs a single test with the name `$TEST_NAME`.
 * `all`: Build all the tests into `bin/`.
-* `$TEST_NAME`: Build a single test with the name `$TEST_NAME`.
+* `run-all`:  Builds and runs all tests in `test/` consecutively.
 * `clean`: Deletes the `bin/` and `obj/` intermediates directories.
 
 Builds default to debug. Specify `RELEASE=1` to build with release optimization. Specify `INSTRUMENT=1` to build with instrumentation options.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.3
+
+Update `readme` to reflect new `makefile`.
+
 ## 7.1.2
 
 This release primarily focuses on improving compatibility with Windows derivative project builds.
