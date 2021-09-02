@@ -1,8 +1,8 @@
 <VSTemplate Version="3.0.0"
-  xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" Type="Project">
+	xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" Type="Project">
 	<TemplateData>
 		<Name>rain</Name>
-		<Description>Rain C++ library test.</Description>
+		<Description>Rain C++ library test and derivative projects.</Description>
 		<Icon>rain.ico</Icon>
 		<ProjectType>VC</ProjectType>
 		<SortOrder>0</SortOrder>

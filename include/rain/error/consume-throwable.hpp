@@ -4,6 +4,7 @@
 
 #include "../functional.hpp"
 #include "../string/string.hpp"
+#include "../string/stringify.hpp"
 
 #include <iostream>
 

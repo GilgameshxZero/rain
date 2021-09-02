@@ -1,5 +1,23 @@
 # Changelog
 
+## 7.1.2
+
+This release primarily focuses on improving compatibility with Windows derivative project builds.
+
+* `build.bat` no longer defines `_CONSOLE` by default, to be compatible with both CONSOLE and WINDOWS rain tests.
+* `makefile` uses updated naming for some variables, and only builds but doesn’t run by default. In addition, it now correctly appends a `\n` to `build.hpp`.
+  * The proper ending of `build.hpp` is important if it is to be included in a resource `.rc` file, since the resource compiler is a limited-syntax C compiler and needs the trailing newline for all files to compile properly.
+* `rain-debug.props` and `rain-release.props` is merged into `rain.props` to reduce project configuration overhead in `.vcxproj`.
+  * `rain.props` does not include the rain includes by default; this is to be specified in each project properties. This allows for derivative projects to use `rain.props` directly without including unnecessary directories.
+* Added test `windows` for general Windows-library tests.
+* All existing Visual Studio projects updated to use the new property sheets specifications.
+* `STRINGIFY` macro is separated out into `string/stringify.hpp` for possible inclusion in `.rc` files if usage is needed.
+* Removed incorrect specification of `_WIN32_WINNT`, which is set by the compiler, not by us, for the current Windows version.
+* Explicitly undefine `min` and `max` for all `algorithm` and `Windows.h` includes, specifically so that the resource compiler does not get confused.
+* Add exceptions for `Rain::Windows` simliar to `Rain::Networking`, and code-share the `FormatMessage` block.
+
+The change of usages of `strto*` to `sto*` was considered, but ultimately rejected, as the latter throw exceptions and ultimately lead to bulkier code.
+
 ## 7.1.1
 
 Resolve Client constructor ambiguities in `server`-tests on POSIX.

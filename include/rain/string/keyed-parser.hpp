@@ -63,6 +63,9 @@ namespace Rain::String {
 		// Overloads for getParser which return a value parser based on the type to
 		// store into. Bools only parse to true if the string is some variation of
 		// "true" or a non-zero number.
+		//
+		// Internally, rain uses the strto* variants instead of the sto* variants as
+		// the former returns valid results on error and do not throw.
 		Parser getParser(bool &store) const {
 			return Parser([&store](std::string const &value) {
 				if (std::strtoll(value.c_str(), nullptr, 10) != 0) {
@@ -100,6 +103,13 @@ namespace Rain::String {
 		Parser getParser(unsigned long &store) const noexcept {
 			return Parser([&store](std::string const &value) {
 				store = std::strtoul(value.c_str(), nullptr, 10);
+				return false;
+			});
+		}
+		// double parser.
+		Parser getParser(double &store) const noexcept {
+			return Parser([&store](std::string const &value) {
+				store = std::stod(value);
 				return false;
 			});
 		}

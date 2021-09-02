@@ -12,3 +12,11 @@
 // ambiguity.
 using std::min;
 using std::max;
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
