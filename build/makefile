@@ -98,7 +98,7 @@ $(TEST_OBJS): $(OBJ_DIR)%.o : $(TEST_DIR)$$(lastword $$(subst /, ,$$*)).cpp \
 $(VERSION_BUILD_INCLUDE): $(RAIN_INCLUDES) $(TEST_SRCS)
 	@read line < $(VERSION_BUILD_INCLUDE); \
 	TOKENS=($$line); \
-	RAIN_VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
-	echo "$${TOKENS[0]} $${TOKENS[1]} $$RAIN_VERSION_BUILD" > \
+	VERSION_BUILD=$$(($${TOKENS[2]} + 1)); \
+	echo "$${TOKENS[0]} $${TOKENS[1]} $$VERSION_BUILD" > \
 		$(VERSION_BUILD_INCLUDE); \
-	echo VERSION_BUILD: $$RAIN_VERSION_BUILD.
+	echo VERSION_BUILD: $$VERSION_BUILD.
