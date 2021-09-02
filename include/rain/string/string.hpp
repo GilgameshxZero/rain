@@ -24,17 +24,6 @@
 #include <sstream>
 #include <string>
 
-// Macro for stringification. Use STRINGIFY(x) on variable x to stringify its
-// value.
-#ifndef STRINGIFY_INNER
-
-#define STRINGIFY_INNER(x) #x
-#ifndef STRINGIFY
-#define STRINGIFY(x) STRINGIFY_INNER(x)
-#endif
-
-#endif
-
 namespace Rain {
 	// strcasecmp does not exist on Windows.
 	inline int strcasecmp(char const *left, char const *right) {
@@ -105,7 +94,7 @@ namespace Rain::String {
 	}
 
 	// Convert any time to any other type using std::stringstream. Thread-safe.
-	// Prefer specialized methods if available (strtoll, to_string, etc.).
+	// Prefer specialized methods if available (stoll, to_string, etc.).
 	template <typename To, typename From>
 	inline To anyToAny(From from) {
 		To to;

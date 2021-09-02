@@ -8,7 +8,7 @@
 #pragma comment(lib, "Gdiplus.lib")
 
 #include "algorithm/algorithm.hpp"
-#include "windows.hpp"
+#include "windows/windows.hpp"
 
 // min/max are defined within Gdiplus as well, and this avoids double definition
 // errors.

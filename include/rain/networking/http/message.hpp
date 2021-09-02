@@ -150,8 +150,7 @@ namespace Rain::Networking::Http {
 						// -2 for \r\0.
 						chunkLenBuffer.resize(
 							std::max(std::streamsize(0), chunkLenStream.gcount() - 2));
-						this->chunkLenRemaining =
-							std::strtoumax(chunkLenBuffer.c_str(), NULL, 10);
+						this->chunkLenRemaining = std::stoull(chunkLenBuffer.c_str());
 
 						// If chunk length parsed to 0, we are done.
 						if (this->chunkLenRemaining == 0) {

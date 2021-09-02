@@ -64,9 +64,7 @@ namespace Rain::Networking::Http {
 		// Invalid value for contentLength is SIZE_MAX.
 		std::size_t contentLength() {
 			auto it = this->find("Content-Length");
-			return it == this->end()
-				? 0
-				: std::strtoumax(it->second.c_str(), nullptr, 10);
+			return it == this->end() ? 0 : std::stoull(it->second);
 		}
 		void contentLength(std::size_t value) {
 			this->operator[]("Content-Length") = std::to_string(value);

@@ -65,7 +65,7 @@ namespace Rain::String {
 		// "true" or a non-zero number.
 		Parser getParser(bool &store) const {
 			return Parser([&store](std::string const &value) {
-				if (std::strtoll(value.c_str(), nullptr, 10) != 0) {
+				if (std::stoll(value) != 0) {
 					store = true;
 				} else {
 					std::string mValue(value);
@@ -78,28 +78,35 @@ namespace Rain::String {
 		// long long parser.
 		Parser getParser(long long &store) const noexcept {
 			return Parser([&store](std::string const &value) {
-				store = std::strtoll(value.c_str(), nullptr, 10);
+				store = std::stoll(value);
 				return false;
 			});
 		}
 		// unsigned long long parser.
 		Parser getParser(unsigned long long &store) const noexcept {
 			return Parser([&store](std::string const &value) {
-				store = std::strtoull(value.c_str(), nullptr, 10);
+				store = std::stoull(value);
 				return false;
 			});
 		}
 		// long parser.
 		Parser getParser(long &store) const noexcept {
 			return Parser([&store](std::string const &value) {
-				store = std::strtol(value.c_str(), nullptr, 10);
+				store = std::stol(value);
 				return false;
 			});
 		}
 		// unsigned long parser.
 		Parser getParser(unsigned long &store) const noexcept {
 			return Parser([&store](std::string const &value) {
-				store = std::strtoul(value.c_str(), nullptr, 10);
+				store = std::stoul(value);
+				return false;
+			});
+		}
+		// double parser.
+		Parser getParser(double &store) const noexcept {
+			return Parser([&store](std::string const &value) {
+				store = std::stod(value);
 				return false;
 			});
 		}
