@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.4
+
+Rename `RAIN_VERSION_BUILD` to `VERSION_BUILD` in makefile to be more consistent with derivative projects.
+
 ## 7.1.3
 
 Update `readme` to reflect new `makefile`.
