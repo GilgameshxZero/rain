@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.6
+
+Allow specifying `MediaType` parameter as separate string in constructor.
+
 ## 7.1.5
 
 Set default automation shell to CMD on Windows for new VSCode update.

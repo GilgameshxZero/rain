@@ -104,6 +104,8 @@ namespace Rain::Networking {
 				: value(MediaType::fromStr(str.substr(0, str.find(';')))),
 					parameter(str.substr(std::min(str.find(';'), str.length() - 1) + 1)) {
 		}
+		MediaType(std::string const &value, std::string const &parameter)
+				: value(MediaType::fromStr(value)), parameter(parameter) {}
 		operator Value() const noexcept { return this->value; }
 		explicit operator bool() = delete;
 		operator std::string() const noexcept {
