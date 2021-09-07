@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.7
+
+Proper `MediaType` for `.webm`. No more unused variable warnings for `Windows::Exception` on non-Windows compile.
+
 ## 7.1.6
 
 Allow specifying `MediaType` parameter as separate string in constructor.

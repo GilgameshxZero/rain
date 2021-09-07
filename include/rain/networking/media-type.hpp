@@ -8,7 +8,7 @@
 namespace Rain::Networking {
 	class MediaType {
 		public:
-		enum Type { TEXT = 0, IMAGE, AUDIO, APPLICATION, FONT };
+		enum Type { TEXT = 0, IMAGE, AUDIO, VIDEO, APPLICATION, FONT };
 		enum Value {
 			PLAIN = 0,
 			HTML,
@@ -23,6 +23,8 @@ namespace Rain::Networking {
 			SVG_XML,
 
 			MPEG,
+
+			WEBM,
 
 			OCTET_STREAM,
 			PDF,
@@ -68,6 +70,9 @@ namespace Rain::Networking {
 
 			{"audio/mpeg", MPEG},
 			{".mp3", MPEG},
+
+			{"video/webm", WEBM},
+			{".webm", WEBM},
 
 			{"application/octet-stream", OCTET_STREAM},
 			{"application/pdf", PDF},
@@ -136,6 +141,9 @@ namespace Rain::Networking {
 					case MPEG:
 						return "audio/mpeg";
 
+					case WEBM:
+						return "video/webm";
+
 					case OCTET_STREAM:
 					default:
 						return "application/octet-stream";
@@ -175,6 +183,9 @@ namespace Rain::Networking {
 
 				case MPEG:
 					return Type::AUDIO;
+
+				case WEBM:
+					return Type::VIDEO;
 
 				case OCTET_STREAM:
 				case PDF:

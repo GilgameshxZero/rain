@@ -10,8 +10,8 @@ namespace Rain::Windows {
 		public:
 		// Shared code to translate a value from GetLastError/WSAGetLastError into a
 		// meaningful message.
-		static std::string getLastErrorMessage(int error) noexcept {
 #ifdef RAIN_PLATFORM_WINDOWS
+		static std::string getLastErrorMessage(int error) noexcept {
 			// While Rain builds with UNICODE, we call the ANSI functions here, since
 			// error messages are not to be wide strings. Failure should always free
 			// buffer if it is successfully allocated.
@@ -43,6 +43,7 @@ namespace Rain::Windows {
 			}
 			return msg;
 #else
+		static std::string getLastErrorMessage(int) noexcept {
 			return "Attempted to retrieve Windows exception message on non-Windows "
 						 "platform.";
 #endif
