@@ -17,6 +17,9 @@ namespace Rain::Networking {
 		// all available interfaces. Empty service will be converted to nullptr when
 		// passed to gai, binding to random port (port 0). Both cannot be empty when
 		// used with gai.
+		//
+		// Usually, node is case-insensitive, but host allows for storage of cased
+		// nodes. Comparison does not take into account case.
 		std::string node, service;
 
 		// Host:Service notation.

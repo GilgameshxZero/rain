@@ -222,28 +222,31 @@ namespace Rain::Networking::Http {
 				throw;
 			} catch (
 				typename RequestMessageSpecInterface::Exception const &exception) {
-				// Send back a helpful error code if possible.
-				switch (exception.getError()) {
-					case RequestMessageSpecInterface::Error::HTTP_VERSION_NOT_SUPPORTED:
-						this->send(
-							ResponseMessageSpec{StatusCode::HTTP_VERSION_NOT_SUPPORTED});
-						break;
-					case RequestMessageSpecInterface::Error::METHOD_NOT_ALLOWED:
-						this->send(ResponseMessageSpec{StatusCode::METHOD_NOT_ALLOWED});
-						break;
-					case RequestMessageSpecInterface::Error::MALFORMED_VERSION:
-					case RequestMessageSpecInterface::Error::MALFORMED_HEADERS:
-					case RequestMessageSpecInterface::Error::MALFORMED_BODY:
-						this->send(ResponseMessageSpec{StatusCode::BAD_REQUEST});
-						break;
-					default:
-						this->send(
-							ResponseMessageSpec{StatusCode::INTERNAL_SERVER_ERROR, {}});
-						break;
-				}
+				// Send back a helpful error code if possible. We may be here because
+				// other end has aborted the connection; so care for send exceptions.
+				Rain::Error::consumeThrowable([this, exception]() {
+					switch (exception.getError()) {
+						case RequestMessageSpecInterface::Error::HTTP_VERSION_NOT_SUPPORTED:
+							this->send(
+								ResponseMessageSpec{StatusCode::HTTP_VERSION_NOT_SUPPORTED});
+							break;
+						case RequestMessageSpecInterface::Error::METHOD_NOT_ALLOWED:
+							this->send(ResponseMessageSpec{StatusCode::METHOD_NOT_ALLOWED});
+							break;
+						case RequestMessageSpecInterface::Error::MALFORMED_VERSION:
+						case RequestMessageSpecInterface::Error::MALFORMED_HEADERS:
+						case RequestMessageSpecInterface::Error::MALFORMED_BODY:
+							this->send(ResponseMessageSpec{StatusCode::BAD_REQUEST});
+							break;
+						default:
+							this->send(
+								ResponseMessageSpec{StatusCode::INTERNAL_SERVER_ERROR, {}});
+							break;
+					}
 
-				// Gracefully close so peer can see error message.
-				Rain::Error::consumeThrowable([this]() { this->shutdown(); })();
+					// Gracefully close so peer can see error message.
+					this->shutdown();
+				})();
 			}
 
 			// No exceptions should leak through here. Any exceptions leaking through
