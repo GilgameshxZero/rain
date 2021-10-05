@@ -420,17 +420,19 @@ namespace Rain::Networking::Smtp {
 			try {
 				throw;
 			} catch (typename RequestMessageSpec::Exception const &exception) {
-				switch (exception.getError()) {
-					case RequestMessageSpec::Error::SYNTAX_ERROR_COMMAND:
-						this->send(ResponseMessageSpec{StatusCode::SYNTAX_ERROR_COMMAND});
-						break;
-					default:
-						this->send(ResponseMessageSpec{StatusCode::TRANSACTION_FAILED});
-						break;
-				}
+				Rain::Error::consumeThrowable([this, exception]() {
+					switch (exception.getError()) {
+						case RequestMessageSpec::Error::SYNTAX_ERROR_COMMAND:
+							this->send(ResponseMessageSpec{StatusCode::SYNTAX_ERROR_COMMAND});
+							break;
+						default:
+							this->send(ResponseMessageSpec{StatusCode::TRANSACTION_FAILED});
+							break;
+					}
 
-				// Graceful close so peer can see message.
-				Rain::Error::consumeThrowable([this]() { this->shutdown(); })();
+					// Graceful close so peer can see message.
+					this->shutdown();
+				})();
 			}
 
 			// No exceptions should leak through here. Any exceptions leaking through

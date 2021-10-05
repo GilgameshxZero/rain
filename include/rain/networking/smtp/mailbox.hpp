@@ -13,25 +13,25 @@ namespace Rain::Networking::Smtp {
 		std::string name;
 
 		// The domain is a host with an unspecified port.
-		Host domain;
+		Host host;
 
 		// name@domain notation. Default construction leaves both empty.
 		Mailbox(std::string const &str = "")
 				: name(str.substr(0, str.find_last_of('@'))),
-					domain(
+					host(
 						str.substr(std::min(str.find_last_of('@'), str.length() - 1) + 1)) {
 		}
 
-		Mailbox(std::string const &name, Host const &domain)
-				: name(name), domain(domain) {}
+		Mailbox(std::string const &name, Host const &host)
+				: name(name), host(host) {}
 
 		operator std::string() const noexcept {
-			return this->name + "@" + this->domain.node;
+			return this->name + "@" + this->host.node;
 		}
 
 		// Equality for unordered_ types.
 		bool operator==(Mailbox const &other) const noexcept {
-			return this->name == other.name && this->domain == other.domain;
+			return this->name == other.name && this->host == other.host;
 		}
 	};
 

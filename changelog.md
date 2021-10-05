@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.10
+
+Rename Mailbox `domain` to `host` to better clarify its type.
+
 ## 7.1.9
 
 Domain names are compared case-insensitively. In particular, SMTP now ignores case for domain names.
