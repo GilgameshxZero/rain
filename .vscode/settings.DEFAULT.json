@@ -6,7 +6,7 @@
 	"editor.tabSize": 2,
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
-	
+
 	"terminal.integrated.automationShell.windows": "C:\\Windows\\System32\\cmd.exe",
 
 	"C_Cpp.default.includePath": ["include/"],

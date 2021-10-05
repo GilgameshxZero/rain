@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.8
+
+Formatting for VSCode build files.
+
 ## 7.1.7
 
 Proper `MediaType` for `.webm`. No more unused variable warnings for `Windows::Exception` on non-Windows compile.

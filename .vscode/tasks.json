@@ -1,60 +1,64 @@
 {
 	"version": "2.0.0",
-	"tasks": [{
-		/* Remove the intermediates directory obj/ and the output directory bin/. */
-		"type": "shell",
-		"label": "clean",
-		"options": { "cwd": "${workspaceFolder}/build" },
-		"presentation": {
-			"clear": true
+	"tasks": [
+		{
+			/* Remove the intermediates directory obj/ and the output directory bin/. */
+			"type": "shell",
+			"label": "clean",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": {
+				"clear": true
+			},
+
+			"command": "make",
+			"args": ["clean"],
+
+			"windows": {
+				"command": "RMDIR",
+				"args": ["/Q", "/S", "..\\bin", "..\\obj"]
+			}
 		},
+		{
+			/* Build the open file (must be within test/) in debug mode. */
+			"type": "shell",
+			"label": "build-debug-x64",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": {
+				"clear": true
+			},
 
-		"command": "make",
-		"args": ["clean"],
+			/* Default build task. */
+			"group": { "kind": "build", "isDefault": true },
 
-		"windows": {
-			"command": "RMDIR",
-			"args": ["/Q", "/S", "..\\bin", "..\\obj"]
-		}
-	}, {
-		/* Build the open file (must be within test/) in debug mode. */
-		"type": "shell",
-		"label": "build-debug-x64",
-		"options": { "cwd": "${workspaceFolder}/build" },
-		"presentation": {
-			"clear": true
-		},
-
-		/* Default build task. */
-		"group": { "kind": "build", "isDefault": true },
-
-		"command": "make",
-		"args": ["${fileBasenameNoExtension}"],
-		"problemMatcher": ["$gcc"],
-
-		"windows": {
-			"command": "build",
+			"command": "make",
 			"args": ["${fileBasenameNoExtension}"],
-			"problemMatcher": ["$msCompile"]
-		}
-	}, {
-		/* Build the open file (must be within test/) in release mode. */
-		"type": "shell",
-		"label": "build-release-x64",
-		"options": { "cwd": "${workspaceFolder}/build" },
-		"presentation": {
-			"clear": true
+			"problemMatcher": ["$gcc"],
+
+			"windows": {
+				"command": "build",
+				"args": ["${fileBasenameNoExtension}"],
+				"problemMatcher": ["$msCompile"]
+			}
 		},
-		"group": "build",
+		{
+			/* Build the open file (must be within test/) in release mode. */
+			"type": "shell",
+			"label": "build-release-x64",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": {
+				"clear": true
+			},
+			"group": "build",
 
-		"command": "make",
-		"args": ["${fileBasenameNoExtension}", "RELEASE=1"],
-		"problemMatcher": ["$gcc"],
+			"command": "make",
+			"args": ["${fileBasenameNoExtension}", "RELEASE=1"],
+			"problemMatcher": ["$gcc"],
 
-		"windows": {
-			"command": "build",
-			"args": ["${fileBasenameNoExtension}", "release"],
-			"problemMatcher": ["$msCompile"]
+			"windows": {
+				"command": "build",
+				"args": ["${fileBasenameNoExtension}", "release"],
+				"problemMatcher": ["$msCompile"]
+			}
 		}
-	}]
+	]
 }
