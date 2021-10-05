@@ -48,10 +48,15 @@ namespace Rain::Networking {
 		operator std::string() const { return this->asStr(); }
 
 		// Operators.
-		bool operator==(Host const &other) {
-			return this->node == other.node && this->service == other.service;
+		bool operator==(Host const &other) const {
+			// node is compared case-insensitive (i.e. domain names are
+			// case-insensitive).
+			return strcasecmp(this->node.c_str(), other.node.c_str()) == 0 &&
+				this->service == other.service;
 		}
-		bool operator!=(Host const &other) { return !this->operator==(other); }
+		bool operator!=(Host const &other) const {
+			return !this->operator==(other);
+		}
 	};
 }
 

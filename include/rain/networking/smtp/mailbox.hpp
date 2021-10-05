@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../../string/string.hpp"
+#include "../host.hpp"
 
 #include <iostream>
 
@@ -10,18 +11,22 @@ namespace Rain::Networking::Smtp {
 	class Mailbox {
 		public:
 		std::string name;
-		std::string domain;
+
+		// The domain is a host with an unspecified port.
+		Host domain;
 
 		// name@domain notation. Default construction leaves both empty.
 		Mailbox(std::string const &str = "")
 				: name(str.substr(0, str.find_last_of('@'))),
-					domain(str.substr(std::min(str.find_last_of('@'), str.length() - 1) + 1)) {}
+					domain(
+						str.substr(std::min(str.find_last_of('@'), str.length() - 1) + 1)) {
+		}
 
-		Mailbox(std::string const &name, std::string const &domain)
+		Mailbox(std::string const &name, Host const &domain)
 				: name(name), domain(domain) {}
 
 		operator std::string() const noexcept {
-			return this->name + "@" + this->domain;
+			return this->name + "@" + this->domain.node;
 		}
 
 		// Equality for unordered_ types.
