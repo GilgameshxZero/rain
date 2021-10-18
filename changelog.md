@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.11
+
+* Revamped VSCode build routines with a unified `make`/`nmake` makefile.
+* Added Fenwick tree implementation and test.
+
 ## 7.1.10
 
 Rename Mailbox `domain` to `host` to better clarify its type.

@@ -12,7 +12,7 @@
   <ItemDefinitionGroup>
     <!-- Default build event to call a batch file to increment build number preprocessor. -->
     <PreBuildEvent>
-      <Command>$(SolutionDir)increment-version-build.bat</Command>
+      <Command>$(SolutionDir)increment.bat</Command>
     </PreBuildEvent>
 
     <!-- Additional common compile and link options shared between debug/release configurations. -->
