@@ -53,6 +53,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "networking-http-headers", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windows", "windows\windows.vcxproj", "{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "algorithm-fenwick", "algorithm-fenwick\algorithm-fenwick.vcxproj", "{C7FF4275-B16B-45CB-B012-9D4996EC4364}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		debug|x64 = debug|x64
@@ -159,6 +161,10 @@ Global
 		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.debug|x64.Build.0 = debug|x64
 		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.release|x64.ActiveCfg = release|x64
 		{3632929E-AC45-47C4-A5B8-CF4EFF8E7BB8}.release|x64.Build.0 = release|x64
+		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.debug|x64.ActiveCfg = debug|x64
+		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.debug|x64.Build.0 = debug|x64
+		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.release|x64.ActiveCfg = release|x64
+		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.release|x64.Build.0 = release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

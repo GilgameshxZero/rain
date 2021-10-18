@@ -11,6 +11,7 @@
 
 	"C_Cpp.default.includePath": ["include/"],
 	"C_Cpp.default.cppStandard": "c++17",
+	"C_Cpp.autoAddFileAssociations": false,
 
 	"[cpp]": {
 		"editor.defaultFormatter": "ms-vscode.cpptools",
@@ -18,7 +19,6 @@
 	},
 
 	"files.associations": {
-		/* Mirrors file association of settings.json. */
 		"settings.DEFAULT.json": "jsonc",
 		"*.vstemplate": "xml"
 	}

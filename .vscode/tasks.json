@@ -6,59 +6,37 @@
 			"type": "shell",
 			"label": "clean",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": {
-				"clear": true
-			},
+			"presentation": { "clear": true, "reveal": "silent" },
 
 			"command": "make",
 			"args": ["clean"],
-
-			"windows": {
-				"command": "RMDIR",
-				"args": ["/Q", "/S", "..\\bin", "..\\obj"]
-			}
+			"windows": { "command": "nmake" }
 		},
 		{
-			/* Build the open file (must be within test/) in debug mode. */
+			/* Build the open file in debug mode. */
 			"type": "shell",
 			"label": "build-debug-x64",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": {
-				"clear": true
-			},
-
-			/* Default build task. */
+			"presentation": { "clear": true },
 			"group": { "kind": "build", "isDefault": true },
 
 			"command": "make",
-			"args": ["${fileBasenameNoExtension}"],
+			"args": ["SOURCES=${fileBasename}"],
 			"problemMatcher": ["$gcc"],
-
-			"windows": {
-				"command": "build",
-				"args": ["${fileBasenameNoExtension}"],
-				"problemMatcher": ["$msCompile"]
-			}
+			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
 		},
 		{
-			/* Build the open file (must be within test/) in release mode. */
+			/* Build the open file in release mode. */
 			"type": "shell",
 			"label": "build-release-x64",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": {
-				"clear": true
-			},
+			"presentation": { "clear": true },
 			"group": "build",
 
 			"command": "make",
-			"args": ["${fileBasenameNoExtension}", "RELEASE=1"],
+			"args": ["SOURCES=${fileBasename}", "BUILD=1"],
 			"problemMatcher": ["$gcc"],
-
-			"windows": {
-				"command": "build",
-				"args": ["${fileBasenameNoExtension}", "release"],
-				"problemMatcher": ["$msCompile"]
-			}
+			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
 		}
 	]
 }
