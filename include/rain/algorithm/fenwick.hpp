@@ -8,8 +8,8 @@ namespace Rain::Algorithm {
 	// Fixed-size Fenwick/Binary-Indexed Tree implementation. O(ln N) point
 	// updates and range queries. Not thread-safe.
 	//
-	// Value must support adding, and should be lightly copyable. In addition,
-	// default initialization should be equivalent to "0".
+	// Value must support adding and subtracting, and should be lightly copyable.
+	// In addition, default initialization should be equivalent to "0".
 	template <typename Value = long long>
 	class FenwickTree {
 		private:
@@ -29,12 +29,22 @@ namespace Rain::Algorithm {
 			return aggregate;
 		}
 
+		// Returns the value at index.
+		Value get(std::size_t const idx) {
+			return this->sum(idx) - this->sum(idx - 1);
+		}
+
 		// Modify index by a delta.
-		void delta(std::size_t const idx, Value const &delta) {
+		void modify(std::size_t const idx, Value const &delta) {
 			this->reserve(idx + 1);
 			for (std::size_t i = idx; i < this->tree.size(); i |= i + 1) {
 				this->tree[i] += delta;
 			}
+		}
+
+		// Set index to a value.
+		void set(std::size_t const idx, Value const &value) {
+			this->modify(idx, value - this->get(idx));
 		}
 
 		private:

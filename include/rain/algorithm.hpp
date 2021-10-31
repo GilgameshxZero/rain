@@ -5,3 +5,4 @@
 #include "algorithm/fenwick.hpp"
 #include "algorithm/kmp.hpp"
 #include "algorithm/lru.hpp"
+#include "algorithm/segment-tree.hpp"

@@ -55,6 +55,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windows", "windows\windows.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "algorithm-fenwick", "algorithm-fenwick\algorithm-fenwick.vcxproj", "{C7FF4275-B16B-45CB-B012-9D4996EC4364}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "algorithm", "algorithm\algorithm.vcxproj", "{C95A7CDC-4EA7-4E07-AE4A-49C284A8C811}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "algorithm-segment-tree", "algorithm-segment-tree\algorithm-segment-tree.vcxproj", "{97A1C164-B381-4488-9D8B-D71B266E26BE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		debug|x64 = debug|x64
@@ -165,6 +169,14 @@ Global
 		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.debug|x64.Build.0 = debug|x64
 		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.release|x64.ActiveCfg = release|x64
 		{C7FF4275-B16B-45CB-B012-9D4996EC4364}.release|x64.Build.0 = release|x64
+		{C95A7CDC-4EA7-4E07-AE4A-49C284A8C811}.debug|x64.ActiveCfg = debug|x64
+		{C95A7CDC-4EA7-4E07-AE4A-49C284A8C811}.debug|x64.Build.0 = debug|x64
+		{C95A7CDC-4EA7-4E07-AE4A-49C284A8C811}.release|x64.ActiveCfg = release|x64
+		{C95A7CDC-4EA7-4E07-AE4A-49C284A8C811}.release|x64.Build.0 = release|x64
+		{97A1C164-B381-4488-9D8B-D71B266E26BE}.debug|x64.ActiveCfg = debug|x64
+		{97A1C164-B381-4488-9D8B-D71B266E26BE}.debug|x64.Build.0 = debug|x64
+		{97A1C164-B381-4488-9D8B-D71B266E26BE}.release|x64.ActiveCfg = release|x64
+		{97A1C164-B381-4488-9D8B-D71B266E26BE}.release|x64.Build.0 = release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
