@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.12
+
+* Added segment tree implementation and test.
+* Added some basic algorithm utilities and tests: msb/lsb, popcount, gcd/lcm.
+
 ## 7.1.11
 
 * Revamped VSCode build routines with a unified `make`/`nmake` makefile.
