@@ -1,7 +1,10 @@
 // Tests for segment tree.
 #include <rain/algorithm/segment-tree.hpp>
+#include <rain/literal.hpp>
+#include <rain/time.hpp>
 
 #include <cassert>
+#include <iostream>
 
 // Underlying array of LLs, with sum segments.
 class SumTree : public Rain::Algorithm::SegmentTree<long long, long long> {
@@ -9,31 +12,33 @@ class SumTree : public Rain::Algorithm::SegmentTree<long long, long long> {
 
 	protected:
 	virtual long long aggregate(
+		std::size_t const,
 		long long const &left,
 		long long const &right,
-		std::pair<std::size_t, std::size_t> const &,
-		std::size_t const) override {
+		std::pair<std::size_t, std::size_t> const &) override {
 		return left + right;
 	}
-	virtual void propagate(
+	virtual void push(
+		std::size_t const,
 		long long const &update,
 		long long &left,
 		long long &right,
-		std::pair<std::size_t, std::size_t> const &,
-		std::size_t const) override {
+		std::pair<std::size_t, std::size_t> const &) override {
 		left += update;
 		right += update;
 	}
 	virtual void apply(
+		std::size_t const,
 		long long &value,
 		long long const &update,
-		std::pair<std::size_t, std::size_t> const &range,
-		std::size_t const) override {
+		std::pair<std::size_t, std::size_t> const &range) override {
 		value += update * (range.second - range.first + 1);
 	}
 };
 
 int main() {
+	using namespace Rain::Literal;
+
 	/*
 											0
 					 |                     \
@@ -72,6 +77,22 @@ int main() {
 	sumTree.update(4, 7, 3);
 	// [1, 14, 14, 4, -1, -6, -13, -3, -6, -6, -1].
 	assert(sumTree.query(0, 7) == 10);
+
+	auto timeBegin = std::chrono::steady_clock::now();
+
+	SumTree tree2(100000);
+
+	for (std::size_t i = 0; i < 100000; i++) {
+		std::pair<std::size_t, std::size_t> range{rand() % 100000, rand() % 100000};
+		if (range.first > range.second) {
+			std::swap(range.first, range.second);
+		}
+		tree2.update(range.first, range.second, rand());
+	}
+
+	auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
+	std::cout << "Time elapsed: " << timeElapsed << ".\n";
+	assert(timeElapsed < 2s);
 
 	return 0;
 }

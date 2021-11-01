@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.13
+
+* Optimized segtree implementation to use a complete binary tree, such that boundary checks don’t need to be made. Trades around 50% more memory for a similar constant factor in performance.
+* Allows segtree `Update` to be `bool` by correctly typing virtual functions signatures with vector references.
+* Added performance test for segtree.
+
 ## 7.1.12
 
 * Added segment tree implementation and test.
