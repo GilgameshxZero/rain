@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.14
+
+* Refactored segtree to virtualize 5 basic operations instead of 3, enabling separate `Value` and `Result` types for tree storage vs. query storage.
+* Added basic serialization/deserialization routines in `Rain::Data` and tests. These need more work to ensure stability, but work for now.
+
 ## 7.1.13
 
 * Optimized segtree implementation to use a complete binary tree, such that boundary checks don’t need to be made. Trades around 50% more memory for a similar constant factor in performance.
