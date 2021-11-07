@@ -11,14 +11,18 @@ namespace Rain::Algorithm {
 	// Segment tree with lazy propagation, supporting range queries and range
 	// updates in O(ln N) and O(N) memory.
 	//
-	// RVO helps with heavier Value types, but is not guaranteed. Value must be
+	// RVO helps with heavier Result types, but is not guaranteed. Value must be
 	// zero-initialized to be valid. Update must be light-copyable.
 	//
 	// Index 0 is unused. For parent i, 2i is the left child and 2i + 1 is the
 	// right child.
-	template <typename Value, typename Update>
+	template <typename _Value, typename _Update, typename _Result = _Value>
 	class SegmentTree {
 		protected:
+		using Value = _Value;
+		using Update = _Update;
+		using Result = _Result;
+
 		// Aggregate values at each node.
 		std::vector<Value> values;
 
@@ -29,35 +33,41 @@ namespace Rain::Algorithm {
 		std::vector<Update> updates;
 
 		public:
-		// Segment tree for an underlying array of size size.
+		// Segment tree for a segment array of size size.
 		SegmentTree(std::size_t const size)
-				: values(1_zu << (mostSignificant1BitIdx(size) + 2)),
+				: values(1_zu << (mostSignificant1BitIdx(size - 1) + 2)),
 					lazy(values.size(), false),
 					updates(values.size()) {}
 
 		protected:
-		// The following virtual functions specify custom behavior for the segtree.
-		// However, vtable lookups and possible prevention of inlining from these
-		// may cuase significant performance loss. Thus, for performance critical
-		// code, consider implementing these as non-virtual functions.
-
-		// Aggregate values from two children. Aggregating with a
-		// default-initialized Value should do nothing. The combined range of the
-		// two children is supplied.
-		virtual Value aggregate(
+		// Aggregate values from two children while retracing an update. Aggregating
+		// with a default-initialized Value should do nothing.
+		virtual void aggregate(
 			std::size_t const node,
+			typename std::vector<Value>::reference value,
 			Value const &left,
 			Value const &right,
 			std::pair<std::size_t, std::size_t> const &range) = 0;
 
+		// Aggregate two results from queries on children. Aggregating with a
+		// default-initialized Result should do nothing.
+		virtual Result aggregate(
+			std::size_t const node,
+			Result const &left,
+			Result const &right,
+			std::pair<std::size_t, std::size_t> const &range) = 0;
+
 		// Propagate an update on a parent to its two children. Lazy bits for the
 		// children are set beforehand, but can be unset in the function.
-		virtual void push(
+		virtual void split(
 			std::size_t const node,
 			Update const &update,
 			typename std::vector<Update>::reference left,
 			typename std::vector<Update>::reference right,
 			std::pair<std::size_t, std::size_t> const &range) = 0;
+
+		// Convert a Value at a leaf node to a Result for base case queries.
+		virtual Result convert(std::size_t const node, Value const &value) = 0;
 
 		// Apply an update fully to a lazy node.
 		virtual void apply(
@@ -68,7 +78,7 @@ namespace Rain::Algorithm {
 
 		public:
 		// Queries a range, propagating if necessary then aggregating.
-		Value query(std::size_t const left, std::size_t const right) {
+		Result query(std::size_t const left, std::size_t const right) {
 			return this->query(1, left, right, {0, this->values.size() / 2 - 1});
 		}
 
@@ -93,7 +103,7 @@ namespace Rain::Algorithm {
 			// Propagating on a leaf applies it immediately.
 			if (node < this->values.size() / 2) {
 				this->lazy[node * 2] = this->lazy[node * 2 + 1] = true;
-				this->push(
+				this->split(
 					node,
 					this->updates[node],
 					this->updates[node * 2],
@@ -110,7 +120,7 @@ namespace Rain::Algorithm {
 
 		// Internal recursive query. range is the coverage range of the current node
 		// and is inclusive.
-		Value query(
+		Result query(
 			std::size_t const node,
 			std::size_t const left,
 			std::size_t const right,
@@ -122,7 +132,7 @@ namespace Rain::Algorithm {
 
 			// Base case.
 			if (range.first >= left && range.second <= right) {
-				return this->values[node];
+				return this->convert(node, this->values[node]);
 			}
 
 			std::size_t mid = (range.first + range.second) / 2;
@@ -163,8 +173,12 @@ namespace Rain::Algorithm {
 				// case would have triggered.
 				this->propagate(node * 2, {range.first, mid});
 				this->propagate(node * 2 + 1, {mid + 1, range.second});
-				this->values[node] = this->aggregate(
-					node, this->values[node * 2], this->values[node * 2 + 1], range);
+				this->aggregate(
+					node,
+					this->values[node],
+					this->values[node * 2],
+					this->values[node * 2 + 1],
+					range);
 			}
 		}
 	};

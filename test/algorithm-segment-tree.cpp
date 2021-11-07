@@ -11,26 +11,37 @@ class SumTree : public Rain::Algorithm::SegmentTree<long long, long long> {
 	using Rain::Algorithm::SegmentTree<long long, long long>::SegmentTree;
 
 	protected:
-	virtual long long aggregate(
-		std::size_t const,
-		long long const &left,
-		long long const &right,
-		std::pair<std::size_t, std::size_t> const &) override {
+	virtual void aggregate(
+		std::size_t const node,
+		typename std::vector<Value>::reference value,
+		Value const &left,
+		Value const &right,
+		std::pair<std::size_t, std::size_t> const &range) override {
+		value = left + right;
+	}
+	virtual Result aggregate(
+		std::size_t const node,
+		Result const &left,
+		Result const &right,
+		std::pair<std::size_t, std::size_t> const &range) override {
 		return left + right;
 	}
-	virtual void push(
-		std::size_t const,
-		long long const &update,
-		long long &left,
-		long long &right,
-		std::pair<std::size_t, std::size_t> const &) override {
+	virtual void split(
+		std::size_t const node,
+		Update const &update,
+		typename std::vector<Update>::reference left,
+		typename std::vector<Update>::reference right,
+		std::pair<std::size_t, std::size_t> const &range) override {
 		left += update;
 		right += update;
 	}
+	virtual Result convert(std::size_t const node, Value const &value) override {
+		return value;
+	}
 	virtual void apply(
-		std::size_t const,
-		long long &value,
-		long long const &update,
+		std::size_t const node,
+		typename std::vector<Value>::reference value,
+		Update const &update,
 		std::pair<std::size_t, std::size_t> const &range) override {
 		value += update * (range.second - range.first + 1);
 	}
@@ -92,7 +103,6 @@ int main() {
 
 	auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 	std::cout << "Time elapsed: " << timeElapsed << ".\n";
-	assert(timeElapsed < 2s);
 
 	return 0;
 }
