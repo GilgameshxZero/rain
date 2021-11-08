@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.15
+
+* `Serializer` now houses a simplified reference schema and does not print headers.
+* `Serializer` does not automatically serialize underlying memory for pointers. However, memory addresses are converted to serialization references during serialization.
+* Removed all VS solutions and projects from the repository. Tests are built using `nmake`; however, the rain template is left to enable creating projects for `rain` tests and derivatives.
+
 ## 7.1.14
 
 * Refactored segtree to virtualize 5 basic operations instead of 3, enabling separate `Value` and `Result` types for tree storage vs. query storage.
