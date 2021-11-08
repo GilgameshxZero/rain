@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.16
+
+* `Serializer` no longer remaps memory addreses nor does it track serialization references. Any memory addresses present in data to be serialized must be treated before serialization.
+
 ## 7.1.15
 
 * `Serializer` now houses a simplified reference schema and does not print headers.
