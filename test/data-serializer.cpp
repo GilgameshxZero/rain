@@ -11,25 +11,25 @@ int main() {
 	using namespace Rain::Literal;
 
 	int sData[]{1, 4, 5, 10, -5, -49, 3049};
-	int *sPData = &sData[3];
-	int **sPPData = &sPData;
-
+	std::string sStr{"yahallo!"};
+	std::vector<long long> sVrLL{439548549457045LL, 348LL, 3934957LL, 39LL, -4LL};
+	std::vector<std::string> sVrStr{"hello", "world", "! :D"};
 	{
 		Rain::Data::Serializer serializer("data-serializer.txt");
-		serializer << sData << sPData << sPPData;
+		serializer << sData << sStr << sVrLL << sVrStr;
 	}
 
 	decltype(sData) dData;
-	decltype(sPData) dPData;
-	decltype(sPPData) dPPData;
+	decltype(sStr) dStr;
+	decltype(sVrLL) dVrLL;
+	decltype(sVrStr) dVrStr;
+	Rain::Data::Deserializer deserializer("data-serializer.txt");
+	deserializer >> dData >> dStr >> dVrLL >> dVrStr;
 
-	Rain::Data::Serializer serializer("data-serializer.txt");
-	serializer >> dData >> dPData >> dPPData;
 	assert(memcmp(sData, dData, sizeof(sData)) == 0);
-	assert(dPData == dData + 3);
-	assert(*dPPData == dPData);
-	dData[3] += 93;
-	assert(*dPData == 103);
+	assert(sStr == dStr);
+	assert(sVrLL == dVrLL);
+	assert(sVrStr == dVrStr);
 
 	return 0;
 }
