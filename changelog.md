@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.17
+
+* Added case for MacOS in the `makefile` for differences in need for `-lstdc++fs`.
+
 ## 7.1.16
 
 * `Serializer` no longer remaps memory addreses nor does it track serialization references. Any memory addresses present in data to be serialized must be treated before serialization.
