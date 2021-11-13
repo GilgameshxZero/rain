@@ -77,7 +77,8 @@ namespace Rain::Networking::Smtp {
 			this->parameter.resize(1_zu << 10);
 			stream.getline(&this->parameter[0], this->parameter.length());
 			// -2 to discard the \r\0.
-			this->parameter.resize(std::max(std::streamsize(0), stream.gcount() - 2));
+			this->parameter.resize(static_cast<std::size_t>(
+				std::max(std::streamsize(0), stream.gcount() - 2)));
 		}
 	};
 

@@ -94,7 +94,8 @@ inline std::istream &operator>>(
 	// not be set if the maximum length is reached.
 	std::string methodStr(9, '\0');
 	stream.getline(&methodStr[0], methodStr.size(), ' ');
-	methodStr.resize(std::max(std::streamsize(0), stream.gcount() - 1));
+	methodStr.resize(static_cast<std::size_t>(
+		std::max(std::streamsize(0), stream.gcount() - 1)));
 	method = Rain::Networking::Http::Method(methodStr);
 	return stream;
 }

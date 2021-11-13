@@ -21,7 +21,7 @@ namespace Rain::Networking::Http {
 	// agnostic keys.
 	//
 	// Some headers are implemented as custom types/enums.
-	class Headers : public std::unordered_map<
+	class Headers : public std::unordered_multimap<
 										std::string,
 										std::string,
 										String::HashCaseAgnostic,
@@ -46,7 +46,7 @@ namespace Rain::Networking::Http {
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
 
-		typedef std::unordered_map<
+		typedef std::unordered_multimap<
 			std::string,
 			std::string,
 			String::HashCaseAgnostic,
@@ -58,15 +58,26 @@ namespace Rain::Networking::Http {
 		// Build inline with initializer list. Also serves as move constructor.
 		Headers(Super &&headers) : Super(std::move(headers)) {}
 
+		// Retrieve the reference to a header value. A new header is created if it
+		// does not already exist. A header which occurs multiple times is not
+		// guaranteed consistent behavior.
+		std::string &operator[](std::string const &key) {
+			auto it = this->find(key);
+			if (it == this->end()) {
+				return this->insert({key, ""})->second;
+			}
+			return it->second;
+		}
+
 		// Typed get/set for common headers. Get will return a default (defined per
-		// header) value if header doesn't exist, and not create it.
+		// header) value if header doesn't exist, and NOT create it.
 
 		// Invalid value for contentLength is SIZE_MAX.
 		std::size_t contentLength() {
 			auto it = this->find("Content-Length");
-			return it == this->end()
-				? 0
-				: std::strtoumax(it->second.c_str(), nullptr, 10);
+			return it == this->end() ? 0_zu
+															 : static_cast<std::size_t>(std::strtoumax(
+																	 it->second.c_str(), nullptr, 10));
 		}
 		void contentLength(std::size_t value) {
 			this->operator[]("Content-Length") = std::to_string(value);
@@ -78,6 +89,33 @@ namespace Rain::Networking::Http {
 		}
 		void contentType(MediaType const &value) {
 			this->operator[]("Content-Type") = static_cast<std::string>(value);
+		}
+
+		std::unordered_map<std::string, std::string> cookie() {
+			auto it = this->find("Cookie");
+			if (it == this->end()) {
+				return {};
+			}
+			std::string const &cookieStr = it->second;
+
+			std::size_t offset = 0;
+			std::unordered_map<std::string, std::string> cookies;
+			do {
+				std::size_t equals = cookieStr.find('=', offset);
+				std::size_t semicolon = cookieStr.find(';', equals + 1);
+				cookies.insert(
+					{cookieStr.substr(offset, equals - offset),
+					 cookieStr.substr(equals + 1, semicolon - equals - 1)});
+				offset = semicolon + 1;
+			} while (offset != 0);
+			return cookies;
+		}
+		void cookie(std::unordered_map<std::string, std::string> const &value) {
+			std::string &cookieStr = this->operator[]("Cookie");
+			for (auto const &i : value) {
+				cookieStr += i.first + "=" + i.second + ";";
+			}
+			cookieStr.pop_back();
 		}
 
 		Host host() {
@@ -146,7 +184,8 @@ inline std::istream &operator>>(
 	std::size_t totalHeadersBytes = 0;
 	std::string line(1_zu << 12, '\0');
 	while (stream.getline(&line[0], line.length())) {
-		line.resize(std::max(std::streamsize(0), stream.gcount() - 1));
+		line.resize(static_cast<std::size_t>(
+			std::max(std::streamsize(0), stream.gcount() - 1)));
 
 		// If line is only \r, we are done.
 		if (line == "\r") {
@@ -173,7 +212,7 @@ inline std::istream &operator>>(
 		Rain::String::trimWhitespace(value);
 
 		// Add to headers.
-		headers[name] = value;
+		headers.insert({name, value});
 		totalHeadersBytes += name.length() + value.length();
 		if (totalHeadersBytes > (1_zu << 16)) {
 			throw Rain::Networking::Http::Headers::Exception(

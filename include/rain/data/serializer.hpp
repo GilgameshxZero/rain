@@ -81,8 +81,7 @@ template <
 inline void serialize(
 	Rain::Data::Serializer &serializer,
 	std::basic_string<CharT, Traits, Allocator> const &data) {
-	std::size_t size = data.size();
-	serializer.write(reinterpret_cast<char const *>(&size), sizeof(std::size_t));
+	serializer << data.size();
 	serializer.write(
 		reinterpret_cast<char const *>(data.data()), sizeof(CharT) * size);
 }
@@ -94,7 +93,7 @@ inline void deserialize(
 	Rain::Data::Deserializer &deserializer,
 	std::basic_string<CharT, Traits, Allocator> &data) {
 	std::size_t size;
-	deserializer.read(reinterpret_cast<char *>(&size), sizeof(std::size_t));
+	deserializer >> size;
 	data.resize(size);
 	deserializer.read(reinterpret_cast<char *>(&data[0]), sizeof(CharT) * size);
 }
@@ -104,8 +103,7 @@ template <class Data>
 inline void serialize(
 	Rain::Data::Serializer &serializer,
 	std::vector<Data> const &data) {
-	std::size_t size = data.size();
-	serializer.write(reinterpret_cast<char const *>(&size), sizeof(std::size_t));
+	serializer << data.size();
 	for (auto &i : data) {
 		serializer << i;
 	}
@@ -115,7 +113,7 @@ inline void deserialize(
 	Rain::Data::Deserializer &deserializer,
 	std::vector<Data> &data) {
 	std::size_t size;
-	deserializer.read(reinterpret_cast<char *>(&size), sizeof(std::size_t));
+	deserializer >> size;
 	data.resize(size);
 	for (auto &i : data) {
 		deserializer >> i;

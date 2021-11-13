@@ -184,8 +184,8 @@ namespace Rain::Networking::Http {
 				// in case the parsing below throws. Then, the version is 0.9, and we
 				// need to use the bytes in versionStr again as the body.
 				std::string versionStrCopy = versionStr;
-				versionStrCopy.resize(
-					std::max(std::streamsize(0), stream.gcount() - 1));
+				versionStrCopy.resize(static_cast<std::size_t>(
+					std::max(std::streamsize(0), stream.gcount() - 1)));
 
 				// versionStr must be in the format HTTP/-.-. Otherwise, this throws,
 				// and we assume HTTP/0.9.
@@ -197,7 +197,7 @@ namespace Rain::Networking::Http {
 				// The body contains the first gcount bytes in versionStr. Regardless of
 				// whether failbit is set, the final of those gcount bytes will be
 				// correct from the space-init of versionStr.
-				versionStr.resize(stream.gcount());
+				versionStr.resize(static_cast<std::size_t>(stream.gcount()));
 				this->version_0_9BodyIStreamBuf.reset(
 					new Version_0_9BodyIStreamBuf(stream.rdbuf(), versionStr));
 				this->body = Body(this->version_0_9BodyIStreamBuf.get());
@@ -226,7 +226,8 @@ namespace Rain::Networking::Http {
 			try {
 				std::string statusCodeStr(5, '\0');
 				stream.getline(&statusCodeStr[0], statusCodeStr.length(), ' ');
-				statusCodeStr.resize(std::max(std::streamsize(0), stream.gcount() - 1));
+				statusCodeStr.resize(static_cast<std::size_t>(
+					std::max(std::streamsize(0), stream.gcount() - 1)));
 				this->statusCode = StatusCode(statusCodeStr);
 			} catch (...) {
 				throw Exception(Error::MALFORMED_STATUS_CODE);
@@ -238,8 +239,8 @@ namespace Rain::Networking::Http {
 				stream.getline(&this->reasonPhrase[0], this->reasonPhrase.length());
 
 				// Ignore the terminator nullptr as well as the \r.
-				this->reasonPhrase.resize(
-					std::max(std::streamsize(0), stream.gcount() - 2));
+				this->reasonPhrase.resize(static_cast<std::size_t>(
+					std::max(std::streamsize(0), stream.gcount() - 2)));
 			} catch (...) {
 				throw Exception(Error::MALFORMED_REASON_PHRASE);
 			}

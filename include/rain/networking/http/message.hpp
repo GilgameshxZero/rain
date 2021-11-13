@@ -85,9 +85,10 @@ namespace Rain::Networking::Http {
 			virtual int_type underflow() noexcept override {
 				// Only refill buffer if it has been exhausted.
 				if (this->gptr() == this->egptr()) {
-					std::streamsize cFilled(this->sourceStreamBuf->sgetn(
-						&this->buffer[0],
-						std::min(this->buffer.length(), this->contentLengthRemaining)));
+					std::size_t cFilled{
+						static_cast<std::size_t>(this->sourceStreamBuf->sgetn(
+							&this->buffer[0],
+							std::min(this->buffer.length(), this->contentLengthRemaining)))};
 					this->contentLengthRemaining -=
 						this->contentLengthRemaining == SIZE_MAX ? 0 : cFilled;
 
@@ -148,10 +149,10 @@ namespace Rain::Networking::Http {
 							&chunkLenBuffer[0], chunkLenBuffer.length(), '\n');
 
 						// -2 for \r\0.
-						chunkLenBuffer.resize(
-							std::max(std::streamsize(0), chunkLenStream.gcount() - 2));
-						this->chunkLenRemaining =
-							std::strtoumax(chunkLenBuffer.c_str(), NULL, 10);
+						chunkLenBuffer.resize(static_cast<std::size_t>(
+							std::max(std::streamsize(0), chunkLenStream.gcount() - 2)));
+						this->chunkLenRemaining = static_cast<std::size_t>(
+							std::strtoumax(chunkLenBuffer.c_str(), NULL, 10));
 
 						// If chunk length parsed to 0, we are done.
 						if (this->chunkLenRemaining == 0) {
@@ -160,9 +161,10 @@ namespace Rain::Networking::Http {
 					}
 
 					// Track chunk length.
-					std::streamsize cFilled(this->sourceStreamBuf->sgetn(
-						&this->buffer[0],
-						std::min(this->buffer.length(), this->chunkLenRemaining)));
+					std::size_t cFilled{
+						static_cast<std::size_t>(this->sourceStreamBuf->sgetn(
+							&this->buffer[0],
+							std::min(this->buffer.length(), this->chunkLenRemaining)))};
 					this->chunkLenRemaining -= cFilled;
 
 					// None filled, so the stream has probably been closed.
@@ -245,7 +247,7 @@ namespace Rain::Networking::Http {
 				if (inAvail == -1 && allowZero) {
 					this->headers.contentLength(0);
 				} else if (inAvail > 0) {
-					this->headers.contentLength(inAvail);
+					this->headers.contentLength(static_cast<std::size_t>(inAvail));
 				}
 			}
 		}
