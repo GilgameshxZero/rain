@@ -110,7 +110,9 @@ namespace Rain::Networking::Smtp {
 				: value(value) {}
 		StatusCode(std::size_t value) : value(StatusCode::fromSz.at(value)) {}
 		StatusCode(std::string const &value)
-				: StatusCode(std::strtoumax(value.c_str(), NULL, 10)) {}
+				: StatusCode(
+						static_cast<std::size_t>(std::strtoumax(value.c_str(), NULL, 10))) {
+		}
 
 		// Enable switch via getValue and getCategory.
 		// Conversions and comparators.

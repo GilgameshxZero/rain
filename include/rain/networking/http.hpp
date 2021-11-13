@@ -7,6 +7,7 @@
 #include "http/headers.hpp"
 #include "http/message.hpp"
 #include "http/method.hpp"
+#include "http/query-params.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "http/server.hpp"

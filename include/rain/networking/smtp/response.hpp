@@ -89,8 +89,8 @@ namespace Rain::Networking::Smtp {
 				this->lines.emplace_back(1_zu << 10, '\0');
 				stream.getline(&this->lines.back()[0], this->lines.back().length());
 				// -2 to discard the \r\0.
-				this->lines.back().resize(
-					std::max(std::streamsize(0), stream.gcount() - 2));
+				this->lines.back().resize(static_cast<std::size_t>(
+					std::max(std::streamsize(0), stream.gcount() - 2)));
 				totalBytes += this->lines.back().length();
 
 				// Exit if last line.

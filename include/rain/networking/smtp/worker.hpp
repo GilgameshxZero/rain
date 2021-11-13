@@ -62,7 +62,8 @@ namespace Rain::Networking::Smtp {
 						return traits_type::eof();
 					}
 					this->sourceStream->get(&this->buffer[0], this->buffer.length());
-					std::streamsize cFilled = this->sourceStream->gcount();
+					std::size_t cFilled =
+						static_cast<std::size_t>(this->sourceStream->gcount());
 					this->buffer[cFilled++] = '\n';
 					this->sourceStream->get();
 
@@ -298,11 +299,13 @@ namespace Rain::Networking::Smtp {
 				StatusCode::SERVER_CHALLENGE, {{usernamePromptB64}}});
 			this->getline(&usernameB64[0], usernameB64.length());
 			// -2 for \r delimiter.
-			usernameB64.resize(std::max(std::streamsize(0), this->gcount() - 2));
+			usernameB64.resize(static_cast<std::size_t>(
+				std::max(std::streamsize(0), this->gcount() - 2)));
 			this->send(ResponseMessageSpec{
 				StatusCode::SERVER_CHALLENGE, {{passwordPromptB64}}});
 			this->getline(&passwordB64[0], passwordB64.length());
-			passwordB64.resize(std::max(std::streamsize(0), this->gcount() - 2));
+			passwordB64.resize(static_cast<std::size_t>(
+				std::max(std::streamsize(0), this->gcount() - 2)));
 
 			// Decode both from Base64 and delegate.
 			std::string username = String::Base64::decode(usernameB64),

@@ -51,7 +51,7 @@ namespace Rain::Networking::Http {
 		// Method/verb of request.
 		Method method;
 
-		// Target URI.
+		// Target URI (including query parameters and fragment).
 		std::string target;
 
 		// Carry over constructor which recvs from a Socket.
@@ -118,7 +118,8 @@ namespace Rain::Networking::Http {
 			stream.getline(&this->target[0], this->target.size(), '\n');
 
 			// -2 for \r\0.
-			this->target.resize(std::max(std::streamsize(0), stream.gcount() - 2));
+			this->target.resize(static_cast<std::size_t>(
+				std::max(std::streamsize(0), stream.gcount() - 2)));
 
 			// Version. Response version requires special parsing, so this can't be
 			// abstracted out.

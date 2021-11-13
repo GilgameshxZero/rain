@@ -127,7 +127,8 @@ inline std::istream &operator>>(
 	// delimiter. failbit will not be set if the maximum length is reached.
 	std::string commandStr(6, '\0');
 	stream.getline(&commandStr[0], commandStr.size(), ' ');
-	commandStr.resize(std::max(std::streamsize(0), stream.gcount() - 1));
+	commandStr.resize(static_cast<std::size_t>(
+		std::max(std::streamsize(0), stream.gcount() - 1)));
 	command = Rain::Networking::Smtp::Command(commandStr);
 	return stream;
 }

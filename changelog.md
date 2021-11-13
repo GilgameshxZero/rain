@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.18
+
+* Resolve signed/unsigned type mismatches explicitly.
+* Add HTTP query parameter resolution functionality.
+
 ## 7.1.17
 
 * Added case for MacOS in the `makefile` for differences in need for `-lstdc++fs`.
