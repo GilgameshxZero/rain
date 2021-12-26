@@ -16,6 +16,12 @@ namespace Rain::Algorithm {
 	//
 	// Index 0 is unused. For parent i, 2i is the left child and 2i + 1 is the
 	// right child.
+	//
+	// Further performance can be had with manual inlining of the five functions,
+	// which are typically not inlined by the compiler due to their virtual-ness.
+	// Forced initialization of underlying vectors can be replaced with
+	// std::array, and on GCC, loop unrolling may be turned on for further
+	// optimization.
 	template <typename _Value, typename _Update, typename _Result = _Value>
 	class SegmentTree {
 		protected:
@@ -32,16 +38,8 @@ namespace Rain::Algorithm {
 		// Lazily-stored updates.
 		std::vector<Update> updates;
 
-		public:
-		// Segment tree for a segment array of size size.
-		SegmentTree(std::size_t const size)
-				: values(1_zu << (mostSignificant1BitIdx(size - 1) + 2)),
-					lazy(values.size(), false),
-					updates(values.size()) {}
-
-		protected:
 		// Aggregate values from two children while retracing an update. Aggregating
-		// with a default-initialized Value should do nothing.
+		// with a default-initialized Value or Update should do nothing.
 		virtual void aggregate(
 			std::size_t const node,
 			typename std::vector<Value>::reference value,
@@ -77,6 +75,12 @@ namespace Rain::Algorithm {
 			std::pair<std::size_t, std::size_t> const &range) = 0;
 
 		public:
+		// Segment tree for a segment array of size size.
+		SegmentTree(std::size_t const size)
+				: values(1_zu << (mostSignificant1BitIdx(size - 1) + 2)),
+					lazy(values.size(), false),
+					updates(values.size()) {}
+
 		// Queries a range, propagating if necessary then aggregating.
 		Result query(std::size_t const left, std::size_t const right) {
 			return this->query(1, left, right, {0, this->values.size() / 2 - 1});
@@ -100,7 +104,8 @@ namespace Rain::Algorithm {
 				return;
 			}
 
-			// Propagating on a leaf applies it immediately.
+			// Propagating on a leaf applies it immediately. Otherwise, split the
+			// update to children.
 			if (node < this->values.size() / 2) {
 				this->lazy[node * 2] = this->lazy[node * 2 + 1] = true;
 				this->split(

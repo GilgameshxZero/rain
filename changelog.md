@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.19
+
+* Added DSU/union-find data structure.
+* Make Fenwick tree static size.
+* Clarified some comments in segment tree.
+
 ## 7.1.18
 
 * Resolve signed/unsigned type mismatches explicitly.

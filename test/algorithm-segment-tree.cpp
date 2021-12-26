@@ -8,7 +8,7 @@
 
 // Underlying array of LLs, with sum segments.
 class SumTree : public Rain::Algorithm::SegmentTree<long long, long long> {
-	using Rain::Algorithm::SegmentTree<long long, long long>::SegmentTree;
+	using Rain::Algorithm::SegmentTree<Value, Update>::SegmentTree;
 
 	protected:
 	virtual void aggregate(
@@ -89,10 +89,9 @@ int main() {
 	// [1, 14, 14, 4, -1, -6, -13, -3, -6, -6, -1].
 	assert(sumTree.query(0, 7) == 10);
 
+	// Time test.
 	auto timeBegin = std::chrono::steady_clock::now();
-
 	SumTree tree2(100000);
-
 	for (std::size_t i = 0; i < 100000; i++) {
 		std::pair<std::size_t, std::size_t> range{rand() % 100000, rand() % 100000};
 		if (range.first > range.second) {
@@ -100,7 +99,6 @@ int main() {
 		}
 		tree2.update(range.first, range.second, rand());
 	}
-
 	auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 	std::cout << "Time elapsed: " << timeElapsed << ".\n";
 
