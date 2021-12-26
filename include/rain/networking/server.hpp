@@ -238,6 +238,7 @@ namespace Rain::Networking {
 		}
 		virtual ~ServerSocketSpec() {
 			// Most-derived class must call this->destruct().
+			// TODO: This is an anti-pattern.
 		}
 
 		// Queries.
