@@ -4,7 +4,7 @@
 #include <cassert>
 
 int main() {
-	Rain::Algorithm::FenwickTree fenwick;
+	Rain::Algorithm::FenwickTree fenwick(100001);
 	fenwick.modify(0, 100);
 	fenwick.modify(1, 5);
 	fenwick.modify(2, 10);
@@ -26,9 +26,6 @@ int main() {
 	assert(fenwick.sum(9) - fenwick.sum(5) == 7);
 	assert(fenwick.sum(7) == 12);
 	assert(fenwick.sum(100000) == 19);
-	fenwick.set(2, 10);
-	// 100, -21, 15, 10, -90, 8, 0, 0, 0, 7.
-	assert(fenwick.get(2) == 10);
 
 	return 0;
 }
