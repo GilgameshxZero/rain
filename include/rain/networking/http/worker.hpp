@@ -62,8 +62,10 @@ namespace Rain::Networking::Http {
 
 			ResponseAction(ResponseAction const &) = delete;
 			ResponseAction &operator=(ResponseAction const &) = delete;
-			ResponseAction(ResponseAction &&other) = delete;
-			ResponseAction &operator=(ResponseAction &&) = delete;
+
+			// Allow move since ResponseMessageSpec allows move.
+			ResponseAction(ResponseAction &&other) = default;
+			ResponseAction &operator=(ResponseAction &&) = default;
 		};
 
 		// Subclasses specify behavior by defining filters for incoming requests.

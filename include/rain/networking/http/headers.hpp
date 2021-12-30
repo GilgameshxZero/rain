@@ -98,16 +98,19 @@ namespace Rain::Networking::Http {
 			}
 			std::string const &cookieStr = it->second;
 
-			std::size_t offset = 0;
+			std::size_t offset{0}, equals, semicolon{0};
 			std::unordered_map<std::string, std::string> cookies;
-			do {
-				std::size_t equals = cookieStr.find('=', offset);
-				std::size_t semicolon = cookieStr.find(';', equals + 1);
-				cookies.insert(
-					{cookieStr.substr(offset, equals - offset),
-					 cookieStr.substr(equals + 1, semicolon - equals - 1)});
+			while (semicolon != std::string::npos) {
+				equals = cookieStr.find('=', offset);
+				semicolon = cookieStr.find(';', equals + 1);
+				std::string name{cookieStr.substr(offset, equals - offset)},
+					value{cookieStr.substr(equals + 1, semicolon - equals - 1)};
+				Rain::String::trimWhitespace(name);
+				Rain::String::trimWhitespace(value);
+				cookies.insert({name, value});
+				// Whitespace may follow the semicolon.
 				offset = semicolon + 1;
-			} while (offset != 0);
+			};
 			return cookies;
 		}
 		void cookie(std::unordered_map<std::string, std::string> const &value) {
@@ -127,6 +130,55 @@ namespace Rain::Networking::Http {
 		std::string server() { return this->find("Server")->second; }
 		void server(std::string const &value) {
 			this->operator[]("Server") = value;
+		}
+
+		std::unordered_map<std::string, Header::SetCookie> setCookie() {
+			std::unordered_map<std::string, Header::SetCookie> result;
+			auto equalRange{this->equal_range("Set-Cookie")};
+			for (auto it = equalRange.first; it != equalRange.second; it++) {
+				std::size_t offset = 0, equals = it->second.find('=', offset),
+										semicolon = it->second.find(';', equals + 1);
+				auto cookie{
+					result
+						.insert(
+							{it->second.substr(offset, equals),
+							 {it->second.substr(equals + 1, semicolon - equals - 1)}})
+						.first};
+				while (semicolon != std::string::npos) {
+					// Whitespace may follow the semicolon.
+					offset = semicolon + 1;
+					std::string attribute, value;
+					equals = it->second.find('=', offset);
+					// Some attributes don’t have values i.e. Secure, HttpOnly.
+					if (equals == std::string::npos) {
+						semicolon = it->second.find(';', offset);
+						attribute = it->second.substr(offset, equals);
+					} else {
+						semicolon = it->second.find(';', equals + 1);
+						attribute = it->second.substr(offset, equals);
+						value = it->second.substr(equals + 1, semicolon - equals - 1);
+					}
+					Rain::String::trimWhitespace(attribute);
+					Rain::String::trimWhitespace(value);
+					cookie->second.attributes.insert({attribute, value});
+				}
+			}
+			return result;
+		}
+		void setCookie(
+			std::unordered_map<std::string, Header::SetCookie> const &value) {
+			this->erase("Set-Cookie");
+			for (auto const &it : value) {
+				std::string cookieStr{it.first + "=" + it.second.value};
+				for (auto const &attribute : it.second.attributes) {
+					cookieStr += "; ";
+					cookieStr += attribute.first;
+					if (!attribute.second.empty()) {
+						cookieStr += "=" + attribute.second;
+					}
+				}
+				this->insert({"Set-Cookie", cookieStr});
+			}
 		}
 
 		std::vector<Header::TransferEncoding> transferEncoding() {
