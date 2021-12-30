@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.1.21
+
+* Fix cookie type parsing.
+* Added `Set-Cookie` header type.
+* Allow `ResponseAction` to be moved.
+
 ## 7.1.20
 
 * Added TODO comment.
