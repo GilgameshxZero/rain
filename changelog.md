@@ -1,5 +1,12 @@
 # Changelog
 
+* Consider options for making this x86 vs. x64 independent. There are assumptions in `test/algorithm-mod-ring.cpp` which depend on x64 `std::size_t`.
+
+## 7.1.22
+
+* Add implementation for integer modulus ring supporting basic arithmetic operations in `Algorithm::ModRing`.
+* Enforced x64 linking in MSVC Make.
+
 ## 7.1.21
 
 * Fix cookie type parsing.
