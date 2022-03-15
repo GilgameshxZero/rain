@@ -59,18 +59,12 @@ inline std::ostream &operator<<(
 	Rain::Platform::Platform platform) {
 	switch (platform) {
 		case Rain::Platform::Platform::WINDOWS:
-			stream << "Windows";
-			break;
+			return stream << "Windows";
 		case Rain::Platform::Platform::MACOS:
-			stream << "MacOS";
-			break;
+			return stream << "MacOS";
 		case Rain::Platform::Platform::LINUX:
-			stream << "Linux";
-			break;
+			return stream << "Linux";
 		default:
-			stream << "Other";
-			break;
+			return stream << "Other";
 	}
-
-	return stream;
 }

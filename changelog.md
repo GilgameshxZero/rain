@@ -2,6 +2,11 @@
 
 * Consider options for making this x86 vs. x64 independent. There are assumptions in `test/algorithm-mod-ring.cpp` which depend on x64 `std::size_t`.
 
+## 7.1.23
+
+* Added $O(\log N)$ Fibonacci number implementation, with optional mod via `ModRing`.
+* Added some `const` overloads for `ModRing`.
+
 ## 7.1.22
 
 * Add implementation for integer modulus ring supporting basic arithmetic operations in `Algorithm::ModRing`.
