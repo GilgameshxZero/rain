@@ -20,12 +20,13 @@ namespace Rain::Algorithm {
 
 		// Add primeModulus first to wrap back around in the case of "negative"
 		// unsigned Integer.
-		ModRing(Integer value = 0) : value((primeModulus + value) % primeModulus) {}
+		ModRing(Integer const value = 0)
+				: value((primeModulus + value) % primeModulus) {}
 
 		// O(ln N) exponentiation.
 		static ModRing<Integer, primeModulus> power(
-			ModRing<Integer, primeModulus> base,
-			Integer exponent) {
+			ModRing<Integer, primeModulus> const base,
+			Integer const exponent) {
 			if (exponent == 0) {
 				return {1};
 			}
@@ -37,18 +38,18 @@ namespace Rain::Algorithm {
 			}
 		}
 
-		ModRing<Integer, primeModulus> operator+(Integer other) const {
+		ModRing<Integer, primeModulus> operator+(Integer const other) const {
 			return *this + ModRing<Integer, primeModulus>(other);
 		}
-		ModRing<Integer, primeModulus> operator+(Integer other) {
+		ModRing<Integer, primeModulus> operator+(Integer const other) {
 			return *this + ModRing<Integer, primeModulus>(other);
 		}
 		ModRing<Integer, primeModulus> operator+(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return {this->value + other.value};
 		}
 		ModRing<Integer, primeModulus> operator+=(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return *this = *this + other;
 		}
 		ModRing<Integer, primeModulus> operator++() { return *this += 1; }
@@ -57,18 +58,18 @@ namespace Rain::Algorithm {
 			*this += 1;
 			return tmp;
 		}
-		ModRing<Integer, primeModulus> operator-(Integer other) const {
+		ModRing<Integer, primeModulus> operator-(Integer const other) const {
 			return *this - ModRing<Integer, primeModulus>(other);
 		}
-		ModRing<Integer, primeModulus> operator-(Integer other) {
+		ModRing<Integer, primeModulus> operator-(Integer const other) {
 			return *this - ModRing<Integer, primeModulus>(other);
 		}
 		ModRing<Integer, primeModulus> operator-(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return {this->value - other.value};
 		}
 		ModRing<Integer, primeModulus> operator-=(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return *this = *this - other;
 		}
 		ModRing<Integer, primeModulus> operator--() { return *this -= 1; }
@@ -77,39 +78,39 @@ namespace Rain::Algorithm {
 			*this -= 1;
 			return tmp;
 		}
-		ModRing<Integer, primeModulus> operator*(Integer other) const {
+		ModRing<Integer, primeModulus> operator*(Integer const other) const {
 			return *this * ModRing<Integer, primeModulus>(other);
 		}
-		ModRing<Integer, primeModulus> operator*(Integer other) {
+		ModRing<Integer, primeModulus> operator*(Integer const other) {
 			return *this * ModRing<Integer, primeModulus>(other);
 		}
 		ModRing<Integer, primeModulus> operator*(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return {this->value * other.value};
 		}
 		ModRing<Integer, primeModulus> operator*=(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return *this = *this * other;
 		}
-		ModRing<Integer, primeModulus> operator/(Integer other) const {
+		ModRing<Integer, primeModulus> operator/(Integer const other) const {
 			return *this / ModRing<Integer, primeModulus>(other);
 		}
-		ModRing<Integer, primeModulus> operator/(Integer other) {
+		ModRing<Integer, primeModulus> operator/(Integer const other) {
 			return *this / ModRing<Integer, primeModulus>(other);
 		}
 		ModRing<Integer, primeModulus> operator/(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return *this * power(other, primeModulus - 2);
 		}
 		ModRing<Integer, primeModulus> operator/=(
-			ModRing<Integer, primeModulus> other) {
+			ModRing<Integer, primeModulus> const other) {
 			return *this = *this / other;
 		}
 
-		bool operator==(Integer other) {
+		bool operator==(Integer const other) {
 			return *this == ModRing<Integer, primeModulus>(other);
 		}
-		bool operator==(ModRing<Integer, primeModulus> other) {
+		bool operator==(ModRing<Integer, primeModulus> const other) {
 			return this->value == other.value;
 		}
 	};
@@ -117,29 +118,29 @@ namespace Rain::Algorithm {
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
 inline Rain::Algorithm::ModRing<Integer, primeModulus> operator+(
-	LeftInteger left,
-	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
+	LeftInteger const left,
+	Rain::Algorithm::ModRing<Integer, primeModulus> const right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) + right;
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
 inline Rain::Algorithm::ModRing<Integer, primeModulus> operator-(
-	LeftInteger left,
-	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
+	LeftInteger const left,
+	Rain::Algorithm::ModRing<Integer, primeModulus> const right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) - right;
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
 inline Rain::Algorithm::ModRing<Integer, primeModulus> operator*(
-	LeftInteger left,
-	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
+	LeftInteger const left,
+	Rain::Algorithm::ModRing<Integer, primeModulus> const right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) * right;
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
 inline Rain::Algorithm::ModRing<Integer, primeModulus> operator/(
-	LeftInteger left,
-	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
+	LeftInteger const left,
+	Rain::Algorithm::ModRing<Integer, primeModulus> const right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) / right;
 }
 
