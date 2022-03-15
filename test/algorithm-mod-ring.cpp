@@ -98,6 +98,7 @@ int main() {
 		998242414);	 // Must be positive comparison, since std::size_t is positive.
 	assert(v - 2038 == -1939);
 	assert(v - 998244355 == 97);
+	std::cout << "v is " << v << '.' << std::endl;
 
 	auto res = Rain::Algorithm::ModRing<std::size_t, 23>::power(5, 4);
 	assert(res == 625 % 23);

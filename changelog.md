@@ -2,6 +2,10 @@
 
 * Consider options for making this x86 vs. x64 independent. There are assumptions in `test/algorithm-mod-ring.cpp` which depend on x64 `std::size_t`.
 
+## 7.1.25
+
+* Add `ModRing` `cout` test.
+
 ## 7.1.24
 
 * Add many `const` modifiers to `ModRing` parameters.
