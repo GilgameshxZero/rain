@@ -1,3 +1,4 @@
+#include <rain/algorithm/algorithm.hpp>
 #include <rain/algorithm/mod-ring.hpp>
 
 #include <cassert>
@@ -100,5 +101,12 @@ int main() {
 
 	auto res = Rain::Algorithm::ModRing<std::size_t, 23>::power(5, 4);
 	assert(res == 625 % 23);
+
+	// Fibonacci tests.
+	assert(
+		(Rain::Algorithm::fibonacciNumber<
+			 Rain::Algorithm::ModRing<std::size_t, 988244353>>(1000000000) ==
+		 910643820));
+
 	return 0;
 }

@@ -37,6 +37,9 @@ namespace Rain::Algorithm {
 			}
 		}
 
+		ModRing<Integer, primeModulus> operator+(Integer other) const {
+			return *this + ModRing<Integer, primeModulus>(other);
+		}
 		ModRing<Integer, primeModulus> operator+(Integer other) {
 			return *this + ModRing<Integer, primeModulus>(other);
 		}
@@ -53,6 +56,9 @@ namespace Rain::Algorithm {
 			auto tmp(*this);
 			*this += 1;
 			return tmp;
+		}
+		ModRing<Integer, primeModulus> operator-(Integer other) const {
+			return *this - ModRing<Integer, primeModulus>(other);
 		}
 		ModRing<Integer, primeModulus> operator-(Integer other) {
 			return *this - ModRing<Integer, primeModulus>(other);
@@ -71,6 +77,9 @@ namespace Rain::Algorithm {
 			*this -= 1;
 			return tmp;
 		}
+		ModRing<Integer, primeModulus> operator*(Integer other) const {
+			return *this * ModRing<Integer, primeModulus>(other);
+		}
 		ModRing<Integer, primeModulus> operator*(Integer other) {
 			return *this * ModRing<Integer, primeModulus>(other);
 		}
@@ -81,6 +90,9 @@ namespace Rain::Algorithm {
 		ModRing<Integer, primeModulus> operator*=(
 			ModRing<Integer, primeModulus> other) {
 			return *this = *this * other;
+		}
+		ModRing<Integer, primeModulus> operator/(Integer other) const {
+			return *this / ModRing<Integer, primeModulus>(other);
 		}
 		ModRing<Integer, primeModulus> operator/(Integer other) {
 			return *this / ModRing<Integer, primeModulus>(other);
@@ -104,29 +116,37 @@ namespace Rain::Algorithm {
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
-Rain::Algorithm::ModRing<Integer, primeModulus> operator+(
+inline Rain::Algorithm::ModRing<Integer, primeModulus> operator+(
 	LeftInteger left,
 	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) + right;
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
-Rain::Algorithm::ModRing<Integer, primeModulus> operator-(
+inline Rain::Algorithm::ModRing<Integer, primeModulus> operator-(
 	LeftInteger left,
 	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) - right;
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
-Rain::Algorithm::ModRing<Integer, primeModulus> operator*(
+inline Rain::Algorithm::ModRing<Integer, primeModulus> operator*(
 	LeftInteger left,
 	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) * right;
 }
 
 template <typename LeftInteger, typename Integer, Integer primeModulus>
-Rain::Algorithm::ModRing<Integer, primeModulus> operator/(
+inline Rain::Algorithm::ModRing<Integer, primeModulus> operator/(
 	LeftInteger left,
 	Rain::Algorithm::ModRing<Integer, primeModulus> right) {
 	return Rain::Algorithm::ModRing<Integer, primeModulus>(left) / right;
+}
+
+// Ease-of-use streaming operator.
+template <typename Integer, Integer primeModulus>
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	Rain::Algorithm::ModRing<Integer, primeModulus> const right) {
+	return stream << right.value;
 }
