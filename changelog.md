@@ -1,6 +1,8 @@
 # Changelog
 
-* Consider options for making this x86 vs. x64 independent. There are assumptions in `test/algorithm-mod-ring.cpp` which depend on x64 `std::size_t`.
+## 7.1.26
+
+* Add `HuffmanStreamBuf` to enable encoding/decoding with the Huffman compression algorithm.
 
 ## 7.1.25
 
