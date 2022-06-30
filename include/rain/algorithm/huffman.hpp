@@ -6,6 +6,7 @@
 #include "../literal.hpp"
 
 #include <array>
+#include <climits>
 #include <iostream>
 #include <queue>
 #include <vector>

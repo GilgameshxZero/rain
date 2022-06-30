@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.1.29
+
+1. Add `tests` command for `make`.
+2. Fix offset `__builtin_clzll` in `mostSignificant1BitIdx`.
+3. Include headers to define `SIZE_MAX` in `algorithm/fenwick` and `UCHAR_MAX` in `algorithm/huffman`.
+4. Define function/class prototypes in `data/serializer` to fix compilation errors.
+5. Fix unused pragma/variable warnings in tests.
+
 ## 7.1.28
 
 1. Create the windows `nmake` command `tests`, which compiles then runs all tests.

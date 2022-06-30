@@ -12,34 +12,34 @@ class SumTree : public Rain::Algorithm::SegmentTree<long long, long long> {
 
 	protected:
 	virtual void aggregate(
-		std::size_t const node,
+		std::size_t const,
 		typename std::vector<Value>::reference value,
 		Value const &left,
 		Value const &right,
-		std::pair<std::size_t, std::size_t> const &range) override {
+		std::pair<std::size_t, std::size_t> const &) override {
 		value = left + right;
 	}
 	virtual Result aggregate(
-		std::size_t const node,
+		std::size_t const,
 		Result const &left,
 		Result const &right,
-		std::pair<std::size_t, std::size_t> const &range) override {
+		std::pair<std::size_t, std::size_t> const &) override {
 		return left + right;
 	}
 	virtual void split(
-		std::size_t const node,
+		std::size_t const,
 		Update const &update,
 		typename std::vector<Update>::reference left,
 		typename std::vector<Update>::reference right,
-		std::pair<std::size_t, std::size_t> const &range) override {
+		std::pair<std::size_t, std::size_t> const &) override {
 		left += update;
 		right += update;
 	}
-	virtual Result convert(std::size_t const node, Value const &value) override {
+	virtual Result convert(std::size_t const, Value const &value) override {
 		return value;
 	}
 	virtual void apply(
-		std::size_t const node,
+		std::size_t const,
 		typename std::vector<Value>::reference value,
 		Update const &update,
 		std::pair<std::size_t, std::size_t> const &range) override {

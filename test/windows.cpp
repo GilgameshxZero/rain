@@ -10,7 +10,12 @@
 //
 // We specify in code here because specifying in project is inconsistent with
 // build.bat.
+
+#include <rain/platform.hpp>
+
+#ifdef RAIN_PLATFORM_WINDOWS
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+#endif
 
 #include <rain/gdi-plus.hpp>
 #include <rain/literal.hpp>
@@ -37,6 +42,7 @@ int CALLBACK WinMain(
 		std::this_thread::sleep_for(3s);
 		PostMessage(FindWindow(NULL, CAPTION), WM_COMMAND, IDOK, 0);
 	}).detach();
-	return !MessageBox(NULL, "Hello world! Waiting for 3s...", CAPTION, MB_OKCANCEL);
+	return !MessageBox(
+		NULL, "Hello world! Waiting for 3s...", CAPTION, MB_OKCANCEL);
 }
 #endif
