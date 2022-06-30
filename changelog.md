@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.1.28
+
+1. Create the windows `nmake` command `tests`, which compiles then runs all tests.
+2. Added corresponding `tests-debug` task to VSCode.
+3. Rework `networking-http-server` and `networking-smtp-server` tests to not wait for 60s at the end.
+4. Rework `windows` test to automatically close the MessageBox after 3 seconds.
+5. Fix compilation bug in `data/serializer`.
+
 ## 7.1.27
 
 1. Explicit casts for some types relating to `std::size_t`.

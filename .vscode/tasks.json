@@ -37,6 +37,19 @@
 			"args": ["SOURCES=${fileBasename}", "BUILD=1"],
 			"problemMatcher": ["$gcc"],
 			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "tests-debug",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+			"group": "build",
+
+			"command": "make",
+			"args": ["tests"],
+			"problemMatcher": ["$gcc"],
+			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
 		}
 	]
 }

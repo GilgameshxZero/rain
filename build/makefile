@@ -94,16 +94,24 @@ build: $(PROJECT_VERSION_INCLUDE) $(PROJECT_BIN)
 dist: $(PROJECT_BIN)
 # Build and run.
 run: build
-	@CD $(BIN_DIR) && $(PROJECT_BIN) $(ARGUMENTS)
+	@CD $(BIN_DIR) &&\
+	$(PROJECT_BIN) $(ARGUMENTS)
 # Clean target removes all intermediates.
 clean:
 	@IF EXIST $(BIN_DIR) RD /Q /S $(BIN_DIR)
 	@IF EXIST $(OBJ_DIR) RD /Q /S $(OBJ_DIR)
+tests: $(PROJECT_VERSION_INCLUDE)
+	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO\
+		@nmake SOURCES=%~ni.cpp BUILD=$(BUILD)
+	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO (\
+		@ECHO -------- %~ni -------- &&\
+		CD $(BIN_DIR) &&\
+		$(BIN_DIR)%~ni $(ARGUMENTS)\
+	)
+
 # Increment version number.
 $(PROJECT_VERSION_INCLUDE): $(PROJECT_INCLUDES) $(PROJECT_SRC_DIR)$(SOURCES)
 	@increment.bat
-test: $(ROOT_DIR)include\*.hpp $(ROOT_DIR)include\rain\*.hpp
-	@ECHO $**
 
 # Build target.
 # Define special macro to enable double-substitution.
@@ -196,6 +204,7 @@ run: build
 	@cd $(BIN_DIR) && ./$(PROJECT_BIN) $(ARGUMENTS)
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+
 # Increment version number.
 $(PROJECT_VERSION_INCLUDE): $(PROJECT_INCLUDES) $(PROJECT_SRC_DIR)$(SOURCES)
 	@read LINE < $(PROJECT_VERSION_INCLUDE);\
