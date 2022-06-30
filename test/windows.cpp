@@ -13,6 +13,9 @@
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 
 #include <rain/gdi-plus.hpp>
+#include <rain/literal.hpp>
+#include <rain/multithreading.hpp>
+#include <rain/time.hpp>
 #include <rain/windows.hpp>
 
 #ifndef RAIN_PLATFORM_WINDOWS
@@ -26,6 +29,14 @@ int CALLBACK WinMain(
 	_In_opt_ HINSTANCE,
 	_In_ LPSTR lpCmdLine,
 	_In_ int nCmdShow) {
-	return !MessageBox(NULL, "Hello world!", "Caption", 0);
+	using namespace Rain::Literal;
+
+	char const CAPTION[]{"rain/test/windows"};
+
+	std::thread([&]() {
+		std::this_thread::sleep_for(3s);
+		PostMessage(FindWindow(NULL, CAPTION), WM_COMMAND, IDOK, 0);
+	}).detach();
+	return !MessageBox(NULL, "Hello world! Waiting for 3s...", CAPTION, MB_OKCANCEL);
 }
 #endif

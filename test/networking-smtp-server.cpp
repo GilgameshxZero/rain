@@ -172,10 +172,6 @@ int main() {
 
 			Rain::Error::consumeThrowable([&client]() { client.shutdown(); });
 		}
-
-		// Let server remain open for 60s for playtest.
-		std::cout << "Serving on " << server.host() << std::endl;
-		std::this_thread::sleep_for(60s);
 	}
 
 	return 0;

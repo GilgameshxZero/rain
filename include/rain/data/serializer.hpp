@@ -83,7 +83,7 @@ inline void serialize(
 	std::basic_string<CharT, Traits, Allocator> const &data) {
 	serializer << data.size();
 	serializer.write(
-		reinterpret_cast<char const *>(data.data()), sizeof(CharT) * size);
+		reinterpret_cast<char const *>(data.data()), sizeof(CharT) * data.size());
 }
 template <
 	class CharT,
