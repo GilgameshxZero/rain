@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.27
+
+1. Explicit casts for some types relating to `std::size_t`.
+
 ## 7.1.26
 
 * Add `HuffmanStreamBuf` to enable encoding/decoding with the Huffman compression algorithm.

@@ -92,7 +92,7 @@ namespace Rain::Algorithm {
 		// Dictionaries contain [3, 511] nodes = leaves * 2 - 1. Node indices are
 		// represented by shorts, with -1 representing NULL. Each pair represents
 		// the indices of the two children.
-		inline static std::size_t const MAX_NODES = UCHAR_MAX * 2 + 1;
+		inline static short const MAX_NODES = UCHAR_MAX * 2 + 1;
 
 		short root, parent[MAX_NODES];
 
@@ -119,7 +119,7 @@ namespace Rain::Algorithm {
 			this->setg(&this->getArea, &this->getArea, &this->getArea);
 			this->setp(nullptr, nullptr);
 
-			for (std::size_t i{0}; i < MAX_NODES; i++) {
+			for (short i{0}; i < MAX_NODES; i++) {
 				this->children[i] = {-1, -1};
 				this->parent[i] = -1;
 			}
@@ -248,9 +248,9 @@ namespace Rain::Algorithm {
 				std::vector<std::pair<std::size_t, short>>,
 				std::greater<std::pair<std::size_t, short>>>
 				pq;
-			for (short i{0}; i < frequency.size(); i++) {
+			for (std::size_t i{0}; i < frequency.size(); i++) {
 				if (frequency[i] > 0) {
-					pq.push({frequency[i], i});
+					pq.push({frequency[i], static_cast<short>(i)});
 				}
 			}
 			if (pq.size() == 1) {
@@ -297,7 +297,7 @@ namespace Rain::Algorithm {
 
 			// Traverse the tree while creating nodes. curNode always points to a
 			// non-leaf node which still needs at least one child to be traversed.
-			short curNode{UCHAR_MAX + 1}, nextNonLeafNode{curNode + 1};
+			short curNode{UCHAR_MAX + 1}, nextNonLeafNode{UCHAR_MAX + 2};
 			this->root = curNode;
 			this->parent[curNode] = -1;
 			this->children[curNode] = {-1, -1};
@@ -385,19 +385,19 @@ namespace Rain::Algorithm {
 			if (this->flushed) {
 				throw Exception(Error::CANNOT_PUT_AFTER_FLUSH);
 			}
-			try {
-				if (!traits_type::eq_int_type(ch, traits_type::eof())) {
-					if (this->charBits[ch].empty()) {
-						throw Exception(Error::CHARACTER_NOT_IN_DICTIONARY);
-					}
+			if (!traits_type::eq_int_type(ch, traits_type::eof())) {
+				if (this->charBits[ch].empty()) {
+					throw Exception(Error::CHARACTER_NOT_IN_DICTIONARY);
+				}
+				try {
 					for (bool const &i : this->charBits[ch]) {
 						this->writeBit(i);
 					}
+				} catch (...) {
+					return traits_type::eof();
 				}
-				return ch;
-			} catch (...) {
-				return traits_type::eof();
 			}
+			return ch;
 		}
 
 		// Flushes remaining bits in oBuffer to underlying as a full byte.
@@ -413,6 +413,7 @@ namespace Rain::Algorithm {
 					this->writeBit(false);
 				}
 				this->writeByte(fillers);
+				this->underlying.pubsync();
 				this->flushed = true;
 				return 0;
 			} catch (...) {
