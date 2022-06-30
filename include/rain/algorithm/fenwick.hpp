@@ -2,6 +2,7 @@
 // queries. Not thread-safe.
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 namespace Rain::Algorithm {

@@ -30,7 +30,7 @@ namespace Rain::Algorithm {
 	inline std::size_t mostSignificant1BitIdx(Integer const x) {
 #ifdef __has_builtin
 #if __has_builtin(__builtin_clzll)
-		return 8 * sizeof(unsigned long long) - __builtin_clzll(x);
+		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
 #endif
 #endif
 		for (std::size_t bit = 8 * sizeof(Integer) - 1;

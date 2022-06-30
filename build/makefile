@@ -196,14 +196,24 @@ PROJECT_OBJS := $(addprefix $(PROJECT_OBJ_DIR), $(addsuffix .o,\
 .SECONDARY: $(PROJECT_BIN) $(PROJECT_OBJS)
 
 # Ensure files with the same name as fake targets do not trigger.
-.PHONY: __default _default build dist run clean
+.PHONY: __default _default build dist run clean tests
 _default: build
 build: $(PROJECT_VERSION_INCLUDE) $(PROJECT_BIN)
 dist: $(PROJECT_BIN)
 run: build
-	@cd $(BIN_DIR) && ./$(PROJECT_BIN) $(ARGUMENTS)
+	@cd $(BIN_DIR) &&\
+	./$(PROJECT_BIN) $(ARGUMENTS)
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+tests: $(PROJECT_VERSION_INCLUDE)
+	@for i in $(PROJECT_SRC_DIR)*.cpp; do\
+		$(MAKE) --no-print-directory SOURCES=$$(basename $$i) || exit;\
+	done
+	@for i in $(PROJECT_SRC_DIR)*.cpp; do\
+		echo -------- $$(basename $$i .cpp) --------;\
+		cd $(BIN_DIR);\
+		./$$(basename $$i .cpp) $(ARGUMENTS) || exit;\
+	done
 
 # Increment version number.
 $(PROJECT_VERSION_INCLUDE): $(PROJECT_INCLUDES) $(PROJECT_SRC_DIR)$(SOURCES)

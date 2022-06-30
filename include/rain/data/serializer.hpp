@@ -9,6 +9,35 @@
 #include <optional>
 #include <string>
 
+// Forward-declared prototypes.
+namespace Rain::Data {
+	class Serializer;
+	class Deserializer;
+}
+
+template <typename Data>
+inline void serialize(Rain::Data::Serializer &, Data const &);
+template <typename Data>
+inline void deserialize(Rain::Data::Deserializer &, Data &);
+template <
+	class CharT,
+	class Traits = std::char_traits<CharT>,
+	class Allocator = std::allocator<CharT> >
+inline void serialize(
+	Rain::Data::Serializer &,
+	std::basic_string<CharT, Traits, Allocator> const &);
+template <
+	class CharT,
+	class Traits = std::char_traits<CharT>,
+	class Allocator = std::allocator<CharT> >
+inline void deserialize(
+	Rain::Data::Deserializer &,
+	std::basic_string<CharT, Traits, Allocator> &);
+template <class Data>
+inline void serialize(Rain::Data::Serializer &, std::vector<Data> const &);
+template <class Data>
+inline void deserialize(Rain::Data::Deserializer &, std::vector<Data> &);
+
 namespace Rain::Data {
 	// Serializes and deserializes data to/from std::iostream.
 	//
@@ -74,10 +103,7 @@ inline void deserialize(Rain::Data::Deserializer &deserializer, Data &data) {
 }
 
 // std::string.
-template <
-	class CharT,
-	class Traits = std::char_traits<CharT>,
-	class Allocator = std::allocator<CharT> >
+template <class CharT, class Traits, class Allocator>
 inline void serialize(
 	Rain::Data::Serializer &serializer,
 	std::basic_string<CharT, Traits, Allocator> const &data) {
@@ -85,10 +111,7 @@ inline void serialize(
 	serializer.write(
 		reinterpret_cast<char const *>(data.data()), sizeof(CharT) * data.size());
 }
-template <
-	class CharT,
-	class Traits = std::char_traits<CharT>,
-	class Allocator = std::allocator<CharT> >
+template <class CharT, class Traits, class Allocator>
 inline void deserialize(
 	Rain::Data::Deserializer &deserializer,
 	std::basic_string<CharT, Traits, Allocator> &data) {
