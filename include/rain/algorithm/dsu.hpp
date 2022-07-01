@@ -30,7 +30,7 @@ namespace Rain::Algorithm {
 			return this->nodes[this->find(i)].second;
 		}
 		void join(std::size_t const i, std::size_t const j) {
-			std::size_t pI = this->find(i), pJ = this->find(j);
+			std::size_t pI{this->find(i)}, pJ{this->find(j)};
 			if (pI == pJ) {
 				return;
 			}

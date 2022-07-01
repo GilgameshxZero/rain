@@ -92,7 +92,7 @@ int main() {
 	// Time test.
 	auto timeBegin = std::chrono::steady_clock::now();
 	SumTree tree2(100000);
-	for (std::size_t i = 0; i < 100000; i++) {
+	for (std::size_t i{0}; i < 100000; i++) {
 		std::pair<std::size_t, std::size_t> range{rand() % 100000, rand() % 100000};
 		if (range.first > range.second) {
 			std::swap(range.first, range.second);

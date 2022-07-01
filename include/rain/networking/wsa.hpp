@@ -14,7 +14,7 @@ namespace Rain::Networking {
 			WSADATA wsaData;
 
 			_() {
-				int startupReturn = WSAStartup(MAKEWORD(2, 2), &wsaData);
+				int startupReturn{WSAStartup(MAKEWORD(2, 2), &wsaData)};
 				if (startupReturn != 0) {
 					// An immediate failure can throws an error code from the WSA set of
 					// codes.

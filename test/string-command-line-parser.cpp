@@ -21,11 +21,11 @@ int main() {
 		"--include=../ext/lib/include/",
 		"--reload",
 		"--name=rain"};
-	int argc = 10;
+	int argc{10};
 
-	unsigned long long port = 443;
-	bool live = false, reload = true;
-	std::string name = "default";
+	unsigned long long port{443};
+	bool live{false}, reload{true};
+	std::string name{"default"};
 	std::vector<std::string> includes;
 	parser.addParser("port", port);
 	parser.addParser("live", live);
@@ -40,8 +40,8 @@ int main() {
 						<< "Live: " << live << std::endl
 						<< "Reload: " << reload << std::endl
 						<< "Name: " << name << std::endl;
-	for (std::size_t a = 0; a < includes.size(); a++) {
-		std::cout << "Include: " << includes[a] << std::endl;
+	for (std::size_t i{0}; i < includes.size(); i++) {
+		std::cout << "Include: " << includes[i] << std::endl;
 	}
 
 	assert(port == 80);

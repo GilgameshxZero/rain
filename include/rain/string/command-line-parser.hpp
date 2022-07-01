@@ -44,9 +44,9 @@ namespace Rain::String {
 		bool parse(int argc, char const *const *const argv) {
 			// Key name buffer.
 			std::string keyName;
-			for (int a = 0; a < argc; a++) {
+			for (int i{0}; i < argc; i++) {
 				// Current argument.
-				char const *arg = argv[a],
+				char const *arg = argv[i],
 									 // Candidate for value to be parsed.
 					*value;
 
@@ -68,7 +68,7 @@ namespace Rain::String {
 						// flag (without value). Otherwise, next argument is the value for
 						// this key.
 						value =
-							(a + 1 == argc || argv[a + 1][0] == '-') ? nullptr : argv[++a];
+							(i + 1 == argc || argv[i + 1][0] == '-') ? nullptr : argv[++i];
 					} else {
 						// An explicit = delimiter exists, and the value is after that.
 						keyName = std::string(arg + 2, value++ - arg - 2);
@@ -84,7 +84,7 @@ namespace Rain::String {
 						// Argument ends, so value is next argument. Again, check if the key
 						// is a flag.
 						value =
-							(a + 1 == argc || argv[a + 1][0] == '-') ? nullptr : argv[++a];
+							(i + 1 == argc || argv[i + 1][0] == '-') ? nullptr : argv[++i];
 					} else {
 						// Value is concatenated to key.
 						value = arg + 2;

@@ -120,7 +120,7 @@ namespace Rain::Networking {
 				auto future =
 					std::async(std::launch::async, [this, &interrupterServer]() {
 						AddressInfo acceptedAddress;
-						socklen_t addressLen = sizeof(acceptedAddress.address);
+						socklen_t addressLen{sizeof(acceptedAddress.address)};
 						interrupterServer.poll(PollFlag::READ_NORMAL);
 						this->interrupter.second.reset(
 							new Networking::Socket<

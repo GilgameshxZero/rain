@@ -8,14 +8,14 @@
 
 int main() {
 	// Partial table computation.
-	std::string s = "PARTICIPATE IN PARACHUTE";
+	std::string s{"PARTICIPATE IN PARACHUTE"};
 	std::cout << "String: " << s << std::endl;
 
 	std::vector<std::size_t> partialMatch =
 		Rain::Algorithm::computeKmpPartialMatch(s);
 	std::cout << "Partial match table: ";
-	for (size_t a = 0; a < partialMatch.size(); a++) {
-		std::cout << partialMatch[a] << " ";
+	for (size_t i{0}; i < partialMatch.size(); i++) {
+		std::cout << partialMatch[i] << " ";
 	}
 	assert(
 		partialMatch ==
@@ -27,8 +27,8 @@ int main() {
 	s = "\r\n";
 	partialMatch = Rain::Algorithm::computeKmpPartialMatch(s.c_str(), s.length());
 	std::cout << std::endl << "Partial match table for \\r\\n: ";
-	for (size_t a = 0; a < partialMatch.size(); a++) {
-		std::cout << partialMatch[a] << " ";
+	for (size_t i{0}; i < partialMatch.size(); i++) {
+		std::cout << partialMatch[i] << " ";
 	}
 	assert(partialMatch == std::vector<std::size_t>({SIZE_MAX, 0, 0}));
 
@@ -36,15 +36,15 @@ int main() {
 	s = "\r\n\r\n";
 	partialMatch = Rain::Algorithm::computeKmpPartialMatch(s.c_str(), s.length());
 	std::cout << std::endl << "Partial match table for \\r\\n\\r\\n: ";
-	for (size_t a = 0; a < partialMatch.size(); a++) {
-		std::cout << partialMatch[a] << " ";
+	for (size_t i{0}; i < partialMatch.size(); i++) {
+		std::cout << partialMatch[i] << " ";
 	}
 	assert(
 		partialMatch == std::vector<std::size_t>({SIZE_MAX, 0, SIZE_MAX, 0, 2}));
 
 	// String search.
 	s = "ABC ABCDAB ABCDABCDABDE";
-	std::string w = "ABCDABD";
+	std::string w{"ABCDABD"};
 	std::string match =
 		s.substr(Rain::Algorithm::kmpSearch(s, w).first, w.length());
 	std::string matchStr(match, w.length());

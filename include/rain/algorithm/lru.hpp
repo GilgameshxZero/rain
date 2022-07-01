@@ -49,7 +49,7 @@ namespace Rain::Algorithm {
 		// Returns an iterator to the hashmap object if available, otherwise
 		// this->end(). Updates LRU ordering.
 		typename InternalList::iterator find(Key const &key) {
-			typename InternalHashMap::iterator const findIt = this->hashMap.find(key);
+			typename InternalHashMap::iterator const findIt{this->hashMap.find(key)};
 
 			if (findIt == this->hashMap.end()) {
 				return this->end();
@@ -79,7 +79,7 @@ namespace Rain::Algorithm {
 		std::pair<typename InternalList::iterator, bool> insertOrAssign(
 			KeyType &&key,
 			ValueType &&value) {
-			typename InternalHashMap::iterator const findIt = this->hashMap.find(key);
+			typename InternalHashMap::iterator const findIt{this->hashMap.find(key)};
 
 			if (findIt != this->hashMap.end()) {
 				// If key exists, simply move it to the front of the list.

@@ -233,7 +233,7 @@ inline std::istream &operator>>(
 
 	// HTTP header lines can be up to 4K long.
 	// Total size of headers cannot exceed 64K.
-	std::size_t totalHeadersBytes = 0;
+	std::size_t totalHeadersBytes{0};
 	std::string line(1_zu << 12, '\0');
 	while (stream.getline(&line[0], line.length())) {
 		line.resize(static_cast<std::size_t>(
@@ -245,7 +245,7 @@ inline std::istream &operator>>(
 		}
 
 		// Copy header value to another string.
-		std::size_t colonPos = line.find(':');
+		std::size_t colonPos{line.find(':')};
 
 		if (colonPos == std::string::npos) {
 			// Failed to find colon, malformed.

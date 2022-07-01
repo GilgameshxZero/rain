@@ -11,7 +11,7 @@ namespace Rain::String::Base64 {
 	inline std::string encode(std::string const &in) {
 		std::string out;
 
-		int val = 0, valb = -6;
+		int val{0}, valb{-6};
 		for (unsigned char c : in) {
 			val = (val << 8) + c;
 			valb += 8;
@@ -37,12 +37,12 @@ namespace Rain::String::Base64 {
 		std::string out;
 
 		std::vector<int> T(256, -1);
-		for (int i = 0; i < 64; i++)
+		for (int i{0}; i < 64; i++)
 			T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] =
 				i;
 
-		unsigned int val = 0;
-		int valb = -8;
+		unsigned int val{0};
+		int valb{-8};
 		for (unsigned char c : in) {
 			if (T[c] == -1) break;
 			val = (val << 6) + T[c];

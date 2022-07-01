@@ -23,7 +23,7 @@ namespace Rain::Algorithm {
 		// Computes prefix sum up to and including idx.
 		Value sum(std::size_t const idx) const {
 			Value aggregate{};
-			for (std::size_t i = idx; i != SIZE_MAX; i &= i + 1, i--) {
+			for (std::size_t i{idx}; i != SIZE_MAX; i &= i + 1, i--) {
 				aggregate += this->tree[i];
 			}
 			return aggregate;
@@ -31,7 +31,7 @@ namespace Rain::Algorithm {
 
 		// Modify index by a delta.
 		void modify(std::size_t const idx, Value const &delta) {
-			for (std::size_t i = idx; i < this->tree.size(); i |= i + 1) {
+			for (std::size_t i{idx}; i < this->tree.size(); i |= i + 1) {
 				this->tree[i] += delta;
 			}
 		}

@@ -69,7 +69,7 @@ namespace Rain::Networking::Smtp {
 
 					// Run matcher. A match will set this->match to an invalid, but
 					// non-null location.
-					static std::string const terminator = "\r\n.\r\n";
+					static std::string const terminator{"\r\n.\r\n"};
 					static auto const terminatorPartialMatch =
 						Algorithm::computeKmpPartialMatch(terminator);
 					std::tie(this->match, this->candidate) = Algorithm::kmpSearch(

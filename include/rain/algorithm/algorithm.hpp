@@ -33,7 +33,7 @@ namespace Rain::Algorithm {
 		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
 #endif
 #endif
-		for (std::size_t bit = 8 * sizeof(Integer) - 1;
+		for (std::size_t bit{8 * sizeof(Integer) - 1};
 				 bit != std::numeric_limits<std::size_t>::max();
 				 bit--) {
 			if (x & (static_cast<Integer>(1) << bit)) {
@@ -52,7 +52,7 @@ namespace Rain::Algorithm {
 		return __builtin_ctzll(x);
 #endif
 #endif
-		for (std::size_t bit = 0; bit != 8 * sizeof(Integer); bit++) {
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
 			if (x & (static_cast<Integer>(1) << bit)) {
 				return bit;
 			}
@@ -68,8 +68,8 @@ namespace Rain::Algorithm {
 		return __builtin_popcountll(x);
 #endif
 #endif
-		std::size_t count = 0;
-		for (std::size_t bit = 0; bit != 8 * sizeof(Integer); bit++) {
+		std::size_t count{0};
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
 			count += !!(x & (static_cast<Integer>(1) << bit));
 		}
 		return count;

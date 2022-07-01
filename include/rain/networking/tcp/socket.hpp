@@ -137,7 +137,8 @@ namespace Rain::Networking::Tcp {
 			virtual int sync() noexcept override {
 				// Send available buffer.
 				try {
-					std::size_t bytesSent{0}, bytesTotal{static_cast<std::size_t>(this->pptr() - this->pbase())};
+					std::size_t bytesSent{0},
+						bytesTotal{static_cast<std::size_t>(this->pptr() - this->pbase())};
 					while (bytesSent < bytesTotal) {
 						auto result = this->socket->send(
 							this->sendBuffer + bytesSent,
@@ -162,7 +163,7 @@ namespace Rain::Networking::Tcp {
 		};
 
 		// Internally holds the stream buffer.
-		IoStreamBuf ioStreamBuf = IoStreamBuf(this);
+		IoStreamBuf ioStreamBuf{IoStreamBuf(this)};
 
 		private:
 		// Custom defaulted default constructor behavior to add onto base class
