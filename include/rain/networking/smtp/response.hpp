@@ -63,7 +63,7 @@ namespace Rain::Networking::Smtp {
 			}
 
 			// For every line but the final, send CODE-line.
-			for (std::size_t index = 0; index + 1 < this->lines.size(); index++) {
+			for (std::size_t index{0}; index + 1 < this->lines.size(); index++) {
 				stream << this->statusCode << "-" << this->lines[index] << "\r\n";
 			}
 			stream << this->statusCode << " " << this->lines.back() << "\r\n";
@@ -71,7 +71,7 @@ namespace Rain::Networking::Smtp {
 		}
 		virtual void recvWith(std::istream &stream) override {
 			// Receive line-by-line, up to 4K bytes total.
-			std::size_t totalBytes = 0;
+			std::size_t totalBytes{0};
 			while (totalBytes < (1_zu << 12)) {
 				try {
 					// statusCode is always the first three characters.
@@ -83,7 +83,7 @@ namespace Rain::Networking::Smtp {
 				}
 
 				// The next character determines whether it is the final line.
-				char statusDelimiter = static_cast<char>(stream.get());
+				char statusDelimiter{static_cast<char>(stream.get())};
 
 				// Each line can be at most ~1K characters.
 				this->lines.emplace_back(1_zu << 10, '\0');

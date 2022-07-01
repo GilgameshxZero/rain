@@ -76,7 +76,7 @@ namespace Rain::String {
 		std::size_t const cStrLen,
 		// Scanning direction.
 		bool const scanRight = true) {
-		std::size_t index = 0;
+		std::size_t index{0};
 		for (; index < cStrLen && std::isspace(static_cast<int>(cStr[index]));
 				 index += (scanRight ? 1 : -1))
 			;
@@ -86,7 +86,7 @@ namespace Rain::String {
 		char const *const cStr,
 		std::size_t const cStrLen,
 		bool const scanRight = true) {
-		std::size_t index = 0;
+		std::size_t index{0};
 		for (; index < cStrLen && !std::isspace(static_cast<int>(cStr[index]));
 				 index += (scanRight ? 1 : -1))
 			;

@@ -33,7 +33,7 @@ int main() {
 		}
 		assert(t == t2);
 
-		std::string s = t;
+		std::string s{t.operator std::string()};
 		assert(s == "identity");
 
 		try {

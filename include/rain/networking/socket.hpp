@@ -51,10 +51,10 @@ namespace Rain::Networking {
 			// All Sockets are non-blocking. A change in this will also change derived
 			// class interfaces.
 #ifdef RAIN_PLATFORM_WINDOWS
-			u_long ioctlOpt = 1;
+			u_long ioctlOpt{1};
 			validateSystemCall(ioctlsocket(
 #else
-			int ioctlOpt = 1;
+			int ioctlOpt{1};
 			validateSystemCall(ioctl(
 #endif
 				this->nativeSocket(), FIONBIO, &ioctlOpt));
@@ -100,7 +100,7 @@ namespace Rain::Networking {
 			std::vector<PollFlag> const &events,
 			Time::Timeout timeout = 15s) {
 			std::vector<pollfd> fds;
-			for (std::size_t index = 0; index < nativeSockets.size(); index++) {
+			for (std::size_t index{0}; index < nativeSockets.size(); index++) {
 				fds.push_back(
 					{nativeSockets[index], static_cast<short>(events[index]), 0});
 			}
@@ -309,7 +309,7 @@ namespace Rain::Networking {
 			char const *buffer,
 			std::size_t bufferLen,
 			Time::Timeout timeout = 15s) {
-			std::size_t bytesSent = 0;
+			std::size_t bytesSent{0};
 
 			while (bytesSent < bufferLen) {
 				// Poll until timeout or writeable so that send doesn't block.
@@ -363,7 +363,7 @@ namespace Rain::Networking {
 		}
 		std::size_t recv(std::string &buffer, Time::Timeout timeout = 15s) {
 			buffer.resize(buffer.capacity());
-			std::size_t result = this->recv(&buffer[0], buffer.length(), timeout);
+			std::size_t result{this->recv(&buffer[0], buffer.length(), timeout)};
 			buffer.resize(result);
 			return result;
 		}
@@ -446,7 +446,9 @@ namespace Rain::Networking {
 			// RVO guaranteed, will be moved at worst.
 			return addressInfo;
 		}
-		Host peerHost() const { return getNumericHost(this->peerName()); }
+		Host peerHost() const {
+			return getNumericHost(this->peerName());
+		}
 	};
 
 	// No-op.

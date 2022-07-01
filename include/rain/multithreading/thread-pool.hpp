@@ -232,7 +232,7 @@ namespace Rain::Multithreading {
 			// Any tasks not completed at this point won't be completed.
 			// Do not need to lock mutexes, since only ThreadFnc may be executing
 			// here, and that does not modify this->threads.
-			for (auto it = this->threads.begin(); it != this->threads.end(); it++) {
+			for (auto it{this->threads.begin()}; it != this->threads.end(); it++) {
 				it->join();
 			}
 		}

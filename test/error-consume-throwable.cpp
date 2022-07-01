@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 auto foo() {
-	static int count = 0;
+	static int count{0};
 	return count++;
 }
 
@@ -38,7 +38,7 @@ int main() {
 
 	// Consume a throwable with captures and parameters.
 	{
-		int left = 3;
+		int left{3};
 		left++;
 		assert(
 			Rain::Error::consumeThrowable(
@@ -79,7 +79,7 @@ int main() {
 
 	// References should be forwarded through consumeThrowable.
 	{
-		int value = 0;
+		int value{0};
 
 		Rain::Error::consumeThrowable(
 			[](int &value) { value++; }, RAIN_ERROR_LOCATION)(value);
@@ -88,7 +88,7 @@ int main() {
 
 	// Mutable lambdas must be handled as well.
 	{
-		int value = 0;
+		int value{0};
 
 		auto throwable = [value]() mutable {
 			// This lambda must be marked mutable since copy-capture value is
@@ -118,7 +118,7 @@ int main() {
 	// std::function MAY OR MAY NOT be moved depending on implementation.
 	{
 		std::function<int()> f([]() {
-			static int value = 0;
+			static int value{0};
 			return value++;
 		});
 

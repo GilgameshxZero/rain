@@ -140,7 +140,7 @@ namespace Rain::Algorithm {
 				return this->convert(node, this->values[node]);
 			}
 
-			std::size_t mid = (range.first + range.second) / 2;
+			std::size_t mid{(range.first + range.second) / 2};
 			return this->aggregate(
 				node,
 				this->query(node * 2, left, right, {range.first, mid}),
@@ -168,7 +168,7 @@ namespace Rain::Algorithm {
 				this->updates[node] = update;
 				this->lazy[node] = true;
 			} else {
-				std::size_t mid = (range.first + range.second) / 2;
+				std::size_t mid{(range.first + range.second) / 2};
 				this->update(node * 2, left, right, update, {range.first, mid});
 				this->update(
 					node * 2 + 1, left, right, update, {mid + 1, range.second});

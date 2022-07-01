@@ -183,7 +183,7 @@ namespace Rain::Networking::Http {
 				// Create a copy of versionStr so that the original remains unchanged,
 				// in case the parsing below throws. Then, the version is 0.9, and we
 				// need to use the bytes in versionStr again as the body.
-				std::string versionStrCopy = versionStr;
+				std::string versionStrCopy{versionStr};
 				versionStrCopy.resize(static_cast<std::size_t>(
 					std::max(std::streamsize(0), stream.gcount() - 1)));
 

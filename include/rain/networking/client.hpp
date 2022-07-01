@@ -18,7 +18,7 @@ namespace Rain::Networking {
 			NativeSocket nativeSocket,
 			AddressInfo const &addressInfo,
 			Time::Timeout timeout = 15s) {
-			Error connectError = Error::NONE;
+			Error connectError{Error::NONE};
 			if (
 				::connect(
 					nativeSocket,
@@ -91,10 +91,10 @@ namespace Rain::Networking {
 			// mtx locks _nativeSocket. _nativeSocket (managed by superclass) is not
 			// directly accessible, so we need to swap it in. This variable determines
 			// if the swap has occurred yet (e.g. successfully connected).
-			bool connected = false;
-			std::atomic_size_t attemptsCompleted = 0;
+			bool connected{false};
+			std::atomic_size_t attemptsCompleted{0};
 
-			for (std::size_t idx = 0; idx < addressInfos.size(); idx++) {
+			for (std::size_t idx{0}; idx < addressInfos.size(); idx++) {
 				// Each thread spawns an identical client and attempts to connect with
 				// that client. On success, locks the mutex and swaps.
 				futures.push_back(std::async(

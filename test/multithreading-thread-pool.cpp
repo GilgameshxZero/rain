@@ -10,7 +10,7 @@ int main() {
 	using namespace Rain::Literal;
 
 	// A counter for work.
-	std::atomic_size_t counter = 0;
+	std::atomic_size_t counter{0};
 
 	// Two types of tasks which both increment the counter, one which prints the
 	// counter as well.
@@ -28,7 +28,7 @@ int main() {
 		Rain::Multithreading::ThreadPool threadPool(8);
 		std::cout << "Limited to 8 threads, incrementing counter by 25."
 							<< std::endl;
-		for (std::size_t a = 0; a < 25; a++) {
+		for (std::size_t i{0}; i < 25; i++) {
 			threadPool.queueTask(printTask);
 		}
 		auto taskSpawnTime = std::chrono::system_clock::now();
@@ -53,7 +53,7 @@ int main() {
 	{
 		Rain::Multithreading::ThreadPool unlimitedThreadPool;
 		std::cout << "Unlimited threads, incrementing counter by 25." << std::endl;
-		for (std::size_t a = 0; a < 25; a++) {
+		for (std::size_t i{0}; i < 25; i++) {
 			unlimitedThreadPool.queueTask(task);
 		}
 		auto taskSpawnTime = std::chrono::system_clock::now();
@@ -79,7 +79,7 @@ int main() {
 	{
 		Rain::Multithreading::ThreadPool bigThreadPool(2048);
 		std::cout << "2048 threads, incrementing counter by 4000." << std::endl;
-		for (std::size_t a = 0; a < 4000; a++) {
+		for (std::size_t i{0}; i < 4000; i++) {
 			try {
 				bigThreadPool.queueTask(task);
 			} catch (std::system_error const &exception) {
@@ -112,7 +112,7 @@ int main() {
 
 	{
 		Rain::Multithreading::ThreadPool threadPool(2);
-		for (std::size_t index = 0; index < 5; index++) {
+		for (std::size_t i{0}; i < 25; i++) {
 			threadPool.queueTask(throwingTask);
 		}
 		threadPool.blockForTasks();

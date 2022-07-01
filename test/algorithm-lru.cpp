@@ -16,7 +16,7 @@ int main() {
 		// Assign.
 		cache.insertOrAssign(1, 1);
 		cache.insertOrAssign(2, 2);
-		int res = cache.at(1);
+		int res{cache.at(1)};
 		std::cout << "cache.at(1): " << res << "." << std::endl;
 		assert(res == 1);
 

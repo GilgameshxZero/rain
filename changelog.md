@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.30
+
+1. `onRequest` for HTTP checks against the filter method first before the host or path string.
+2. Prefer using `{}` braces initialization rather than `=` initialization for clarity. `=` can be confusing as it implies the use of a copy assignment operator, whereas in reality it doesn’t.
+
 ## 7.1.29
 
 1. Add `tests` command for `make`.

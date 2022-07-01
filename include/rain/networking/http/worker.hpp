@@ -163,13 +163,13 @@ namespace Rain::Networking::Http {
 			std::smatch targetMatch;
 			for (RequestFilter const &filter : this->_filters) {
 				if (
+					filter.methods.find(req.method) != filter.methods.end() &&
 					std::regex_match(req.headers.host().asStr(), filter.host) &&
-					std::regex_match(req.target, targetMatch, filter.target) &&
-					filter.methods.find(req.method) != filter.methods.end()) {
+					std::regex_match(req.target, targetMatch, filter.target)) {
 					// Matched, call handler and process.
 					try {
 						// This will be cast to a derived type.
-						ResponseAction result = filter.handler(this, req, targetMatch);
+						ResponseAction result{filter.handler(this, req, targetMatch)};
 
 						// Ignore the rest of the unprocessed body.
 						req.body.ignore(std::numeric_limits<std::streamsize>::max());

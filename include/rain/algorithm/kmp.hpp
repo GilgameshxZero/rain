@@ -25,9 +25,9 @@ namespace Rain::Algorithm {
 
 		// How far into search string s we must begin (to our best knowledge) if we
 		// mismatch.
-		std::size_t candidate = 0;
+		std::size_t candidate{0};
 
-		for (std::size_t a = 1; a < cStrLen; a++) {
+		for (std::size_t a{1}; a < cStrLen; a++) {
 			if (cStr[a] == cStr[candidate]) {
 				partialMatch[a] = partialMatch[candidate];
 			} else {
@@ -64,7 +64,8 @@ namespace Rain::Algorithm {
 			partialMatch.size() == 0 ? computeKmpPartialMatch(needle) : partialMatch;
 
 		char const *searchResult = nullptr;
-		for (std::size_t a = 0; a < haystackLen;) {
+
+		for (std::size_t a{0}; a < haystackLen;) {
 			if (haystack[a] == needle[candidate]) {
 				a++;
 				candidate++;

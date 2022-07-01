@@ -209,14 +209,14 @@ namespace Rain::Networking {
 		}
 
 		// Get the number of answer.
-		int cMsg = ns_msg_count(hMsgs, ns_s_an);
+		int cMsg{ns_msg_count(hMsgs, ns_s_an)};
 		if (cMsg < 0) {
 			throw Exception(Error::NS_MSG_COUNT_FAILED);
 		}
 
 		ns_rr record;
 		char buffer[NS_PACKETSZ], mxNameBuffer[NS_PACKETSZ];
-		for (int msgIdx = 0; msgIdx < cMsg; msgIdx++) {
+		for (int msgIdx{0}; msgIdx < cMsg; msgIdx++) {
 			// If parsing a single message fails, move on.
 			if (ns_parserr(&hMsgs, ns_s_an, msgIdx, &record)) {
 				continue;

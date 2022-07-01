@@ -241,7 +241,7 @@ namespace Rain::Networking::Http {
 				 transferEncoding.back() == Header::TransferEncoding::IDENTITY)) {
 				// body.inAvail must return -1 if no characters, 0 if indeterminate, or
 				// an accurate number otherwise.
-				std::streamsize inAvail = this->body.inAvail();
+				std::streamsize inAvail{this->body.inAvail()};
 
 				// Set Content-Length if body is determinate.
 				if (inAvail == -1 && allowZero) {

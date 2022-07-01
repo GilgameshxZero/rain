@@ -18,7 +18,7 @@ int main() {
 		virtual void onWork() override {
 			// Worker always echos client message.
 			std::string buffer(1_zu << 2, '\0');
-			std::size_t recvStatus = 0;
+			std::size_t recvStatus{0};
 			Rain::Time::Timeout timeout;
 
 			// In case peer resets during recv.
@@ -172,7 +172,7 @@ int main() {
 			};
 			_MyServer _myServer = _MyServer(this);
 
-			std::size_t workersDestructed = 0;
+			std::size_t workersDestructed{0};
 
 			virtual MyWorker makeWorker(
 				NativeSocket nativeSocket,
