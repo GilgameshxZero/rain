@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.32
+
+1. Add support for HTTP Authorization header.
+
 ## 7.1.31
 
 1. Added default rate limiting of 60 connections/second/IP to base socket server.

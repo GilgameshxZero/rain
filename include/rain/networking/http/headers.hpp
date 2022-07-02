@@ -72,6 +72,47 @@ namespace Rain::Networking::Http {
 		// Typed get/set for common headers. Get will return a default (defined per
 		// header) value if header doesn't exist, and NOT create it.
 
+		Header::Authorization authorization() {
+			auto it = this->find("Authorization");
+			if (it == this->end()) {
+				return {};
+			}
+			std::string const &authStr{it->second};
+
+			std::size_t separator{authStr.find(' ')};
+			std::string scheme{authStr.substr(0, separator)};
+			Header::Authorization authorization(scheme);
+
+			if (String::toLower(scheme) == "basic") {
+				authorization.parameters["credentials"] = authStr.substr(separator + 1);
+			} else {
+				for (std::size_t i; separator != std::string::npos;) {
+					i = separator + 1;
+					std::size_t const equals{authStr.find('=', i)};
+					separator = authStr.find(',', equals + 1);
+					std::string key{authStr.substr(i, equals - i)},
+						value{authStr.substr(equals + 1, separator - equals - 1)};
+					String::trimWhitespace(key);
+					String::trimWhitespace(value);
+					if (value.front() == value.back() && value.front() == '"') {
+						authorization.parameters.emplace(
+							key, value.substr(1, value.length() - 2));
+					} else {
+						authorization.parameters.emplace(key, value);
+					}
+				}
+			}
+			return authorization;
+		}
+		void authorization(Header::Authorization const &value) {
+			std::string &authorizationStr = this->operator[]("Authorization");
+			authorizationStr = value.scheme + " ";
+			for (auto const &i : value.parameters) {
+				authorizationStr += i.first + "=\"" + i.second + "\",";
+			}
+			authorizationStr.pop_back();
+		}
+
 		// Invalid value for contentLength is SIZE_MAX.
 		std::size_t contentLength() {
 			auto it = this->find("Content-Length");
