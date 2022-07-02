@@ -30,7 +30,7 @@ namespace Rain::Error {
 		// later move-capture.
 		Callable &&callable,
 		// RAIN_ERROR_LOCATION will identify caller site on-throw. Otherwise, an
-		// empty location will silently cons.ume.
+		// empty location will silently consume.
 		std::string const &location = "") {
 		// Perfect-forward the callable in. Preserves mutability, copies lambdas &
 		// function pointers, but moves std::functions if requested.

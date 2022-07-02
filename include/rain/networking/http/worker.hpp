@@ -133,11 +133,10 @@ namespace Rain::Networking::Http {
 		using Response = ResponseMessageSpec;
 
 		private:
-		// Subclasses define behavior by overriding a virtual list of handlers. This
-		// function will only be called at most once per instance and saved. Should
-		// return at least one filter.
-		virtual std::vector<RequestFilter> filters() = 0;
-		std::vector<RequestFilter> _filters;
+		// Subclasses define behavior by overriding a virtual list of handlers. Must
+		// return at least one filter. The lifetime of the returned vector must
+		// persist until the destructor (best kept as a static variable).
+		virtual std::vector<RequestFilter> const &filters() = 0;
 
 		// Called when filter handlers throw. Returns false to continue to receiving
 		// next ResponseMessageSpec, and true to close the connection.
@@ -157,15 +156,12 @@ namespace Rain::Networking::Http {
 		// Handle non-error Request. Must not throw.
 		virtual bool onRequest(RequestMessageSpec &req) final override {
 			// Run through filters and try to send.
-			if (this->_filters.empty()) {
-				this->_filters = this->filters();
-			}
 			std::smatch targetMatch;
-			for (RequestFilter const &filter : this->_filters) {
+			for (RequestFilter const &filter : this->filters()) {
 				if (
-					filter.methods.find(req.method) != filter.methods.end() &&
 					std::regex_match(req.headers.host().asStr(), filter.host) &&
-					std::regex_match(req.target, targetMatch, filter.target)) {
+					std::regex_match(req.target, targetMatch, filter.target) &&
+					filter.methods.find(req.method) != filter.methods.end()) {
 					// Matched, call handler and process.
 					try {
 						// This will be cast to a derived type.

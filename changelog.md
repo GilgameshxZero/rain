@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.31
+
+1. Added default rate limiting of 60 connections/second/IP to base socket server.
+2. Changed HTTP worker `filters` to return a const reference to a vector instead, so that it is constant time with number of filters instead of linear.
+
 ## 7.1.30
 
 1. `onRequest` for HTTP checks against the filter method first before the host or path string.
