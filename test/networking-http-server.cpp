@@ -75,11 +75,12 @@ int main() {
 				 "bruh"}};
 		}
 
-		virtual std::vector<RequestFilter> filters() override {
-			return {
+		virtual std::vector<RequestFilter> const &filters() override {
+			static std::vector<RequestFilter> const filters{
 				{".*", "/simple/?", {Method::GET}, &MyWorker::reqSimple},
 				{".*", "/echo/?", {Method::GET, Method::POST}, &MyWorker::reqEcho},
 				{".*", "/play.*", {Method::GET, Method::POST}, &MyWorker::reqPlay}};
+			return filters;
 		}
 
 		// Override send pp-chain to add server signature.

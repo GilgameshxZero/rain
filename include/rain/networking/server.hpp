@@ -85,6 +85,8 @@ namespace Rain::Networking {
 				virtual public ServerSocketSpecInterface<WorkerSocketSpec>,
 				virtual public ServerSocketSpecInterfaceInterface {
 		private:
+		static std::size_t const LISTEN_BACKLOG_DEFAULT{65535};
+
 		// accept thread and worker threads are spawned with ThreadPool (infinite
 		// capacity).
 		Multithreading::ThreadPool threadPool;
@@ -100,7 +102,7 @@ namespace Rain::Networking {
 			interrupter;
 
 		// listen & accept on a bound Socket, in an std::async.
-		void serve(int backlog = 200) {
+		void serve(int backlog = LISTEN_BACKLOG_DEFAULT) {
 			validateSystemCall(::listen(this->nativeSocket(), backlog));
 
 			// Connect the interrupter pair.
@@ -157,8 +159,8 @@ namespace Rain::Networking {
 						break;
 					}
 
-					NativeSocket nativeSocket = validateSystemCall(
-						::accept(this->nativeSocket(), nullptr, nullptr));
+					NativeSocket nativeSocket{validateSystemCall(
+						::accept(this->nativeSocket(), nullptr, nullptr))};
 
 					// Worker must be constructed prior to starting its task, lest the
 					// Server deconstruction cause the makeWorker virtual to be
@@ -179,21 +181,65 @@ namespace Rain::Networking {
 								auto worker = this->makeWorker(
 									nativeSocket, this->interrupter.second.get());
 
-								// Failures in onWork should be logged.
-								Rain::Error::consumeThrowable(
-									[&worker]() {
-										// Cast to WorkerSocketSpecInterface to trigger friend
-										// permissions.
-										static_cast<WorkerSocketSpecInterface &>(worker).onWork();
-									},
-									RAIN_ERROR_LOCATION)();
+								// Rate limit based on peer hostname.
+								if (!this->shouldRejectPeerHost(worker.peerHost())) {
+									// Failures in onWork should be logged.
+									Rain::Error::consumeThrowable(
+										[&worker]() {
+											// Cast to WorkerSocketSpecInterface to trigger friend
+											// permissions.
+											static_cast<WorkerSocketSpecInterface &>(worker).onWork();
+										},
+										RAIN_ERROR_LOCATION)();
+								}
 							}));
 					} catch (std::exception const &exception) {
 						std::cout << exception.what();
+
+						// Set maxThreads here so that we don’t exceed system maximum.
+						// TODO: Is there a better way to determine if we’ve hit the system
+						// maximum on threads?
 						this->threadPool.setMaxThreads(this->threadPool.getCThreads());
 					}
 				}
 			});
+		}
+
+		// Host rate limit sliding window size.
+		static std::chrono::steady_clock::duration constexpr RATE_LIMIT_WINDOW_SIZE{
+			60s};
+		static std::size_t const RATE_LIMIT_THRESHOLD{60};
+		// Maps a peer node to a pair (mutex, queue of times) where the queue
+		// contains all times the peer has connected within the sliding window,
+		// sorted in ascending order. The mutex is used to guarantee thread-safety
+		// on the queue.
+		// TODO: This map expands over the lifetime of the server and is not cleaned
+		// up.
+		std::unordered_map<
+			std::string,
+			std::pair<
+				std::mutex,
+				std::queue<std::chrono::time_point<std::chrono::steady_clock>>>>
+			peerConnections;
+
+		// Implements sliding window rate limiting based on host node (IP).
+		virtual bool shouldRejectPeerHost(Host const &peerHost) {
+			auto &peerConnection = this->peerConnections[peerHost.node];
+			std::lock_guard peerConnectionLck(peerConnection.first);
+			auto const now = std::chrono::steady_clock::now();
+			while (!peerConnection.second.empty()) {
+				if (peerConnection.second.front() > now - RATE_LIMIT_WINDOW_SIZE) {
+					break;
+				}
+				peerConnection.second.pop();
+			}
+
+			if (peerConnection.second.size() >= RATE_LIMIT_THRESHOLD) {
+				return true;
+			} else {
+				peerConnection.second.push(now);
+				return false;
+			}
 		}
 
 		protected:
@@ -209,21 +255,23 @@ namespace Rain::Networking {
 
 		public:
 		// On construction, Servers bind and listen and accept, asynchronously.
-		ServerSocketSpec(AddressInfo const &addressInfo, int backlog = 200) {
+		ServerSocketSpec(
+			AddressInfo const &addressInfo,
+			int backlog = LISTEN_BACKLOG_DEFAULT) {
 			ServerSocketSpecInterfaceInterface::bind(
 				this->nativeSocket(), addressInfo);
 			this->serve(backlog);
 		}
 		ServerSocketSpec(
 			std::vector<AddressInfo> const &addressInfos,
-			int backlog = 200) {
+			int backlog = LISTEN_BACKLOG_DEFAULT) {
 			ServerSocketSpecInterfaceInterface::bind(
 				this->nativeSocket(), addressInfos);
 			this->serve(backlog);
 		}
 		ServerSocketSpec(
 			Host const &host,
-			int backlog = 200,
+			int backlog = LISTEN_BACKLOG_DEFAULT,
 			AddressInfo::Flag flags = AddressInfo::Flag::V4MAPPED |
 				AddressInfo::Flag::ADDRCONFIG | AddressInfo::Flag::ALL |
 				AddressInfo::Flag::PASSIVE) {
