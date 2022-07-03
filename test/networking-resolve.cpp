@@ -96,7 +96,7 @@ int main() {
 		assert(mxRecords.size() == 2);
 		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed << std::endl;
-		assert(timeElapsed < 1s);
+		assert(timeElapsed < 2s);
 	}
 
 	// MX record lookup.

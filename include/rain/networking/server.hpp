@@ -227,10 +227,8 @@ namespace Rain::Networking {
 			auto &peerConnection = this->peerConnections[peerHost.node];
 			std::lock_guard peerConnectionLck(peerConnection.first);
 			auto const now = std::chrono::steady_clock::now();
-			while (!peerConnection.second.empty()) {
-				if (peerConnection.second.front() > now - RATE_LIMIT_WINDOW_SIZE) {
-					break;
-				}
+			while (!peerConnection.second.empty() &&
+						 peerConnection.second.front() <= now - RATE_LIMIT_WINDOW_SIZE) {
 				peerConnection.second.pop();
 			}
 

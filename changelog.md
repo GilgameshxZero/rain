@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.33
+
+1. Clean up some syntax.
+
 ## 7.1.32
 
 1. Add support for HTTP Authorization header.
