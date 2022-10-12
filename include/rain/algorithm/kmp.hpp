@@ -71,6 +71,7 @@ namespace Rain::Algorithm {
 				candidate++;
 				if (candidate == needleLen) {
 					searchResult = haystack + a - candidate;
+					break;
 				}
 			} else {
 				// Use the partial match table to resume if a match fails.
@@ -98,6 +99,7 @@ namespace Rain::Algorithm {
 			partialMatch,
 			candidate);
 	}
+	// The first element of returned pair will be out of range if not found.
 	inline std::pair<std::size_t, std::size_t> kmpSearch(
 		std::string const &haystack,
 		char const *const needle,

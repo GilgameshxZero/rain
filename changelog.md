@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.34
+
+1. Fix bug in KMP search to return the first, not last match.
+
 ## 7.1.33
 
 1. Clean up some syntax.
