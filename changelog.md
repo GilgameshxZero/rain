@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.36
+
+1. Add option to test subpath with `absolute` instead of `canonical`, to allow for symlink subpaths.
+
 ## 7.1.35
 
 1. Add Edmonds-Karp MFMC implementation.
