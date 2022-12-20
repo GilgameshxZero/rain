@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.1.37
+
+1. Remove Visual Studio build pipeline support.
+2. Add `SharedLockGuard` to `Multithreading`.
+
 ## 7.1.36
 
 1. Add option to test subpath with `absolute` instead of `canonical`, to allow for symlink subpaths.
