@@ -31,6 +31,9 @@ namespace Rain::Networking::Http {
 		Body(std::stringbuf &&stringbuf)
 				: std::istream(new std::stringbuf(std::move(stringbuf))),
 					toDelete(this->rdbuf()) {}
+		Body(std::filebuf &&filebuf)
+				: std::istream(new std::filebuf(std::move(filebuf))),
+					toDelete(this->rdbuf()) {}
 
 		// Disable copy constructors.
 		Body(Body const &) = delete;
