@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.38
+
+1. Allow construction of body directly from `std::filebuf`.
+
 ## 7.1.37
 
 1. Remove Visual Studio build pipeline support.
