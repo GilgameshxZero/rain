@@ -4,6 +4,7 @@
 #include "../../literal.hpp"
 #include "../../string/string.hpp"
 
+#include <fstream>
 #include <ostream>
 #include <sstream>
 #include <streambuf>

@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.1.39
+
+1. Various `Algorithm` fixes.
+2. Update `ModRing` to `PrimeModulusRing` with support for non-compile-time moduli, and mod factorials and chooses.
+3. Add test for Max-Flow.
+4. Fix `Networking::Client` test.
+5. `#include <fstream>` in `Networking::Body` to fix compilation error.
+6. Split Fibonacci, bit manipulation, and GCD/LCM code and tests.
+
 ## 7.1.38
 
 1. Allow construction of body directly from `std::filebuf`.

@@ -1,8 +1,6 @@
 // Various Max-flow/min-cut algorithms.
 #pragma once
 
-#include "algorithm.hpp"
-
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -49,7 +47,7 @@ namespace Rain::Algorithm {
 			std::size_t pathFlow{SIZE_MAX};
 			for (std::size_t current{sink}; current != source;
 					 current = parent[current]) {
-				pathFlow = min(pathFlow, residual[parent[current]][current]);
+				pathFlow = std::min(pathFlow, residual[parent[current]][current]);
 			}
 			flow += pathFlow;
 			for (std::size_t current{sink}; current != source;

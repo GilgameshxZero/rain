@@ -2,10 +2,11 @@
 // updates in O(ln N).
 #pragma once
 
+#include "../literal.hpp"
+#include "bit-manipulators.hpp"
+
 #include <memory>
 #include <vector>
-
-#include "algorithm.hpp"
 
 namespace Rain::Algorithm {
 	// Segment tree with lazy propagation, supporting range queries and range
