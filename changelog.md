@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.40
+
+1. Add cast operators and fix cast precendence in `PrimeModulusRing`.
+
 ## 7.1.39
 
 1. Various `Algorithm` fixes.
