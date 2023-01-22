@@ -48,42 +48,43 @@ namespace Rain::Algorithm {
 		PrimeModulusRing(Integer const value = 0)
 				: value((this->primeModulus() + value) % this->primeModulus()) {}
 
-		// In C++17+, these variables may be declared static inline. To preserve
-		// C++11 compatibility, we access them via a function instead.
+		// Versions of C++ before C++17 should use static member functions intead of
+		// static inline member variables. static inline
+		// std::vector<PrimeModulusRing<Integer, PrimeModulus>> 	&factorials() {
+		// static std::vector<PrimeModulusRing<Integer, PrimeModulus>> factorials;
+		// return factorials;
+		// }
+		// static inline std::vector<PrimeModulusRing<Integer, PrimeModulus>>
+		// 	&invFactorials() {
+		// 	static std::vector<PrimeModulusRing<Integer, PrimeModulus>>
+		// invFactorials; 	return invFactorials;
+		// }
 		static inline std::vector<PrimeModulusRing<Integer, PrimeModulus>>
-			&factorials() {
-			static std::vector<PrimeModulusRing<Integer, PrimeModulus>> factorials;
-			return factorials;
-		}
-		static inline std::vector<PrimeModulusRing<Integer, PrimeModulus>>
-			&invFactorials() {
-			static std::vector<PrimeModulusRing<Integer, PrimeModulus>> invFactorials;
-			return invFactorials;
-		}
+			factorials, invFactorials;
 
 		// Computes the factorials modulus a prime, up to and including N, in O(N).
 		// This enables the choose functions.
 		static void precomputeFactorials(std::size_t const N) {
-			factorials().resize(N + 1);
-			invFactorials().resize(N + 1);
-			factorials()[0] = 1;
+			factorials.resize(N + 1);
+			invFactorials.resize(N + 1);
+			factorials[0] = 1;
 			for (std::size_t i{1}; i <= N; i++) {
-				factorials()[i] = factorials()[i - 1] * i;
+				factorials[i] = factorials[i - 1] * i;
 			}
-			invFactorials()[N] = 1 / factorials()[N];
+			invFactorials[N] = 1 / factorials[N];
 			for (std::size_t i{0}; i < N; i++) {
-				invFactorials()[N - i - 1] = invFactorials()[N - i] * (N - i);
+				invFactorials[N - i - 1] = invFactorials[N - i] * (N - i);
 			}
 		}
 
-		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
+		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1). Must have called precomputeFactorials for the largest expected value of N first.
 		inline PrimeModulusRing<Integer, PrimeModulus> choose(
 			Integer const K) const {
 			if (K < 0 || K > this->value) {
 				return {0};
 			}
-			return factorials()[this->value] * invFactorials()[K] *
-				invFactorials()[this->value - K];
+			return factorials[this->value] * invFactorials[K] *
+				invFactorials[this->value - K];
 		}
 
 		// O(ln N) exponentiation.
@@ -101,12 +102,14 @@ namespace Rain::Algorithm {
 		}
 
 		// Arithmetic operators.
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator+(
-			Integer const other) const {
+			OtherInteger const other) const {
 			return *this + PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator+(
-			Integer const other) {
+			OtherInteger const other) {
 			return *this + PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
 		inline PrimeModulusRing<Integer, PrimeModulus> operator+(
@@ -125,12 +128,14 @@ namespace Rain::Algorithm {
 			*this += 1;
 			return tmp;
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator-(
-			Integer const other) const {
+			OtherInteger const other) const {
 			return *this - PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator-(
-			Integer const other) {
+			OtherInteger const other) {
 			return *this - PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
 		inline PrimeModulusRing<Integer, PrimeModulus> operator-(
@@ -149,12 +154,14 @@ namespace Rain::Algorithm {
 			*this -= 1;
 			return tmp;
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator*(
-			Integer const other) const {
+			OtherInteger const other) const {
 			return *this * PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator*(
-			Integer const other) {
+			OtherInteger const other) {
 			return *this * PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
 		inline PrimeModulusRing<Integer, PrimeModulus> operator*(
@@ -165,12 +172,14 @@ namespace Rain::Algorithm {
 			PrimeModulusRing<Integer, PrimeModulus> const other) {
 			return *this = *this * other;
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator/(
-			Integer const other) const {
+			OtherInteger const other) const {
 			return *this / PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
+		template <typename OtherInteger>
 		inline PrimeModulusRing<Integer, PrimeModulus> operator/(
-			Integer const other) {
+			OtherInteger const other) {
 			return *this / PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
 		inline PrimeModulusRing<Integer, PrimeModulus> operator/(
@@ -182,41 +191,46 @@ namespace Rain::Algorithm {
 			return *this = *this / other;
 		}
 
-		inline bool operator==(Integer const other) {
+		// Equality operators.
+		template <typename OtherInteger>
+		inline bool operator==(OtherInteger const other) {
 			return *this == PrimeModulusRing<Integer, PrimeModulus>(other);
 		}
 		inline bool operator==(
 			PrimeModulusRing<Integer, PrimeModulus> const other) {
 			return this->value == other.value;
 		}
-	};
 
+		// Cast operators.
+		operator std::size_t() const { return this->value; }
+		operator Integer() const { return this->value; }
+	};
 }
 
-template <typename LeftInteger, typename Integer, typename PrimeModulus>
+template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator+(
-	LeftInteger const left,
+	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
 	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) + right;
 }
 
-template <typename LeftInteger, typename Integer, typename PrimeModulus>
+template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator-(
-	LeftInteger const left,
+	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
 	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) - right;
 }
 
-template <typename LeftInteger, typename Integer, typename PrimeModulus>
+template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator*(
-	LeftInteger const left,
+	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
 	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) * right;
 }
 
-template <typename LeftInteger, typename Integer, typename PrimeModulus>
+template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator/(
-	LeftInteger const left,
+	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
 	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) / right;
 }
@@ -231,7 +245,7 @@ inline std::ostream &operator<<(
 template <typename Integer, typename PrimeModulus>
 inline std::istream &operator>>(
 	std::istream &stream,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
+	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> right) {
 	stream >> right.value;
 	right.value = (right.primeModulus() + right.value) % right.primeModulus();
 	return stream;
