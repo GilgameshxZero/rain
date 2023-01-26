@@ -34,32 +34,32 @@ namespace Rain::Algorithm {
 	// };
 
 	// Implementation for a prime modulus ring over the integers, supporting basic
-	// operations add, subtract, multiply in O(1) and divide in O(ln N). For O(1)
+	// operations add, subtract, multiply in O(1) and divide in O(ln M). For O(1)
 	// division, cache multiplicative inverses and multiply with those.
 	//
 	// Integer must be large enough to store (primeModulus() - 1)^2.
 	template <typename Integer, typename PrimeModulus>
-	class PrimeModulusRing : public PrimeModulus {
+	class PrimeModulusField : public PrimeModulus {
 		public:
 		Integer value;
 
 		// Add primeModulus() first to wrap back around in the case of "negative"
 		// unsigned Integer.
-		PrimeModulusRing(Integer const value = 0)
+		PrimeModulusField(Integer const value = 0)
 				: value((this->primeModulus() + value) % this->primeModulus()) {}
 
 		// Versions of C++ before C++17 should use static member functions intead of
 		// static inline member variables. static inline
-		// std::vector<PrimeModulusRing<Integer, PrimeModulus>> 	&factorials() {
-		// static std::vector<PrimeModulusRing<Integer, PrimeModulus>> factorials;
+		// std::vector<PrimeModulusField<Integer, PrimeModulus>> 	&factorials() {
+		// static std::vector<PrimeModulusField<Integer, PrimeModulus>> factorials;
 		// return factorials;
 		// }
-		// static inline std::vector<PrimeModulusRing<Integer, PrimeModulus>>
+		// static inline std::vector<PrimeModulusField<Integer, PrimeModulus>>
 		// 	&invFactorials() {
-		// 	static std::vector<PrimeModulusRing<Integer, PrimeModulus>>
+		// 	static std::vector<PrimeModulusField<Integer, PrimeModulus>>
 		// invFactorials; 	return invFactorials;
 		// }
-		static inline std::vector<PrimeModulusRing<Integer, PrimeModulus>>
+		static inline std::vector<PrimeModulusField<Integer, PrimeModulus>>
 			factorials, invFactorials;
 
 		// Computes the factorials modulus a prime, up to and including N, in O(N).
@@ -78,7 +78,7 @@ namespace Rain::Algorithm {
 		}
 
 		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1). Must have called precomputeFactorials for the largest expected value of N first.
-		inline PrimeModulusRing<Integer, PrimeModulus> choose(
+		inline PrimeModulusField<Integer, PrimeModulus> choose(
 			Integer const K) const {
 			if (K < 0 || K > this->value) {
 				return {0};
@@ -88,7 +88,7 @@ namespace Rain::Algorithm {
 		}
 
 		// O(ln N) exponentiation.
-		PrimeModulusRing<Integer, PrimeModulus> power(
+		PrimeModulusField<Integer, PrimeModulus> power(
 			std::size_t const exponent) const {
 			if (exponent == 0) {
 				return {1};
@@ -103,101 +103,101 @@ namespace Rain::Algorithm {
 
 		// Arithmetic operators.
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator+(
+		inline PrimeModulusField<Integer, PrimeModulus> operator+(
 			OtherInteger const other) const {
-			return *this + PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this + PrimeModulusField<Integer, PrimeModulus>(other);
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator+(
+		inline PrimeModulusField<Integer, PrimeModulus> operator+(
 			OtherInteger const other) {
-			return *this + PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this + PrimeModulusField<Integer, PrimeModulus>(other);
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator+(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator+(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return {this->value + other.value};
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator+=(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator+=(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return *this = *this + other;
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator++() {
+		inline PrimeModulusField<Integer, PrimeModulus> operator++() {
 			return *this += 1;
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator++(int) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator++(int) {
 			auto tmp(*this);
 			*this += 1;
 			return tmp;
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator-(
+		inline PrimeModulusField<Integer, PrimeModulus> operator-(
 			OtherInteger const other) const {
-			return *this - PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this - PrimeModulusField<Integer, PrimeModulus>(other);
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator-(
+		inline PrimeModulusField<Integer, PrimeModulus> operator-(
 			OtherInteger const other) {
-			return *this - PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this - PrimeModulusField<Integer, PrimeModulus>(other);
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator-(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator-(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return {this->value - other.value};
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator-=(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator-=(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return *this = *this - other;
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator--() {
+		inline PrimeModulusField<Integer, PrimeModulus> operator--() {
 			return *this -= 1;
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator--(int) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator--(int) {
 			auto tmp(*this);
 			*this -= 1;
 			return tmp;
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator*(
+		inline PrimeModulusField<Integer, PrimeModulus> operator*(
 			OtherInteger const other) const {
-			return *this * PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this * PrimeModulusField<Integer, PrimeModulus>(other);
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator*(
+		inline PrimeModulusField<Integer, PrimeModulus> operator*(
 			OtherInteger const other) {
-			return *this * PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this * PrimeModulusField<Integer, PrimeModulus>(other);
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator*(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator*(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return {this->value * other.value};
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator*=(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator*=(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return *this = *this * other;
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator/(
+		inline PrimeModulusField<Integer, PrimeModulus> operator/(
 			OtherInteger const other) const {
-			return *this / PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this / PrimeModulusField<Integer, PrimeModulus>(other);
 		}
 		template <typename OtherInteger>
-		inline PrimeModulusRing<Integer, PrimeModulus> operator/(
+		inline PrimeModulusField<Integer, PrimeModulus> operator/(
 			OtherInteger const other) {
-			return *this / PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this / PrimeModulusField<Integer, PrimeModulus>(other);
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator/(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator/(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return *this * other.power(this->primeModulus() - 2);
 		}
-		inline PrimeModulusRing<Integer, PrimeModulus> operator/=(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+		inline PrimeModulusField<Integer, PrimeModulus> operator/=(
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return *this = *this / other;
 		}
 
 		// Equality operators.
 		template <typename OtherInteger>
 		inline bool operator==(OtherInteger const other) {
-			return *this == PrimeModulusRing<Integer, PrimeModulus>(other);
+			return *this == PrimeModulusField<Integer, PrimeModulus>(other);
 		}
 		inline bool operator==(
-			PrimeModulusRing<Integer, PrimeModulus> const other) {
+			PrimeModulusField<Integer, PrimeModulus> const other) {
 			return this->value == other.value;
 		}
 
@@ -208,44 +208,44 @@ namespace Rain::Algorithm {
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
-inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator+(
+inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator+(
 	OtherInteger const left,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) + right;
+	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) + right;
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
-inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator-(
+inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator-(
 	OtherInteger const left,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) - right;
+	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) - right;
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
-inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator*(
+inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator*(
 	OtherInteger const left,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) * right;
+	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) * right;
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
-inline Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> operator/(
+inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator/(
 	OtherInteger const left,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus>(left) / right;
+	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) / right;
 }
 
 // Ease-of-use streaming operators.
 template <typename Integer, typename PrimeModulus>
 inline std::ostream &operator<<(
 	std::ostream &stream,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> const right) {
+	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
 	return stream << right.value;
 }
 template <typename Integer, typename PrimeModulus>
 inline std::istream &operator>>(
 	std::istream &stream,
-	Rain::Algorithm::PrimeModulusRing<Integer, PrimeModulus> right) {
+	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> right) {
 	stream >> right.value;
 	right.value = (right.primeModulus() + right.value) % right.primeModulus();
 	return stream;
