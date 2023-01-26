@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.41
+
+1. Rename `PrimeModulusRing` to `PrimeModulusField`.
+
 ## 7.1.40
 
 1. Add cast operators and fix cast precendence in `PrimeModulusRing`.

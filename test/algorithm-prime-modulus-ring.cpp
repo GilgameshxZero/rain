@@ -1,15 +1,15 @@
 #include <rain/algorithm/fibonacci.hpp>
-#include <rain/algorithm/prime-modulus-ring.hpp>
+#include <rain/algorithm/prime-modulus-field.hpp>
 
 #include <cassert>
 #include <iostream>
 
 int main() {
 	{
-		using PMR1 = Rain::Algorithm::PrimeModulusRing<
+		using PMR1 = Rain::Algorithm::PrimeModulusField<
 			long long,
 			Rain::Algorithm::PrimeModulus<long long, 998244353>>;
-		using PMR2 = Rain::Algorithm::PrimeModulusRing<
+		using PMR2 = Rain::Algorithm::PrimeModulusField<
 			long long,
 			Rain::Algorithm::PrimeModulus<long long, 1000000009>>;
 		PMR1 x, y(100);
@@ -61,11 +61,11 @@ int main() {
 	}
 
 	{
-		Rain::Algorithm::PrimeModulusRing<
+		Rain::Algorithm::PrimeModulusField<
 			std::size_t,
 			Rain::Algorithm::PrimeModulus<std::size_t, 998244353>>
 			x, y(100);
-		Rain::Algorithm::PrimeModulusRing<
+		Rain::Algorithm::PrimeModulusField<
 			std::size_t,
 			Rain::Algorithm::PrimeModulus<std::size_t, 1000000009>>
 			z;
@@ -109,7 +109,7 @@ int main() {
 		assert(x / 10000 / 3049857272LL / 39486758 / 31 == y);
 	}
 
-	Rain::Algorithm::PrimeModulusRing<
+	Rain::Algorithm::PrimeModulusField<
 		uint64_t,
 		Rain::Algorithm::PrimeModulus<uint64_t, 998244353>>
 		v{99};
@@ -122,7 +122,7 @@ int main() {
 	assert(v - 998244355 == 97);
 	std::cout << "v is " << v << '.' << std::endl;
 
-	auto res = Rain::Algorithm::PrimeModulusRing<
+	auto res = Rain::Algorithm::PrimeModulusField<
 							 std::size_t,
 							 Rain::Algorithm::PrimeModulus<std::size_t, 23>>(5)
 							 .power(4);
@@ -130,7 +130,7 @@ int main() {
 
 	// Fibonacci tests.
 	assert(
-		(Rain::Algorithm::fibonacciNumber<Rain::Algorithm::PrimeModulusRing<
+		(Rain::Algorithm::fibonacciNumber<Rain::Algorithm::PrimeModulusField<
 			 std::size_t,
 			 Rain::Algorithm::PrimeModulus<std::size_t, 988244353>>>(1000000000) ==
 		 910643820));

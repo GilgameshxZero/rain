@@ -10,5 +10,5 @@
 #include "algorithm/huffman.hpp"
 #include "algorithm/kmp.hpp"
 #include "algorithm/lru.hpp"
-#include "algorithm/prime-modulus-ring.hpp"
+#include "algorithm/prime-modulus-field.hpp"
 #include "algorithm/segment-tree.hpp"
