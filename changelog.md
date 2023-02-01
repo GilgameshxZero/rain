@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.42
+
+1. Added implementation for SCC/condensation graph algorithms by Tarjan and Kosarju.
+
 ## 7.1.41
 
 1. Rename `PrimeModulusRing` to `PrimeModulusField`.
