@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.43
+
+1. `auto` type inference on `PrimeModulus`.
+
 ## 7.1.42
 
 1. Added implementation for SCC/condensation graph algorithms by Tarjan and Kosarju.
