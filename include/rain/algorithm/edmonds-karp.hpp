@@ -1,4 +1,4 @@
-// Various Max-flow/min-cut algorithms.
+// Edmonds-Karp max-flow.
 #pragma once
 
 #include <queue>
@@ -8,6 +8,7 @@
 namespace Rain::Algorithm {
 	// Computes the maximum flow on a graph using Edmonds-Karp in O(VE^2). The
 	// provided graph must be simple (no self-loops, no multi-edges, connected).
+	//
 	// Returns the residual graph after the max flow is computed.
 	std::
 		pair<std::size_t, std::vector<std::unordered_map<std::size_t, std::size_t>>>
