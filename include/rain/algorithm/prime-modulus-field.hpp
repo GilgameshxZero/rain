@@ -10,29 +10,17 @@ namespace Rain::Algorithm {
 	// modulus integer. Template specializations may not use dependent types, so
 	// we must either use `integral_constant` or `enable_if` to specify the
 	// this->primeModulus().
-	template <typename Integer, Integer PRIME_MODULUS = 0, typename = void>
+	template <auto PRIME_MODULUS>
 	class PrimeModulus {
 		public:
-		virtual inline Integer primeModulus() const = 0;
+		inline auto primeModulus() const { return PRIME_MODULUS; }
 	};
 
-	template <typename Integer, Integer PRIME_MODULUS>
-	class PrimeModulus<
-		Integer,
-		PRIME_MODULUS,
-		typename std::enable_if<PRIME_MODULUS != 0>::type> {
-		public:
-		virtual inline Integer primeModulus() const { return PRIME_MODULUS; }
-	};
-
-	// A non-compile-time prime modulus may be specified by overriding
-	// `PrimeModulus<Integer, 0>`, e.g.
+	// A non-compile-time prime modulus may be specified by defining a class which
+	// satisfies the PrimeModulus contract, e.g. implements primeModulus.
+	// Unfortunately virtual auto isn’t supported so we cannot derive primeModulus
+	// easily.
 	//
-	// class PM : public PrimeModulus<LL> {
-	// 	public:
-	// 	virtual LL primeModulus() const override { return M; }
-	// };
-
 	// Implementation for a prime modulus ring over the integers, supporting basic
 	// operations add, subtract, multiply in O(1) and divide in O(ln M). For O(1)
 	// division, cache multiplicative inverses and multiply with those.
@@ -77,7 +65,9 @@ namespace Rain::Algorithm {
 			}
 		}
 
-		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1). Must have called precomputeFactorials for the largest expected value of N first.
+		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
+		// Must have called precomputeFactorials for the largest expected value of N
+		// first.
 		inline PrimeModulusField<Integer, PrimeModulus> choose(
 			Integer const K) const {
 			if (K < 0 || K > this->value) {
@@ -203,7 +193,13 @@ namespace Rain::Algorithm {
 
 		// Cast operators.
 		operator std::size_t() const { return this->value; }
-		operator Integer() const { return this->value; }
+
+		template <
+			typename =
+				std::enable_if<!std::is_same<Integer, std::size_t>::value>::type>
+		operator Integer() const {
+			return this->value;
+		}
 	};
 }
 
@@ -211,28 +207,32 @@ template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator+(
 	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) + right;
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) +
+		right;
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator-(
 	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) - right;
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) -
+		right;
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator*(
 	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) * right;
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) *
+		right;
 }
 
 template <typename OtherInteger, typename Integer, typename PrimeModulus>
 inline Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> operator/(
 	OtherInteger const left,
 	Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus> const right) {
-	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) / right;
+	return Rain::Algorithm::PrimeModulusField<Integer, PrimeModulus>(left) /
+		right;
 }
 
 // Ease-of-use streaming operators.
