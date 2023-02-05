@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.2.0
+
+1. Added flexible `BigInt` implementation, with less-than-optimal division and multiplication and modulus (!!).
+2. Added linear prime sieve.
+3. Added Miller-Rabin primality tests.
+4. Added extended Euclidean algorithm.
+5. Updated ModulusField to better support runtime moduli.
+
 ## 7.1.43
 
 1. `auto` type inference on `PrimeModulus`.
