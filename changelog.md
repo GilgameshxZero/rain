@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.1
+
+1. Change `BigInt` right shift to use right shift on a smaller int as a subroutine rather than multiplication.
+
 ## 7.2.0
 
 1. Added flexible `BigInt` implementation, with less-than-optimal division and multiplication and modulus (!!).

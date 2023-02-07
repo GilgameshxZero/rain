@@ -307,9 +307,7 @@ namespace Rain::Algorithm {
 			}
 			ThisInt tmp{this->low >> shift, this->high >> shift};
 			SmallerInt lost{this->high - (tmp.high << shift)};
-			SmallerIntUnsigned multiplicand{
-				SmallerIntUnsigned(1) << (halfBits - shift)};
-			return {tmp.low + lost * multiplicand, tmp.high};
+			return {tmp.low + (lost << (halfBits - shift)), tmp.high};
 		}
 		template <typename OtherInteger>
 		inline ThisInt operator>>(OtherInteger const &shift) {
