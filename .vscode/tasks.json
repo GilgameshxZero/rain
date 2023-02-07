@@ -39,9 +39,9 @@
 			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
 		},
 		{
-			/* Build the open file in release mode. */
+			/* Build and run all tests in debug x64. */
 			"type": "shell",
-			"label": "tests-debug",
+			"label": "tests-debug-x64",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 			"group": "build",

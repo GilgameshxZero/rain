@@ -102,11 +102,11 @@ clean:
 	@IF EXIST $(OBJ_DIR) RD /Q /S $(OBJ_DIR)
 tests: $(PROJECT_VERSION_INCLUDE)
 	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO\
-		@nmake SOURCES=%~ni.cpp BUILD=$(BUILD)
+		@nmake SOURCES=%~ni.cpp BUILD=$(BUILD) || exit /b
 	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO (\
 		@ECHO -------- %~ni -------- &&\
 		CD $(BIN_DIR) &&\
-		$(BIN_DIR)%~ni $(ARGUMENTS)\
+		$(BIN_DIR)%~ni $(ARGUMENTS) || exit /b\
 	)
 
 # Increment version number.
