@@ -121,5 +121,17 @@ int main() {
 		assert(x == 1000000009);
 	}
 
+	{
+		using BI = Rain::Algorithm::BigIntSigned<10>;
+		BI a, b, c;
+		a = 15;
+		BI const d(a), e(20);
+		assert(a == d);
+		b = e;
+		assert(b == e);
+		c = a + b;
+		assert(c == d + e);
+	}
+
 	return 0;
 }

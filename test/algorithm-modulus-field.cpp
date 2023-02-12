@@ -154,5 +154,32 @@ int main() {
 		assert(24 / x == 5);
 	}
 
+	{
+		using MF = Rain::Algorithm::ModulusField<std::size_t, 13>;
+		MF a, b, c, d, e;
+
+		// Constructing with a large negative integer should still wrap around correctly.
+		a = -28;
+		assert(a == 11);
+
+		// Making sure const versions of functions work as expected.
+		c = a / 15;
+		MF const f(15), g(a);
+		d = g / f;
+		assert(c == d);
+		c = a + 15;
+		d = g + f;
+		assert(c == d);
+		assert(a == a);
+		assert(a == g);
+		assert(g == a);
+		assert(g == g);
+
+		a = 1;
+		assert(a > b);
+		assert(a >= b);
+		assert(b == c);
+	}
+
 	return 0;
 }

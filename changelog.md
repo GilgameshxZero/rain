@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.2.2
+
+1. Standardize `const` and non-`const` versions of operators for both `ModulusField` and `BigInt`.
+2. Fill in missing comparison operators in `ModulusField` and `BigInt`.
+3. Fix SFINAE in `ModulusField` to work with G++ as well; namely, using `typename std::enable_if<...>::type * = nullptr` instead of `typename = std::enable_if<..>::type`.
+
 ## 7.2.1
 
 1. Change `BigInt` right shift to use right shift on a smaller int as a subroutine rather than multiplication.
