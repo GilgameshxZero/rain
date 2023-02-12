@@ -17,7 +17,7 @@ namespace Rain::Algorithm {
 	// O(ln M). Division is generally only valid for prime moduli. For O(1)
 	// division, cache multiplicative inverses and multiply with those.
 	//
-	// A compile-time modulus may be specified with
+	// A compile-time modulus may be specified with the appropriate constructor.
 	//
 	// Integer must be large enough to store (modulus() - 1)^2.
 	template <typename Integer, std::size_t MODULUS = 0>
@@ -26,30 +26,48 @@ namespace Rain::Algorithm {
 		Integer const modulus;
 		Integer value;
 
-		// Add modulus() first to wrap back around in the case of "negative"
-		// unsigned Integer.
-		template <typename = std::enable_if<MODULUS != 0>::type>
-		ModulusField(Integer const value = 0)
-				: modulus{MODULUS}, value((value + this->modulus) % this->modulus) {}
+		// If the integer specified is signed and negative, we want to wrap it back
+		// to the positives first.
+		template <
+			typename OtherInteger = std::size_t,
+			std::size_t MODULUS_INNER = MODULUS,
+			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+		ModulusField(OtherInteger const &value = 0)
+				: modulus{MODULUS},
+					value(
+						value < 0 ? (value % static_cast<OtherInteger>(this->modulus) +
+												 static_cast<OtherInteger>(this->modulus)) %
+								static_cast<OtherInteger>(this->modulus)
+											: value % static_cast<OtherInteger>(this->modulus)) {}
 
-		template <typename = std::enable_if<MODULUS == 0>::type>
-		ModulusField(Integer const modulus, Integer const value = 0)
-				: modulus{modulus}, value((value + this->modulus) % this->modulus) {}
+		template <
+			typename OtherInteger = std::size_t,
+			std::size_t MODULUS_INNER = MODULUS,
+			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
+		ModulusField(Integer const &modulus, OtherInteger const &value = 0)
+				: modulus{modulus},
+					value(
+						value < 0 ? (value % static_cast<OtherInteger>(this->modulus) +
+												 static_cast<OtherInteger>(this->modulus)) %
+								static_cast<OtherInteger>(this->modulus)
+											: value % static_cast<OtherInteger>(this->modulus)) {}
 
 		// Builds a ModulusField<Integer, MODULUS> type, but with the same
 		// underlying modulus value. Uses more specialized SFINAE to differentiate
 		// otherwise identical signatures.
 		template <
+			typename OtherInteger,
 			std::size_t MODULUS_INNER = MODULUS,
 			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
-		static ModulusField<Integer, MODULUS> build(Integer const value) {
+		static ModulusField<Integer, MODULUS> build(OtherInteger const &value) {
 			return {value};
 		}
 
 		template <
+			typename OtherInteger,
 			std::size_t MODULUS_INNER = MODULUS,
 			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
-		ModulusField<Integer, MODULUS> build(Integer const value) const {
+		ModulusField<Integer, MODULUS> build(OtherInteger const &value) const {
 			return {this->modulus, value};
 		}
 
@@ -58,17 +76,174 @@ namespace Rain::Algorithm {
 		// operator.
 		ModulusField<Integer, MODULUS> &operator=(
 			ModulusField<Integer, MODULUS> const &other) {
-			if (this == &other) {
-				return *this;
-			}
-			this->value = (other.value + this->modulus) % this->modulus;
+			// Runtime moduli may not actually be the same, so we need to take an
+			// additional mod here.
+			this->value = other.value % this->modulus;
 			return *this;
 		}
 		template <typename OtherInteger>
 		ModulusField<Integer, MODULUS> &operator=(OtherInteger const &other) {
-			this->value = (other + this->modulus) % this->modulus;
-			return *this;
+			return *this = build(other);
 		}
+
+		// Comparison.
+		template <typename OtherInteger>
+		inline bool operator==(OtherInteger const &other) const {
+			return *this == build(other);
+		}
+		template <typename OtherInteger>
+		inline bool operator==(OtherInteger const &other) {
+			return std::as_const(*this) == other;
+		}
+		inline bool operator==(ModulusField<Integer, MODULUS> const &other) const {
+			// Ignores modulus comparison! Important.
+			return this->value == other.value;
+		}
+		inline bool operator==(ModulusField<Integer, MODULUS> const &other) {
+			return std::as_const(*this) == other;
+		}
+		template <typename OtherInteger>
+		inline bool operator!=(OtherInteger const &other) const {
+			return *this != build(other);
+		}
+		template <typename OtherInteger>
+		inline bool operator!=(OtherInteger const &other) {
+			return std::as_const(*this) != other;
+		}
+		inline bool operator!=(ModulusField<Integer, MODULUS> const &other) const {
+			return !(*this == other);
+		}
+		inline bool operator!=(ModulusField<Integer, MODULUS> const &other) {
+			return std::as_const(*this) != other;
+		}
+		// Other comparison operators don't make that much sense under modulus.
+
+		// Unary.
+		inline ModulusField<Integer, MODULUS> operator-() const {
+			return 0 - *this;
+		}
+		inline ModulusField<Integer, MODULUS> operator-() {
+			return -std::as_const(*this);
+		}
+
+		// Cast.
+		explicit operator bool() const { return this->value != 0; }
+		operator std::size_t() const {
+			return static_cast<std::size_t>(this->value);
+		}
+		template <
+			typename = typename std::enable_if<
+				!std::is_same<Integer, std::size_t>::value>::type>
+		operator Integer() const {
+			return this->value;
+		}
+
+		// Arithmetic.
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator+(
+			OtherInteger const &other) const {
+			return *this + build(other);
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator+(OtherInteger const &other) {
+			return std::as_const(*this) + other;
+		}
+		inline ModulusField<Integer, MODULUS> operator+(
+			ModulusField<Integer, MODULUS> const &other) const {
+			return build(this->value + other.value);
+		}
+		inline ModulusField<Integer, MODULUS> operator+(
+			ModulusField<Integer, MODULUS> const &other) {
+			return std::as_const(*this) + other;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> &operator+=(
+			OtherInteger const &other) {
+			return *this = *this + other;
+		}
+		inline ModulusField<Integer, MODULUS> operator++() { return *this += 1; }
+		inline ModulusField<Integer, MODULUS> operator++(int) {
+			auto tmp(*this);
+			*this += 1;
+			return tmp;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator-(
+			OtherInteger const &other) const {
+			return *this - build(other);
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator-(OtherInteger const &other) {
+			return std::as_const(*this) - other;
+		}
+		inline ModulusField<Integer, MODULUS> operator-(
+			ModulusField<Integer, MODULUS> const &other) const {
+			return build(this->value + this->modulus - other.value);
+		}
+		inline ModulusField<Integer, MODULUS> operator-(
+			ModulusField<Integer, MODULUS> const &other) {
+			return std::as_const(*this) - other;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> &operator-=(
+			OtherInteger const &other) {
+			return *this = *this - other;
+		}
+		inline ModulusField<Integer, MODULUS> operator--() { return *this -= 1; }
+		inline ModulusField<Integer, MODULUS> operator--(int) {
+			auto tmp(*this);
+			*this -= 1;
+			return tmp;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator*(
+			OtherInteger const &other) const {
+			return *this * build(other);
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator*(OtherInteger const &other) {
+			return std::as_const(*this) * other;
+		}
+		inline ModulusField<Integer, MODULUS> operator*(
+			ModulusField<Integer, MODULUS> const &other) const {
+			return build(this->value * other.value);
+		}
+		inline ModulusField<Integer, MODULUS> operator*(
+			ModulusField<Integer, MODULUS> const &other) {
+			return std::as_const(*this) * other;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> &operator*=(
+			OtherInteger const &other) {
+			return *this = *this * other;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator/(
+			OtherInteger const &other) const {
+			return *this / build(other);
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> operator/(OtherInteger const &other) {
+			return std::as_const(*this) / other;
+		}
+		inline ModulusField<Integer, MODULUS> operator/(
+			ModulusField<Integer, MODULUS> const &other) const {
+			// This is only true if this has a multiplicative inverse, which is always
+			// true if the modulus is prime.
+			return *this * other.power(this->modulus - 2);
+		}
+		inline ModulusField<Integer, MODULUS> operator/(
+			ModulusField<Integer, MODULUS> const &other) {
+			return std::as_const(*this) / other;
+		}
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> &operator/=(
+			OtherInteger const &other) {
+			return *this = *this / other;
+		}
+
+		// The following are algorithmic functions based on the modulus field
+		// properties.
 
 		// Versions of C++ before C++17 should use static member functions intead of
 		// static inline member variables. static inline
@@ -122,107 +297,6 @@ namespace Rain::Algorithm {
 			} else {
 				return half * half * *this;
 			}
-		}
-
-		// Comparison.
-		template <typename OtherInteger>
-		inline bool operator==(OtherInteger const &other) {
-			return *this == build(other);
-		}
-		inline bool operator==(ModulusField<Integer, MODULUS> const &other) {
-			return this->value == other.value;
-		}
-
-		// Cast.
-		operator std::size_t() const { return this->value; }
-
-		template <
-			typename =
-				std::enable_if<!std::is_same<Integer, std::size_t>::value>::type>
-		operator Integer() const {
-			return this->value;
-		}
-
-		// Arithmetic operators.
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator+(
-			OtherInteger const &other) const {
-			return *this + build(other);
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator+(OtherInteger const &other) {
-			return *this + build(other);
-		}
-		inline ModulusField<Integer, MODULUS> operator+(
-			ModulusField<Integer, MODULUS> const &other) {
-			return build(this->value + other.value);
-		}
-		inline ModulusField<Integer, MODULUS> &operator+=(
-			ModulusField<Integer, MODULUS> const &other) {
-			return *this = *this + other;
-		}
-		inline ModulusField<Integer, MODULUS> operator++() { return *this += 1; }
-		inline ModulusField<Integer, MODULUS> operator++(int) {
-			auto tmp(*this);
-			*this += 1;
-			return tmp;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator-(
-			OtherInteger const &other) const {
-			return *this - build(other);
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator-(OtherInteger const &other) {
-			return *this - build(other);
-		}
-		inline ModulusField<Integer, MODULUS> operator-(
-			ModulusField<Integer, MODULUS> const &other) {
-			return build(this->value - other.value);
-		}
-		inline ModulusField<Integer, MODULUS> &operator-=(
-			ModulusField<Integer, MODULUS> const &other) {
-			return *this = *this - other;
-		}
-		inline ModulusField<Integer, MODULUS> operator--() { return *this -= 1; }
-		inline ModulusField<Integer, MODULUS> operator--(int) {
-			auto tmp(*this);
-			*this -= 1;
-			return tmp;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator*(
-			OtherInteger const &other) const {
-			return *this * build(other);
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator*(OtherInteger const &other) {
-			return *this * build(other);
-		}
-		inline ModulusField<Integer, MODULUS> operator*(
-			ModulusField<Integer, MODULUS> const &other) {
-			return build(this->value * other.value);
-		}
-		inline ModulusField<Integer, MODULUS> &operator*=(
-			ModulusField<Integer, MODULUS> const &other) {
-			return *this = *this * other;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator/(
-			OtherInteger const &other) const {
-			return *this / build(other);
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> operator/(OtherInteger const &other) {
-			return *this / build(other);
-		}
-		inline ModulusField<Integer, MODULUS> operator/(
-			ModulusField<Integer, MODULUS> const &other) {
-			return *this * other.power(this->modulus - 2);
-		}
-		inline ModulusField<Integer, MODULUS> &operator/=(
-			ModulusField<Integer, MODULUS> const &other) {
-			return *this = *this / other;
 		}
 	};
 }

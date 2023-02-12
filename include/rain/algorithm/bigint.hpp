@@ -225,7 +225,7 @@ namespace Rain::Algorithm {
 				: low(static_cast<SmallerIntUnsigned>(value)),
 					high(static_cast<SmallerInt>(value >> (1_zu << (LOG_BITS - 1)))) {}
 
-		// Casting from bool.
+		// Constructing with bool.
 		BigInt(bool const &value) : low(value ? 1 : 0), high(0) {}
 
 		// Constructing with a larger int than storable is ill-advised and disabled.
@@ -266,6 +266,20 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) == other;
 		}
 		template <typename OtherInteger>
+		inline bool operator!=(OtherInteger const &other) const {
+			return *this != ThisInt(other);
+		}
+		template <typename OtherInteger>
+		inline bool operator!=(OtherInteger const &other) {
+			return std::as_const(*this) != other;
+		}
+		inline bool operator!=(ThisInt const &other) const {
+			return !(*this == other);
+		}
+		inline bool operator!=(ThisInt const &other) {
+			return std::as_const(*this) != other;
+		}
+		template <typename OtherInteger>
 		inline bool operator<(OtherInteger const &other) const {
 			return *this < ThisInt(other);
 		}
@@ -281,6 +295,20 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) < other;
 		}
 		template <typename OtherInteger>
+		inline bool operator<=(OtherInteger const &other) const {
+			return *this <= ThisInt(other);
+		}
+		template <typename OtherInteger>
+		inline bool operator<=(OtherInteger const &other) {
+			return std::as_const(*this) <= other;
+		}
+		inline bool operator<=(ThisInt const &other) const {
+			return *this < other || *this == other;
+		}
+		inline bool operator<=(ThisInt const &other) {
+			return std::as_const(*this) <= other;
+		}
+		template <typename OtherInteger>
 		inline bool operator>(OtherInteger const &other) const {
 			return *this > ThisInt(other);
 		}
@@ -289,11 +317,24 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) > other;
 		}
 		inline bool operator>(ThisInt const &other) const {
-			return this->high > other.high ||
-				(this->high == other.high && this->low > other.low);
+			return !(*this <= other);
 		}
 		inline bool operator>(ThisInt const &other) {
 			return std::as_const(*this) > other;
+		}
+		template <typename OtherInteger>
+		inline bool operator>=(OtherInteger const &other) const {
+			return *this >= ThisInt(other);
+		}
+		template <typename OtherInteger>
+		inline bool operator>=(OtherInteger const &other) {
+			return std::as_const(*this) >= other;
+		}
+		inline bool operator>=(ThisInt const &other) const {
+			return !(*this < other);
+		}
+		inline bool operator>=(ThisInt const &other) {
+			return std::as_const(*this) >= other;
 		}
 
 		// Shift.
@@ -359,6 +400,7 @@ namespace Rain::Algorithm {
 		inline ThisInt operator-() { return -std::as_const(*this); }
 
 		// Cast.
+		explicit operator bool() const { return *this != 0; }
 		operator BigInt<LOG_BITS, !SIGNED>() const {
 			return {
 				this->low,
@@ -373,7 +415,6 @@ namespace Rain::Algorithm {
 			}
 			return static_cast<typename BigIntTypeMap<5, SIGNED>::Type>(this->low);
 		}
-		explicit operator bool() const { return !(*this == 0); }
 
 		// Arithmetic.
 		template <typename OtherInteger>
