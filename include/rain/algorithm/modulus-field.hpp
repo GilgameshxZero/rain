@@ -7,17 +7,12 @@
 #include <vector>
 
 namespace Rain::Algorithm {
-	// The Modulus interface provides one public function which returns a
-	// modulus integer. Template specializations may not use dependent types, so
-	// we must either use `integral_constant` or `enable_if` to specify the
-	// get() function.
-
-	// Implementation for a modulus field over the integers,
+		// Implementation for a modulus field over the integers,
 	// supporting basic operations add, subtract, multiply in O(1) and divide in
 	// O(ln M). Division is generally only valid for prime moduli. For O(1)
 	// division, cache multiplicative inverses and multiply with those.
 	//
-	// A compile-time modulus may be specified with the appropriate constructor.
+	// A runtime modulus may be specified with MODULUS 0 in the template and the appropriate constructor.
 	//
 	// Integer must be large enough to store (modulus() - 1)^2.
 	template <typename Integer, std::size_t MODULUS = 0>
