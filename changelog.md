@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.3
+
+1. Clarify comments in `ModulusField`.
+
 ## 7.2.2
 
 1. Standardize `const` and non-`const` versions of operators for both `ModulusField` and `BigInt`.
