@@ -14,4 +14,5 @@
 #include "algorithm/miller-rabin.hpp"
 #include "algorithm/modulus-field.hpp"
 #include "algorithm/segment-tree.hpp"
+#include "algorithm/segment-tree-lazy.hpp"
 #include "algorithm/sieve.hpp"
