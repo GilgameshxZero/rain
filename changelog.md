@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.2.4
+
+1. Add optimized `SegmentTree` implementation without lazy optimization for a lower constant factor.
+2. Rename `SegmentTree` to `SegmentTreeLazy`.
+3. Reform segment tree implementations to use function pointer template arguments rather than virtual functions in an attempt to reduce constant factor vtable lookup cost.
+
 ## 7.2.3
 
 1. Clarify comments in `ModulusField`.
