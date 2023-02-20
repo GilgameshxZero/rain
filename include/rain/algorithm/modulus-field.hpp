@@ -7,12 +7,13 @@
 #include <vector>
 
 namespace Rain::Algorithm {
-		// Implementation for a modulus field over the integers,
+	// Implementation for a modulus field over the integers,
 	// supporting basic operations add, subtract, multiply in O(1) and divide in
 	// O(ln M). Division is generally only valid for prime moduli. For O(1)
 	// division, cache multiplicative inverses and multiply with those.
 	//
-	// A runtime modulus may be specified with MODULUS 0 in the template and the appropriate constructor.
+	// A runtime modulus may be specified with MODULUS 0 in the template and the
+	// appropriate constructor.
 	//
 	// Integer must be large enough to store (modulus() - 1)^2.
 	template <typename Integer, std::size_t MODULUS = 0>
@@ -30,10 +31,8 @@ namespace Rain::Algorithm {
 		ModulusField(OtherInteger const &value = 0)
 				: modulus{MODULUS},
 					value(
-						value < 0 ? (value % static_cast<OtherInteger>(this->modulus) +
-												 static_cast<OtherInteger>(this->modulus)) %
-								static_cast<OtherInteger>(this->modulus)
-											: value % static_cast<OtherInteger>(this->modulus)) {}
+						value < 0 ? this->modulus - ((0 - value) % this->modulus)
+											: value % this->modulus) {}
 
 		template <
 			typename OtherInteger = std::size_t,
@@ -42,10 +41,8 @@ namespace Rain::Algorithm {
 		ModulusField(Integer const &modulus, OtherInteger const &value = 0)
 				: modulus{modulus},
 					value(
-						value < 0 ? (value % static_cast<OtherInteger>(this->modulus) +
-												 static_cast<OtherInteger>(this->modulus)) %
-								static_cast<OtherInteger>(this->modulus)
-											: value % static_cast<OtherInteger>(this->modulus)) {}
+						value < 0 ? this->modulus - ((0 - value) % this->modulus)
+											: value % this->modulus) {}
 
 		// Builds a ModulusField<Integer, MODULUS> type, but with the same
 		// underlying modulus value. Uses more specialized SFINAE to differentiate
@@ -272,7 +269,8 @@ namespace Rain::Algorithm {
 		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
 		// Must have called precomputeFactorials for the largest expected value of N
 		// first.
-		inline ModulusField<Integer, MODULUS> choose(Integer const K) const {
+		template <typename OtherInteger>
+		inline ModulusField<Integer, MODULUS> choose(OtherInteger const &K) const {
 			if (K < 0 || K > this->value) {
 				return build(0);
 			}

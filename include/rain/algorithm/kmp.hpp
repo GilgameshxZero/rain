@@ -40,6 +40,7 @@ namespace Rain::Algorithm {
 		}
 
 		partialMatch[cStrLen] = candidate;
+		// C++17: guaranteed either NRVO or move.
 		return partialMatch;
 	}
 	inline std::vector<std::size_t> computeKmpPartialMatch(std::string const &s) {
@@ -83,7 +84,7 @@ namespace Rain::Algorithm {
 			}
 		}
 
-		return std::make_pair(const_cast<char *>(searchResult), candidate);
+		return {const_cast<char *>(searchResult), candidate};
 	}
 	inline std::pair<char *, std::size_t> kmpSearch(
 		char const *const haystack,
@@ -113,7 +114,7 @@ namespace Rain::Algorithm {
 			needleLen,
 			partialMatch,
 			candidate);
-		return std::make_pair(searchRes.first - haystack.c_str(), searchRes.second);
+		return {searchRes.first - haystack.c_str(), searchRes.second};
 	}
 	inline std::pair<std::size_t, std::size_t> kmpSearch(
 		std::string const &haystack,

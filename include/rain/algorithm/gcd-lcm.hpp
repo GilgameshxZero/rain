@@ -32,7 +32,7 @@ namespace Rain::Algorithm {
 
 	// LCM.
 	template <typename Integer>
-	inline Integer leastCommonMultiple(Integer const x, Integer const y) {
+	inline Integer leastCommonMultiple(Integer const &x, Integer const &y) {
 		return x / greatestCommonDivisor(x, y) * y;
 	}
 }

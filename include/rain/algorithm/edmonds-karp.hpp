@@ -58,6 +58,7 @@ namespace Rain::Algorithm {
 			}
 		}
 
+		// C++17: guaranteed either NRVO or move.
 		return {flow, residual};
 	}
 }

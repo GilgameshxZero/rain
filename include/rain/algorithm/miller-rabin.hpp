@@ -7,10 +7,10 @@ namespace Rain::Algorithm {
 	// Miller-Rabin helper.
 	template <typename Integer>
 	bool isMaybePrimeMillerRabinInner(
-		Integer const N,
-		Integer const A,
+		Integer const &N,
+		Integer const &A,
 		std::size_t const lsb,
-		Integer const truncated) {
+		Integer const &truncated) {
 		ModulusField<Integer> X(N);
 		X = X.build(A).power(truncated);
 
@@ -29,7 +29,7 @@ namespace Rain::Algorithm {
 	// Miller-Rabin primality test in O(K ln^3 N), with failure probability upper
 	// bounded by 4^-K. Can test numbers up to half the bits in Integer.
 	template <typename Integer>
-	bool isPrimeMillerRabin(Integer const N, std::size_t const K) {
+	bool isPrimeMillerRabin(Integer const &N, std::size_t const K) {
 		if (N < 4) {
 			return N == 2 || N == 3;
 		}
@@ -48,7 +48,7 @@ namespace Rain::Algorithm {
 	// Miller-Rabin primality test, deterministic, for up to 64-bits, in O(12).
 	// Bound by the same conditions on Integer as the random version.
 	template <typename Integer>
-	bool isPrimeMillerRabinDeterministic(Integer const N) {
+	bool isPrimeMillerRabinDeterministic(Integer const &N) {
 		if (N < 2) {
 			return false;
 		}

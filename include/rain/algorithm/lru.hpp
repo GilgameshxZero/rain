@@ -36,7 +36,7 @@ namespace Rain::Algorithm {
 		// Key/value pair capacity of the cache. Cannot be 0.
 		std::size_t const capacity;
 
-		LruCache(std::size_t capacity) : capacity(capacity) {}
+		LruCache(std::size_t const capacity) : capacity(capacity) {}
 
 		// Simple getters.
 		std::size_t size() const noexcept { return this->lruList.size(); }
