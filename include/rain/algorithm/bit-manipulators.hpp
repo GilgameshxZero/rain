@@ -6,7 +6,7 @@ namespace Rain::Algorithm {
 	// Most significant 1-bit for unsigned integral types of at most long long in
 	// size. Undefined result if x = 0.
 	template <typename Integer>
-	inline std::size_t mostSignificant1BitIdx(Integer const x) {
+	inline std::size_t mostSignificant1BitIdx(Integer const &x) {
 #ifdef __has_builtin
 #if __has_builtin(__builtin_clzll)
 		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
@@ -25,7 +25,7 @@ namespace Rain::Algorithm {
 	// Least significant 1-bit for unsigned integral types of at most long long in
 	// size. Undefined result if x = 0.
 	template <typename Integer>
-	inline std::size_t leastSignificant1BitIdx(Integer const x) {
+	inline std::size_t leastSignificant1BitIdx(Integer const &x) {
 #ifdef __has_builtin
 #if __has_builtin(__builtin_ctzll)
 		return __builtin_ctzll(x);
@@ -41,7 +41,7 @@ namespace Rain::Algorithm {
 
 	// Count of 1-bits in unsigned integral types of at most long long in size.
 	template <typename Integer>
-	inline std::size_t bitPopcount(Integer const x) {
+	inline std::size_t bitPopcount(Integer const &x) {
 #ifdef __has_builtin
 #if __has_builtin(__builtin_popcountll)
 		return __builtin_popcountll(x);

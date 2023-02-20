@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.2.5
+
+1. Standardize and clarify NRVO/RVO/move semantics.
+2. Standardize using copy-construct for primitive arguments and const reference for non-primitive or template arguments in algorithms.
+3. Rename one of the segment tree `aggregate` functions to `retrace` for readability.
+4. Add partition number computation in $O(N\lg N)$.
+5. Add failsafe to the SMTP client test in case port 25 is blocked by ISP.
+6. Bugfix for `ModulusField` where it doesn’t work with negative integers on construction, failing the Miller-Rabin test.
+
 ## 7.2.4
 
 1. Add optimized `SegmentTree` implementation without lazy optimization for a lower constant factor.

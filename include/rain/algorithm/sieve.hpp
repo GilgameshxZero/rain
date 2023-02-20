@@ -8,7 +8,7 @@ namespace Rain::Algorithm {
 	// minFactor[1] refers to the minimum prime factor of 1, which we define as 1.
 	template <typename Integer>
 	std::pair<std::vector<Integer>, std::vector<Integer>> linearSieve(
-		Integer const N) {
+		Integer const &N) {
 		std::vector<Integer> minFactor(N + 1), primes;
 		minFactor[0] = minFactor[1] = 1;
 		for (Integer i{2}; i <= N; i++) {
@@ -23,6 +23,8 @@ namespace Rain::Algorithm {
 				}
 			}
 		}
+
+		// C++17: guaranteed either NRVO or move.
 		return {minFactor, primes};
 	}
 }

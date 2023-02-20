@@ -38,7 +38,7 @@ namespace Rain::Algorithm {
 		Value DEFAULT_VALUE,
 		// Aggregate values from two children while retracing an update. Aggregating
 		// with a default Value should do nothing.
-		void (*aggregateValues)(
+		void (*retrace)(
 			std::size_t const,
 			typename std::vector<Value>::reference,
 			Value const &,
@@ -46,7 +46,7 @@ namespace Rain::Algorithm {
 			std::pair<std::size_t, std::size_t> const &),
 		// Aggregate two results from queries on children. Aggregating with a
 		// Result converted from a default Value should do nothing.
-		Result (*aggregateResults)(
+		Result (*aggregate)(
 			std::size_t const,
 			Result const &,
 			Result const &,
@@ -145,7 +145,7 @@ namespace Rain::Algorithm {
 			}
 
 			std::size_t mid{(range.first + range.second) / 2};
-			return aggregateResults(
+			return aggregate(
 				node,
 				this->query(node * 2, left, right, {range.first, mid}),
 				this->query(node * 2 + 1, left, right, {mid + 1, range.second}),
@@ -182,7 +182,7 @@ namespace Rain::Algorithm {
 				// case would have triggered.
 				this->propagate(node * 2, {range.first, mid});
 				this->propagate(node * 2 + 1, {mid + 1, range.second});
-				aggregateValues(
+				retrace(
 					node,
 					this->values[node],
 					this->values[node * 2],

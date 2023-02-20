@@ -15,6 +15,28 @@ int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
 
+	try {
+		Smtp::Client<
+			Smtp::Request,
+			Smtp::Response,
+			1_zu << 10,
+			1_zu << 10,
+			15000,
+			15000,
+			Ipv4FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption>
+			client(getMxRecords("gmail.com"));
+	} catch (Rain::Networking::Exception const &exception) {
+		if (exception.getError() == Rain::Networking::Error::TIMED_OUT) {
+			// Likely SMTP is blocked by ISP; skip test.
+			return 0;
+		}
+
+		throw;
+	}
+
 	// A simple sequence to gmail.com SMTP using IPv4.
 	{
 		Smtp::Client<

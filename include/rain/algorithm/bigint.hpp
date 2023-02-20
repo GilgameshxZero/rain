@@ -226,7 +226,7 @@ namespace Rain::Algorithm {
 					high(static_cast<SmallerInt>(value >> (1_zu << (LOG_BITS - 1)))) {}
 
 		// Constructing with bool.
-		BigInt(bool const &value) : low(value ? 1 : 0), high(0) {}
+		BigInt(bool const value) : low(value ? 1 : 0), high(0) {}
 
 		// Constructing with a larger int than storable is ill-advised and disabled.
 

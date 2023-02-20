@@ -17,13 +17,13 @@ namespace Rain::Algorithm {
 		Value DEFAULT_VALUE,
 		// Aggregate values from two children while retracing an update. Aggregating
 		// with a default Value should do nothing.
-		void (*aggregateValues)(
+		void (*retrace)(
 			typename std::vector<Value>::reference,
 			Value const &,
 			Value const &),
 		// Aggregate two results from queries on children. Aggregating with a
 		// Result converted from a default Value should do nothing.
-		Result (*aggregateResults)(Result const &, Result const &),
+		Result (*aggregate)(Result const &, Result const &),
 		// Apply an update fully to a node.
 		void (*apply)(typename std::vector<Value>::reference, Update const &)>
 	class SegmentTree {
@@ -46,13 +46,13 @@ namespace Rain::Algorithm {
 					 left < right;
 					 left /= 2, right /= 2) {
 				if (left % 2 == 1) {
-					resLeft = aggregateResults(resLeft, this->values[left++]);
+					resLeft = aggregate(resLeft, this->values[left++]);
 				}
 				if (right % 2 == 1) {
-					resRight = aggregateResults(resRight, this->values[--right]);
+					resRight = aggregate(resRight, this->values[--right]);
 				}
 			}
-			return aggregateResults(resLeft, resRight);
+			return aggregate(resLeft, resRight);
 		}
 
 		// Point update an index.
@@ -60,7 +60,7 @@ namespace Rain::Algorithm {
 			idx += this->values.size() / 2;
 			apply(this->values[idx], update);
 			for (idx /= 2; idx >= 1; idx /= 2) {
-				aggregateValues(
+				retrace(
 					this->values[idx], this->values[idx * 2], this->values[idx * 2 + 1]);
 			}
 		}
