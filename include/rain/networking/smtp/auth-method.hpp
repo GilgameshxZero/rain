@@ -18,8 +18,8 @@ namespace Rain::Networking::Smtp {
 		inline static std::unordered_map<
 			std::string,
 			Value,
-			String::HashCaseAgnostic,
-			String::EqualCaseAgnostic> const fromStr{
+			String::CaseAgnosticHash,
+			String::CaseAgnosticEqual> const fromStr{
 			{"PLAIN", PLAIN},
 			{"LOGIN", LOGIN},
 			{"CRAM-MD5", CRAM_MD5}};

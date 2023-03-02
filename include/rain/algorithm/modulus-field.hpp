@@ -343,8 +343,8 @@ namespace std {
 	template <typename Integer, std::size_t MODULUS>
 	struct hash<Rain::Algorithm::ModulusField<Integer, MODULUS>> {
 		size_t operator()(
-			Rain::Algorithm::ModulusField<Integer, MODULUS> const &value) {
-			return hash<>{}(value.value);
+			Rain::Algorithm::ModulusField<Integer, MODULUS> const &value) const {
+			return hash<Integer>{}(value.value);
 		}
 	};
 }

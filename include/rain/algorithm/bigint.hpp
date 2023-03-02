@@ -601,8 +601,8 @@ inline std::istream &operator>>(
 namespace std {
 	template <std::size_t LOG_BITS, bool SIGNED>
 	struct hash<Rain::Algorithm::BigInt<LOG_BITS, SIGNED>> {
-		size_t operator()(Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &value) {
-			size_t result{hash<>{}(value.high)};
+		size_t operator()(Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &value) const {
+			size_t result{hash<decltype(value.high)>{}(value.high)};
 			Rain::Functional::combineHash(result, value.low);
 			return result;
 		}

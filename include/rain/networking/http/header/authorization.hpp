@@ -27,8 +27,8 @@ namespace Rain::Networking::Http::Header {
 		std::unordered_map<
 			std::string,
 			std::string,
-			String::HashCaseAgnostic,
-			String::EqualCaseAgnostic>
+			String::CaseAgnosticHash,
+			String::CaseAgnosticEqual>
 			parameters;
 
 		Authorization(
@@ -36,8 +36,8 @@ namespace Rain::Networking::Http::Header {
 			std::unordered_map<
 				std::string,
 				std::string,
-				String::HashCaseAgnostic,
-				String::EqualCaseAgnostic> const &parameters = {})
+				String::CaseAgnosticHash,
+				String::CaseAgnosticEqual> const &parameters = {})
 				: scheme(scheme), parameters(parameters) {}
 	};
 }
