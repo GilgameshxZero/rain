@@ -269,13 +269,12 @@ namespace Rain::Algorithm {
 		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
 		// Must have called precomputeFactorials for the largest expected value of N
 		// first.
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS> choose(OtherInteger const &K) const {
-			if (K < 0 || K > this->value) {
+		inline ModulusField<Integer, MODULUS> choose(std::size_t const K) const {
+			std::size_t const N{static_cast<std::size_t>(this->value)};
+			if (K < 0 || K > N) {
 				return build(0);
 			}
-			return factorials[this->value] * invFactorials[K] *
-				invFactorials[this->value - K];
+			return factorials[N] * invFactorials[K] * invFactorials[N - K];
 		}
 
 		// O(ln N) exponentiation.
