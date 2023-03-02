@@ -1,6 +1,7 @@
 // Implements cross-platform big ints.
 #pragma once
 
+#include "../functional.hpp"
 #include "../literal.hpp"
 
 #include <cstdint>
@@ -593,4 +594,17 @@ inline std::istream &operator>>(
 		right = right * 10 + (i - '0');
 	}
 	return stream;
+}
+
+// Hash operator for this user-defined type, which combines hashes of the inner
+// type.
+namespace std {
+	template <std::size_t LOG_BITS, bool SIGNED>
+	struct hash<Rain::Algorithm::BigInt<LOG_BITS, SIGNED>> {
+		size_t operator()(Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &value) {
+			size_t result{hash<>{}(value.high)};
+			Rain::Functional::combineHash(result, value.low);
+			return result;
+		}
+	};
 }

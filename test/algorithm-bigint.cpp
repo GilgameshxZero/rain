@@ -4,6 +4,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <unordered_set>
 
 int main() {
 	// 64-bits.
@@ -132,6 +133,9 @@ int main() {
 		c = a + b;
 		assert(c == d + e);
 	}
+
+	// Hashable.
+	{ std::unordered_set<Rain::Algorithm::BigIntSigned<10>> S; }
 
 	return 0;
 }

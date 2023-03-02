@@ -336,3 +336,15 @@ inline std::istream &operator>>(
 	right.value = (right.modulus + right.value) % right.modulus;
 	return stream;
 }
+
+// Hash operator for this user-defined type, which hashes the inner value (not
+// the modulus).
+namespace std {
+	template <typename Integer, std::size_t MODULUS>
+	struct hash<Rain::Algorithm::ModulusField<Integer, MODULUS>> {
+		size_t operator()(
+			Rain::Algorithm::ModulusField<Integer, MODULUS> const &value) {
+			return hash<>{}(value.value);
+		}
+	};
+}

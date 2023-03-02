@@ -25,5 +25,13 @@ int main() {
 		using Type = std::unordered_map<long long, std::string>;
 		std::unordered_set<Type, Rain::Functional::ContainerHash<Type>> X;
 	}
+	{
+		std::unordered_set<
+			std::pair<std::vector<int>, bool>,
+			Rain::Functional::PairHash<std::vector<int>, bool>>
+			X;
+	}
+	// Fails because we haven't implemented tuple hash.
+	// { std::unordered_set<std::tuple<int, bool>> X; }
 	return 0;
 }

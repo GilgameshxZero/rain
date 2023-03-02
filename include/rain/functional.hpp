@@ -16,7 +16,7 @@ namespace Rain::Functional {
 	// <https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x>.
 	template <class T>
 	inline void combineHash(std::size_t &seed, T const &value) {
-		seed ^= std::hash<T>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= std::hash<>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 	}
 
 	// SFINAE for const-iterable types (containers). Assumes sizeof(char) and
@@ -32,7 +32,7 @@ namespace Rain::Functional {
 		enum { value = sizeof(test<Type>(0)) == sizeof(char) };
 	};
 
-	// Custom hash function for const-iterable containers. Cannot be placed in std
+	// Custom hash functor for const-iterable containers. Cannot be placed in std
 	// namespace as it is UB for system types (not UB for user-defined types).
 	template <
 		typename Container,
@@ -44,6 +44,17 @@ namespace Rain::Functional {
 			for (auto const &i : value) {
 				combineHash(result, i);
 			}
+			return result;
+		}
+	};
+
+	// Custom hash functor for std::pair (TODO: implement tuple functor).
+	template <typename TypeFirst, typename TypeSecond>
+	struct PairHash {
+		std::size_t operator()(
+			std::pair<TypeFirst, TypeSecond> const &value) const {
+			std::size_t result{std::hash<>{}(value.first)};
+			combineHash(result, value.second);
 			return result;
 		}
 	};

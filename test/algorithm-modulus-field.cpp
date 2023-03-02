@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <unordered_set>
 
 int main() {
 	{
@@ -158,7 +159,8 @@ int main() {
 		using MF = Rain::Algorithm::ModulusField<std::size_t, 13>;
 		MF a, b, c, d, e;
 
-		// Constructing with a large negative integer should still wrap around correctly.
+		// Constructing with a large negative integer should still wrap around
+		// correctly.
 		a = -28;
 		assert(a == 11);
 
@@ -179,6 +181,13 @@ int main() {
 		assert(a > b);
 		assert(a >= b);
 		assert(b == c);
+	}
+
+	{
+		using MF = Rain::Algorithm::ModulusField<std::size_t, 13>;
+
+		// Is a hashable type.
+		std::unordered_set<MF> S;
 	}
 
 	return 0;
