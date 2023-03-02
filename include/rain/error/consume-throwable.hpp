@@ -25,7 +25,7 @@ namespace Rain::Error {
 	//
 	// Crashes may still be caused via signal crashes (dividing by 0, etc.).
 	template <typename Callable>
-	auto consumeThrowable(
+	inline auto consumeThrowable(
 		// Perfect forwarding rvalue-reference to allow for inline construction and
 		// later move-capture.
 		Callable &&callable,

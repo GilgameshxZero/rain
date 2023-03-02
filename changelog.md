@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.2.7
+
+1. Use `std::mt19937_64` as generator for Miller-Rabin tests, and add functionality for default generator.
+2. `inline` more standalone functions in `Algorithm`.
+3. Add utilities to hash iterable containers for use in hash-based DSs.
+4. Standardize to use `typename` instead of `class` in templates.
+
 ## 7.2.6
 
 1. Use `size_t` instead of template ints.

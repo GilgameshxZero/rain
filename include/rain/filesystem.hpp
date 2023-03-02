@@ -5,23 +5,20 @@
 #include <fstream>
 
 namespace Rain::Filesystem {
-	// Hash std::filesystem::path.
-	struct HashPath {
-		std::size_t operator()(std::filesystem::path const &path) const {
-			return std::hash<std::string>{}(path.string());
-		}
-	};
-
 	// Returns true if descendent path is under the directory subtree of the
 	// ancestor path.
 	//
 	// Internally converts to canonical or absolute paths.
 	inline bool isSubpath(
 		std::filesystem::path const &descendant,
-		std::filesystem::path const &ancestor, bool useCanonical = true) {
-		std::filesystem::path trueDescendant(useCanonical ? 
-			std::filesystem::canonical(descendant) : std::filesystem::absolute(descendant)),
-			trueAncestor(useCanonical ? std::filesystem::canonical(ancestor) : std::filesystem::absolute(ancestor));
+		std::filesystem::path const &ancestor,
+		bool useCanonical = true) {
+		std::filesystem::path trueDescendant(
+			useCanonical ? std::filesystem::canonical(descendant)
+									 : std::filesystem::absolute(descendant)),
+			trueAncestor(
+				useCanonical ? std::filesystem::canonical(ancestor)
+										 : std::filesystem::absolute(ancestor));
 		return std::mismatch(
 						 trueDescendant.begin(),
 						 trueDescendant.end(),

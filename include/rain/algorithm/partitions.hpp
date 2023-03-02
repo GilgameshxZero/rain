@@ -8,7 +8,7 @@ namespace Rain::Algorithm {
 	// may involve polynomial exponentiation or log, which are significantly more
 	// complicated.
 	template <typename Integer>
-	std::vector<Integer> partitionNumbers(Integer const &N) {
+	inline std::vector<Integer> partitionNumbers(Integer const &N) {
 		std::vector<Integer> partitions(N + 1, 0);
 		partitions[0] = 1;
 		for (Integer i{1}; i <= N; i++) {

@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <unordered_set>
 
 int main() {
 	std::string str{"WhAT? iS? thIs?"};
@@ -43,6 +44,17 @@ int main() {
 	std::cout << "Double:          " << dblNum << "\n"
 						<< "anyToAny string: " << s << "\n";
 	assert(s == "-38.1415");
+
+	{
+		std::unordered_set<
+			std::string,
+			Rain::String::CaseAgnosticHash,
+			Rain::String::CaseAgnosticEqual>
+			S;
+		S.insert("hello world");
+		S.insert("Hello World");
+		assert(S.size() == 1);
+	}
 
 	return 0;
 }
