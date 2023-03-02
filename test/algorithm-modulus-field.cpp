@@ -188,6 +188,7 @@ int main() {
 
 		// Is a hashable type.
 		std::unordered_set<MF> S;
+		S.insert({24});
 	}
 
 	return 0;

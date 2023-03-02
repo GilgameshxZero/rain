@@ -135,7 +135,10 @@ int main() {
 	}
 
 	// Hashable.
-	{ std::unordered_set<Rain::Algorithm::BigIntSigned<10>> S; }
+	{
+		std::unordered_set<Rain::Algorithm::BigIntSigned<10>> S;
+		S.insert({5});
+	}
 
 	return 0;
 }

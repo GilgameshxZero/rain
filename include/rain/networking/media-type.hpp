@@ -43,8 +43,8 @@ namespace Rain::Networking {
 		inline static std::unordered_map<
 			std::string,
 			Value,
-			Rain::String::HashCaseAgnostic,
-			Rain::String::EqualCaseAgnostic> const _fromStr{
+			Rain::String::CaseAgnosticHash,
+			Rain::String::CaseAgnosticEqual> const _fromStr{
 			{"text/plain", PLAIN},
 			{".txt", PLAIN},
 			{"text/html", HTML},

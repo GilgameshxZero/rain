@@ -44,8 +44,8 @@ namespace Rain::Networking::Smtp {
 		inline static std::unordered_map<
 			std::string,
 			Value,
-			String::HashCaseAgnostic,
-			String::EqualCaseAgnostic> const fromStr{
+			String::CaseAgnosticHash,
+			String::CaseAgnosticEqual> const fromStr{
 			{"HELO", HELO},
 			{"MAIL", MAIL},
 			{"RCPT", RCPT},

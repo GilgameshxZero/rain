@@ -24,8 +24,8 @@ namespace Rain::Networking::Http {
 	class Headers : public std::unordered_multimap<
 										std::string,
 										std::string,
-										String::HashCaseAgnostic,
-										String::EqualCaseAgnostic> {
+										String::CaseAgnosticHash,
+										String::CaseAgnosticEqual> {
 		public:
 		enum class Error { NO_COLON_DELIMITER = 1, HEADERS_BLOCK_OVERFLOW };
 		class ErrorCategory : public std::error_category {
@@ -49,8 +49,8 @@ namespace Rain::Networking::Http {
 		typedef std::unordered_multimap<
 			std::string,
 			std::string,
-			String::HashCaseAgnostic,
-			String::EqualCaseAgnostic>
+			String::CaseAgnosticHash,
+			String::CaseAgnosticEqual>
 			Super;
 
 		Headers() = default;

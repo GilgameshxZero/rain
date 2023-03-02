@@ -15,6 +15,7 @@ int main() {
 	{
 		using Type = std::vector<long long>;
 		std::unordered_set<Type, Rain::Functional::ContainerHash<Type>> X;
+		X.insert({5, 6, 7});
 	}
 	// {
 	// 	// Fails because Type is not a container.
@@ -26,10 +27,10 @@ int main() {
 		std::unordered_set<Type, Rain::Functional::ContainerHash<Type>> X;
 	}
 	{
-		std::unordered_set<
-			std::pair<std::vector<int>, bool>,
-			Rain::Functional::PairHash<std::vector<int>, bool>>
-			X;
+		std::
+			unordered_set<std::pair<int, bool>, Rain::Functional::PairHash<int, bool>>
+				X;
+		X.insert({5, false});
 	}
 	// Fails because we haven't implemented tuple hash.
 	// { std::unordered_set<std::tuple<int, bool>> X; }

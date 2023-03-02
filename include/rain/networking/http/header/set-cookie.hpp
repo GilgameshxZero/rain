@@ -12,8 +12,8 @@ namespace Rain::Networking::Http::Header {
 		std::unordered_map<
 			std::string,
 			std::string,
-			String::HashCaseAgnostic,
-			String::EqualCaseAgnostic>
+			String::CaseAgnosticHash,
+			String::CaseAgnosticEqual>
 			attributes;
 
 		SetCookie(
@@ -21,8 +21,8 @@ namespace Rain::Networking::Http::Header {
 			std::unordered_map<
 				std::string,
 				std::string,
-				String::HashCaseAgnostic,
-				String::EqualCaseAgnostic> const &attributes = {})
+				String::CaseAgnosticHash,
+				String::CaseAgnosticEqual> const &attributes = {})
 				: value(value), attributes(attributes) {}
 	};
 }

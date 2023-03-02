@@ -14,9 +14,9 @@
 namespace Rain::Functional {
 	// Simple function to combine two hashes, based on
 	// <https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x>.
-	template <class T>
-	inline void combineHash(std::size_t &seed, T const &value) {
-		seed ^= std::hash<>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	template <class Type>
+	inline void combineHash(std::size_t &seed, Type const &value) {
+		seed ^= std::hash<Type>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 	}
 
 	// SFINAE for const-iterable types (containers). Assumes sizeof(char) and
@@ -53,7 +53,7 @@ namespace Rain::Functional {
 	struct PairHash {
 		std::size_t operator()(
 			std::pair<TypeFirst, TypeSecond> const &value) const {
-			std::size_t result{std::hash<>{}(value.first)};
+			std::size_t result{std::hash<TypeFirst>{}(value.first)};
 			combineHash(result, value.second);
 			return result;
 		}

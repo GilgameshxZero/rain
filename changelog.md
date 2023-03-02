@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.9
+
+1. Fix hash operators and errors resulting from changing the name of case angostic string comparison functions.
+
 ## 7.2.8
 
 1. Add hash operators to `BigInt` and `ModulusField`.
