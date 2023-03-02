@@ -15,7 +15,7 @@ namespace Rain::Algorithm {
 	//
 	// Returns the number of CCs, and the 0-indexed index of the
 	// SCC that each vertex belongs to.
-	std::pair<std::size_t, std::vector<std::size_t>> stronglyConnectedTarjans(
+	inline std::pair<std::size_t, std::vector<std::size_t>> stronglyConnectedTarjans(
 		std::vector<std::unordered_set<std::size_t>> const &edges) {
 		std::size_t cScc{0}, cPreOrderId{0};
 		std::vector<std::size_t> scc(edges.size()),

@@ -13,7 +13,7 @@ namespace Rain::Algorithm {
 	// Returns the number of CCs, and the 0-indexed index of the
 	// SCC that each vertex belongs to. SCC indices are sorted in topological
 	// order (lower indices have edges pointing toward higher indices).
-	std::pair<std::size_t, std::vector<std::size_t>> stronglyConnectedKosarjus(
+	inline std::pair<std::size_t, std::vector<std::size_t>> stronglyConnectedKosarjus(
 		std::vector<std::unordered_set<std::size_t>> const &edges) {
 		std::size_t cScc{0}, cPostOrderId{0};
 		std::vector<std::size_t> scc(edges.size(), SIZE_MAX),

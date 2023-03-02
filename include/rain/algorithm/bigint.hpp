@@ -65,7 +65,7 @@ namespace Rain::Algorithm {
 	// Overflow multiplication and division. Multiplication returns {low, high} of
 	// the result. Division returns {low, high} of the result.
 	template <std::size_t LOG_BITS, bool SIGNED>
-	std::pair<
+	inline std::pair<
 		typename BigIntTypeMap<LOG_BITS, false>::Type,
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type>
 	bigIntMultiply(
@@ -126,7 +126,7 @@ namespace Rain::Algorithm {
 		return {first, second};
 	}
 	template <>
-	std::pair<
+	inline std::pair<
 		typename BigIntTypeMap<5, false>::Type,
 		typename BigIntTypeMap<5, false>::Type>
 	bigIntMultiply<5, false>(
@@ -141,7 +141,7 @@ namespace Rain::Algorithm {
 			static_cast<ThisIntUnsigned>(result), static_cast<ThisInt>(result >> 32)};
 	}
 	template <>
-	std::pair<
+	inline std::pair<
 		typename BigIntTypeMap<5, false>::Type,
 		typename BigIntTypeMap<5, true>::Type>
 	bigIntMultiply<5, true>(
@@ -157,7 +157,7 @@ namespace Rain::Algorithm {
 	}
 
 	template <std::size_t LOG_BITS, bool SIGNED>
-	typename BigIntTypeMap<LOG_BITS, SIGNED>::Type bigIntDivide(
+	inline typename BigIntTypeMap<LOG_BITS, SIGNED>::Type bigIntDivide(
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type X,
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type Y) {
 		using ThisInt = typename BigIntTypeMap<LOG_BITS, SIGNED>::Type;
@@ -189,7 +189,7 @@ namespace Rain::Algorithm {
 		return negative ? (0 - low) : low;
 	}
 	template <bool SIGNED>
-	typename BigIntTypeMap<5, SIGNED>::Type bigIntDivide(
+	inline typename BigIntTypeMap<5, SIGNED>::Type bigIntDivide(
 		typename BigIntTypeMap<5, SIGNED>::Type X,
 		typename BigIntTypeMap<5, SIGNED>::Type Y) {
 		return X / Y;

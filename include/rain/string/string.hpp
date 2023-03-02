@@ -107,27 +107,27 @@ namespace Rain::String {
 		return to;
 	}
 	// Comparison operator for ASCII C-strings for use in std::maps and the like.
-	struct CompareCString {
+	struct CStringCompare {
 		bool operator()(char const *left, char const *right) const {
 			return std::strcmp(left, right) < 0;
 		}
 	};
 
 	// Comparison operator for case-agnostic comparison.
-	struct CompareCaseAgnostic {
+	struct CaseAgnosticCompare {
 		bool operator()(std::string const &left, std::string const &right) const {
 			return strcasecmp(left.c_str(), right.c_str()) < 0;
 		}
 	};
 
 	// Case-agnostic hash & equality for std::unordered_map.
-	struct HashCaseAgnostic {
+	struct CaseAgnosticHash {
 		std::size_t operator()(std::string const &str) const {
 			std::string strLower(str);
 			return std::hash<std::string>{}(toLower(strLower));
 		}
 	};
-	struct EqualCaseAgnostic {
+	struct CaseAgnosticEqual {
 		bool operator()(std::string const &left, std::string const &right) const {
 			return strcasecmp(left.c_str(), right.c_str()) == 0;
 		}

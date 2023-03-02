@@ -10,7 +10,7 @@ namespace Rain::Algorithm {
 	// provided graph must be simple (no self-loops, no multi-edges, connected).
 	//
 	// Returns the residual graph after the max flow is computed.
-	std::
+	inline std::
 		pair<std::size_t, std::vector<std::unordered_map<std::size_t, std::size_t>>>
 		maxFlowEdmondsKarp(
 			std::vector<std::unordered_map<std::size_t, std::size_t>> const &edges,
