@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.2.6
+
+1. Use `size_t` instead of template ints.
+2. Build now uses project (test) name for intermediaries on Windows.
+
 ## 7.2.5
 
 1. Standardize and clarify NRVO/RVO/move semantics.
