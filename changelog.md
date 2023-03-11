@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.2.10
+
+1. Move hashers to `Random`.
+2. Add split mix hasher, and use it by default in `combineHash`.
+
 ## 7.2.9
 
 1. Fix hash operators and errors resulting from changing the name of case angostic string comparison functions.

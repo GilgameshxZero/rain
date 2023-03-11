@@ -1,4 +1,4 @@
-#include <rain/functional.hpp>
+#include <rain/random.hpp>
 
 #include <array>
 #include <iostream>
@@ -9,12 +9,11 @@
 int main() {
 	{
 		using Type = std::array<long long, 8>;
-		std::unordered_map<Type, std::string, Rain::Functional::ContainerHash<Type>>
-			X;
+		std::unordered_map<Type, std::string, Rain::Random::ContainerHash<Type>> X;
 	}
 	{
 		using Type = std::vector<long long>;
-		std::unordered_set<Type, Rain::Functional::ContainerHash<Type>> X;
+		std::unordered_set<Type, Rain::Random::ContainerHash<Type>> X;
 		X.insert({5, 6, 7});
 	}
 	// {
@@ -24,12 +23,11 @@ int main() {
 	// }
 	{
 		using Type = std::unordered_map<long long, std::string>;
-		std::unordered_set<Type, Rain::Functional::ContainerHash<Type>> X;
+		std::unordered_set<Type, Rain::Random::ContainerHash<Type>> X;
 	}
 	{
-		std::
-			unordered_set<std::pair<int, bool>, Rain::Functional::PairHash<int, bool>>
-				X;
+		std::unordered_set<std::pair<int, bool>, Rain::Random::PairHash<int, bool>>
+			X;
 		X.insert({5, false});
 	}
 	// Fails because we haven't implemented tuple hash.
