@@ -24,4 +24,19 @@ namespace Rain::Functional {
 		public:
 		enum { value = sizeof(evaluate<Type>(0)) == sizeof(char) };
 	};
+
+	template <typename>
+	struct isPair : std::false_type {};
+
+	template <typename TypeFirst, typename TypeSecond>
+	struct isPair<std::pair<TypeFirst, TypeSecond>> : std::true_type {};
+
+	template <typename Type, typename = std::void_t<>>
+	struct isStdHashable : std::false_type {};
+
+	template <typename Type>
+	struct isStdHashable<
+		Type,
+		std::void_t<decltype(std::declval<std::hash<Type>>()(
+			std::declval<Type>()))>> : std::true_type {};
 }
