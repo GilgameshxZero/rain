@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.11
+
+1. Enable recursive unwrapping for `SplitMixHash`.
+
 ## 7.2.10
 
 1. Move hashers to `Random`.

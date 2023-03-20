@@ -1,8 +1,8 @@
 // Implements cross-platform big ints.
 #pragma once
 
-#include "../functional.hpp"
 #include "../literal.hpp"
+#include "../random.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -601,9 +601,12 @@ inline std::istream &operator>>(
 namespace std {
 	template <std::size_t LOG_BITS, bool SIGNED>
 	struct hash<Rain::Algorithm::BigInt<LOG_BITS, SIGNED>> {
-		size_t operator()(Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &value) const {
-			size_t result{hash<decltype(value.high)>{}(value.high)};
-			Rain::Functional::combineHash(result, value.low);
+		size_t operator()(
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &value) const {
+			size_t result{
+				Rain::Random::SplitMixHash<decltype(value.high)>{}(value.high)};
+			Rain::Random::combineHash(
+				result, Rain::Random::SplitMixHash<decltype(value.low)>{}(value.low));
 			return result;
 		}
 	};
