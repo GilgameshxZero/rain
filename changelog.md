@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.12
+
+1. Add parity and distance extensions to DSU.
+
 ## 7.2.11
 
 1. Enable recursive unwrapping for `SplitMixHash`.
