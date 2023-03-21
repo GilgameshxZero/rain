@@ -15,8 +15,9 @@ int main() {
 	assert(dsu.rank(2) == 3);
 	assert(dsu.rank(1) == 3);
 	dsu.join(9, 8);
-	dsu.join(1, 9);
+	assert(dsu.join(1, 9));
 	assert(dsu.rank(1) == 5);
 	assert(dsu.find(9) == dsu.find(0));
+	assert(!dsu.join(2, 8));
 	return 0;
 }
