@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.13
+
+1. `minFactor` now indexes directly into `primes` rather than storing primes themselves.
+
 ## 7.2.12
 
 1. Add parity and distance extensions to DSU.
