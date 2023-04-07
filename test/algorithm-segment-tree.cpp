@@ -7,55 +7,45 @@
 #include <cassert>
 #include <iostream>
 
-namespace MaxTreeAux {
-	void aggregateValues(
-		typename std::vector<long long>::reference value,
-		long long const &left,
-		long long const &right) {
-		value = max(left, right);
-	}
-	long long aggregateResults(long long const &left, long long const &right) {
-		return max(left, right);
-	}
-	void apply(
-		typename std::vector<long long>::reference value,
-		long long const &update) {
+class MaxTreePolicy {
+	public:
+	using Value = long long;
+	using Result = long long;
+	using Update = long long;
+
+	static constexpr Value DEFAULT_VALUE{-1};
+	inline static void apply(Value &value, Update const &update) {
 		value = max(value, update);
 	}
-}
-using MaxTree = Rain::Algorithm::SegmentTree<
-	long long,
-	long long,
-	long long,
-	-1,
-	MaxTreeAux::aggregateValues,
-	MaxTreeAux::aggregateResults,
-	MaxTreeAux::apply>;
+	inline static Result aggregate(Result const &left, Result const &right) {
+		return max(left, right);
+	}
+	inline static void
+	retrace(Value &value, Value const &left, Value const &right) {
+		value = max(left, right);
+	}
+};
+using MaxTree = Rain::Algorithm::SegmentTree<MaxTreePolicy>;
 
-namespace SumTreeAux {
-	void aggregateValues(
-		typename std::vector<long long>::reference value,
-		long long const &left,
-		long long const &right) {
-		value = left + right;
-	}
-	long long aggregateResults(long long const &left, long long const &right) {
-		return left + right;
-	}
-	void apply(
-		typename std::vector<long long>::reference value,
-		long long const &update) {
+class SumTreePolicy {
+	public:
+	using Value = long long;
+	using Result = long long;
+	using Update = long long;
+
+	static constexpr Value DEFAULT_VALUE{0};
+	inline static void apply(Value &value, Update const &update) {
 		value += update;
 	}
-}
-using SumTree = Rain::Algorithm::SegmentTree<
-	long long,
-	long long,
-	long long,
-	0,
-	SumTreeAux::aggregateValues,
-	SumTreeAux::aggregateResults,
-	SumTreeAux::apply>;
+	inline static Result aggregate(Result const &left, Result const &right) {
+		return left + right;
+	}
+	inline static void
+	retrace(Value &value, Value const &left, Value const &right) {
+		value = left + right;
+	}
+};
+using SumTree = Rain::Algorithm::SegmentTree<SumTreePolicy>;
 
 int main() {
 	using namespace Rain::Literal;

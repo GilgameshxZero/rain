@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.14
+
+1. Change to policy-based non-lazy segtree.
+
 ## 7.2.13
 
 1. `minFactor` now indexes directly into `primes` rather than storing primes themselves.
