@@ -3,10 +3,6 @@
 // much faster constant factor.
 #pragma once
 
-#include "../functional.hpp"
-#include "../literal.hpp"
-#include "bit-manipulators.hpp"
-
 #include <vector>
 
 namespace Rain::Algorithm {
@@ -19,16 +15,16 @@ namespace Rain::Algorithm {
 	// static constexpr Value DEFAULT_VALUE: Identity values at creation and
 	// aggregation.
 	//
-	// inline static void apply(Value &value, Update const &update): Fully apply
+	// static void apply(Value &value, Update const &update): Fully apply
 	// an update to a leaf node.
 	//
-	// inline static Result aggregate(Result const &left, Result const &right):
+	// static Result aggregate(Result const &left, Result const &right):
 	// Aggregate two results from queries on children. Aggregating with a Result
 	// converted from a default Value should do nothing.
 	//
-	// inline static void retrace(Value &value, Value const &left, Value const
-	// &right): Aggregate values from two children while retracing an update.
-	// Aggregating with a default Value should do nothing.
+	// static void retrace(Value &value, Value const &left, Value const &right):
+	// Aggregate values from two children while retracing an update. Aggregating
+	// with a default Value should do nothing.
 	template <typename Policy>
 	class SegmentTree {
 		public:

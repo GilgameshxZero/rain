@@ -6,52 +6,34 @@
 #include <cassert>
 #include <iostream>
 
-namespace SumTreeAux {
-	void aggregateValues(
-		std::size_t const,
-		typename std::vector<long long>::reference value,
-		long long const &left,
-		long long const &right,
-		std::pair<std::size_t, std::size_t> const &) {
-		value = left + right;
+class SumTreePolicy {
+	public:
+	using Value = long long;
+	using Update = long long;
+	using Result = long long;
+
+	static constexpr Value DEFAULT_VALUE{0};
+	static constexpr Update DEFAULT_UPDATE{0};
+	static void apply(Value &value, Update const &update, std::size_t range) {
+		value += update * range;
 	}
-	long long aggregateResults(
-		std::size_t const,
-		long long const &left,
-		long long const &right,
-		std::pair<std::size_t, std::size_t> const &) {
+	static Result aggregate(Result const &left, Result const &right) {
 		return left + right;
 	}
-	void split(
-		std::size_t const,
-		long long const &update,
-		typename std::vector<long long>::reference left,
-		typename std::vector<long long>::reference right,
-		std::pair<std::size_t, std::size_t> const &) {
+	static void retrace(
+		Value &value,
+		Value const &left,
+		Value const &right,
+		std::size_t range) {
+		value = left + right;
+	}
+	static void
+	split(Update const &update, Update &left, Update &right, std::size_t range) {
 		left += update;
 		right += update;
 	}
-	void apply(
-		std::size_t const,
-		typename std::vector<long long>::reference value,
-		long long const &update,
-		std::pair<std::size_t, std::size_t> const &range) {
-		value += update * (range.second - range.first + 1);
-	}
-	long long convert(std::size_t const, long long const &value) {
-		return value;
-	}
-}
-using SumTree = Rain::Algorithm::SegmentTreeLazy<
-	long long,
-	long long,
-	long long,
-	0,
-	SumTreeAux::aggregateValues,
-	SumTreeAux::aggregateResults,
-	SumTreeAux::split,
-	SumTreeAux::apply,
-	SumTreeAux::convert>;
+};
+using SumTree = Rain::Algorithm::SegmentTreeLazy<SumTreePolicy>;
 
 int main() {
 	using namespace Rain::Literal;
