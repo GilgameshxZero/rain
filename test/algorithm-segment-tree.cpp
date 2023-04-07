@@ -14,13 +14,13 @@ class MaxTreePolicy {
 	using Update = long long;
 
 	static constexpr Value DEFAULT_VALUE{-1};
-	inline static void apply(Value &value, Update const &update) {
+	static void apply(Value &value, Update const &update) {
 		value = max(value, update);
 	}
-	inline static Result aggregate(Result const &left, Result const &right) {
+	static Result aggregate(Result const &left, Result const &right) {
 		return max(left, right);
 	}
-	inline static void
+	static void
 	retrace(Value &value, Value const &left, Value const &right) {
 		value = max(left, right);
 	}
@@ -34,13 +34,13 @@ class SumTreePolicy {
 	using Update = long long;
 
 	static constexpr Value DEFAULT_VALUE{0};
-	inline static void apply(Value &value, Update const &update) {
+	static void apply(Value &value, Update const &update) {
 		value += update;
 	}
-	inline static Result aggregate(Result const &left, Result const &right) {
+	static Result aggregate(Result const &left, Result const &right) {
 		return left + right;
 	}
-	inline static void
+	static void
 	retrace(Value &value, Value const &left, Value const &right) {
 		value = left + right;
 	}

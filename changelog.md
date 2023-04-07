@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.15
+
+1. Change to policy-based lazy segtree.
+
 ## 7.2.14
 
 1. Change to policy-based non-lazy segtree.

@@ -11,63 +11,36 @@ namespace Rain::Algorithm {
 	// Segment tree with lazy propagation, supporting range queries and range
 	// updates in O(ln N) and O(N) memory.
 	//
-	// RVO helps with heavier Result types, but is not guaranteed. Value must be
-	// zero-initialized to be valid. Update must be light-copyable.
+	// Based on <https://codeforces.com/blog/entry/18051>. Earlier iterations of
+	// this data structure have higher constant factor but enable more intuitive
+	// modifications. This policy-based structure requires a policy of the
+	// following interface:
 	//
-	// Index 0 is unused. For parent i, 2i is the left child and 2i + 1 is the
-	// right child. The queries and updates themselves are inclusive and 0-indexed
-	// on the represented range.
+	// static constexpr Value DEFAULT_VALUE: Identity values at creation and
+	// aggregation.
 	//
-	// Further performance can be had with manual inlining of the five functions,
-	// which are typically not inlined by the compiler due to their virtual-ness.
-	// Forced initialization of underlying vectors can be replaced with
-	// std::array, and on GCC, loop unrolling may be turned on for further
-	// optimization. Removing functions which support lazy propagation will
-	// further speed up this implementation.
+	// static constexpr Update DEFAULT_UPDATE: Identify value of an update.
 	//
-	// Additionally, consider using the non-lazy version of this tree if range
-	// updates are not required.
+	// static void apply(Value &value, Update const &update, std::size_t range):
+	// Fully apply an update to a leaf node.
 	//
-	// The default Value should be one which serves as an identity when acted upon
-	// by aggregate, apply, and propagate, and its converted Result should also be
-	// an identity w.r.t aggregate.
-	template <
-		typename Value,
-		typename Update,
-		typename Result,
-		Value DEFAULT_VALUE,
-		// Aggregate values from two children while retracing an update. Aggregating
-		// with a default Value should do nothing.
-		void (*retrace)(
-			std::size_t const,
-			typename std::vector<Value>::reference,
-			Value const &,
-			Value const &,
-			std::pair<std::size_t, std::size_t> const &),
-		// Aggregate two results from queries on children. Aggregating with a
-		// Result converted from a default Value should do nothing.
-		Result (*aggregate)(
-			std::size_t const,
-			Result const &,
-			Result const &,
-			std::pair<std::size_t, std::size_t> const &),
-		// Propagate an update on a parent to its two children. Lazy bits for the
-		// children are set beforehand, but can be unset in the function.
-		void (*split)(
-			std::size_t const,
-			Update const &,
-			typename std::vector<Update>::reference,
-			typename std::vector<Update>::reference,
-			std::pair<std::size_t, std::size_t> const &),
-		// Apply an update fully to a lazy node.
-		void (*apply)(
-			std::size_t const,
-			typename std::vector<Value>::reference,
-			Update const &,
-			std::pair<std::size_t, std::size_t> const &),
-		// Convert a Value at a leaf node to a Result for base case queries.
-		Result (*convert)(std::size_t const, Value const &)>
+	// static Result aggregate(Result const &left, Result const &right):
+	// Aggregate two results from queries on children. Aggregating with a Result
+	// converted from a default Value should do nothing.
+	//
+	// static void retrace( Value &value, Value const &left, Value const &right,
+	// std::size_t range): Aggregate values from two children while retracing an
+	// update. Aggregating with a default Value should do nothing.
+	//
+	// static void split(Update const &update, Update &left, Update &right,
+	// std::size_t range): Split a lazy update into its children updates.
+	template <typename Policy>
 	class SegmentTreeLazy {
+		public:
+		using Value = typename Policy::Value;
+		using Update = typename Policy::Update;
+		using Result = typename Policy::Result;
+
 		protected:
 		// Aggregate values at each node.
 		std::vector<Value> values;
@@ -78,116 +51,115 @@ namespace Rain::Algorithm {
 		// Lazily-stored updates.
 		std::vector<Update> updates;
 
+		// Height of the highest node in the tree.
+		std::size_t const HEIGHT;
+
 		public:
 		// Segment tree for a segment array of size size.
 		SegmentTreeLazy(std::size_t const size)
-				: values(1_zu << (mostSignificant1BitIdx(size - 1) + 2), DEFAULT_VALUE),
+				: values(2 * size, Policy::DEFAULT_VALUE),
 					lazy(values.size(), false),
-					updates(values.size()) {}
+					updates(values.size(), Policy::DEFAULT_UPDATE),
+					HEIGHT{mostSignificant1BitIdx(values.size())} {}
 
+		protected:
+		// Propagate all ancestors of nodes in a given inclusive underlying range.
+		void propagate(std::size_t left, std::size_t right) {
+			std::size_t level{this->HEIGHT}, range{1_zu << (this->HEIGHT - 1)};
+			for (left += this->values.size() / 2, right += this->values.size() / 2;
+					 level > 0;
+					 --level, range >>= 1) {
+				for (std::size_t i{left >> level}; i <= (right >> level); ++i) {
+					if (this->lazy[i]) {
+						Policy::apply(this->values[i * 2], this->updates[i], range);
+						Policy::apply(this->values[i * 2 + 1], this->updates[i], range);
+						Policy::split(
+							this->updates[i],
+							this->updates[i * 2],
+							this->updates[i * 2 + 1],
+							range);
+						this->lazy[i * 2] = this->lazy[i * 2 + 1] = true;
+
+						this->updates[i] = Policy::DEFAULT_UPDATE;
+						this->lazy[i] = false;
+					}
+				}
+			}
+		}
+
+		public:
 		// Queries an inclusive range, propagating if necessary then aggregating.
-		inline Result query(std::size_t const left, std::size_t const right) {
-			return this->query(1, left, right, {0, this->values.size() / 2 - 1});
+		Result query(std::size_t left, std::size_t right) {
+			this->propagate(left, left);
+			this->propagate(right, right);
+			Value resLeft{Policy::DEFAULT_VALUE}, resRight{Policy::DEFAULT_VALUE};
+			for (left += this->values.size() / 2,
+					 right += this->values.size() / 2 + 1;
+					 left < right;
+					 left /= 2, right /= 2) {
+				if (left % 2 == 1) {
+					resLeft = Policy::aggregate(resLeft, this->values[left++]);
+				}
+				if (right % 2 == 1) {
+					resRight = Policy::aggregate(this->values[--right], resRight);
+				}
+			}
+			return Policy::aggregate(resLeft, resRight);
 		}
 
 		// Lazy update an inclusive range.
-		inline void update(
-			std::size_t const left,
-			std::size_t const right,
-			Update const &update) {
-			this->update(1, left, right, update, {0, this->values.size() / 2 - 1});
-		}
-
-		private:
-		// Conditionally propagate a node if it is not a leaf and has an update to
-		// propagate.
-		inline void propagate(
-			std::size_t const node,
-			std::pair<std::size_t, std::size_t> const &range) {
-			if (!this->lazy[node]) {
-				return;
+		void update(std::size_t left, std::size_t right, Update const &update) {
+			this->propagate(left, left);
+			this->propagate(right, right);
+			// Only retrace updates once left or right node has been changed.
+			bool changedLeft{false}, changedRight{false};
+			std::size_t range{1};
+			for (left += this->values.size() / 2,
+					 right += this->values.size() / 2 + 1;
+					 left < right;
+					 left /= 2, right /= 2, range *= 2) {
+				if (changedLeft) {
+					Policy::retrace(
+						this->values[left - 1],
+						this->values[left * 2 - 2],
+						this->values[left * 2 - 1],
+						range);
+				}
+				if (changedRight) {
+					Policy::retrace(
+						this->values[right],
+						this->values[right * 2],
+						this->values[right * 2 + 1],
+						range);
+				}
+				if (left % 2 == 1) {
+					Policy::apply(this->values[left++], update, range);
+					this->lazy[left - 1] = true;
+					this->updates[left - 1] = update;
+					changedLeft = true;
+				}
+				if (right % 2 == 1) {
+					Policy::apply(this->values[--right], update, range);
+					this->lazy[right] = true;
+					this->updates[right] = update;
+					changedRight = true;
+				}
 			}
-
-			// Propagating on a leaf applies it immediately. Otherwise, split the
-			// update to children.
-			if (node < this->values.size() / 2) {
-				this->lazy[node * 2] = this->lazy[node * 2 + 1] = true;
-				split(
-					node,
-					this->updates[node],
-					this->updates[node * 2],
-					this->updates[node * 2 + 1],
-					range);
-			}
-
-			// Clear the update at this node so it doesn’t interfere with later
-			// propagations.
-			apply(node, this->values[node], this->updates[node], range);
-			this->updates[node] = {};
-			this->lazy[node] = false;
-		}
-
-		// Internal recursive query. range is the coverage range of the current node
-		// and is inclusive.
-		Result query(
-			std::size_t const node,
-			std::size_t const left,
-			std::size_t const right,
-			std::pair<std::size_t, std::size_t> const &range) {
-			if (right < range.first || left > range.second) {
-				return DEFAULT_VALUE;
-			}
-			this->propagate(node, range);
-
-			// Base case.
-			if (range.first >= left && range.second <= right) {
-				return convert(node, this->values[node]);
-			}
-
-			std::size_t mid{(range.first + range.second) / 2};
-			return aggregate(
-				node,
-				this->query(node * 2, left, right, {range.first, mid}),
-				this->query(node * 2 + 1, left, right, {mid + 1, range.second}),
-				range);
-		}
-
-		// Internal recursive update.
-		void update(
-			std::size_t const node,
-			std::size_t const left,
-			std::size_t const right,
-			Update const &update,
-			std::pair<std::size_t, std::size_t> const &range) {
-			if (right < range.first || left > range.second) {
-				return;
-			}
-			// Propagate even if this node is fully covered, since we don’t have a
-			// function to combine two updates.
-			this->propagate(node, range);
-
-			// Base case.
-			if (range.first >= left && range.second <= right) {
-				// This node is already non-lazy since it was just propagated.
-				this->updates[node] = update;
-				this->lazy[node] = true;
-			} else {
-				std::size_t mid{(range.first + range.second) / 2};
-				this->update(node * 2, left, right, update, {range.first, mid});
-				this->update(
-					node * 2 + 1, left, right, update, {mid + 1, range.second});
-
-				// Substitute parent value with aggregate after update has been
-				// propagated. O(1). Guaranteed at least one child, or else the base
-				// case would have triggered.
-				this->propagate(node * 2, {range.first, mid});
-				this->propagate(node * 2 + 1, {mid + 1, range.second});
-				retrace(
-					node,
-					this->values[node],
-					this->values[node * 2],
-					this->values[node * 2 + 1],
-					range);
+			for (left--; right > 0; left /= 2, right /= 2, range *= 2) {
+				if (changedLeft) {
+					Policy::retrace(
+						this->values[left],
+						this->values[left * 2],
+						this->values[left * 2 + 1],
+						range);
+				}
+				if (changedRight && (!changedLeft || left != right)) {
+					Policy::retrace(
+						this->values[right],
+						this->values[right * 2],
+						this->values[right * 2 + 1],
+						range);
+				}
 			}
 		}
 	};
