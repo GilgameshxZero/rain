@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.16
+
+1. Remove unused include.
+
 ## 7.2.15
 
 1. Change to policy-based lazy segtree.
