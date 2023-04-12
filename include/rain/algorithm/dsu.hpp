@@ -2,8 +2,6 @@
 // union and find.
 #pragma once
 
-#include "../literal.hpp"
-
 #include <vector>
 
 namespace Rain::Algorithm {
