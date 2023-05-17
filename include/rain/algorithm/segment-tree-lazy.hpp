@@ -28,7 +28,7 @@ namespace Rain::Algorithm {
 	// Aggregate two results from queries on children. Aggregating with a Result
 	// converted from a default Value should do nothing.
 	//
-	// static void retrace( Value &value, Value const &left, Value const &right,
+	// static void retrace(Value &value, Value const &left, Value const &right,
 	// std::size_t range): Aggregate values from two children while retracing an
 	// update. Aggregating with a default Value should do nothing.
 	//
