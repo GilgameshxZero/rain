@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.18
+
+1. Add persistent DSU implementation, with extension support for edge-counting in components.
+
 ## 7.2.17
 
 1. Remove unnecessary space in comment.

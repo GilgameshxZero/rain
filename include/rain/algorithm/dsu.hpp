@@ -2,6 +2,7 @@
 // union and find.
 #pragma once
 
+#include <stack>
 #include <vector>
 
 namespace Rain::Algorithm {
@@ -73,6 +74,96 @@ namespace Rain::Algorithm {
 			this->parity[rI] = this->parity[i] ^ this->parity[j] ^ (length % 2);
 			this->distance[rI] = length;
 			return true;
+		}
+	};
+
+	// Persistent DSU based on
+	// <https://codeforces.com/blog/entry/22031?#comment-266919>. Does not store
+	// additional distance and parity extensions, and does not do path
+	// compression. Overall runtime is hence O(N\ln N).
+	//
+	// Stores an additional extension to track the number of edges per connected
+	// component.
+	class DisjointSetUnionPersistent {
+		private:
+		mutable std::vector<bool> isRoot;
+		// If a node is root, parent[node] stores the size of the component instead.
+		mutable std::vector<std::size_t> parent;
+		// cEdges[root] stores the number of edges in a connected component,
+		// including those added via ineffective `join`s.
+		mutable std::vector<std::size_t> cEdges;
+
+		// History of changes for persistence.
+		mutable std::stack<std::size_t> actions, actionParams;
+
+		public:
+		DisjointSetUnionPersistent(std::size_t const size)
+				: isRoot(size, true), parent(size, 1), cEdges(size, 0) {}
+
+		std::size_t find(std::size_t const i) const {
+			if (this->isRoot[i]) {
+				return i;
+			}
+			return this->find(this->parent[i]);
+		}
+		inline std::size_t rank(std::size_t const i) const {
+			return this->parent[this->find(i)];
+		}
+		inline bool connected(std::size_t const i, std::size_t const j) const {
+			auto rI{this->find(i)}, rJ{this->find(j)};
+			return rI == rJ;
+		}
+		inline std::size_t countEdges(std::size_t const i) const {
+			return this->cEdges[this->find(i)];
+		}
+		// Returns false if no join happened; otherwise true.
+		inline bool join(std::size_t const i, std::size_t const j) {
+			std::size_t rI{this->find(i)}, rJ{this->find(j)};
+			if (rI == rJ) {
+				this->actions.push(1);
+				this->actionParams.push(rI);
+				this->cEdges[rI]++;
+				return false;
+			}
+			if (this->parent[rI] > this->parent[rJ]) {
+				std::swap(rI, rJ);
+			}
+			this->actions.push(0);
+			this->actionParams.push(this->parent[rI]);
+			this->actionParams.push(rJ);
+			this->actionParams.push(rI);
+			this->parent[rJ] += this->parent[rI];
+			this->cEdges[rJ] += this->cEdges[rI] + 1;
+			this->isRoot[rI] = false;
+			this->parent[rI] = rJ;
+			return true;
+		}
+
+		// Returns the size of the history at the current time. Rewinds should
+		// rewind until the history is some previous size.
+		inline std::size_t countActions() const { return this->actions.size(); }
+		// Rewinds the last action in the history.
+		inline void rewind() {
+			auto type{this->actions.top()};
+			this->actions.pop();
+			if (type == 0) {
+				// Join.
+				std::size_t rI{this->actionParams.top()};
+				this->actionParams.pop();
+				std::size_t rJ{this->actionParams.top()};
+				this->actionParams.pop();
+				std::size_t rankI{this->actionParams.top()};
+				this->actionParams.pop();
+				this->parent[rI] = rankI;
+				this->isRoot[rI] = true;
+				this->cEdges[rJ] -= this->cEdges[rI] + 1;
+				this->parent[rJ] -= rankI;
+			} else if (type == 1) {
+				// Ineffective join.
+				std::size_t rI{this->actionParams.top()};
+				this->actionParams.pop();
+				this->cEdges[rI]--;
+			}
 		}
 	};
 }
