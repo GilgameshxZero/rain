@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.19
+
+1. Remove potential operator ambiguity in BigInt.
+
 ## 7.2.18
 
 1. Add persistent DSU implementation, with extension support for edge-counting in components.
