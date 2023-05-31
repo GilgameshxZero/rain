@@ -174,7 +174,7 @@ namespace Rain::Algorithm {
 			Y *= -1;
 		}
 		if (Y == 1) {
-			return negative ? (0 - X) : X;
+			return negative ? -X : X;
 		}
 
 		ThisInt low{0}, high{X};
@@ -187,7 +187,7 @@ namespace Rain::Algorithm {
 				low = mid;
 			}
 		}
-		return negative ? (0 - low) : low;
+		return negative ? -low : low;
 	}
 	template <bool SIGNED>
 	inline typename BigIntTypeMap<5, SIGNED>::Type bigIntDivide(

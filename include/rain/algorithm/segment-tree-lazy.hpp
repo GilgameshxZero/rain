@@ -22,7 +22,7 @@ namespace Rain::Algorithm {
 	// static constexpr Update DEFAULT_UPDATE: Identify value of an update.
 	//
 	// static void apply(Value &value, Update const &update, std::size_t range):
-	// Fully apply an update to a leaf node.
+	// Fully apply an update to a node.
 	//
 	// static Result aggregate(Result const &left, Result const &right):
 	// Aggregate two results from queries on children. Aggregating with a Result
