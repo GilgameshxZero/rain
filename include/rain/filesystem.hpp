@@ -8,17 +8,18 @@ namespace Rain::Filesystem {
 	// Returns true if descendent path is under the directory subtree of the
 	// ancestor path.
 	//
-	// Internally converts to canonical or absolute paths.
+	// Internally converts to canonical or weakly canonical paths. Note that
+	// absolute paths do not remove `..` elements in paths.
 	inline bool isSubpath(
 		std::filesystem::path const &descendant,
 		std::filesystem::path const &ancestor,
 		bool useCanonical = true) {
 		std::filesystem::path trueDescendant(
 			useCanonical ? std::filesystem::canonical(descendant)
-									 : std::filesystem::absolute(descendant)),
+									 : std::filesystem::weakly_canonical(descendant)),
 			trueAncestor(
 				useCanonical ? std::filesystem::canonical(ancestor)
-										 : std::filesystem::absolute(ancestor));
+										 : std::filesystem::weakly_canonical(ancestor));
 		return std::mismatch(
 						 trueDescendant.begin(),
 						 trueDescendant.end(),
