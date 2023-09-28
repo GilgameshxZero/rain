@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.20
+
+1. Fix bug in `isSubpath` which may use absolute paths instead of weakly canonical, which could still have `..` elements in it.
+
 ## 7.2.19
 
 1. Remove potential operator ambiguity in BigInt.
