@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../literal.hpp"
+
 #include <vector>
 
 namespace Rain::Algorithm {
@@ -12,7 +14,7 @@ namespace Rain::Algorithm {
 	linearSieve(std::size_t const &N) {
 		std::vector<std::size_t> minFactor(N + 1, -1), primes;
 		for (std::size_t i{2}; i <= N; i++) {
-			if (minFactor[i] == -1) {
+			if (minFactor[i] == -1_zu) {
 				minFactor[i] = primes.size();
 				primes.push_back(i);
 			}
