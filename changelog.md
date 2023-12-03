@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.22
+
+1. Use `_zu` literal in `sieve` when comparing with `-1`.
+
 ## 7.2.21
 
 1. Remove unsued `Statistic` sublibrary.
