@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.24
+
+1. `weakly_canonical` does not preserve symlinks, so there is no more reason to use it in `isSubpath` as opposed to using `canonical`. Symlinks must manually be configured in the caller site.
+
 ## 7.2.23
 
 1. The negative literal previously used doesn’t work, so we are switching to using `numeric_limits::max`.
