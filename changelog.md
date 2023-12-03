@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.23
+
+1. The negative literal previously used doesn’t work, so we are switching to using `numeric_limits::max`.
+
 ## 7.2.22
 
 1. Use `_zu` literal in `sieve` when comparing with `-1`.
