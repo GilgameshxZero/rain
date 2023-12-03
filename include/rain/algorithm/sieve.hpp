@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../literal.hpp"
-
 #include <vector>
 
 namespace Rain::Algorithm {
@@ -12,9 +10,11 @@ namespace Rain::Algorithm {
 	// the integer representation used, which may be unsigned).
 	inline std::pair<std::vector<std::size_t>, std::vector<std::size_t>>
 	linearSieve(std::size_t const &N) {
-		std::vector<std::size_t> minFactor(N + 1, -1), primes;
+		std::vector<std::size_t> minFactor(
+			N + 1, std::numeric_limits<std::size_t>::max()),
+			primes;
 		for (std::size_t i{2}; i <= N; i++) {
-			if (minFactor[i] == -1_zu) {
+			if (minFactor[i] == std::numeric_limits<std::size_t>::max()) {
 				minFactor[i] = primes.size();
 				primes.push_back(i);
 			}
