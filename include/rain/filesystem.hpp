@@ -12,14 +12,10 @@ namespace Rain::Filesystem {
 	// absolute paths do not remove `..` elements in paths.
 	inline bool isSubpath(
 		std::filesystem::path const &descendant,
-		std::filesystem::path const &ancestor,
-		bool useCanonical = true) {
+		std::filesystem::path const &ancestor) {
 		std::filesystem::path trueDescendant(
-			useCanonical ? std::filesystem::canonical(descendant)
-									 : std::filesystem::weakly_canonical(descendant)),
-			trueAncestor(
-				useCanonical ? std::filesystem::canonical(ancestor)
-										 : std::filesystem::weakly_canonical(ancestor));
+			std::filesystem::canonical(descendant)),
+			trueAncestor(std::filesystem::canonical(ancestor));
 		return std::mismatch(
 						 trueDescendant.begin(),
 						 trueDescendant.end(),
