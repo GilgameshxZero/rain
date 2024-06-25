@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.25
+
+1. Minor changes to includes and compilation warnings on Linux-based platforms.
+
 ## 7.2.24
 
 1. `weakly_canonical` does not preserve symlinks, so there is no more reason to use it in `isSubpath` as opposed to using `canonical`. Symlinks must manually be configured in the caller site.
