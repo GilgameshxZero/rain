@@ -221,8 +221,12 @@ namespace Rain::Networking {
 			if (ns_parserr(&hMsgs, ns_s_an, msgIdx, &record)) {
 				continue;
 			}
+			// `ns_sprintrr` is rarely used thus deprecated and we are recommended to use/build our own DNS parsing library.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 			if (
 				ns_sprintrr(&hMsgs, &record, NULL, NULL, buffer, sizeof(buffer)) < 0) {
+#pragma GCC diagnostic pop
 				continue;
 			}
 
