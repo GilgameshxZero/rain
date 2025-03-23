@@ -147,7 +147,7 @@ namespace Rain::Networking {
 			// READ_NORMAL, and interrupt by sending on the first.
 
 			// Begin accepting on this server. The server thread must be extremely
-			// resiliant to exceptions.
+			// resilient to exceptions.
 			this->threadPool.queueTask([this]() {
 				while (true) {
 					// If poll throws, it is unlikely the server can be restarted anyway.
