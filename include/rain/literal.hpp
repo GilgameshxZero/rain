@@ -10,8 +10,12 @@
 namespace Rain {
 	// Inline namespaces are implicitly accessible by the parent namespace.
 	inline namespace Literal {
-		// Inject std literals into the Rain namespace.
-		using namespace std::literals;
+		// Inject std literals into the Rain namespace. Injecting the entire
+		// namespace via `using namespace std::literals` may cause compilation
+		// issues with default arguments using those literals.
+		using std::string_literals::operator""s;
+		using std::chrono_literals::operator""s;
+		using std::chrono_literals::operator""ms;
 
 		// User-defined literals.
 		inline constexpr std::size_t operator"" _zu(unsigned long long value) {
