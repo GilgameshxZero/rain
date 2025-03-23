@@ -14,6 +14,7 @@ namespace Rain {
 		// namespace via `using namespace std::literals` may cause compilation
 		// issues with default arguments using those literals.
 		using std::string_literals::operator""s;
+		using std::chrono_literals::operator""h;
 		using std::chrono_literals::operator""s;
 		using std::chrono_literals::operator""ms;
 

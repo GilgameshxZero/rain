@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.27
+
+1. Re-add the chrono literal `h` to `Rain::Literal`.
+
 ## 7.2.26
 
 1. Selectively add chrono literals `s`, `ms`, and string literal `s` to `Rain::Literal`. More liberal usage of `using namespace std::literal` has shown to fail compilation on MSVC++ 19.43.34809.
