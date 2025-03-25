@@ -24,11 +24,11 @@ class SumTreePolicy {
 		Value &value,
 		Value const &left,
 		Value const &right,
-		std::size_t range) {
+		std::size_t) {
 		value = left + right;
 	}
 	static void
-	split(Update const &update, Update &left, Update &right, std::size_t range) {
+	split(Update const &update, Update &left, Update &right, std::size_t) {
 		left += update;
 		right += update;
 	}

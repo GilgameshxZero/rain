@@ -14,6 +14,7 @@
 # build (default): compile & link.
 # run: compile, link, and run.
 # clean: remove intermediates directory.
+# tests: build and run all tests.
 
 # Default target defined before any "fake" targets.
 __default: _default
@@ -101,10 +102,12 @@ clean:
 	@IF EXIST $(BIN_DIR) RD /Q /S $(BIN_DIR)
 	@IF EXIST $(OBJ_DIR) RD /Q /S $(OBJ_DIR)
 tests: $(PROJECT_VERSION_INCLUDE)
-	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO\
-		@nmake SOURCES=%~ni.cpp BUILD=$(BUILD) || exit /b
-	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO (\
-		@ECHO -------- %~ni -------- &&\
+	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO @(\
+		@ECHO ---------------- [Build] %~ni ---------------- &&\
+		@nmake /NOLOGO SOURCES=%~ni.cpp BUILD=$(BUILD) || exit /b\
+	)
+	@FOR /F %%i IN ('DIR /B /A-D "$(PROJECT_SRC_DIR)*.cpp"') DO @(\
+		@ECHO ---------------- [Run] %~ni ---------------- &&\
 		CD $(BIN_DIR) &&\
 		$(BIN_DIR)%~ni $(ARGUMENTS) || exit /b\
 	)
@@ -207,10 +210,11 @@ clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
 tests: $(PROJECT_VERSION_INCLUDE)
 	@for i in $(PROJECT_SRC_DIR)*.cpp; do\
+		echo ---------------- [Build] $$(basename $$i .cpp) ----------------;\
 		$(MAKE) --no-print-directory SOURCES=$$(basename $$i) || exit;\
 	done
 	@for i in $(PROJECT_SRC_DIR)*.cpp; do\
-		echo -------- $$(basename $$i .cpp) --------;\
+		echo ---------------- [Run] $$(basename $$i .cpp) ----------------;\
 		cd $(BIN_DIR);\
 		./$$(basename $$i .cpp) $(ARGUMENTS) || exit;\
 	done

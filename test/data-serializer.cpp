@@ -3,6 +3,7 @@
 #include <rain/literal.hpp>
 
 #include <cassert>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <vector>

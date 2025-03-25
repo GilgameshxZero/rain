@@ -135,12 +135,12 @@ namespace Rain::Algorithm {
 		typename BigIntTypeMap<5, false>::Type const &X,
 		typename BigIntTypeMap<5, false>::Type const &Y) {
 		using ThisIntUnsigned = typename BigIntTypeMap<5, false>::Type;
-		using ThisInt = typename BigIntTypeMap<5, false>::Type;
 
 		std::uint64_t result{X};
 		result *= Y;
 		return {
-			static_cast<ThisIntUnsigned>(result), static_cast<ThisInt>(result >> 32)};
+			static_cast<ThisIntUnsigned>(result),
+			static_cast<ThisIntUnsigned>(result >> 32)};
 	}
 	template <>
 	inline std::pair<
@@ -234,7 +234,13 @@ namespace Rain::Algorithm {
 
 		BigInt(SmallerIntUnsigned const &low, SmallerInt const &high = 0)
 				: low(low), high(high) {}
-		template <bool OTHER_SIGNED>
+
+		// Explicit copy constructor helps avoid compiler warnings on `clang`.
+		BigInt(BigInt<LOG_BITS, SIGNED> const &other)
+				: low{other.low}, high(other.high) {}
+		template <
+			bool OTHER_SIGNED,
+			typename std::enable_if<OTHER_SIGNED != SIGNED>::type * = nullptr>
 		BigInt(BigInt<LOG_BITS, OTHER_SIGNED> const &other)
 				: low{other.low}, high(other.high) {}
 
@@ -342,9 +348,9 @@ namespace Rain::Algorithm {
 		// Shift.
 		template <typename OtherInteger>
 		inline ThisInt operator>>(OtherInteger const &shift) const {
-			if (shift >= halfBits * 2) {
+			if (shift >= static_cast<OtherInteger>(halfBits * 2)) {
 				return 0;
-			} else if (shift >= halfBits) {
+			} else if (shift >= static_cast<OtherInteger>(halfBits)) {
 				return ThisInt{static_cast<SmallerIntUnsigned>(this->high), 0} >>
 					(shift - halfBits);
 			}
@@ -362,9 +368,9 @@ namespace Rain::Algorithm {
 		}
 		template <typename OtherInteger>
 		inline ThisInt operator<<(OtherInteger const &shift) const {
-			if (shift >= halfBits * 2) {
+			if (shift >= static_cast<OtherInteger>(halfBits * 2)) {
 				return 0;
-			} else if (shift >= halfBits) {
+			} else if (shift >= static_cast<OtherInteger>(halfBits)) {
 				return ThisInt{0, static_cast<SmallerInt>(this->low)}
 				<< (shift - halfBits);
 			}
@@ -398,7 +404,7 @@ namespace Rain::Algorithm {
 		}
 
 		// Unary.
-		inline ThisInt operator-() const { return 0 - *this; }
+		inline ThisInt operator-() const { return ThisInt(0, 0) - *this; }
 		inline ThisInt operator-() { return -std::as_const(*this); }
 
 		// Cast.
@@ -488,7 +494,7 @@ namespace Rain::Algorithm {
 					std::numeric_limits<
 						typename BigIntTypeMap<LOG_BITS, false>::Type>::max() -
 					first + 1};
-				return 0 - ThisInt(tmp.low, tmp.high);
+				return ThisInt(0, 0) - ThisInt(tmp.low, tmp.high);
 			}
 			return first;
 		}

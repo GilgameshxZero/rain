@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.2.28
+
+1. Clean up `makefile` logging around testing.
+2. Fix `BigInt` compilation on `apple-clang` (Darwin) and `clang` (Arch) by explicitly specifying copy constructor/
+3. Fix `BigInt` subtraction on Darwin by using `ThisInt(0) - ` instead of `0 -` which does not handle signs correctly.
+4. Remove usages of `SIZE_MAX` in favor of `std::numeric_limits<std::size_t>::max()`, and use `<limits>` to achieve, this; fixes compilation on Arch which does not define `SIZE_MAX`.
+5. Include `<stdexcept>` in `lru.hpp` to use `std::out_of_range` which is not included on Arch by default.
+6. In `ModulusField`, explicitly type default copy constructor (fixes Darwin compilation) and use `build(1) / ` instead of `1 /` (correctness of type conversions).
+7. In `ModulusField`, explicitly allow `>,<,>=,<=` comparison operators on `.value` directly.
+8. In `body.hpp`, include `<utility>` to use `std::exchange`.
+9. Minor modifications to postfix `ULL` literals to large integers in `algorithm-*` tests to fix warnings on Darwin.
+10. Include `<cstring>` in `data-serializer.cpp` to fix dependency issue on Arch.
+
 ## 7.2.27
 
 1. Re-add the chrono literal `h` to `Rain::Literal`.

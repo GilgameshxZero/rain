@@ -5,6 +5,7 @@
 #include <list>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <tuple>
 #include <unordered_map>
 
