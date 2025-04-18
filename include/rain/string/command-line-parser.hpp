@@ -1,4 +1,3 @@
-// Parses a command line with the KeyedParser as backbone.
 #pragma once
 
 #include "../error/exception.hpp"
@@ -7,6 +6,7 @@
 #include <set>
 
 namespace Rain::String {
+	// Parses a command line with the KeyedParser as backbone.
 	class CommandLineParser : public KeyedParser {
 		public:
 		enum class Error : int {
@@ -56,8 +56,7 @@ namespace Rain::String {
 				}
 				if (arg[1] == '-') {
 					// Long key name. Find delimiter.
-					for (value = arg + 2; *value != '\0' && *value != '='; value++)
-						;
+					for (value = arg + 2; *value != '\0' && *value != '='; value++);
 
 					if (*value == '\0') {
 						// No explicit delimiter, so value must be next argument.

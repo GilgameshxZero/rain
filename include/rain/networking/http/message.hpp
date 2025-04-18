@@ -202,7 +202,7 @@ namespace Rain::Networking::Http {
 		// Header block.
 		Headers headers;
 
-		// Body is an uncopyable ostream wrapping a custom streambuf.
+		// Body is an uncopyable istream wrapping a custom streambuf.
 		Body body;
 
 		private:
