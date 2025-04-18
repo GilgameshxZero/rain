@@ -8,6 +8,7 @@
 #include <ostream>
 #include <sstream>
 #include <streambuf>
+#include <utility>
 
 namespace Rain::Networking::Http {
 	// HTTP body. A custom streambuf wrapped in an ostream.

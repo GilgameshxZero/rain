@@ -3,6 +3,7 @@
 
 #include "algorithm.hpp"
 
+#include <limits>
 #include <stack>
 #include <unordered_set>
 #include <vector>
@@ -19,7 +20,7 @@ namespace Rain::Algorithm {
 		std::vector<std::unordered_set<std::size_t>> const &edges) {
 		std::size_t cScc{0}, cPreOrderId{0};
 		std::vector<std::size_t> scc(edges.size()),
-			preOrderId(edges.size(), SIZE_MAX), lowLink(edges.size());
+			preOrderId(edges.size(), std::numeric_limits<std::size_t>::max()), lowLink(edges.size());
 		std::vector<bool> onStack(edges.size(), false);
 		std::stack<std::size_t> s;
 
@@ -32,7 +33,7 @@ namespace Rain::Algorithm {
 				s.push(i);
 
 				for (auto const &j : edges[i]) {
-					if (preOrderId[j] == SIZE_MAX) {
+					if (preOrderId[j] == std::numeric_limits<std::size_t>::max()) {
 						subroutineRef(j, subroutineRef);
 						lowLink[i] = min(lowLink[i], lowLink[j]);
 					} else if (onStack[j]) {
@@ -55,7 +56,7 @@ namespace Rain::Algorithm {
 		}};
 
 		for (std::size_t i{0}; i < edges.size(); i++) {
-			if (preOrderId[i] == SIZE_MAX) {
+			if (preOrderId[i] == std::numeric_limits<std::size_t>::max()) {
 				subroutine(i);
 			}
 		}

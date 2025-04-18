@@ -1,6 +1,7 @@
 // Edmonds-Karp max-flow.
 #pragma once
 
+#include <limits>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -22,30 +23,31 @@ namespace Rain::Algorithm {
 		while (true) {
 			// BFS for the shortest source-sink path.
 			std::queue<std::size_t> bfsQueue;
-			std::vector<std::size_t> parent(edges.size(), SIZE_MAX);
+			std::vector<std::size_t> parent(
+				edges.size(), std::numeric_limits<std::size_t>::max());
 			bfsQueue.push(source);
 			while (!bfsQueue.empty()) {
 				std::size_t current{bfsQueue.front()};
 				bfsQueue.pop();
 				for (auto const &edge : residual[current]) {
 					if (
-						parent[edge.first] == SIZE_MAX &&
+						parent[edge.first] == std::numeric_limits<std::size_t>::max() &&
 						residual[current][edge.first] > 0) {
 						parent[edge.first] = current;
 						bfsQueue.push(edge.first);
 					}
 				}
-				if (parent[sink] != SIZE_MAX) {
+				if (parent[sink] != std::numeric_limits<std::size_t>::max()) {
 					break;
 				}
 			}
 
 			// Exit if no path found, otherwise update residuals.
-			if (parent[sink] == SIZE_MAX) {
+			if (parent[sink] == std::numeric_limits<std::size_t>::max()) {
 				break;
 			}
 
-			std::size_t pathFlow{SIZE_MAX};
+			std::size_t pathFlow{std::numeric_limits<std::size_t>::max()};
 			for (std::size_t current{sink}; current != source;
 					 current = parent[current]) {
 				pathFlow = std::min(pathFlow, residual[parent[current]][current]);

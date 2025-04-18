@@ -24,12 +24,19 @@ namespace Rain::Algorithm {
 		Integer const MODULUS;
 		Integer value;
 
+		// Explicit copy constructor helps avoid compiler warnings on `clang`.
+		ModulusField(ModulusField<Integer, MODULUS_OUTER> const &other)
+				: MODULUS{MODULUS_OUTER}, value(other.value) {}
+
 		// If the integer specified is signed and negative, we want to wrap it back
 		// to the positives first.
 		template <
 			typename OtherInteger = std::size_t,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
-			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr,
+			typename std::enable_if<!std::is_same<
+				ModulusField<Integer, MODULUS_OUTER>,
+				OtherInteger>::value>::type * = nullptr>
 		ModulusField(OtherInteger const &value = 0)
 				: MODULUS{MODULUS_OUTER},
 					value(
@@ -114,7 +121,19 @@ namespace Rain::Algorithm {
 		inline bool operator!=(ModulusField<Integer, MODULUS_OUTER> const &other) {
 			return std::as_const(*this) != other;
 		}
-		// Other comparison operators don't make that much sense under modulus.
+		// Other comparison operators only compare value and are prone to error.
+		inline bool operator>(ModulusField<Integer, MODULUS_OUTER> const &other) {
+			return this->value > other.value;
+		}
+		inline bool operator>=(ModulusField<Integer, MODULUS_OUTER> const &other) {
+			return this->value >= other.value;
+		}
+		inline bool operator<(ModulusField<Integer, MODULUS_OUTER> const &other) {
+			return this->value < other.value;
+		}
+		inline bool operator<=(ModulusField<Integer, MODULUS_OUTER> const &other) {
+			return this->value <= other.value;
+		}
 
 		// Unary.
 		inline ModulusField<Integer, MODULUS_OUTER> operator-() const {
@@ -130,9 +149,10 @@ namespace Rain::Algorithm {
 			return static_cast<std::size_t>(this->value);
 		}
 		template <
-			typename = typename std::enable_if<
-				!std::is_same<Integer, std::size_t>::value>::type>
-		operator Integer() const {
+			typename OtherInteger,
+			typename std::enable_if<
+				!std::is_same<OtherInteger, std::size_t>::value>::type * = nullptr>
+		operator OtherInteger() const {
 			return this->value;
 		}
 
@@ -274,7 +294,7 @@ namespace Rain::Algorithm {
 			for (std::size_t i{1}; i <= N; i++) {
 				factorials[i] = factorials[i - 1] * i;
 			}
-			invFactorials[N] = 1 / factorials[N];
+			invFactorials[N] = build(1) / factorials[N];
 			for (std::size_t i{0}; i < N; i++) {
 				invFactorials[N - i - 1] = invFactorials[N - i] * (N - i);
 			}
