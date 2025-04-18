@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <vector>
 
 namespace Rain::Algorithm {

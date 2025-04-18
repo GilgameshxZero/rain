@@ -22,9 +22,9 @@ int main() {
 	assert(!Rain::Algorithm::isPrimeMillerRabin(
 		Rain::Algorithm::BigIntSigned<7>(8589934581), 100));
 	assert(Rain::Algorithm::isPrimeMillerRabin(
-		Rain::Algorithm::BigIntUnsigned<7>(18446744073709551557), 100));
+		Rain::Algorithm::BigIntUnsigned<7>(18446744073709551557ULL), 100));
 	assert(!Rain::Algorithm::isPrimeMillerRabin(
-		Rain::Algorithm::BigIntUnsigned<7>(18446744073709551559), 100));
+		Rain::Algorithm::BigIntUnsigned<7>(18446744073709551559ULL), 100));
 
 	assert(Rain::Algorithm::isPrimeMillerRabinDeterministic(1000000009_zu));
 	assert(Rain::Algorithm::isPrimeMillerRabinDeterministic(1000000007_zu));
@@ -32,6 +32,6 @@ int main() {
 	assert(Rain::Algorithm::isPrimeMillerRabinDeterministic(998244353_zu));
 	assert(!Rain::Algorithm::isPrimeMillerRabinDeterministic(998244351_zu));
 	assert(Rain::Algorithm::isPrimeMillerRabinDeterministic(
-		Rain::Algorithm::BigIntSigned<8>(18446744073709551557)));
+		Rain::Algorithm::BigIntSigned<8>(18446744073709551557ULL)));
 	return 0;
 }
