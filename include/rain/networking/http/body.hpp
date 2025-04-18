@@ -5,7 +5,7 @@
 #include "../../string/string.hpp"
 
 #include <fstream>
-#include <ostream>
+#include <istream>
 #include <sstream>
 #include <streambuf>
 #include <utility>

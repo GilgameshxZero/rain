@@ -1,5 +1,12 @@
 # Changelog
 
+<<<<<<< Updated upstream
+=======
+## 7.2.29
+
+1. Fixed some typos.
+
+>>>>>>> Stashed changes
 ## 7.2.28
 
 1. Clean up `makefile` logging around testing.

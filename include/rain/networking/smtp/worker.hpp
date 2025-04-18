@@ -227,7 +227,6 @@ namespace Rain::Networking::Smtp {
 
 			// Send a 354, and set up the stream for streaming the data.
 			this->send(ResponseMessageSpec{StatusCode::START_MAIL_INPUT});
-
 			std::unique_ptr<std::streambuf> dataIStreamBuf(new DataIStreamBuf(this));
 			std::istream stream(dataIStreamBuf.get());
 
