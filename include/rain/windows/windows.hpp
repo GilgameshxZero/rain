@@ -23,8 +23,13 @@
 #define NOMINMAX
 #endif
 
-#pragma comment(lib, "User32.lib")
-#pragma comment(lib, "Shell32.lib")
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "gdi32.lib")
+#pragma comment(lib, "winspool.lib")
+#pragma comment(lib, "comdlg32.lib")
+#pragma comment(lib, "advapi32.lib")
+#pragma comment(lib, "kernel32.lib")
 
 #include <Windows.h>
 #include <shellapi.h>

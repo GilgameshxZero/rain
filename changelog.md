@@ -1,12 +1,13 @@
 # Changelog
 
-<<<<<<< Updated upstream
-=======
+## 7.2.30
+
+1. Added a bunch of statically linked libraries to `windows/windows.hpp`. Facilitates communication with drivers e.g. the MicroController.
+
 ## 7.2.29
 
 1. Fixed some typos.
 
->>>>>>> Stashed changes
 ## 7.2.28
 
 1. Clean up `makefile` logging around testing.
