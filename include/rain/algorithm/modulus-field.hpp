@@ -271,8 +271,8 @@ namespace Rain::Algorithm {
 		// The following are algorithmic functions based on the modulus field
 		// properties.
 
-		// Versions of C++ before C++17 should use static member functions intead of
-		// static inline member variables. static inline
+		// Versions of C++ before C++17 should use static member functions instead
+		// of static inline member variables. static inline
 		// std::vector<ModulusField<Integer, MODULUS_OUTER>> 	&factorials() {
 		// static std::vector<ModulusField<Integer, MODULUS_OUTER>> factorials;
 		// return factorials;

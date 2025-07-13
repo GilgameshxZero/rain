@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.31
+
+1. Added `Log`, a multithreaded log utility that is disabled on RELEASE.
+
 ## 7.2.30
 
 1. Added a bunch of statically linked libraries to `windows/windows.hpp`. Facilitates communication with drivers e.g. the MicroController.
