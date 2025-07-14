@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.32
+
+1. Added an overload for `CommandLineParser::parse`, which populates a list of non-keyed-arguments intead of throwing.
+
 ## 7.2.31
 
 1. Added `Log`, a multithreaded log utility that is disabled on RELEASE.

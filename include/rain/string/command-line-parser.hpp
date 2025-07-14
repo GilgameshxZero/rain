@@ -41,7 +41,10 @@ namespace Rain::String {
 		// =. Short keys must be 1 character long and prefixed with -, with their
 		// values optionally coming immediately after the key. Returns true on any
 		// parser error. Throws on other errors.
-		bool parse(int argc, char const *const *const argv) {
+		bool parse(
+			int argc,
+			char const *const *const argv,
+			std::vector<std::string> &nonKeyedArguments) {
 			// Key name buffer.
 			std::string keyName;
 			for (int i{0}; i < argc; i++) {
@@ -51,10 +54,11 @@ namespace Rain::String {
 					*value;
 
 				if (arg[0] != '-') {
-					// Both long and short keys must start with -.
-					throw Exception(Error::INVALID_KEY_PREFIX);
-				}
-				if (arg[1] == '-') {
+					// Both long and short keys must start with -. Otherwise, this
+					// argument does not have a key.
+					nonKeyedArguments.push_back(arg);
+					continue;
+				} else if (arg[1] == '-') {
 					// Long key name. Find delimiter.
 					for (value = arg + 2; *value != '\0' && *value != '='; value++);
 
@@ -101,6 +105,16 @@ namespace Rain::String {
 			}
 
 			return false;
+		}
+
+		// Overload which throws on non-keyed arguments.
+		bool parse(int argc, char const *const *const argv) {
+			std::vector<std::string> nonKeyedArguments;
+			auto result{parse(argc, argv, nonKeyedArguments)};
+			if (!nonKeyedArguments.empty()) {
+				throw Exception(Error::INVALID_KEY_PREFIX);
+			}
+			return result;
 		}
 	};
 }

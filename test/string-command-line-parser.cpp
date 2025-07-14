@@ -1,6 +1,7 @@
 // Tests for String::CommandLineParser.
 #include <rain/string/command-line-parser.hpp>
 
+#include <array>
 #include <cassert>
 #include <filesystem>
 #include <iostream>
@@ -10,7 +11,7 @@ int main() {
 
 	// Synthetic command line. In a real program, these strings are guaranteed to
 	// be well-formed.
-	char const *argv[] = {
+	std::array argv{
 		"--port",
 		"80",
 		"--live",
@@ -20,8 +21,9 @@ int main() {
 		"../lib/include/",
 		"--include=../ext/lib/include/",
 		"--reload",
-		"--name=rain"};
-	int argc{10};
+		"--name=rain",
+		"filename.txt"};
+	std::vector<std::string> nonKeyedArguments;
 
 	unsigned long long port{443};
 	bool live{false}, reload{true};
@@ -34,7 +36,7 @@ int main() {
 	parser.addParser("I", includes);
 	parser.addParser("include", includes);
 
-	parser.parse(argc, argv);
+	parser.parse(static_cast<int>(argv.size()), argv.data(), nonKeyedArguments);
 
 	std::cout << "Port: " << port << std::endl
 						<< "Live: " << live << std::endl
@@ -49,6 +51,8 @@ int main() {
 	assert(reload);
 	assert(name == "rain");
 	assert(includes.size() == 4);
+	assert(nonKeyedArguments.size() == 1);
+	assert(nonKeyedArguments.front() == "filename.txt");
 
 	return 0;
 }
