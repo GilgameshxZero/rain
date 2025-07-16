@@ -32,14 +32,14 @@ int main() {
 
 	const char *numCStr = "-455.30";
 	int i{Rain::String::anyToAny<int>(numCStr)};
-	double d{Rain::String::anyToAny<double>(numCStr)};
+	long double d{Rain::String::anyToAny<long double>(numCStr)};
 	std::cout << "String:          " << numCStr << "\n"
 						<< "anyToAny int:    " << i << "\n"
 						<< "anyToAny double: " << d << "\n";
 	assert(i == -455);
 	assert(d == -455.3);
 
-	double dblNum{-38.1415};
+	long double dblNum{-38.1415};
 	std::string s{Rain::String::anyToAny<std::string>(dblNum)};
 	std::cout << "Double:          " << dblNum << "\n"
 						<< "anyToAny string: " << s << "\n";

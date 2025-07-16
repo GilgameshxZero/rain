@@ -17,7 +17,6 @@
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 #endif
 
-#include <rain/gdi-plus.hpp>
 #include <rain/literal.hpp>
 #include <rain/multithreading.hpp>
 #include <rain/time.hpp>

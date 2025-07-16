@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.2.33
+
+1. Change most floating point types to `long double`.
+2. Add Error/Exception for Gdiplus.
+3. Add Windows theme detection.
+4. Add validateSystemCallDirect for WinAPI calls which return ERROR_SUCCESS.
+
 ## 7.2.32
 
 1. Added an overload for `CommandLineParser::parse`, which populates a list of non-keyed-arguments intead of throwing.
