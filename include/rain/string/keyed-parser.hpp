@@ -113,6 +113,13 @@ namespace Rain::String {
 				return false;
 			});
 		}
+		// long double parser.
+		Parser getParser(long double &store) const noexcept {
+			return Parser([&store](std::string const &value) {
+				store = std::stod(value);
+				return false;
+			});
+		}
 		// std::string parser.
 		Parser getParser(std::string &store) const noexcept {
 			return Parser([&store](std::string const &value) {

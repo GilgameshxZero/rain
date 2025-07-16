@@ -28,8 +28,8 @@ void assertEncodeDecode(std::string const &text) {
 	std::cout << "Text: " << text.substr(0, 16) << "..." << std::endl;
 	assert(text == decodedText);
 	std::cout << "Compression ratio: "
-						<< static_cast<double>(encodedText.length()) / text.length() << '.'
-						<< std::endl
+						<< static_cast<long double>(encodedText.length()) / text.length()
+						<< '.' << std::endl
 						<< std::endl;
 }
 
@@ -66,7 +66,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	std::cout << "Encode time: " << encodeTime << '.' << std::endl;
 	auto originalSize = std::filesystem::file_size(filePath);
 	std::cout << "Encode speed: "
-						<< static_cast<double>(originalSize) / (1_zu << 20) /
+						<< static_cast<long double>(originalSize) / (1_zu << 20) /
 			std::chrono::duration_cast<std::chrono::duration<long double>>(encodeTime)
 				.count()
 						<< "MB/s." << std::endl;
@@ -84,14 +84,14 @@ void assertEncodeDecodeFile(std::string const &name) {
 	std::cout << "Decode time: " << decodeTime << '.' << std::endl;
 	auto encodedSize = std::filesystem::file_size(encodedPath);
 	std::cout << "Decode speed: "
-						<< static_cast<double>(encodedSize) / (1_zu << 20) /
+						<< static_cast<long double>(encodedSize) / (1_zu << 20) /
 			std::chrono::duration_cast<std::chrono::duration<long double>>(decodeTime)
 				.count()
 						<< "MB/s." << std::endl;
 
 	assert(Rain::Filesystem::compareFiles(filePath, decodedPath));
 	std::cout << "Compression ratio: "
-						<< static_cast<double>(encodedSize) / originalSize << '.'
+						<< static_cast<long double>(encodedSize) / originalSize << '.'
 						<< std::endl
 						<< std::endl;
 }

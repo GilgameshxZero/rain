@@ -72,6 +72,14 @@ namespace Rain::Windows {
 		if (result == NULL) {
 			throw Exception(getSystemError());
 		}
-		return result;
+		return std::forward<Result>(result);
+	}
+
+	// Some Windows functions return ERROR_SUCCESS (0) on success, and the error
+	// directly otherwise.
+	inline void validateSystemCallDirect(LRESULT &&result) {
+		if (result != ERROR_SUCCESS) {
+			throw Exception(Error(result));
+		}
 	}
 }
