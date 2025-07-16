@@ -19,7 +19,7 @@ namespace Rain::Error {
 	class Exception : public std::exception {
 		private:
 		// A unique ErrorCategory instance.
-		inline static ErrorCategory const errorCategory;
+		static inline ErrorCategory const errorCategory;
 
 		Error const error;
 		std::string const explanation;
@@ -48,4 +48,15 @@ namespace Rain::Error {
 		// std::exception to use this version of what.
 		char const *what() const noexcept { return this->explanation.c_str(); }
 	};
+
+	// Default generic error category.
+	class GenericErrorCategory : public std::error_category {
+		public:
+		// Name of this category of errors.
+		char const *name() const noexcept { return "Generic Error Category"; }
+
+		// Translates Errors from the enum into string messages.
+		std::string message(int error) const noexcept { return "Generic."; }
+	};
+	using GenericException = Exception<int, GenericErrorCategory>;
 }

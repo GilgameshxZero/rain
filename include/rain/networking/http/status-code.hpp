@@ -72,7 +72,7 @@ namespace Rain::Networking::Http {
 
 		public:
 		// Maps std::size_t to Value.
-		inline static std::unordered_map<std::size_t, Value> const fromSz{
+		static inline std::unordered_map<std::size_t, Value> const fromSz{
 			{100, CONTINUE},
 			{101, SWITCHING_PROTOCOLS},
 

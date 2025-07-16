@@ -33,7 +33,7 @@ namespace Rain::Networking::Http {
 
 		public:
 		// Maps strings to Value.
-		inline static std::unordered_map<std::string, Value> const fromStr{
+		static inline std::unordered_map<std::string, Value> const fromStr{
 			{"GET", GET},
 			{"HEAD", HEAD},
 			{"POST", POST},
