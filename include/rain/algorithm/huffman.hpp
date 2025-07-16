@@ -93,7 +93,7 @@ namespace Rain::Algorithm {
 		// Dictionaries contain [3, 511] nodes = leaves * 2 - 1. Node indices are
 		// represented by shorts, with -1 representing NULL. Each pair represents
 		// the indices of the two children.
-		inline static short const MAX_NODES = UCHAR_MAX * 2 + 1;
+		static inline short const MAX_NODES = UCHAR_MAX * 2 + 1;
 
 		short root, parent[MAX_NODES];
 

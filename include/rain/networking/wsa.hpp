@@ -27,7 +27,7 @@ namespace Rain::Networking {
 
 		// Constructed during global initialization (before main), destructed after
 		// main.
-		inline static _ invoker;
+		static inline _ invoker;
 
 		public:
 		// Get WSADATA from WSAStartup.

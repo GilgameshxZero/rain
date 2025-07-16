@@ -15,7 +15,7 @@ namespace Rain::Networking::Smtp {
 		Value value;
 
 		// Maps strings to Value.
-		inline static std::unordered_map<
+		static inline std::unordered_map<
 			std::string,
 			Value,
 			String::CaseAgnosticHash,

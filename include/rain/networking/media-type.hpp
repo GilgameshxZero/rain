@@ -40,7 +40,7 @@ namespace Rain::Networking {
 
 		// fromStr includes the type/subtype format but also the file extension
 		// format.
-		inline static std::unordered_map<
+		static inline std::unordered_map<
 			std::string,
 			Value,
 			Rain::String::CaseAgnosticHash,

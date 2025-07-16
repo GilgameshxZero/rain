@@ -65,7 +65,7 @@ namespace Rain::Networking::Smtp {
 
 		public:
 		// Maps std::size_t to Value.
-		inline static std::unordered_map<std::size_t, Value> const fromSz{
+		static inline std::unordered_map<std::size_t, Value> const fromSz{
 			{211, SYSTEM_STATUS},
 			{214, HELP_MESSAGE},
 			{220, SERVICE_READY},

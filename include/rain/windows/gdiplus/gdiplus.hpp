@@ -46,11 +46,19 @@ namespace Rain::Windows::Gdiplus {
 	};
 }
 
-// Custom hashes.
+// Custom hashes and equality.
 template <>
 struct std::hash<Gdiplus::Point> {
 	std::size_t operator()(Gdiplus::Point const &point) const {
 		return std::hash<int>()(point.X) ^ (std::hash<int>()(point.Y) << 1);
+	}
+};
+
+template <>
+struct std::equal_to<Gdiplus::Point> {
+	bool operator()(Gdiplus::Point const &left, Gdiplus::Point const &right)
+		const {
+		return left.X == right.X && left.Y == right.Y;
 	}
 };
 

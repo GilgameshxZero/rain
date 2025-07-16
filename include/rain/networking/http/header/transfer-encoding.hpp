@@ -14,7 +14,7 @@ namespace Rain::Networking::Http::Header {
 		Value const value;
 
 		// Maps strings to Value.
-		inline static std::unordered_map<std::string, Value> const fromStr{
+		static inline std::unordered_map<std::string, Value> const fromStr{
 			{"identity", IDENTITY},
 			{"chunked", CHUNKED},
 			{"gzip", GZIP},

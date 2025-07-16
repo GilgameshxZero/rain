@@ -15,7 +15,7 @@ namespace Rain::Networking::Http {
 		Value value;
 
 		// Maps strings to Value.
-		inline static std::unordered_map<std::string, Value> const fromStr{
+		static inline std::unordered_map<std::string, Value> const fromStr{
 			{"0.9", _0_9},
 			{"1.0", _1_0},
 			{"1.1", _1_1},

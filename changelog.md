@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.2.34
+
+1. Use `static inline` instead of `inline static`.
+2. Add equality operator for `Gdiplus::Point`.
+
 ## 7.2.33
 
 1. Change most floating point types to `long double`.
