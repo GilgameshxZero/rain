@@ -13,21 +13,14 @@
 
 #include <rain/platform.hpp>
 
-#ifdef RAIN_PLATFORM_WINDOWS
-#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
-#endif
-
 #include <rain/literal.hpp>
 #include <rain/multithreading.hpp>
 #include <rain/time.hpp>
 #include <rain/windows.hpp>
 
-#ifndef RAIN_PLATFORM_WINDOWS
-int main() {
-	std::cout << "This is a Windows-only test.\n";
-	return 0;
-}
-#else
+#ifdef RAIN_PLATFORM_WINDOWS
+// WinMain can only be used on SUBSYSTEM:WINDOWS.
+#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 int CALLBACK WinMain(
 	_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE,
@@ -43,5 +36,10 @@ int CALLBACK WinMain(
 	}).detach();
 	return !MessageBox(
 		NULL, "Hello world! Waiting for 3s...", CAPTION, MB_OKCANCEL);
+}
+#else
+int main() {
+	std::cout << "This is a Windows-only test.\n";
+	return 0;
 }
 #endif

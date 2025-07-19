@@ -75,6 +75,7 @@ namespace Rain::Windows {
 		return std::forward<Result>(result);
 	}
 
+#ifdef RAIN_PLATFORM_WINDOWS
 	// Some Windows functions return ERROR_SUCCESS (0) on success, and the error
 	// directly otherwise.
 	inline void validateSystemCallDirect(LRESULT &&result) {
@@ -82,4 +83,5 @@ namespace Rain::Windows {
 			throw Exception(Error(result));
 		}
 	}
+#endif
 }

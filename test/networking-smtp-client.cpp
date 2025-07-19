@@ -31,6 +31,7 @@ int main() {
 	} catch (Rain::Networking::Exception const &exception) {
 		if (exception.getError() == Rain::Networking::Error::TIMED_OUT) {
 			// Likely SMTP is blocked by ISP; skip test.
+			std::cout << "SMTP blocked (by ISP). Skipping test...\n";
 			return 0;
 		}
 
