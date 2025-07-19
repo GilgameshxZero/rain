@@ -1,0 +1,103 @@
+#pragma once
+
+#include "../../random.hpp"
+#include "../../windows/windows.hpp"
+
+#include <type_traits>
+#include <utility>
+
+namespace Rain::Algorithm::Geometry {
+	template <typename PrecisionType>
+	class Point {
+		public:
+		PrecisionType x, y;
+
+		Point() = default;
+		Point(PrecisionType const &x, PrecisionType const &y) : x{x}, y{y} {}
+		Point(std::pair<PrecisionType, PrecisionType> const &point)
+				: x{point.first}, y{point.second} {}
+#ifdef RAIN_PLATFORM_WINDOWS
+		template <
+			bool isSame = std::is_same<PrecisionType, LONG>::value,
+			typename std::enable_if<isSame>::type * = nullptr>
+		Point(POINT const &point) : x{point.x}, y{point.y} {}
+#endif
+
+		inline bool operator==(Point const &other) const {
+			return this->x == other.x && this->y == other.y;
+		}
+		inline bool operator<(Point const &other) const {
+			return this->x == other.x ? this->y < other.y : this->x < other.x;
+		}
+
+		inline operator std::pair<PrecisionType, PrecisionType>() const {
+			return {this->x, this->y};
+		}
+#ifdef RAIN_PLATFORM_WINDOWS
+		template <
+			bool isSame = std::is_same<PrecisionType, LONG>::value,
+			typename std::enable_if<isSame>::type * = nullptr>
+		inline operator POINT() const {
+			return {this->x, this->y};
+		}
+#endif
+
+		// Cross-cast integral/non-integral operator.
+		template <
+			typename OtherPrecisionType,
+			bool isCurrentIntegral = std::is_integral<PrecisionType>::value,
+			bool isOtherIntegral = std::is_integral<PrecisionType>::value,
+			bool isDifferent = (isCurrentIntegral && !isOtherIntegral) ||
+				(!isCurrentIntegral && isOtherIntegral),
+			typename std::enable_if<isDifferent>::type * = nullptr>
+		explicit inline operator Point<OtherPrecisionType>() const {
+			return {
+				static_cast<OtherPrecisionType>(this->x),
+				static_cast<OtherPrecisionType>(this->y)};
+		}
+
+		// Down-cast is explicit, up-cast is not.
+		template <
+			typename OtherPrecisionType,
+			bool isCurrentIntegral = std::is_integral<PrecisionType>::value,
+			bool isOtherIntegral = std::is_integral<PrecisionType>::value,
+			bool isDifferent = (isCurrentIntegral && !isOtherIntegral) ||
+				(!isCurrentIntegral && isOtherIntegral),
+			bool isSmaller = sizeof(OtherPrecisionType) < sizeof(PrecisionType),
+			typename std::enable_if<!isDifferent && isSmaller>::type * = nullptr>
+		explicit inline operator Point<OtherPrecisionType>() const {
+			return {
+				static_cast<OtherPrecisionType>(this->x),
+				static_cast<OtherPrecisionType>(this->y)};
+		}
+		template <
+			typename OtherPrecisionType,
+			bool isCurrentIntegral = std::is_integral<PrecisionType>::value,
+			bool isOtherIntegral = std::is_integral<PrecisionType>::value,
+			bool isDifferent = (isCurrentIntegral && !isOtherIntegral) ||
+				(!isCurrentIntegral && isOtherIntegral),
+			bool isSmaller = sizeof(OtherPrecisionType) < sizeof(PrecisionType),
+			typename std::enable_if<!isDifferent && !isSmaller>::type * = nullptr>
+		inline operator Point<OtherPrecisionType>() const {
+			return {
+				static_cast<OtherPrecisionType>(this->x),
+				static_cast<OtherPrecisionType>(this->y)};
+		}
+	};
+
+	using PointI = Point<int>;
+	using PointL = Point<long>;
+	using PointLl = Point<long long>;
+	using PointS = Point<std::size_t>;
+	using PointLd = Point<long double>;
+}
+
+template <typename PrecisionType>
+struct std::hash<Rain::Algorithm::Geometry::Point<PrecisionType>> {
+	std::size_t operator()(
+		Rain::Algorithm::Geometry::Point<PrecisionType> const &point) const {
+		auto hash{Rain::Random::SplitMixHash<PrecisionType>()(point.x)};
+		return Rain::Random::combineHash(
+			hash, Rain::Random::SplitMixHash<PrecisionType>()(point.y));
+	}
+};

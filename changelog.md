@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.3.0
+
+1. Added managing RAII types for `HPEN`, `HBRUSH`, `HBITMAP`, `HDC`, and `HWND`.
+2. Add `Point` and `Rectangle` types as abstractions of the WinAPI types, with relevant operator conversions. `Point` and `Rectangle` are hashable using `SplitMixHash`.
+3. Fix some lint errors with literal operators: should not have space between `operator""` and `_zu`.
+4. Added generic error and exception.
+5. Upgraded to C++20 requirement (prompted by designated initializers).
+6. Increased timeout on `networking-resolve` test.
+7. Print explicit ISP error message for `networking-smtp-client` test.
+8. Fix `string-string` test with `long double` equality testing.
+
 ## 7.2.34
 
 1. Use `static inline` instead of `inline static`.
@@ -14,7 +25,7 @@
 
 ## 7.2.32
 
-1. Added an overload for `CommandLineParser::parse`, which populates a list of non-keyed-arguments intead of throwing.
+1. Added an overload for `CommandLineParser::parse`, which populates a list of non-keyed-arguments instead of throwing.
 
 ## 7.2.31
 
@@ -43,11 +54,11 @@
 
 ## 7.2.27
 
-1. Re-add the chrono literal `h` to `Rain::Literal`.
+1. Re-add the `chrono` literal `h` to `Rain::Literal`.
 
 ## 7.2.26
 
-1. Selectively add chrono literals `s`, `ms`, and string literal `s` to `Rain::Literal`. More liberal usage of `using namespace std::literal` has shown to fail compilation on MSVC++ 19.43.34809.
+1. Selectively add `chrono` literals `s`, `ms`, and string literal `s` to `Rain::Literal`. More liberal usage of `using namespace std::literal` has shown to fail compilation on MSVC++ 19.43.34809.
 
 ## 7.2.25
 
@@ -67,7 +78,7 @@
 
 ## 7.2.21
 
-1. Remove unsued `Statistic` sublibrary.
+1. Remove unused `Statistic` sub-library.
 
 ## 7.2.20
 
@@ -132,7 +143,7 @@
 
 ## 7.2.6
 
-1. Use `size_t` instead of template ints.
+1. Use `size_t` instead of template `int`s.
 2. Build now uses project (test) name for intermediaries on Windows.
 
 ## 7.2.5

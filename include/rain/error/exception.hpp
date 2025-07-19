@@ -53,10 +53,10 @@ namespace Rain::Error {
 	class GenericErrorCategory : public std::error_category {
 		public:
 		// Name of this category of errors.
-		char const *name() const noexcept { return "Generic Error Category"; }
+		char const *name() const noexcept { return "Generic"; }
 
 		// Translates Errors from the enum into string messages.
-		std::string message(int error) const noexcept { return "Generic."; }
+		std::string message(int) const noexcept { return "Generic."; }
 	};
 	using GenericException = Exception<int, GenericErrorCategory>;
 }

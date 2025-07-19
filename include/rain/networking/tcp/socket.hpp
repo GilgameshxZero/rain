@@ -174,6 +174,6 @@ namespace Rain::Networking::Tcp {
 				that->rdbuf(&that->ioStreamBuf);
 			}
 		};
-		_ConnectedSocketSpec _connectedSocketSpec = _ConnectedSocketSpec(this);
+		_ConnectedSocketSpec _connectedSocketSpec{this};
 	};
 }
