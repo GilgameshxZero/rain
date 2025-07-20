@@ -12,6 +12,7 @@
 #include "algorithm/huffman.hpp"
 #include "algorithm/kmp.hpp"
 #include "algorithm/lru.hpp"
+#include "algorithm/math.hpp"
 #include "algorithm/miller-rabin.hpp"
 #include "algorithm/modulus-field.hpp"
 #include "algorithm/segment-tree-lazy.hpp"

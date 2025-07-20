@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../windows/windows.hpp"
+#include "../math.hpp"
 #include "point.hpp"
 
 #include <type_traits>
@@ -67,26 +68,31 @@ namespace Rain::Algorithm::Geometry {
 			this->bottom += scalar;
 		}
 		template <typename NewPrecisionType>
-		inline typename std::enable_if<
-			std::is_same<NewPrecisionType, long>::value,
-			Rectangle<NewPrecisionType>>::type
-		round() const {
+		inline Rectangle<NewPrecisionType> round() const {
 			return {
-				std::lround(this->left),
-				std::lround(this->top),
-				std::lround(this->right),
-				std::lround(this->bottom)};
+				Algorithm::round<NewPrecisionType>(this->left),
+				Algorithm::round<NewPrecisionType>(this->top),
+				Algorithm::round<NewPrecisionType>(this->right),
+				Algorithm::round<NewPrecisionType>(this->bottom)};
 		}
 		template <typename NewPrecisionType>
-		inline typename std::enable_if<
-			std::is_same<NewPrecisionType, long long>::value,
-			Rectangle<NewPrecisionType>>::type
-		round() const {
+		inline Rectangle<NewPrecisionType> floor() const {
 			return {
-				std::llround(this->left),
-				std::llround(this->top),
-				std::llround(this->right),
-				std::llround(this->bottom)};
+				Algorithm::floor<NewPrecisionType>(this->left),
+				Algorithm::floor<NewPrecisionType>(this->top),
+				Algorithm::floor<NewPrecisionType>(this->right),
+				Algorithm::floor<NewPrecisionType>(this->bottom)};
+		}
+		template <typename NewPrecisionType>
+		inline Rectangle<NewPrecisionType> ceil() const {
+			return {
+				Algorithm::ceil<NewPrecisionType>(this->left),
+				Algorithm::ceil<NewPrecisionType>(this->top),
+				Algorithm::ceil<NewPrecisionType>(this->right),
+				Algorithm::ceil<NewPrecisionType>(this->bottom)};
+		}
+		inline Point<PrecisionType> size() const {
+			return {this->width(), this->height()};
 		}
 
 		inline bool operator==(Rectangle const &other) const {
@@ -133,6 +139,14 @@ namespace Rain::Algorithm::Geometry {
 				this->right - scalar,
 				this->bottom - scalar};
 		}
+		template <typename OtherPrecisionType>
+		inline auto operator*(Rectangle<OtherPrecisionType> const &other) const {
+			return Rectangle<decltype(this->left * other.left)>{
+				this->left * other.left,
+				this->top * other.top,
+				this->right * other.right,
+				this->bottom * other.bottom};
+		}
 		template <typename ScalarType>
 		inline auto operator*(ScalarType const &scalar) const {
 			return Rectangle<decltype(this->left * scalar)>{
@@ -140,6 +154,14 @@ namespace Rain::Algorithm::Geometry {
 				this->top * scalar,
 				this->right * scalar,
 				this->bottom * scalar};
+		}
+		template <typename OtherPrecisionType>
+		inline auto operator/(Rectangle<OtherPrecisionType> const &other) const {
+			return Rectangle<decltype(this->left / other.left)>{
+				this->left / other.left,
+				this->top / other.top,
+				this->right / other.right,
+				this->bottom / other.bottom};
 		}
 		template <typename ScalarType>
 		inline auto operator/(ScalarType const &scalar) const {

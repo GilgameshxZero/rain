@@ -232,7 +232,7 @@ namespace Rain::Windows {
 			validateSystemCall(GetClientRect(*this, &rect));
 			return {rect};
 		}
-		Algorithm::Geometry::RectangleL getWindowRect() const {
+		Algorithm::Geometry::RectangleL getBoundingRect() const {
 			RECT rect;
 			validateSystemCall(GetWindowRect(*this, &rect));
 			return {rect};

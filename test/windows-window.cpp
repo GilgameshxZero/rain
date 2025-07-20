@@ -83,7 +83,7 @@ int main() {
 	DWORD mainThreadId{GetCurrentThreadId()};
 	std::thread([&]() {
 		std::this_thread::sleep_for(1s);
-		auto rect{window.getWindowRect()};
+		auto rect{window.getBoundingRect()};
 		INPUT input;
 		input.type = INPUT_MOUSE;
 		input.mi.dx = MulDiv(rect.left + 100, 65536, GetSystemMetrics(SM_CXSCREEN));
