@@ -47,6 +47,15 @@ namespace Rain::Algorithm::Geometry {
 				Algorithm::ceil<NewPrecisionType>(this->x),
 				Algorithm::ceil<NewPrecisionType>(this->y)};
 		}
+		template <typename OtherPrecisionType>
+		inline auto cross(Point<OtherPrecisionType> const &other) const {
+			return this->x * other.y - this->y * other.x;
+		}
+		template <typename OtherPrecisionType>
+		inline long crossSign(Point<OtherPrecisionType> const &other) const {
+			auto cross{this->cross(other)};
+			return cross == 0 ? 0 : (cross < 0 ? -1 : 1);
+		}
 
 		inline bool operator==(Point const &other) const {
 			return this->x == other.x && this->y == other.y;
@@ -150,10 +159,8 @@ namespace Rain::Algorithm::Geometry {
 		}
 	};
 
-	using PointI = Point<int>;
 	using PointL = Point<long>;
 	using PointLl = Point<long long>;
-	using PointS = Point<std::size_t>;
 	using PointLd = Point<long double>;
 }
 

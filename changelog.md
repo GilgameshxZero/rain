@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.3.3
+
+1. Added `LineSegment`, and moved intersection detection into it.
+2. Added general test for `Geometry`.
+
 ## 7.3.2
 
 1. Introduce basic geometry math algorithms.

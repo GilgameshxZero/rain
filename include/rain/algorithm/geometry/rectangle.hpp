@@ -235,9 +235,7 @@ namespace Rain::Algorithm::Geometry {
 		}
 	};
 
-	using RectangleI = Rectangle<int>;
 	using RectangleL = Rectangle<long>;
-	using RectangleS = Rectangle<std::size_t>;
 	using RectangleLl = Rectangle<long long>;
 	using RectangleLd = Rectangle<long double>;
 }
