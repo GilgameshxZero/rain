@@ -172,9 +172,9 @@ LINKER_FLAGS_INSTRUMENT := $(LINKER_FLAGS_DEBUG)\
 	-fsanitize=address,undefined,leak
 
 # -lstdc++fs is neither available nor required on typical MacOS C++ compiler
-# implementations.
+# implementations. Also, we statically link where we can.
 ifneq ($(shell uname -s), Darwin)
-	LINKER_FLAGS_LIBRARIES := $(LINKER_FLAGS_LIBRARIES) -lstdc++fs
+	LINKER_FLAGS_LIBRARIES := -Wl,-Bstatic $(LINKER_FLAGS_LIBRARIES) -lstdc++fs
 endif
 
 BUILD ?= 0

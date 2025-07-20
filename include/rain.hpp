@@ -4,7 +4,7 @@
 // Versioning.
 #define RAIN_VERSION_MAJOR 7
 #define RAIN_VERSION_MINOR 3
-#define RAIN_VERSION_REVISION 3
+#define RAIN_VERSION_REVISION 5
 
 // Disable secure warnings; the caller should be aware of out-of-bounds errors
 // when calling any not-bound-checked function.
@@ -15,10 +15,10 @@
 #include "rain/build.hpp"
 
 #include "rain/algorithm.hpp"
+#include "rain/console.hpp"
 #include "rain/error.hpp"
 #include "rain/filesystem.hpp"
 #include "rain/literal.hpp"
-#include "rain/log.hpp"
 #include "rain/multithreading.hpp"
 #include "rain/networking.hpp"
 #include "rain/platform.hpp"

@@ -94,6 +94,11 @@ namespace Rain::Algorithm::Geometry {
 		inline Point<PrecisionType> size() const {
 			return {this->width(), this->height()};
 		}
+		inline Point<PrecisionType> clamp(Point<PrecisionType> const &point) const {
+			return {
+				std::clamp(point.x, this->left, this->right),
+				std::clamp(point.y, this->top, this->bottom)};
+		}
 
 		inline bool operator==(Rectangle const &other) const {
 			return this->left == other.left && this->top == other.top &&
@@ -235,6 +240,7 @@ namespace Rain::Algorithm::Geometry {
 		}
 	};
 
+	using RectangleS = Rectangle<short>;
 	using RectangleL = Rectangle<long>;
 	using RectangleLl = Rectangle<long long>;
 	using RectangleLd = Rectangle<long double>;

@@ -159,6 +159,7 @@ namespace Rain::Algorithm::Geometry {
 		}
 	};
 
+	using PointS = Point<short>;
 	using PointL = Point<long>;
 	using PointLl = Point<long long>;
 	using PointLd = Point<long double>;

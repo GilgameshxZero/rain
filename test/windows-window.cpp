@@ -1,6 +1,5 @@
 #include <rain/algorithm/geometry.hpp>
 #include <rain/literal.hpp>
-#include <rain/log.hpp>
 #include <rain/windows.hpp>
 
 #include <iostream>
