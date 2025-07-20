@@ -2,8 +2,8 @@
 
 #include "../../random.hpp"
 #include "../../windows/windows.hpp"
+#include "../math.hpp"
 
-#include <cmath>
 #include <type_traits>
 #include <utility>
 
@@ -30,18 +30,22 @@ namespace Rain::Algorithm::Geometry {
 				static_cast<long double>(this->y - other.y) * (this->y - other.y));
 		}
 		template <typename NewPrecisionType>
-		inline typename std::enable_if<
-			std::is_same<NewPrecisionType, long>::value,
-			Point<NewPrecisionType>>::type
-		round() const {
-			return {std::lround(this->x), std::lround(this->y)};
+		inline Point<NewPrecisionType> round() const {
+			return {
+				Algorithm::round<NewPrecisionType>(this->x),
+				Algorithm::round<NewPrecisionType>(this->y)};
 		}
 		template <typename NewPrecisionType>
-		inline typename std::enable_if<
-			std::is_same<NewPrecisionType, long long>::value,
-			Point<NewPrecisionType>>::type
-		round() const {
-			return {std::llround(this->x), std::llround(this->y)};
+		inline Point<NewPrecisionType> floor() const {
+			return {
+				Algorithm::floor<NewPrecisionType>(this->x),
+				Algorithm::floor<NewPrecisionType>(this->y)};
+		}
+		template <typename NewPrecisionType>
+		inline Point<NewPrecisionType> ceil() const {
+			return {
+				Algorithm::ceil<NewPrecisionType>(this->x),
+				Algorithm::ceil<NewPrecisionType>(this->y)};
 		}
 
 		inline bool operator==(Point const &other) const {
@@ -62,7 +66,7 @@ namespace Rain::Algorithm::Geometry {
 		}
 		template <typename OtherPrecisionType>
 		inline auto operator-(Point<OtherPrecisionType> const &other) const {
-			return Point<decltype(this->x + other.x)>{
+			return Point<decltype(this->x - other.x)>{
 				this->x - other.x, this->y - other.y};
 		}
 		template <typename ScalarType>
@@ -70,10 +74,20 @@ namespace Rain::Algorithm::Geometry {
 			return Point<decltype(this->x - scalar)>{
 				this->x - scalar, this->y - scalar};
 		}
+		template <typename OtherPrecisionType>
+		inline auto operator*(Point<OtherPrecisionType> const &other) const {
+			return Point<decltype(this->x * other.x)>{
+				this->x * other.x, this->y * other.y};
+		}
 		template <typename ScalarType>
 		inline auto operator*(ScalarType const &scalar) const {
 			return Point<decltype(this->x * scalar)>{
 				this->x * scalar, this->y * scalar};
+		}
+		template <typename OtherPrecisionType>
+		inline auto operator/(Point<OtherPrecisionType> const &other) const {
+			return Point<decltype(this->x / other.x)>{
+				this->x / other.x, this->y / other.y};
 		}
 		template <typename ScalarType>
 		inline auto operator/(ScalarType const &scalar) const {

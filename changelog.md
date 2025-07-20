@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.3.2
+
+1. Introduce basic geometry math algorithms.
+2. Added more convenience functions for `Point`/`Rectangle`.
+
 ## 7.3.1
 
 1. Add convenience operators for `Point`, `Rectangle`.
