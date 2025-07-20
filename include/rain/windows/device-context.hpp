@@ -53,7 +53,7 @@ namespace Rain::Windows {
 		void lineTo(Algorithm::Geometry::PointL const &point) {
 			validateSystemCall(LineTo(*this, point.x, point.y));
 		}
-		void ellipse(Algorithm::Geometry::RectangleI const &rectangle) {
+		void ellipse(Algorithm::Geometry::RectangleL const &rectangle) {
 			validateSystemCall(Ellipse(
 				*this,
 				rectangle.left,
