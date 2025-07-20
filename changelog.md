@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.1
+
+1. Add convenience operators for `Point`, `Rectangle`.
+
 ## 7.3.0
 
 1. Added managing RAII types for `HPEN`, `HBRUSH`, `HBITMAP`, `HDC`, and `HWND`.

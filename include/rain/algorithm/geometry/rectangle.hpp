@@ -47,6 +47,47 @@ namespace Rain::Algorithm::Geometry {
 
 		inline PrecisionType width() const { return this->right - this->left; }
 		inline PrecisionType height() const { return this->bottom - this->top; }
+		inline Point<PrecisionType> topLeft() const {
+			return {this->left, this->top};
+		}
+		inline Point<PrecisionType> bottomRight() const {
+			return {this->right, this->bottom};
+		}
+		inline PrecisionType area() const { return this->width() * this->height(); }
+		inline void include(Point<PrecisionType> const &point) {
+			this->left = min(this->left, point.x);
+			this->top = min(this->top, point.y);
+			this->right = max(this->right, point.x);
+			this->bottom = max(this->bottom, point.y);
+		}
+		inline void expand(PrecisionType const &scalar) {
+			this->left -= scalar;
+			this->top -= scalar;
+			this->right += scalar;
+			this->bottom += scalar;
+		}
+		template <typename NewPrecisionType>
+		inline typename std::enable_if<
+			std::is_same<NewPrecisionType, long>::value,
+			Rectangle<NewPrecisionType>>::type
+		round() const {
+			return {
+				std::lround(this->left),
+				std::lround(this->top),
+				std::lround(this->right),
+				std::lround(this->bottom)};
+		}
+		template <typename NewPrecisionType>
+		inline typename std::enable_if<
+			std::is_same<NewPrecisionType, long long>::value,
+			Rectangle<NewPrecisionType>>::type
+		round() const {
+			return {
+				std::llround(this->left),
+				std::llround(this->top),
+				std::llround(this->right),
+				std::llround(this->bottom)};
+		}
 
 		inline bool operator==(Rectangle const &other) const {
 			return this->left == other.left && this->top == other.top &&
@@ -59,6 +100,54 @@ namespace Rain::Algorithm::Geometry {
 																					 : this->right < other.right)
 						 : this->top < other.top)
 				: this->left < other.left;
+		}
+		template <typename OtherPrecisionType>
+		inline auto operator+(Rectangle<OtherPrecisionType> const &other) const {
+			return Rectangle<decltype(this->left + other.left)>{
+				this->left + other.left,
+				this->top + other.top,
+				this->right + other.right,
+				this->bottom + other.bottom};
+		}
+		template <typename ScalarType>
+		inline auto operator+(ScalarType const &scalar) const {
+			return Rectangle<decltype(this->left + scalar)>{
+				this->left + scalar,
+				this->top + scalar,
+				this->right + scalar,
+				this->bottom + scalar};
+		}
+		template <typename OtherPrecisionType>
+		inline auto operator-(Rectangle<OtherPrecisionType> const &other) const {
+			return Rectangle<decltype(this->left + other.left)>{
+				this->left - other.left,
+				this->top - other.top,
+				this->right - other.right,
+				this->bottom - other.bottom};
+		}
+		template <typename ScalarType>
+		inline auto operator-(ScalarType const &scalar) const {
+			return Rectangle<decltype(this->left - scalar)>{
+				this->left - scalar,
+				this->top - scalar,
+				this->right - scalar,
+				this->bottom - scalar};
+		}
+		template <typename ScalarType>
+		inline auto operator*(ScalarType const &scalar) const {
+			return Rectangle<decltype(this->left * scalar)>{
+				this->left * scalar,
+				this->top * scalar,
+				this->right * scalar,
+				this->bottom * scalar};
+		}
+		template <typename ScalarType>
+		inline auto operator/(ScalarType const &scalar) const {
+			return Rectangle<decltype(this->left / scalar)>{
+				this->left / scalar,
+				this->top / scalar,
+				this->right / scalar,
+				this->bottom / scalar};
 		}
 
 		inline operator std::pair<
@@ -145,3 +234,11 @@ struct std::hash<Rain::Algorithm::Geometry::Rectangle<PrecisionType>> {
 			hash, Rain::Random::SplitMixHash<PrecisionType>()(rectangle.bottom));
 	}
 };
+
+template <typename PrecisionType>
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	Rain::Algorithm::Geometry::Rectangle<PrecisionType> const &rectangle) {
+	return stream << "(" << rectangle.topLeft() << ", " << rectangle.bottomRight()
+								<< ')';
+}

@@ -3,6 +3,7 @@
 #include "../../random.hpp"
 #include "../../windows/windows.hpp"
 
+#include <cmath>
 #include <type_traits>
 #include <utility>
 
@@ -23,11 +24,61 @@ namespace Rain::Algorithm::Geometry {
 		Point(POINT const &point) : x{point.x}, y{point.y} {}
 #endif
 
+		inline long double distanceTo(Point const &other) const {
+			return std::sqrtl(
+				static_cast<long double>(this->x - other.x) * (this->x - other.x) +
+				static_cast<long double>(this->y - other.y) * (this->y - other.y));
+		}
+		template <typename NewPrecisionType>
+		inline typename std::enable_if<
+			std::is_same<NewPrecisionType, long>::value,
+			Point<NewPrecisionType>>::type
+		round() const {
+			return {std::lround(this->x), std::lround(this->y)};
+		}
+		template <typename NewPrecisionType>
+		inline typename std::enable_if<
+			std::is_same<NewPrecisionType, long long>::value,
+			Point<NewPrecisionType>>::type
+		round() const {
+			return {std::llround(this->x), std::llround(this->y)};
+		}
+
 		inline bool operator==(Point const &other) const {
 			return this->x == other.x && this->y == other.y;
 		}
 		inline bool operator<(Point const &other) const {
 			return this->x == other.x ? this->y < other.y : this->x < other.x;
+		}
+		template <typename OtherPrecisionType>
+		inline auto operator+(Point<OtherPrecisionType> const &other) const {
+			return Point<decltype(this->x + other.x)>{
+				this->x + other.x, this->y + other.y};
+		}
+		template <typename ScalarType>
+		inline auto operator+(ScalarType const &scalar) const {
+			return Point<decltype(this->x + scalar)>{
+				this->x + scalar, this->y + scalar};
+		}
+		template <typename OtherPrecisionType>
+		inline auto operator-(Point<OtherPrecisionType> const &other) const {
+			return Point<decltype(this->x + other.x)>{
+				this->x - other.x, this->y - other.y};
+		}
+		template <typename ScalarType>
+		inline auto operator-(ScalarType const &scalar) const {
+			return Point<decltype(this->x - scalar)>{
+				this->x - scalar, this->y - scalar};
+		}
+		template <typename ScalarType>
+		inline auto operator*(ScalarType const &scalar) const {
+			return Point<decltype(this->x * scalar)>{
+				this->x * scalar, this->y * scalar};
+		}
+		template <typename ScalarType>
+		inline auto operator/(ScalarType const &scalar) const {
+			return Point<decltype(this->x / scalar)>{
+				this->x / scalar, this->y / scalar};
 		}
 
 		inline operator std::pair<PrecisionType, PrecisionType>() const {
@@ -101,3 +152,10 @@ struct std::hash<Rain::Algorithm::Geometry::Point<PrecisionType>> {
 			hash, Rain::Random::SplitMixHash<PrecisionType>()(point.y));
 	}
 };
+
+template <typename PrecisionType>
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	Rain::Algorithm::Geometry::Point<PrecisionType> const &point) {
+	return stream << '(' << point.x << ", " << point.y << ')';
+}
