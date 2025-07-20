@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.3.5
+
+1. Add back `short` geometry types, and `short` literal.
+2. Move `Log` to `Console`.
+3. Fix `Geometry` types compilation issue.
+
+## 7.3.4
+
+1. Added console positioning and coloring utilities.
+
 ## 7.3.3
 
 1. Added `LineSegment`, and moved intersection detection into it.

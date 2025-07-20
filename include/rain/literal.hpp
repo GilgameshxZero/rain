@@ -25,5 +25,8 @@ namespace Rain {
 		inline std::regex operator""_re(char const *value, std::size_t) {
 			return std::regex(value);
 		}
+		inline constexpr short operator""_ss(unsigned long long value) {
+			return static_cast<short>(value);
+		}
 	}
 }

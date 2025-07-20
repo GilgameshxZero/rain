@@ -32,20 +32,20 @@ namespace Rain::Algorithm::Geometry {
 		template <typename NewPrecisionType>
 		inline LineSegment<NewPrecisionType> round() const {
 			return {
-				this->start.round<NewPrecisionType>(),
-				this->end.round<NewPrecisionType>()};
+				this->start.template round<NewPrecisionType>(),
+				this->end.template round<NewPrecisionType>()};
 		}
 		template <typename NewPrecisionType>
 		inline LineSegment<NewPrecisionType> floor() const {
 			return {
-				this->start.floor<NewPrecisionType>(),
-				this->end.floor<NewPrecisionType>()};
+				this->start.template floor<NewPrecisionType>(),
+				this->end.template floor<NewPrecisionType>()};
 		}
 		template <typename NewPrecisionType>
 		inline LineSegment<NewPrecisionType> ceil() const {
 			return {
-				this->start.ceil<NewPrecisionType>(),
-				this->end.ceil<NewPrecisionType>()};
+				this->start.template ceil<NewPrecisionType>(),
+				this->end.template ceil<NewPrecisionType>()};
 		}
 
 		inline bool operator==(LineSegment const &other) const {
@@ -133,6 +133,7 @@ namespace Rain::Algorithm::Geometry {
 		}
 	};
 
+	using LineSegmentS = LineSegment<short>;
 	using LineSegmentL = LineSegment<long>;
 	using LineSegmentLl = LineSegment<long long>;
 	using LineSegmentLd = LineSegment<long double>;
