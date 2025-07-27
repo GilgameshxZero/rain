@@ -2,13 +2,14 @@
 
 ## 7.3.5
 
-1. Add back `short` geometry types, and `short` literal.
-2. Move `Log` to `Console`.
-3. Fix `Geometry` types compilation issue.
+1. Added `waitSingleOrThrow`.
 
 ## 7.3.4
 
-1. Added console positioning and coloring utilities.
+1. Add back `short` geometry types, and `short` literal.
+2. Move `Log` to `Console`.
+3. Fix `Geometry` types compilation issue.
+4. Added console positioning and coloring utilities.
 
 ## 7.3.3
 

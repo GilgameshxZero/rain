@@ -83,5 +83,21 @@ namespace Rain::Windows {
 			throw Exception(Error(result));
 		}
 	}
+
+	// Waits until the time is up or mutex is acquired. Retries if abandoned.
+	inline void waitSingleOrThrow(HANDLE hHandle, DWORD dwMilliseconds) {
+		switch (WaitForSingleObject(hHandle, dwMilliseconds)) {
+			case WAIT_ABANDONED:
+				waitSingleOrThrow(hHandle, dwMilliseconds);
+				break;
+			case WAIT_OBJECT_0:
+				return;
+			case WAIT_TIMEOUT:
+				throw Exception(Error(WAIT_TIMEOUT));
+			case WAIT_FAILED:
+			default:
+				throw Exception(getSystemError());
+		}
+	}
 #endif
 }
