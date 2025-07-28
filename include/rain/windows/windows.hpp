@@ -12,6 +12,10 @@
 #undef UNICODE
 #endif
 
+#ifdef _UNICODE
+#undef _UNICODE
+#endif
+
 // Prevents Windows.h from automatically include Winsock 1.1; Rain uses
 // Winsock 2.
 #ifndef WIN32_LEAN_AND_MEAN

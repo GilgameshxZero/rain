@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.6
+
+1. Undefine `_UNICODE` to fix `_T` compilation issues.
+
 ## 7.3.5
 
 1. Added `waitSingleOrThrow`.
