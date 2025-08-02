@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.7
+
+1. Add Dijkstra's, Floyd-Warshall, and SPFA (a variant of Bellman-Ford), untested.
+
 ## 7.3.6
 
 1. Undefine `_UNICODE` to fix `_T` compilation issues.
