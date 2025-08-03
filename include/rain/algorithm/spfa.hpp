@@ -1,3 +1,5 @@
+#pragma once
+
 #include <limits>
 #include <unordered_map>
 #include <vector>
@@ -12,45 +14,40 @@ namespace Rain::Algorithm {
 	//
 	// Returns a list of minimal distances to each vertex, and the penultimate
 	// vertex on the shortest path to each vertex. If a vertex is unreachable, the
-	// distance is INF. If a vertex is reachable via a negative-weight cycle, the
-	// distance is -INF.
-	template <typename IndexType, typename WeightType>
-	std::pair<std::vector<WeightType>, std::vector<IndexType>> ssspSpfa(
-		std::vector<std::unordered_map<IndexType, WeightType>> const &edges,
-		IndexType const source) {
+	// distance is INF. If there exists any negative-weight cycle reachable from a
+	// source, each negative-weight cycle will contain at least one vertex with
+	// distance -INF.
+	template <typename WeightType>
+	inline std::pair<std::vector<WeightType>, std::vector<std::size_t>> ssspSpfa(
+		std::vector<std::unordered_map<std::size_t, WeightType>> const &edges,
+		std::vector<std::size_t> const &sources) {
 		std::vector<WeightType> distances(
 			edges.size(), std::numeric_limits<WeightType>::max());
-		distances[source] = 0;
-		std::vector<IndexType> predecessors(
-			edges.size(), std::numeric_limits<IndexType>::max());
-		std::queue<std::pair<IndexType, IndexType>> queue;
-		std::vector<bool> visited(edges.size(), true);
-		queue.push({source, 0});
-		visited[source] = false;
+		std::vector<std::size_t> predecessors(
+			edges.size(), std::numeric_limits<std::size_t>::max());
+		std::queue<std::pair<std::size_t, std::size_t>> queue;
+		std::vector<std::size_t> enqueues(edges.size(), 0);
+		for (auto const &i : sources) {
+			distances[i] = 0;
+			enqueues[i]++;
+			queue.push({i, 0});
+		}
 		while (!queue.empty()) {
 			auto [i, j]{queue.front()};
 			queue.pop();
-			if (static_cast<std::size_t>(j) >= 2 * edges.size()) {
-				break;
-			}
-			if (static_cast<std::size_t>(j) >= edges.size()) {
-				distances[i] = std::numeric_limits<WeightType>::min();
-			}
-			if (visited[i]) {
+			enqueues[i]--;
+			if (enqueues[i] > 0) {
 				continue;
 			}
-			visited[i] = true;
+			if (j == edges.size()) {
+				distances[i] = std::numeric_limits<WeightType>::min();
+				continue;
+			}
 			for (auto const &k : edges[i]) {
-				if (
-					distances[i] == std::numeric_limits<WeightType>::min() ||
-					distances[i] + k.second < distances[k.first]) {
-					if (distances[i] == std::numeric_limits<WeightType>::min()) {
-						distances[k.first] = std::numeric_limits<WeightType>::min();
-					} else {
-						distances[k.first] = distances[i] + k.second;
-					}
+				if (distances[i] + k.second < distances[k.first]) {
+					distances[k.first] = distances[i] + k.second;
 					predecessors[k.first] = i;
-					visited[k.first] = false;
+					enqueues[k.first]++;
 					queue.push({k.first, j + 1});
 				}
 			}

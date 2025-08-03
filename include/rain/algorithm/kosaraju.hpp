@@ -1,4 +1,4 @@
-// Kosarju strongly connected components algorithm.
+// Kosaraju strongly connected components algorithm.
 #pragma once
 
 #include <limits>
@@ -7,7 +7,7 @@
 
 namespace Rain::Algorithm {
 	// Computes strongly connected components (SCCs) for a simple graph G in
-	// O(V+E). The SCCs form an acyclic condensation graph of G. Kosarju’s
+	// O(V+E). The SCCs form an acyclic condensation graph of G. Kosaraju's
 	// algorithm provides the SCCs in topologically sorted order, but is a
 	// constant factor slower than Tarjan’s.
 	//
@@ -15,7 +15,7 @@ namespace Rain::Algorithm {
 	// SCC that each vertex belongs to. SCC indices are sorted in topological
 	// order (lower indices have edges pointing toward higher indices).
 	inline std::pair<std::size_t, std::vector<std::size_t>>
-	stronglyConnectedKosarjus(
+	sccKosaraju(
 		std::vector<std::unordered_set<std::size_t>> const &edges) {
 		std::size_t cScc{0}, cPostOrderId{0};
 		std::vector<std::size_t> scc(
