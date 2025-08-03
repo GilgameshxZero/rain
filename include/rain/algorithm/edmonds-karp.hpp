@@ -11,14 +11,15 @@ namespace Rain::Algorithm {
 	// provided graph must be simple (no self-loops, no multi-edges, connected).
 	//
 	// Returns the residual graph after the max flow is computed.
+	template <typename WeightType>
 	inline std::
-		pair<std::size_t, std::vector<std::unordered_map<std::size_t, std::size_t>>>
+		pair<std::size_t, std::vector<std::unordered_map<std::size_t, WeightType>>>
 		maxFlowEdmondsKarp(
-			std::vector<std::unordered_map<std::size_t, std::size_t>> const &edges,
+			std::vector<std::unordered_map<std::size_t, WeightType>> const &edges,
 			std::size_t const source,
 			std::size_t const sink) {
-		std::vector<std::unordered_map<std::size_t, std::size_t>> residual(edges);
-		std::size_t flow{0};
+		std::vector<std::unordered_map<std::size_t, WeightType>> residual(edges);
+		WeightType flow{0};
 
 		while (true) {
 			// BFS for the shortest source-sink path.
@@ -47,7 +48,7 @@ namespace Rain::Algorithm {
 				break;
 			}
 
-			std::size_t pathFlow{std::numeric_limits<std::size_t>::max()};
+			WeightType pathFlow{std::numeric_limits<WeightType>::max()};
 			for (std::size_t current{sink}; current != source;
 					 current = parent[current]) {
 				pathFlow = std::min(pathFlow, residual[parent[current]][current]);

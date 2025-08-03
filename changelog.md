@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.8
+
+1. Add Heirholzer's, Prim's, and rename Kosaraju and Tarjan. Ensure that `algorithm.hpp` includes all included headers as intended.
+
 ## 7.3.7
 
 1. Add Dijkstra's, Floyd-Warshall, and SPFA (a variant of Bellman-Ford), untested.

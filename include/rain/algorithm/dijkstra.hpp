@@ -1,3 +1,5 @@
+#pragma once
+
 #include <limits>
 #include <unordered_map>
 #include <vector>
@@ -9,19 +11,20 @@ namespace Rain::Algorithm {
 	//
 	// Returns a list of distances to each node, and the penultimate node on the
 	// shortest path to each node.
-	template <typename IndexType, typename WeightType>
-	std::pair<std::vector<WeightType>, std::vector<IndexType>> ssspDijkstra(
-		std::vector<std::unordered_map<IndexType, WeightType>> const &edges,
-		IndexType const source,
-		IndexType const sink = std::numeric_limits<IndexType>::max()) {
+	template <typename WeightType>
+	inline std::pair<std::vector<WeightType>, std::vector<std::size_t>>
+	ssspDijkstra(
+		std::vector<std::unordered_map<std::size_t, WeightType>> const &edges,
+		std::size_t const source,
+		std::size_t const sink = std::numeric_limits<std::size_t>::max()) {
 		std::vector<WeightType> distances(
 			edges.size(), std::numeric_limits<WeightType>::max());
-		std::vector<IndexType> predecessors(
-			edges.size(), std::numeric_limits<IndexType>::max());
+		std::vector<std::size_t> predecessors(
+			edges.size(), std::numeric_limits<std::size_t>::max());
 		std::priority_queue<
-			std::pair<WeightType, IndexType>,
-			std::vector<std::pair<WeightType, IndexType>>,
-			std::greater<std::pair<WeightType, IndexType>>>
+			std::pair<WeightType, std::size_t>,
+			std::vector<std::pair<WeightType, std::size_t>>,
+			std::greater<std::pair<WeightType, std::size_t>>>
 			queue;
 		std::vector<bool> visited(edges.size(), false);
 

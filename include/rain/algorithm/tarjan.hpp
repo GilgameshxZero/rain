@@ -1,8 +1,6 @@
 // Tarjan’s strongly connected components algorithm.
 #pragma once
 
-#include "algorithm.hpp"
-
 #include <limits>
 #include <stack>
 #include <unordered_set>
@@ -11,16 +9,18 @@
 namespace Rain::Algorithm {
 	// Computes strongly connected components (SCCs) for a simple graph G in
 	// O(V+E). The SCCs form an acyclic condensation graph of G. Typically,
-	// Tarjan’s is more efficient than Kosarju’s algorithm for SCCs, though
-	// Kosarju’s algorithm provides the SCCs in topologically sorted order.
+	// Tarjan's is more efficient than Kosarju's algorithm for SCCs, though
+	// Kosarju's algorithm provides the SCCs in topologically sorted order (and
+	// Tarjan's in reverse topological order).
 	//
 	// Returns the number of CCs, and the 0-indexed index of the
 	// SCC that each vertex belongs to.
-	inline std::pair<std::size_t, std::vector<std::size_t>> stronglyConnectedTarjans(
+	inline std::pair<std::size_t, std::vector<std::size_t>> sccTarjan(
 		std::vector<std::unordered_set<std::size_t>> const &edges) {
 		std::size_t cScc{0}, cPreOrderId{0};
 		std::vector<std::size_t> scc(edges.size()),
-			preOrderId(edges.size(), std::numeric_limits<std::size_t>::max()), lowLink(edges.size());
+			preOrderId(edges.size(), std::numeric_limits<std::size_t>::max()),
+			lowLink(edges.size());
 		std::vector<bool> onStack(edges.size(), false);
 		std::stack<std::size_t> s;
 
@@ -35,9 +35,9 @@ namespace Rain::Algorithm {
 				for (auto const &j : edges[i]) {
 					if (preOrderId[j] == std::numeric_limits<std::size_t>::max()) {
 						subroutineRef(j, subroutineRef);
-						lowLink[i] = min(lowLink[i], lowLink[j]);
+						lowLink[i] = std::min(lowLink[i], lowLink[j]);
 					} else if (onStack[j]) {
-						lowLink[i] = min(lowLink[i], preOrderId[j]);
+						lowLink[i] = std::min(lowLink[i], preOrderId[j]);
 					}
 				}
 
