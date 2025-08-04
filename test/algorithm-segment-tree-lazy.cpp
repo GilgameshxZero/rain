@@ -6,48 +6,23 @@
 #include <cassert>
 #include <iostream>
 
-class SumTreePolicy {
-	public:
-	using Value = long long;
-	using Update = long long;
-	using Result = long long;
-
-	static constexpr Value DEFAULT_VALUE{0};
-	static constexpr Update DEFAULT_UPDATE{0};
-	static void apply(Value &value, Update const &update, std::size_t range) {
-		value += update * range;
-	}
-	static Result aggregate(Result const &left, Result const &right) {
-		return left + right;
-	}
-	static void retrace(
-		Value &value,
-		Value const &left,
-		Value const &right,
-		std::size_t) {
-		value = left + right;
-	}
-	static void
-	split(Update const &update, Update &left, Update &right, std::size_t) {
-		left += update;
-		right += update;
-	}
-};
+class SumTreePolicy
+		: protected Rain::Algorithm::SegmentTreeLazy<>::Policy<long long> {};
 using SumTree = Rain::Algorithm::SegmentTreeLazy<SumTreePolicy>;
 
 int main() {
 	using namespace Rain::Literal;
 
 	/*
-											0
+											1
 					 |                     \
-					 1                      2
+					 2                      3
 		 |            \            |     \
-		 3             4           5      6
+		 4             5           6      7
 	|      \      |     \      |   \   | \
-	7       8     9     10    11   12 13 14
-	|  \   | \   | \   | \   | \   |
-	15 16 17 18 19 20 21 22 23 24 25
+	8       9     10     11    12   13 14 15
+	|  \    | \   | \ 
+	16 17   18 19 20 21
 	*/
 	SumTree sumTree(11);
 	// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].
