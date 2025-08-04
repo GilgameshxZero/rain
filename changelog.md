@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.3.9
+
+1. Fix lazy propagation bug in `SegmentTreeLazy`, also introduce interface for policy.
+2. Provide directed variant of Heirholzer's.
+
 ## 7.3.8
 
 1. Add Heirholzer's, Prim's, and rename Kosaraju and Tarjan. Ensure that `algorithm.hpp` includes all included headers as intended.
