@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.10
+
+1. Add default policies for sum, min, and max segtree lazy.
+
 ## 7.3.9
 
 1. Fix lazy propagation bug in `SegmentTreeLazy`, also introduce interface for policy.
