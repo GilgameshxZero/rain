@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.3.12
+
+1. Light performance optimization on `SegmentTreeLazy`.
+2. Implement `Iterator` for `SegmentTreeLazy`.
+3. Introduce a 2D point update segtree implementation.
+4. Update `SegmentTreeLazy` tests.
+
 ## 7.3.11
 
 1. Reshape segment tree lazy to use a joint vertex array instead of three separate ones, in preparation for the introduction of iterators.

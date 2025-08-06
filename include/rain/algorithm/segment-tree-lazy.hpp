@@ -2,18 +2,44 @@
 // updates in O(ln N).
 #pragma once
 
+#include "../error/exception.hpp"
 #include "../literal.hpp"
 #include "bit-manipulators.hpp"
+#include "fenwick.hpp"
 
+#include <cassert>
 #include <type_traits>
 #include <vector>
 
 namespace Rain::Algorithm {
-	template <typename = void>
+	template <typename = std::nullptr_t>
 	class SegmentTreeLazy;
 
 	template <>
-	class SegmentTreeLazy<void> {
+	class SegmentTreeLazy<std::nullptr_t> {
+		public:
+		// Exceptions are defined on the default template.
+		enum Error { NONE, NOT_IMPLEMENTED_POLICY, ITERATOR_INVALID };
+		class ErrorCategory : public std::error_category {
+			public:
+			char const *name() const noexcept {
+				return "Rain::Algorithm::SegmentTreeLazy";
+			}
+			std::string message(int error) const noexcept {
+				switch (error) {
+					case Error::NONE:
+						return "None.";
+					case Error::NOT_IMPLEMENTED_POLICY:
+						return "An unimplemented Policy function was called.";
+					case Error::ITERATOR_INVALID:
+						return "The requested iterator is invalid.";
+					default:
+						return "Generic.";
+				}
+			}
+		};
+		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+
 		private:
 		// SFINAE base class which conditionally defines defaultValue() and
 		// defaultResult().
@@ -79,6 +105,16 @@ namespace Rain::Algorithm {
 			convert(Value const &value, Query const &, std::size_t) {
 				return {value};
 			}
+
+			// Combine and build are not used in every segtree, and the default is to
+			// throw if used.
+			static inline void combine(Update &current, Update const &update) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
 		};
 	};
 
@@ -87,11 +123,21 @@ namespace Rain::Algorithm {
 	//
 	// Loosely based on <https://codeforces.com/blog/entry/18051>. Earlier
 	// iterations of this data structure have higher constant factor but enable
-	// more intuitive modifications. Inherit and modify the provided default
-	// policy to implement custom behavior.
+	// more intuitive modifications. Due to the memory layout, some vertices are
+	// "bridge" vertices, and aggregate a prefix and suffix of the underlying
+	// together. Bridges do not have a uniform height or size.
 	//
-	// If only point queries are used, Policy::combine can just overwrite the
-	// existing update and the tree will not be lazy.
+	// Inherit and modify the provided default policy to implement custom
+	// behavior.
+	//
+	// Updates must be combinable. If updates are not combinable, consider using
+	// the non-lazy version of this segtree, or otherwise using a
+	// higher-dimensional structure (e.g. quad-tree). Otherwise, using only point
+	// updates will guarantee that combine is never called.
+	//
+	// build is only required when using the building version of the constructor.
+	// retrace receives information about the update that caused it to be called,
+	// and may know which child was updated, but this is not yet implemented.
 	template <typename Policy>
 	class SegmentTreeLazy {
 		public:
@@ -100,97 +146,184 @@ namespace Rain::Algorithm {
 		using Result = typename Policy::Result;
 		using Query = typename Policy::Query;
 
+		using Error = SegmentTreeLazy<>::Error;
+		using Exception = SegmentTreeLazy<>::Exception;
+
 		private:
 		class Vertex {
 			public:
-			mutable Value value{Policy::defaultValue()};
+			Value value{Policy::defaultValue()};
 
 			// True iff node has a pending lazy update to propagate to its children.
 			// The update has already been applied to the node itself.
-			mutable bool lazy{false};
+			bool lazy{false};
 
 			// Lazily-stored updates. Will be the default update if lazy is false.
-			mutable Update update{Policy::defaultUpdate()};
-
-			// Underlying inclusive range of the vertex. May be invalid if the range
-			// bridges both ends of the range.
-			std::pair<std::size_t, std::size_t> range{
-				std::numeric_limits<std::size_t>::max(),
-				std::numeric_limits<std::size_t>::max()};
-
-			// Number of leaf vertices in this vertex's subtree.
-			std::size_t size{1};
+			Update update{Policy::defaultUpdate()};
 		};
 
-		// Height of the highest node in the tree.
-		std::size_t const HEIGHT;
+		// Depth of the deepest node in the tree.
+		std::size_t const DEPTH;
+
+		// Number of underlying nodes.
+		std::size_t const SIZE_UNDERLYING;
 
 		// All vertices in the tree. Vertex 0 is unused.
-		std::vector<Vertex> vertices;
+		mutable std::vector<Vertex> vertices;
 
-		// Propagate a single non-leaf vertex in the tree.
-		void propagate(std::size_t i) const {
-			if (!this->vertices[i].lazy) {
+		// Propagate a single non-leaf vertex in the tree. It is guaranteed that
+		// propagate will never be called on a leaf. propagate may be called on a
+		// bridge, but bridges (and ancestors of them) will never be lazy.
+		//
+		// `size` is only valid for non-bridge-ancestors. It is always the number of
+		// leaf nodes contained in this subtree.
+		inline void propagate(std::size_t idx, std::size_t size) const {
+			if (!this->vertices[idx].lazy) {
 				return;
 			}
 
 			Policy::apply(
-				this->vertices[i * 2].value,
-				this->vertices[i].update,
-				this->vertices[i * 2].size);
+				this->vertices[idx * 2].value, this->vertices[idx].update, size / 2);
 			Policy::apply(
-				this->vertices[i * 2 + 1].value,
-				this->vertices[i].update,
-				this->vertices[i * 2 + 1].size);
-			Policy::combine(this->vertices[i * 2].update, this->vertices[i].update);
-			Policy::combine(
-				this->vertices[i * 2 + 1].update, this->vertices[i].update);
-			this->vertices[i * 2].lazy = this->vertices[i * 2 + 1].lazy = true;
+				this->vertices[idx * 2 + 1].value,
+				this->vertices[idx].update,
+				size / 2);
 
-			this->vertices[i].update = Policy::defaultUpdate();
-			this->vertices[i].lazy = false;
+			// Avoid unnecessarily setting lazy on a leaf node.
+			if (idx * 2 < this->SIZE_UNDERLYING) {
+				Policy::combine(
+					this->vertices[idx * 2].update, this->vertices[idx].update);
+				Policy::combine(
+					this->vertices[idx * 2 + 1].update, this->vertices[idx].update);
+				this->vertices[idx * 2].lazy = this->vertices[idx * 2 + 1].lazy = true;
+			}
+
+			this->vertices[idx].update = Policy::defaultUpdate();
+			this->vertices[idx].lazy = false;
 		}
 
-		// Propagate all ancestors of a single vertex.
-		// After this, no ancestor of any node in this range should have a queued
-		// update.
-		void propagateTo(std::size_t idx) const {
-			for (std::size_t level{this->HEIGHT}; level > 0; --level) {
-				this->propagate((idx + this->vertices.size() / 2) >> level);
+		// Propagate all ancestors of a single vertex, optionally beginning at a
+		// specific ancestor depth.
+		inline void propagateTo(std::size_t idx) const {
+			for (std::size_t level{this->DEPTH}, size{1_zu << level}; level > 0;
+					 level--, size /= 2) {
+				if ((idx >> level) == 0) {
+					continue;
+				}
+				this->propagate(idx >> level, size);
 			}
 		}
 
 		public:
-		// Segment tree for a segment array of size size.
-		SegmentTreeLazy(std::size_t const size)
-				: HEIGHT{mostSignificant1BitIdx(2 * size)}, vertices(2 * size) {
-			// Set size and range.
-			this->vertices.shrink_to_fit();
-			for (std::size_t i{0}; i < size; i++) {
-				this->vertices[size + i].range = {i, i};
+		// Publicly accessible way to traverse the tree while abstracting away the
+		// lazy propagation. It is assumed that the tree has been propagated to the
+		// iterator already.
+		//
+		// Iterators remain valid as long as no operations are performed between
+		// accesses. Operations may invalidate the values of iterators as they will
+		// no longer be up-to-date with lazy updates. This can be resolved with
+		// `revalidate`.
+		//
+		// TODO: Implement a constant version of this.
+		class Iterator {
+			private:
+			SegmentTreeLazy<Policy> const *TREE;
+
+			std::size_t IDX, SIZE;
+
+			public:
+			// Size is the number of leaf nodes in this subtree. It is only valid if
+			// this is not an ancestor of a bridge.
+			Iterator(
+				SegmentTreeLazy<Policy> const *tree,
+				std::size_t idx,
+				std::size_t size)
+					: TREE{tree}, IDX{idx}, SIZE{size} {}
+			Iterator(Iterator const &other)
+					: TREE{other.TREE}, IDX{other.IDX}, SIZE{other.SIZE} {}
+
+			Iterator &operator=(Iterator const &other) {
+				this->TREE = other.TREE;
+				this->IDX = other.IDX;
+				this->SIZE = other.SIZE;
+				return *this;
 			}
-			for (std::size_t i{size - 1}; i > 0; i--) {
-				this->vertices[i].size =
-					this->vertices[i * 2].size + this->vertices[i * 2 + 1].size;
-				if (
-					this->vertices[i * 2].range.second + 1 ==
-					this->vertices[i * 2 + 1].range.first) {
-					this->vertices[i].range = {
-						this->vertices[i * 2].range.first,
-						this->vertices[i * 2 + 1].range.second};
+
+			inline bool isRoot() { return this->IDX == 1; }
+			inline bool isLeaf() { return this->IDX >= this->TREE->SIZE_UNDERLYING; }
+			inline bool isFrontUnderlying() {
+				return this->IDX == this->TREE->SIZE_UNDERLYING;
+			}
+			inline bool isBackUnderlying() {
+				return this->IDX == this->TREE->SIZE_UNDERLYING * 2 - 1;
+			}
+
+			inline Iterator parent() {
+				if (this->isRoot()) {
+					throw Exception(Error::ITERATOR_INVALID);
 				}
+				return {this->TREE, this->IDX / 2, this->SIZE * 2};
 			}
-		}
+			// Children access.
+			inline Iterator left() {
+				if (this->isLeaf()) {
+					throw Exception(Error::ITERATOR_INVALID);
+				}
+				this->TREE->propagate(this->IDX, this->SIZE);
+				return {this->TREE, this->IDX * 2, this->SIZE / 2};
+			}
+			inline Iterator right() {
+				if (this->isLeaf()) {
+					throw Exception(Error::ITERATOR_INVALID);
+				}
+				this->TREE->propagate(this->IDX, this->SIZE);
+				return {this->TREE, this->IDX * 2 + 1, this->SIZE / 2};
+			}
+			// Underlying access. Throws if at the ends of the underlying array, or if
+			// this is not leaf. Because of the need to propagate, these are O(\lg N)
+			// amortized.
+			//
+			// TODO: Can this be implemented faster?
+			inline Iterator nextUnderlying() {
+				if (!this->isLeaf() || this->isBackUnderlying()) {
+					throw Exception(Error::ITERATOR_INVALID);
+				}
+				this->TREE->propagateTo(this->IDX + 1);
+				return {this->TREE, this->IDX + 1, this->SIZE};
+			}
+			inline Iterator prevUnderlying() {
+				if (!this->isLeaf() || this->isFrontUnderlying()) {
+					throw Exception(Error::ITERATOR_INVALID);
+				}
+				this->TREE->propagateTo(this->IDX - 1);
+				return {this->TREE, this->IDX - 1, this->SIZE};
+			}
+
+			// If updates have changed the tree, re-validate this iterator by
+			// propagating to it.
+			inline void revalidate() { this->TREE->propagateTo(this->IDX); }
+
+			// Access to iterator value.
+			Value &operator*() { return this->TREE->vertices[this->IDX].value; }
+		};
+
+		friend Iterator;
+
+		// Segment tree for a segment array of size size.
+		SegmentTreeLazy(std::size_t size)
+				: DEPTH{mostSignificant1BitIdx(size * 2)},
+					SIZE_UNDERLYING{size},
+					vertices(size * 2) {}
 
 		// Segment tree with all leaf nodes moved in, and the others constructed in
 		// order. This minimizes build time by a constant factor.
 		SegmentTreeLazy(std::vector<Value> &&values)
 				: SegmentTreeLazy(values.size()) {
-			for (std::size_t i{0}; i < values.size(); i++) {
-				std::swap(values[i], this->vertices[values.size() + i].value);
+			for (std::size_t i{0}; i < this->SIZE_UNDERLYING; i++) {
+				std::swap(values[i], this->vertices[this->SIZE_UNDERLYING + i].value);
 			}
-			for (std::size_t i{values.size() - 1}; i > 0; i--) {
-				Policy::retrace(
+			for (std::size_t i{this->SIZE_UNDERLYING - 1}; i > 0; i--) {
+				Policy::build(
 					this->vertices[i].value,
 					this->vertices[i * 2].value,
 					this->vertices[i * 2 + 1].value);
@@ -198,31 +331,24 @@ namespace Rain::Algorithm {
 		}
 
 		// Queries an inclusive range, propagating if necessary then aggregating.
-		// Take an optional query parameter `query` which will be used in convert
-		// and aggregate of the results and values.
-		Result query(std::size_t left, std::size_t right, Query const &query = {})
-			const {
-			this->propagateTo(left);
-			this->propagateTo(right);
+		Result query(std::size_t left, std::size_t right, Query const &query = {}) {
+			this->propagateTo(left + this->SIZE_UNDERLYING);
+			this->propagateTo(right + this->SIZE_UNDERLYING);
 			Result resLeft{Policy::defaultResult()},
 				resRight{Policy::defaultResult()};
-			for (left += this->vertices.size() / 2,
-					 right += this->vertices.size() / 2 + 1;
+			std::size_t size{1};
+			for (left += this->SIZE_UNDERLYING, right += this->SIZE_UNDERLYING + 1;
 					 left < right;
-					 left /= 2, right /= 2) {
+					 left /= 2, right /= 2, size *= 2) {
 				if (left % 2 == 1) {
 					resLeft = Policy::aggregate(
 						resLeft,
-						Policy::convert(
-							this->vertices[left].value, query, this->vertices[left].size),
+						Policy::convert(this->vertices[left++].value, query, size),
 						query);
-					left++;
 				}
 				if (right % 2 == 1) {
-					right--;
 					resRight = Policy::aggregate(
-						Policy::convert(
-							this->vertices[right].value, query, this->vertices[right].size),
+						Policy::convert(this->vertices[--right].value, query, size),
 						resRight,
 						query);
 				}
@@ -234,81 +360,101 @@ namespace Rain::Algorithm {
 		// to all nodes in the range, save for differences based on the depth of the
 		// node (which will be expressed via the std::size_t range parameter).
 		void update(std::size_t left, std::size_t right, Update const &update) {
-			// We must propagate here because retrace expects non-lazy nodes to store
-			// the value.
-			this->propagateTo(left);
-			this->propagateTo(right);
+			this->propagateTo(left + this->SIZE_UNDERLYING);
+			this->propagateTo(right + this->SIZE_UNDERLYING);
 			// Only retrace updates once left or right node has been changed.
 			bool changedLeft{false}, changedRight{false};
-			for (left += this->vertices.size() / 2,
-					 right += this->vertices.size() / 2 + 1;
+			std::size_t size{1};
+			for (left += this->SIZE_UNDERLYING, right += this->SIZE_UNDERLYING + 1;
 					 left < right;
-					 left /= 2, right /= 2) {
+					 left /= 2, right /= 2, size *= 2) {
 				if (changedLeft) {
 					Policy::retrace(
 						this->vertices[left - 1].value,
 						this->vertices[left * 2 - 2].value,
-						this->vertices[left * 2 - 1].value);
+						this->vertices[left * 2 - 1].value,
+						update);
 				}
 				if (changedRight) {
 					Policy::retrace(
 						this->vertices[right].value,
 						this->vertices[right * 2].value,
-						this->vertices[right * 2 + 1].value);
+						this->vertices[right * 2 + 1].value,
+						update);
 				}
 				if (left % 2 == 1) {
-					Policy::apply(
-						this->vertices[left].value, update, this->vertices[left].size);
-					Policy::combine(this->vertices[left].update, update);
-					this->vertices[left].lazy = true;
 					changedLeft = true;
+					Policy::apply(this->vertices[left].value, update, size);
+					// Avoid unnecessarily setting the lazy update on a leaf node.
+					if (left < this->SIZE_UNDERLYING) {
+						Policy::combine(this->vertices[left].update, update);
+						this->vertices[left].lazy = true;
+					}
 					left++;
 				}
 				if (right % 2 == 1) {
 					right--;
-					Policy::apply(
-						this->vertices[right].value, update, this->vertices[right].size);
-					Policy::combine(this->vertices[right].update, update);
-					this->vertices[right].lazy = true;
 					changedRight = true;
+					Policy::apply(this->vertices[right].value, update, size);
+					if (right < this->SIZE_UNDERLYING) {
+						Policy::combine(this->vertices[right].update, update);
+						this->vertices[right].lazy = true;
+					}
 				}
 			}
 			for (left--; right > 0; left /= 2, right /= 2) {
-				if (changedLeft) {
+				if (changedLeft && left > 0) {
 					Policy::retrace(
 						this->vertices[left].value,
 						this->vertices[left * 2].value,
-						this->vertices[left * 2 + 1].value);
+						this->vertices[left * 2 + 1].value,
+						update);
 				}
 				if (changedRight && (!changedLeft || left != right)) {
 					Policy::retrace(
 						this->vertices[right].value,
 						this->vertices[right * 2].value,
-						this->vertices[right * 2 + 1].value);
+						this->vertices[right * 2 + 1].value,
+						update);
 				}
 			}
 		}
 
-		// Get the state of a single vertex, useful for traversing the tree.
-		// TODO: implement sane iterators.
-		Vertex const &getVertex(std::size_t idx) const {
-			return this->vertices[idx];
+		Iterator root() {
+			this->propagateTo(1);
+			return Iterator(this, 1, 1_zu << this->DEPTH);
+		}
+		Iterator frontUnderlying() {
+			this->propagateTo(this->SIZE_UNDERLYING);
+			return Iterator(this, this->SIZE_UNDERLYING, 1);
+		}
+		Iterator backUnderlying() {
+			this->propagateTo(this->SIZE_UNDERLYING * 2 - 1);
+			return Iterator(this, this->SIZE_UNDERLYING * 2 - 1, 1);
 		}
 	};
 
 	template <typename ValueType>
 	class SegmentTreeLazySumPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
 		public:
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Value;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Update;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Result;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Query;
+		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
+		using typename SuperPolicy::Value;
+		using typename SuperPolicy::Update;
+		using typename SuperPolicy::Result;
+		using typename SuperPolicy::Query;
 
 		static inline void combine(Update &current, Update const &update) {
 			current += update;
 		}
+		static inline void retrace(
+			Value &value,
+			Value const &left,
+			Value const &right,
+			Update const &) {
+			value = left + right;
+		}
 		static inline void
-		retrace(Value &value, Value const &left, Value const &right) {
+		build(Value &value, Value const &left, Value const &right) {
 			value = left + right;
 		}
 		static inline void
@@ -328,10 +474,11 @@ namespace Rain::Algorithm {
 	template <typename ValueType>
 	class SegmentTreeLazyMinPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
 		public:
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Value;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Update;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Result;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Query;
+		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
+		using typename SuperPolicy::Value;
+		using typename SuperPolicy::Update;
+		using typename SuperPolicy::Result;
+		using typename SuperPolicy::Query;
 
 		static inline Result defaultResult() {
 			return std::numeric_limits<Result>::max();
@@ -339,8 +486,15 @@ namespace Rain::Algorithm {
 		static inline void combine(Update &current, Update const &update) {
 			current += update;
 		}
+		static inline void retrace(
+			Value &value,
+			Value const &left,
+			Value const &right,
+			Update const &) {
+			value = std::min(left, right);
+		}
 		static inline void
-		retrace(Value &value, Value const &left, Value const &right) {
+		build(Value &value, Value const &left, Value const &right) {
 			value = std::min(left, right);
 		}
 		static inline void apply(Value &value, Update const &update, std::size_t) {
@@ -359,10 +513,11 @@ namespace Rain::Algorithm {
 	template <typename ValueType>
 	class SegmentTreeLazyMaxPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
 		public:
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Value;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Update;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Result;
-		using typename SegmentTreeLazy<>::Policy<ValueType>::Query;
+		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
+		using typename SuperPolicy::Value;
+		using typename SuperPolicy::Update;
+		using typename SuperPolicy::Result;
+		using typename SuperPolicy::Query;
 
 		static inline Result defaultResult() {
 			return std::numeric_limits<Result>::min();
@@ -370,8 +525,15 @@ namespace Rain::Algorithm {
 		static inline void combine(Update &current, Update const &update) {
 			current += update;
 		}
+		static inline void retrace(
+			Value &value,
+			Value const &left,
+			Value const &right,
+			Update const &) {
+			value = std::max(left, right);
+		}
 		static inline void
-		retrace(Value &value, Value const &left, Value const &right) {
+		build(Value &value, Value const &left, Value const &right) {
 			value = std::max(left, right);
 		}
 		static inline void apply(Value &value, Update const &update, std::size_t) {
@@ -386,4 +548,51 @@ namespace Rain::Algorithm {
 	template <typename ValueType>
 	using SegmentTreeLazyMax =
 		SegmentTreeLazy<SegmentTreeLazyMaxPolicy<ValueType>>;
+
+	// 2D segtree for point updates and range queries.
+	template <std::size_t INNER_DIMENSION, typename ValueType>
+	class SegmentTreeLazySum2DPointPolicy : public SegmentTreeLazy<>::Policy<
+																						FenwickTree<ValueType>,
+																						std::pair<std::size_t, ValueType>,
+																						ValueType,
+																						std::size_t> {
+		public:
+		using SuperPolicy = SegmentTreeLazy<>::Policy<
+			FenwickTree<ValueType>,
+			std::pair<std::size_t, ValueType>,
+			ValueType,
+			std::size_t>;
+		using typename SuperPolicy::Value;
+		using typename SuperPolicy::Update;
+		using typename SuperPolicy::Result;
+		using typename SuperPolicy::Query;
+
+		static inline Value defaultValue() { return {INNER_DIMENSION}; }
+		static inline Result defaultResult() { return {}; }
+		static inline Result
+		convert(Value const &value, Query const &query, std::size_t) {
+			return value.sum(query);
+		}
+		// combine is omitted because we only support point updates.
+		static inline void retrace(
+			Value &value,
+			Value const &left,
+			Value const &right,
+			Update const &update) {
+			// We can directly apply the update to this vertex.
+			value.modify(update.first, update.second);
+		}
+		// build is omitted because there is no easy way to combine two Fenwicks.
+		static inline void apply(Value &value, Update const &update, std::size_t) {
+			value.modify(update.first, update.second);
+		}
+		static inline Result
+		aggregate(Result const &left, Result const &right, Query const &) {
+			return left + right;
+		}
+	};
+
+	template <std::size_t INNER_DIMENSION, typename ValueType>
+	using SegmentTreeLazySum2DPoint = SegmentTreeLazy<
+		SegmentTreeLazySum2DPointPolicy<INNER_DIMENSION, ValueType>>;
 }
