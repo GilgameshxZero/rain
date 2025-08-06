@@ -12,7 +12,7 @@ int main() {
 	using namespace Rain::Algorithm;
 
 	{
-		SegmentTreeLazySum<int> sumTree(4);
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicySum<int>> sumTree(4);
 		sumTree.update(0, 3, 1);
 		sumTree.update(1, 2, 5);
 		sumTree.update(2, 2, -20);
@@ -20,7 +20,7 @@ int main() {
 		assert(sumTree.query(0, 2) == -7);
 		assert(sumTree.query(0, 1) == 7);
 
-		SegmentTreeLazyMin<int> minTree(4);
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicyMin<int>> minTree(4);
 		minTree.update(0, 3, 1);
 		minTree.update(1, 2, 5);
 		minTree.update(2, 2, -20);
@@ -28,7 +28,7 @@ int main() {
 		assert(minTree.query(0, 2) == -14);
 		assert(minTree.query(0, 1) == 1);
 
-		SegmentTreeLazyMax<int> maxTree(4);
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicyMax<int>> maxTree(4);
 		maxTree.update(0, 3, 1);
 		maxTree.update(1, 2, 5);
 		maxTree.update(2, 2, -20);
@@ -49,7 +49,7 @@ int main() {
 		|  \    | \   | \
 		16 17   18 19 20 21
 		*/
-		SegmentTreeLazySum<int> sumTree(11);
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicySum<int>> sumTree(11);
 		// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].
 		sumTree.update(0, 5, 7);
 		// [7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0].
@@ -108,7 +108,7 @@ int main() {
 	{
 		// Time test.
 		auto timeBegin = std::chrono::steady_clock::now();
-		Rain::Algorithm::SegmentTreeLazySum<long long> tree2(100000);
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicySum<long long>> tree2(100000);
 		for (std::size_t i{0}; i < 100000; i++) {
 			std::pair<std::size_t, std::size_t> range{
 				rand() % 100000, rand() % 100000};
@@ -123,7 +123,7 @@ int main() {
 
 	{
 		// Assume this is a chess board.
-		SegmentTreeLazySum2DPoint<8, int> tree(8);
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicySum2DPoint<int, 8>> tree(8);
 		// 6B +13.
 		tree.update(2, 2, {1, 13});
 		// Query entire board.

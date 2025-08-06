@@ -10,6 +10,7 @@
 #include <cassert>
 #include <type_traits>
 #include <vector>
+#include <map>
 
 namespace Rain::Algorithm {
 	template <typename = std::nullptr_t>
@@ -81,15 +82,14 @@ namespace Rain::Algorithm {
 		// SFINAE if they do not support expected operations. In that case, the
 		// client should inherit the enabled parts of this disabled policy and
 		// re-implement the disabled functions.
-		//
-		// This default policy represents a sum tree.
 		template <
 			typename ValueType,
 			typename UpdateType = ValueType,
 			typename ResultType = ValueType,
 			typename QueryType = std::nullptr_t>
-		class Policy : public PolicyBaseDefaultValueResult<ValueType, ResultType>,
-									 public PolicyBaseDefaultUpdate<UpdateType> {
+		class PolicyBase
+				: public PolicyBaseDefaultValueResult<ValueType, ResultType>,
+					public PolicyBaseDefaultUpdate<UpdateType> {
 			public:
 			// Expose typenames to subclasses (SegmentTreeLazy).
 			using Value = ValueType;
@@ -114,6 +114,235 @@ namespace Rain::Algorithm {
 			static inline void
 			build(Value &value, Value const &left, Value const &right) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+		};
+
+		// Wraps a policy to implement a persistent segment tree via the fat-node
+		// technique. Range updates are somewhat dangerous because lazy propagation
+		// may cause some updates to not be stored in the history. I do not believe
+		// lazy propagation is possible in a persistent manner, because lazy
+		// propagation works via the combining of updates, which necessarily
+		// destroys time information, or otherwise is no longer constant-time.
+		//
+		// Updates should typically be applied in non-decreasing order of time. One
+		// may choose to apply an out-of-order update to operate on a previous
+		// "version" of the tree, however, this invalidates later "version"s of the
+		// tree. In this method, it is recommended to compute offline the number of
+		// versions to be able to revert to.
+		//
+		// A query for time `t` is evaluated after all requested updates at time `t`
+		// have been applied.
+		//
+		// Additional speedups can be had by offline re-ordering of the updates and
+		// applying history pruning in `retrace` and `apply`.
+		template <typename Policy, typename TimeType = std::size_t>
+		class PolicyPersistentWrapper {
+			public:
+			using Value = std::map<TimeType, typename Policy::Value>;
+			using Update = std::pair<TimeType, typename Policy::Update>;
+			using Result = typename Policy::Result;
+			using Query = std::pair<TimeType, typename Policy::Query>;
+
+			static inline Value defaultValue() {
+				return {{std::numeric_limits<TimeType>::min(), Policy::defaultValue()}};
+			}
+			static inline Update defaultUpdate() {
+				return {std::numeric_limits<TimeType>::min(), Policy::defaultUpdate()};
+			}
+			static inline Result defaultResult() { return Policy::defaultResult(); }
+			static inline Result
+			convert(Value const &value, Query const &query, std::size_t size) {
+				return Policy::convert(
+					std::prev(value.upper_bound(query.first))->second,
+					query.second,
+					size);
+			}
+			static inline void combine(Update &current, Update const &update) {
+				current.first = update.first;
+				Policy::combine(current.second, update.second);
+			}
+			// TODO: Persistent retrace performs redundant work in binary searching
+			// left/right each time, so this is slower than necessary by a
+			// constant factor.
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &update) {
+				auto hint{std::prev(value.upper_bound(update.first))};
+				auto it{value.insert_or_assign(hint, update.first, hint->second)};
+				Policy::retrace(
+					it->second,
+					std::prev(left.upper_bound(update.first))->second,
+					std::prev(right.upper_bound(update.first))->second,
+					update.second);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				auto t{std::max(left.rbegin()->first, right.rbegin()->first)};
+				auto hint{std::prev(value.upper_bound(t))};
+				auto it{value.insert_or_assign(hint, t, hint->second)};
+				Policy::build(
+					it->second, left.rbegin()->second, right.rbegin()->second);
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t size) {
+				auto hint{std::prev(value.upper_bound(update.first))};
+				auto it{value.insert_or_assign(hint, update.first, hint->second)};
+				Policy::apply(it->second, update.second, size);
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &query) {
+				return Policy::aggregate(left, right, query.second);
+			}
+		};
+
+		template <typename ValueType>
+		class PolicySum : public PolicyBase<ValueType> {
+			public:
+			using SuperPolicy = PolicyBase<ValueType>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+
+			static inline void combine(Update &current, Update const &update) {
+				current += update;
+			}
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &) {
+				value = left + right;
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				value = left + right;
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t size) {
+				value += update * static_cast<Update>(size);
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return left + right;
+			}
+		};
+
+		template <typename ValueType>
+		class PolicyMin : public PolicyBase<ValueType> {
+			public:
+			using SuperPolicy = PolicyBase<ValueType>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+
+			static inline Result defaultResult() {
+				return std::numeric_limits<Result>::max();
+			}
+			static inline void combine(Update &current, Update const &update) {
+				current += update;
+			}
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &) {
+				value = std::min(left, right);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				value = std::min(left, right);
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t) {
+				value += update;
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return std::min(left, right);
+			}
+		};
+
+		template <typename ValueType>
+		class PolicyMax : public PolicyBase<ValueType> {
+			public:
+			using SuperPolicy = PolicyBase<ValueType>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+
+			static inline Result defaultResult() {
+				return std::numeric_limits<Result>::min();
+			}
+			static inline void combine(Update &current, Update const &update) {
+				current += update;
+			}
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &) {
+				value = std::max(left, right);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				value = std::max(left, right);
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t) {
+				value += update;
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return std::max(left, right);
+			}
+		};
+
+		// 2D segtree for point updates and range queries.
+		template <typename ValueType, std::size_t INNER_DIMENSION>
+		class PolicySum2DPoint : public PolicyBase<
+															 FenwickTree<ValueType>,
+															 std::pair<std::size_t, ValueType>,
+															 ValueType,
+															 std::size_t> {
+			public:
+			using SuperPolicy = PolicyBase<
+				FenwickTree<ValueType>,
+				std::pair<std::size_t, ValueType>,
+				ValueType,
+				std::size_t>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+
+			static inline Value defaultValue() { return {INNER_DIMENSION}; }
+			static inline Result defaultResult() { return {}; }
+			static inline Result
+			convert(Value const &value, Query const &query, std::size_t) {
+				return value.sum(query);
+			}
+			// combine is omitted because we only support point updates.
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &update) {
+				// We can directly apply the update to this vertex.
+				value.modify(update.first, update.second);
+			}
+			// build is omitted because there is no easy way to combine two Fenwicks.
+			static inline void
+			apply(Value &value, Update const &update, std::size_t) {
+				value.modify(update.first, update.second);
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return left + right;
 			}
 		};
 	};
@@ -434,165 +663,7 @@ namespace Rain::Algorithm {
 		}
 	};
 
-	template <typename ValueType>
-	class SegmentTreeLazySumPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline void combine(Update &current, Update const &update) {
-			current += update;
-		}
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &) {
-			value = left + right;
-		}
-		static inline void
-		build(Value &value, Value const &left, Value const &right) {
-			value = left + right;
-		}
-		static inline void
-		apply(Value &value, Update const &update, std::size_t size) {
-			value += update * static_cast<Update>(size);
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return left + right;
-		}
-	};
-
-	template <typename ValueType>
-	using SegmentTreeLazySum =
-		SegmentTreeLazy<SegmentTreeLazySumPolicy<ValueType>>;
-
-	template <typename ValueType>
-	class SegmentTreeLazyMinPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline Result defaultResult() {
-			return std::numeric_limits<Result>::max();
-		}
-		static inline void combine(Update &current, Update const &update) {
-			current += update;
-		}
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &) {
-			value = std::min(left, right);
-		}
-		static inline void
-		build(Value &value, Value const &left, Value const &right) {
-			value = std::min(left, right);
-		}
-		static inline void apply(Value &value, Update const &update, std::size_t) {
-			value += update;
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return std::min(left, right);
-		}
-	};
-
-	template <typename ValueType>
-	using SegmentTreeLazyMin =
-		SegmentTreeLazy<SegmentTreeLazyMinPolicy<ValueType>>;
-
-	template <typename ValueType>
-	class SegmentTreeLazyMaxPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline Result defaultResult() {
-			return std::numeric_limits<Result>::min();
-		}
-		static inline void combine(Update &current, Update const &update) {
-			current += update;
-		}
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &) {
-			value = std::max(left, right);
-		}
-		static inline void
-		build(Value &value, Value const &left, Value const &right) {
-			value = std::max(left, right);
-		}
-		static inline void apply(Value &value, Update const &update, std::size_t) {
-			value += update;
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return std::max(left, right);
-		}
-	};
-
-	template <typename ValueType>
-	using SegmentTreeLazyMax =
-		SegmentTreeLazy<SegmentTreeLazyMaxPolicy<ValueType>>;
-
-	// 2D segtree for point updates and range queries.
-	template <std::size_t INNER_DIMENSION, typename ValueType>
-	class SegmentTreeLazySum2DPointPolicy : public SegmentTreeLazy<>::Policy<
-																						FenwickTree<ValueType>,
-																						std::pair<std::size_t, ValueType>,
-																						ValueType,
-																						std::size_t> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<
-			FenwickTree<ValueType>,
-			std::pair<std::size_t, ValueType>,
-			ValueType,
-			std::size_t>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline Value defaultValue() { return {INNER_DIMENSION}; }
-		static inline Result defaultResult() { return {}; }
-		static inline Result
-		convert(Value const &value, Query const &query, std::size_t) {
-			return value.sum(query);
-		}
-		// combine is omitted because we only support point updates.
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &update) {
-			// We can directly apply the update to this vertex.
-			value.modify(update.first, update.second);
-		}
-		// build is omitted because there is no easy way to combine two Fenwicks.
-		static inline void apply(Value &value, Update const &update, std::size_t) {
-			value.modify(update.first, update.second);
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return left + right;
-		}
-	};
-
-	template <std::size_t INNER_DIMENSION, typename ValueType>
-	using SegmentTreeLazySum2DPoint = SegmentTreeLazy<
-		SegmentTreeLazySum2DPointPolicy<INNER_DIMENSION, ValueType>>;
+	template <typename Policy>
+	using SegmentTreeLazyPersistent =
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicyPersistentWrapper<Policy>>;
 }
