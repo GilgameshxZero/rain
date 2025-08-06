@@ -8,9 +8,9 @@
 #include "fenwick.hpp"
 
 #include <cassert>
+#include <map>
 #include <type_traits>
 #include <vector>
-#include <map>
 
 namespace Rain::Algorithm {
 	template <typename = std::nullptr_t>
@@ -106,29 +106,42 @@ namespace Rain::Algorithm {
 				return {value};
 			}
 
-			// Combine and build are not used in every segtree, and the default is to
-			// throw if used.
-			static inline void combine(Update &current, Update const &update) {
+			// Some functions do not need to be provided by the policy if the segtree
+			// does not use them.
+			//
+			// `combine` is used iff range updates are used.
+			static inline void combine(Update &, Update const &) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
+			// `build` is used iff the segtree is moved from an array in the
+			// constructor.
+			static inline void build(Value &, Value const &, Value const &) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+			// `retrace` is used iff the segtree is updated.
 			static inline void
-			build(Value &value, Value const &left, Value const &right) {
+			retrace(Value &, Value const &, Value const &, Update const &) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+			// `apply` is used iff the segtree is updated.
+			static inline void apply(Value &, Update const &, std::size_t) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 		};
 
 		// Wraps a policy to implement a persistent segment tree via the fat-node
-		// technique. Range updates are somewhat dangerous because lazy propagation
-		// may cause some updates to not be stored in the history. I do not believe
-		// lazy propagation is possible in a persistent manner, because lazy
-		// propagation works via the combining of updates, which necessarily
-		// destroys time information, or otherwise is no longer constant-time.
+		// technique. In fate node, only the latest copy is modifiable.
 		//
-		// Updates should typically be applied in non-decreasing order of time. One
-		// may choose to apply an out-of-order update to operate on a previous
-		// "version" of the tree, however, this invalidates later "version"s of the
-		// tree. In this method, it is recommended to compute offline the number of
-		// versions to be able to revert to.
+		// To apply updates out-of-order, we recommend the client apply updates and
+		// queries in reverse-time order. In this way, applying an earlier update
+		// will apply it correctly, but also invalidate later, already-applied
+		// "version"s of the tree.
+		//
+		// Lazy range updates are supported by persisting lazy updates. However,
+		// this wrapper does not support it, as there is no query information
+		// provided in `retrace` and `apply`, which is necessary. To support
+		// persistent lazy updates, we prefer a separate path copying alternative
+		// segment tree implementation (TODO).
 		//
 		// A query for time `t` is evaluated after all requested updates at time `t`
 		// have been applied.
@@ -136,7 +149,7 @@ namespace Rain::Algorithm {
 		// Additional speedups can be had by offline re-ordering of the updates and
 		// applying history pruning in `retrace` and `apply`.
 		template <typename Policy, typename TimeType = std::size_t>
-		class PolicyPersistentWrapper {
+		class PolicyPersistentFatNodeWrapper {
 			public:
 			using Value = std::map<TimeType, typename Policy::Value>;
 			using Update = std::pair<TimeType, typename Policy::Update>;
@@ -664,6 +677,6 @@ namespace Rain::Algorithm {
 	};
 
 	template <typename Policy>
-	using SegmentTreeLazyPersistent =
-		SegmentTreeLazy<SegmentTreeLazy<>::PolicyPersistentWrapper<Policy>>;
+	using SegmentTreeLazyPersistentFatNode =
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicyPersistentFatNodeWrapper<Policy>>;
 }
