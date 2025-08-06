@@ -28,11 +28,10 @@ namespace Rain {
 	// strcasecmp does not exist on Windows.
 	inline int strcasecmp(char const *left, char const *right) {
 #ifdef RAIN_PLATFORM_WINDOWS
-		return _stricmp(
+		return _stricmp(left, right);
 #else
-		return ::strcasecmp(
+		return ::strcasecmp(left, right);
 #endif
-			left, right);
 	}
 }
 
@@ -78,8 +77,7 @@ namespace Rain::String {
 		bool const scanRight = true) {
 		std::size_t index{0};
 		for (; index < cStrLen && std::isspace(static_cast<int>(cStr[index]));
-				 index += (scanRight ? 1 : -1))
-			;
+				 index += (scanRight ? 1 : -1));
 		return const_cast<char *>(cStr) + index;
 	}
 	inline char *scanUntilWhitespace(
@@ -88,8 +86,7 @@ namespace Rain::String {
 		bool const scanRight = true) {
 		std::size_t index{0};
 		for (; index < cStrLen && !std::isspace(static_cast<int>(cStr[index]));
-				 index += (scanRight ? 1 : -1))
-			;
+				 index += (scanRight ? 1 : -1));
 		return const_cast<char *>(cStr) + index;
 	}
 
