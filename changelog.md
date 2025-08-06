@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.11
+
+1. Reshape segment tree lazy to use a joint vertex array instead of three separate ones, in preparation for the introduction of iterators.
+
 ## 7.3.10
 
 1. Add default policies for sum, min, and max segtree lazy.
