@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.13
+
+1. Added persistent policy wrapper for `SegmentTreeLazy`. It is not very performant, so custom `Policy` is still preferred.
+
 ## 7.3.12
 
 1. Light performance optimization on `SegmentTreeLazy`.
