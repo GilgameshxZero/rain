@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.16
+
+1. Add compile-time primality checker and `sqrt`.
+
 ## 7.3.15
 
 1. Refactor `ModulusField` into `ModulusField` and `ModulusRing`, depending on if the provided modulus is prime and we can guarantee a multiplicative inverse.
