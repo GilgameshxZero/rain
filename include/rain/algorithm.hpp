@@ -17,7 +17,6 @@
 #include "algorithm/kmp.hpp"
 #include "algorithm/kosaraju.hpp"
 #include "algorithm/lru.hpp"
-#include "algorithm/math.hpp"
 #include "algorithm/miller-rabin.hpp"
 #include "algorithm/modulus-field.hpp"
 #include "algorithm/partitions.hpp"
