@@ -2,7 +2,7 @@
 
 #include "../../random.hpp"
 #include "../../windows/windows.hpp"
-#include "../math.hpp"
+#include "../../math.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -32,20 +32,20 @@ namespace Rain::Algorithm::Geometry {
 		template <typename NewPrecisionType>
 		inline Point<NewPrecisionType> round() const {
 			return {
-				Algorithm::round<NewPrecisionType>(this->x),
-				Algorithm::round<NewPrecisionType>(this->y)};
+				Math::round<NewPrecisionType>(this->x),
+				Math::round<NewPrecisionType>(this->y)};
 		}
 		template <typename NewPrecisionType>
 		inline Point<NewPrecisionType> floor() const {
 			return {
-				Algorithm::floor<NewPrecisionType>(this->x),
-				Algorithm::floor<NewPrecisionType>(this->y)};
+				Math::floor<NewPrecisionType>(this->x),
+				Math::floor<NewPrecisionType>(this->y)};
 		}
 		template <typename NewPrecisionType>
 		inline Point<NewPrecisionType> ceil() const {
 			return {
-				Algorithm::ceil<NewPrecisionType>(this->x),
-				Algorithm::ceil<NewPrecisionType>(this->y)};
+				Math::ceil<NewPrecisionType>(this->x),
+				Math::ceil<NewPrecisionType>(this->y)};
 		}
 		template <typename OtherPrecisionType>
 		inline auto cross(Point<OtherPrecisionType> const &other) const {

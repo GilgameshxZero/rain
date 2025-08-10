@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.3.17
+
+1. Refactor math into its own namespace.
+2. Introduce `Matrix` class.
+
 ## 7.3.16
 
 1. Add compile-time primality checker and `sqrt`.

@@ -70,26 +70,26 @@ namespace Rain::Algorithm::Geometry {
 		template <typename NewPrecisionType>
 		inline Rectangle<NewPrecisionType> round() const {
 			return {
-				Algorithm::round<NewPrecisionType>(this->left),
-				Algorithm::round<NewPrecisionType>(this->top),
-				Algorithm::round<NewPrecisionType>(this->right),
-				Algorithm::round<NewPrecisionType>(this->bottom)};
+				Math::round<NewPrecisionType>(this->left),
+				Math::round<NewPrecisionType>(this->top),
+				Math::round<NewPrecisionType>(this->right),
+				Math::round<NewPrecisionType>(this->bottom)};
 		}
 		template <typename NewPrecisionType>
 		inline Rectangle<NewPrecisionType> floor() const {
 			return {
-				Algorithm::floor<NewPrecisionType>(this->left),
-				Algorithm::floor<NewPrecisionType>(this->top),
-				Algorithm::floor<NewPrecisionType>(this->right),
-				Algorithm::floor<NewPrecisionType>(this->bottom)};
+				Math::floor<NewPrecisionType>(this->left),
+				Math::floor<NewPrecisionType>(this->top),
+				Math::floor<NewPrecisionType>(this->right),
+				Math::floor<NewPrecisionType>(this->bottom)};
 		}
 		template <typename NewPrecisionType>
 		inline Rectangle<NewPrecisionType> ceil() const {
 			return {
-				Algorithm::ceil<NewPrecisionType>(this->left),
-				Algorithm::ceil<NewPrecisionType>(this->top),
-				Algorithm::ceil<NewPrecisionType>(this->right),
-				Algorithm::ceil<NewPrecisionType>(this->bottom)};
+				Math::ceil<NewPrecisionType>(this->left),
+				Math::ceil<NewPrecisionType>(this->top),
+				Math::ceil<NewPrecisionType>(this->right),
+				Math::ceil<NewPrecisionType>(this->bottom)};
 		}
 		inline Point<PrecisionType> size() const {
 			return {this->width(), this->height()};

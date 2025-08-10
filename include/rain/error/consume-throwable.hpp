@@ -1,4 +1,4 @@
-// Provide a wrapper which noexcepts any generic callable by consuming its
+// Provide a wrapper which `noexcept`s any generic callable by consuming its
 // exceptions.
 #pragma once
 
@@ -21,7 +21,7 @@ namespace Rain::Error {
 	//
 	// consumeThrowable must be called with Args... matching the parameters to the
 	// callable. It does not support default arguments in the callable, as Args...
-	// does not accomodate that signature.
+	// does not accommodate that signature.
 	//
 	// Crashes may still be caused via signal crashes (dividing by 0, etc.).
 	template <typename Callable>
