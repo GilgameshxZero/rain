@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.3.15
+
+1. Refactor `ModulusField` into `ModulusField` and `ModulusRing`, depending on if the provided modulus is prime and we can guarantee a multiplicative inverse.
+1. The refactor uses base class `ModulusRingBase` to inherit most capabilities, and CRTP tricks to ensure that operators are inherited correctly.
+1. Remove `isPair` in favor of `isBaseOfTemplate` in `Functional`.
+1. Introduce more tests for `ModulusField`, `ModulusRing`, and `Functional`.
+
 ## 7.3.14
 
 1. Clarify documentation for `SegmentTreeLazy`.

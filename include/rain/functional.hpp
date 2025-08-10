@@ -25,15 +25,19 @@ namespace Rain::Functional {
 		enum { value = sizeof(evaluate<Type>(0)) == sizeof(char) };
 	};
 
-	template <typename>
-	struct isPair : std::false_type {};
-
-	template <typename TypeFirst, typename TypeSecond>
-	struct isPair<std::pair<TypeFirst, TypeSecond>> : std::true_type {};
+	// Similar to `std::is_base_of`, but for template base types.
+	namespace {
+		template <template <typename...> class Type, typename... TypeTemplate>
+		std::true_type isBaseOfTemplateImpl(Type<TypeTemplate...> const *);
+		template <template <typename...> class Type>
+		std::false_type isBaseOfTemplateImpl(...);
+	}
+	template <template <typename...> class TypeBase, typename TypeDerived>
+	using isBaseOfTemplate =
+		decltype(isBaseOfTemplateImpl<TypeBase>(std::declval<TypeDerived *>()));
 
 	template <typename Type, typename = std::void_t<>>
 	struct isStdHashable : std::false_type {};
-
 	template <typename Type>
 	struct isStdHashable<
 		Type,

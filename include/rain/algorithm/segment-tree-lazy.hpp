@@ -342,8 +342,8 @@ namespace Rain::Algorithm {
 			// combine is omitted because we only support point updates.
 			static inline void retrace(
 				Value &value,
-				Value const &left,
-				Value const &right,
+				Value const &,
+				Value const &,
 				Update const &update) {
 				// We can directly apply the update to this vertex.
 				value.modify(update.first, update.second);
