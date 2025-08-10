@@ -7,14 +7,45 @@
 
 int main() {
 	{
+		assert(!(Rain::Algorithm::isDerivedFromModulusRing<int>()).value);
+		assert((Rain::Algorithm::isDerivedFromModulusRing<
+							Rain::Algorithm::ModulusField<long long, 17>>())
+						 .value);
+		assert((2 * Rain::Algorithm::ModulusField<int, 7>{3}).value == 6);
+	}
+
+	{
 		using PMR1 = Rain::Algorithm::ModulusField<long long, 998244353>;
 		using PMR2 = Rain::Algorithm::ModulusField<long long, 1000000009>;
+
 		PMR1 x, y(100);
 		PMR2 z;
 		assert(sizeof(long long) >= 8);
 		x += 5;
 		assert(x == 5);
-		x += y;
+		assert(x != 6);
+		assert(x == x);
+		assert(x != y);
+		assert(x < y);
+		assert(x <= y);
+		assert(y > x);
+		assert(y >= x);
+		assert(x < 6);
+		assert(x <= 5);
+
+		bool bx{x};
+		std::size_t sx{x};
+		int ix{x};
+		assert(bx);
+		assert(sx == 5);
+		assert(ix == 5);
+		// This is not an explicit cast and should fail.
+		// ix = x;
+		// This is, deceptively, still an explicit cast and will compile.
+		std::vector<int> vx(x);
+		assert(vx.size() == 5);
+
+		x += y.value;
 		assert(x == 105);
 		x++;
 		assert(x == 106);
@@ -46,11 +77,13 @@ int main() {
 		assert(z == 1000000006);
 		x = 31;
 		assert(y == 100);
-		x *= 2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 * y * 39486758 * y *
-			3049857272LL;
+		x *= (2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 * y * 39486758 * y *
+					3049857272LL)
+					 .value;
 		y = 2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31;
 		assert(x / y / 10000 / 3049857272LL / 31 == 39486758);
 		assert(x / 10000 / 3049857272LL / 39486758 / 31 == y);
+		x = z;
 		x = y;
 
 		// Factorials and chooses.
@@ -68,7 +101,7 @@ int main() {
 		assert(sizeof(std::size_t) >= 8);
 		x += 5;
 		assert(x == 5);
-		x += y;
+		x += y.value;
 		assert(x == 105);
 		x++;
 		assert(x == 106);
@@ -97,8 +130,9 @@ int main() {
 		assert(z == 2000000017);
 		x = 31;
 		assert(y == 100);
-		x *= 2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 * y * 39486758 * y *
-			3049857272LL;
+		x *= (2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 * y * 39486758 * y *
+					3049857272LL)
+					 .value;
 		y = 2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31;
 		assert(x / y / 10000 / 3049857272LL / 31 == 39486758);
 		assert(x / 10000 / 3049857272LL / 39486758 / 31 == y);
@@ -141,8 +175,14 @@ int main() {
 		assert(z * 14 == 14);
 
 		// Assignment with differing moduli always prefers the lvalue modulus.
+		assert(y == 14);
+		assert(19 == 5 + y);
+		assert(y.MODULUS > 14);
+		assert(z.MODULUS == 13);
 		z = y;
 		assert(z == 1);
+		z = 5;
+		assert(z == 5);
 
 		z = y.value;
 		assert(z.value == 1);
@@ -189,6 +229,26 @@ int main() {
 		// Is a hashable type.
 		std::unordered_set<MF> S;
 		S.insert({24});
+	}
+
+	{
+		using MR = Rain::Algorithm::ModulusRing<long long, 14>;
+		using MF = Rain::Algorithm::ModulusField<long long, 7>;
+		MR x{5};
+		MF y{1};
+
+		x *= 5;
+		assert(x == 11);
+		assert(x == -3);
+		assert(y == -6);
+		y /= 4;
+		assert(y == 2);
+		y = x;
+		assert(y == 4);
+		y = -5;
+		assert(y == 2);
+		x = y;
+		assert(x == 2);
 	}
 
 	return 0;

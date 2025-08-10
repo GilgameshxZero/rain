@@ -8,12 +8,6 @@
 #include <unordered_set>
 
 int main() {
-	// std::cout << Rain::Functional::isStdHashable<long long>::value << '\n';
-	// std::cout << Rain::Functional::isStdHashable<std::array<int, 8>>::value
-	// 					<< '\n';
-	// std::cout << Rain::Functional::isPair<std::array<int, 8>>::value << '\n';
-	// std::cout << Rain::Functional::isConstIterable<std::array<int, 8>>::value
-	// << '\n';
 	{
 		using Type = std::array<long long, 8>;
 		std::unordered_map<Type, std::string, Rain::Random::SplitMixHash<Type>> X;

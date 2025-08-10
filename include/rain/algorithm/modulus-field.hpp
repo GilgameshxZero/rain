@@ -9,7 +9,24 @@
 #include <vector>
 
 namespace Rain::Algorithm {
-	// Implementation for a modulus field over the integers,
+	template <typename, typename, std::size_t>
+	class ModulusRingBase;
+
+	// We must use our own templated SFINAE base class checker, since the one
+	// provided in Functional cannot work with non-type template parameters.
+	template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
+	std::true_type isDerivedFromModulusRingImpl(
+		ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const *);
+	// Must include default types here in case deduction fails (which it almost
+	// certainly will, and trigger SFINAE if it does, which is bad, since we need
+	// this type to be defined).
+	template <typename = void *, typename = void *, std::size_t = 0>
+	std::false_type isDerivedFromModulusRingImpl(...);
+	template <typename TypeDerived>
+	using isDerivedFromModulusRing =
+		decltype(isDerivedFromModulusRingImpl(std::declval<TypeDerived *>()));
+
+	// Implementation for a modulus ring CRTP over the integers,
 	// supporting basic operations add, subtract, multiply in O(1) and divide in
 	// O(ln M). Division is generally only valid for prime moduli. For O(1)
 	// division, cache multiplicative inverses and multiply with those.
@@ -17,255 +34,332 @@ namespace Rain::Algorithm {
 	// A runtime modulus may be specified with MODULUS 0 in the template and the
 	// appropriate constructor.
 	//
-	// Integer must be large enough to store (modulus() - 1)^2.
-	template <typename Integer, std::size_t MODULUS_OUTER = 0>
-	class ModulusField {
+	// Underlying must be large enough to store (modulus() - 1)^2.
+	//
+	// Polymorphism CRTP is similar to the 2D CRTP in Networking, but without the
+	// additional layers and complexity.
+	template <
+		typename Derived,
+		typename Underlying,
+		std::size_t MODULUS_OUTER = 0>
+	class ModulusRingBase {
+		private:
+		using TypeThis = ModulusRingBase<Derived, Underlying, MODULUS_OUTER>;
+
 		public:
-		Integer const MODULUS;
-		Integer value;
+		Underlying const MODULUS;
+		Underlying value;
 
-		// Explicit copy constructor helps avoid compiler warnings on `clang`.
-		ModulusField(ModulusField<Integer, MODULUS_OUTER> const &other)
-				: MODULUS{MODULUS_OUTER}, value(other.value) {}
-
+		// Construction with a raw value will directly take the value. Construction
+		// with another ModulusRingBase will call the % operator on the other's
+		// value, which will always stay in range of the other's ring. This value is
+		// then explicitly cast into the current underlying type.
+		//
 		// If the integer specified is signed and negative, we want to wrap it back
 		// to the positives first.
+		//
+		// Use () instead of {} for value to explicitly trigger narrowing casts, if
+		// necessary.
 		template <
-			typename OtherInteger = std::size_t,
+			typename Integer = std::size_t,
+			typename std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type
+				* = nullptr,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
-			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr,
-			typename std::enable_if<!std::is_same<
-				ModulusField<Integer, MODULUS_OUTER>,
-				OtherInteger>::value>::type * = nullptr>
-		ModulusField(OtherInteger const &value = 0)
+			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+		ModulusRingBase(Integer const &value = 0)
 				: MODULUS{MODULUS_OUTER},
 					value(
 						value < 0 ? this->MODULUS - ((0 - value) % this->MODULUS)
 											: value % this->MODULUS) {}
-
 		template <
-			typename OtherInteger = std::size_t,
+			typename Integer = std::size_t,
+			typename std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type
+				* = nullptr,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
-		ModulusField(Integer const &modulus, OtherInteger const &value = 0)
+		ModulusRingBase(Underlying const &modulus, Integer const &value = 0)
 				: MODULUS{modulus},
 					value(
 						value < 0 ? this->MODULUS - ((0 - value) % this->MODULUS)
 											: value % this->MODULUS) {}
-
-		// Builds a ModulusField<Integer, MODULUS_OUTER> type, but with the same
-		// underlying modulus value. Uses more specialized SFINAE to differentiate
-		// otherwise identical signatures.
 		template <
-			typename OtherInteger,
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
-		static ModulusField<Integer, MODULUS_OUTER> build(
-			OtherInteger const &value) {
-			return {value};
-		}
-
+		ModulusRingBase(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other)
+				: MODULUS{MODULUS_OUTER},
+					value(
+						other.value < 0
+							? this->MODULUS - ((0 - other.value) % this->MODULUS)
+							: other.value % this->MODULUS) {}
 		template <
-			typename OtherInteger,
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
-		ModulusField<Integer, MODULUS_OUTER> build(
-			OtherInteger const &value) const {
+		ModulusRingBase(
+			Underlying const &modulus,
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other)
+				: MODULUS{modulus},
+					value(
+						other.value < 0
+							? this->MODULUS - ((0 - other.value) % this->MODULUS)
+							: other.value % this->MODULUS) {}
+
+		// Explicit copy constructor helps avoid compiler warnings on `clang`.
+		ModulusRingBase(TypeThis const &other)
+				: MODULUS{other.MODULUS},
+					value{
+						other.value < 0
+							? this->MODULUS - ((0 - other.value) % this->MODULUS)
+							: other.value % this->MODULUS} {}
+
+		// Builds a Derived type, but with the same underlying modulus value. Uses
+		// more specialized SFINAE to differentiate otherwise identical signatures.
+		template <
+			typename Integer,
+			std::size_t MODULUS_INNER = MODULUS_OUTER,
+			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+		static Derived build(Integer const &value) {
+			return Derived(value);
+		}
+		template <
+			typename Integer,
+			std::size_t MODULUS_INNER = MODULUS_OUTER,
+			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
+		Derived build(Integer const &value) const {
 			return {this->MODULUS, value};
 		}
 
 		// Assignment operators need to be overloaded as this class stores an
 		// additional modulus, which implicitly deletes the default assignment
 		// operator.
-		ModulusField<Integer, MODULUS_OUTER> &operator=(
-			ModulusField<Integer, MODULUS_OUTER> const &other) {
-			// Runtime moduli may not actually be the same, so we need to take an
-			// additional mod here.
+		//
+		// Assignment only assigns the value. On some compilers (MSVC), it is
+		// helpful to have an explicit overload for the current type.
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		auto &operator=(Integer const &other) {
+			return *this = build(other);
+		}
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_FIELD>
+		auto &operator=(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_FIELD> const
+				&other) {
+			// Like in the constructor, we should force this modulus first.
 			this->value = other.value % this->MODULUS;
 			return *this;
 		}
-		template <typename OtherInteger>
-		ModulusField<Integer, MODULUS_OUTER> &operator=(OtherInteger const &other) {
-			return *this = build(other);
+		auto &operator=(TypeThis const &other) {
+			this->value = other.value % this->MODULUS;
+			return *this;
 		}
 
-		// Comparison.
-		template <typename OtherInteger>
-		inline bool operator==(OtherInteger const &other) const {
+		// Casts are explicit to prevent errors. However, this may still be
+		// deceptive.
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		explicit operator Integer() const {
+			return static_cast<Integer>(this->value);
+		}
+
+		// Comparison on integer types will first bring the integer into the ring.
+		// Comparison with other modulus types will compare the value directly.
+		// Some operators are generated by the compiler automatically.
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator==(Integer const &other) const {
 			return *this == build(other);
 		}
-		template <typename OtherInteger>
-		inline bool operator==(OtherInteger const &other) {
-			return std::as_const(*this) == other;
-		}
-		inline bool operator==(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
-			// Ignores modulus comparison! Important.
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator==(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			// Ignores modulus comparison!
 			return this->value == other.value;
 		}
-		inline bool operator==(ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return std::as_const(*this) == other;
-		}
-		template <typename OtherInteger>
-		inline bool operator!=(OtherInteger const &other) const {
-			return *this != build(other);
-		}
-		template <typename OtherInteger>
-		inline bool operator!=(OtherInteger const &other) {
-			return std::as_const(*this) != other;
-		}
-		inline bool operator!=(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
-			return !(*this == other);
-		}
-		inline bool operator!=(ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return std::as_const(*this) != other;
-		}
-		// Other comparison operators only compare value and are prone to error.
-		inline bool operator>(ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return this->value > other.value;
-		}
-		inline bool operator>=(ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return this->value >= other.value;
-		}
-		inline bool operator<(ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return this->value < other.value;
-		}
-		inline bool operator<=(ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return this->value <= other.value;
-		}
-
-		// Unary.
-		inline ModulusField<Integer, MODULUS_OUTER> operator-() const {
-			return 0 - *this;
-		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator-() {
-			return -std::as_const(*this);
-		}
-
-		// Cast.
-		explicit operator bool() const { return this->value != 0; }
-		operator std::size_t() const {
-			return static_cast<std::size_t>(this->value);
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator<(Integer const &other) const {
+			return *this < build(other);
 		}
 		template <
-			typename OtherInteger,
-			typename std::enable_if<
-				!std::is_same<OtherInteger, std::size_t>::value>::type * = nullptr>
-		operator OtherInteger() const {
-			return this->value;
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator<(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			return this->value < other.value;
+		}
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator<=(Integer const &other) const {
+			return *this <= build(other);
+		}
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator<=(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			return *this < other || *this == other;
+		}
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator>(Integer const &other) const {
+			return *this > build(other);
+		}
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator>(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			return !(*this <= other);
+		}
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator>=(Integer const &other) const {
+			return *this >= build(other);
+		}
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator>=(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			return *this > other || *this == other;
 		}
 
-		// Arithmetic.
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator+(
-			OtherInteger const &other) const {
+		// Arithmetic can only be performed between ModulusRingBases with the same
+		// moduli, or with raw integers. Arithmetic on raw integers first builds
+		// them into this type.
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator+(Integer const &other) const {
 			return *this + build(other);
 		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator+(
-			OtherInteger const &other) {
-			return std::as_const(*this) + other;
-		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator+(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator+(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
 			return build(this->value + other.value);
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator+(
-			ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return std::as_const(*this) + other;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> &operator+=(
-			OtherInteger const &other) {
+		template <typename Integer>
+		inline auto &operator+=(Integer const &other) {
 			return *this = *this + other;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator++() {
-			return *this += 1;
-		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator++(int) {
-			auto tmp(*this);
-			*this += 1;
-			return tmp;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator-(
-			OtherInteger const &other) const {
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator-(Integer const &other) const {
 			return *this - build(other);
 		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator-(
-			OtherInteger const &other) {
-			return std::as_const(*this) - other;
-		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator-(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator-(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			// We must explicitly add MODULUS here because the type may be signed.
 			return build(this->value + this->MODULUS - other.value);
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator-(
-			ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return std::as_const(*this) - other;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> &operator-=(
-			OtherInteger const &other) {
+		template <typename Integer>
+		inline auto &operator-=(Integer const &other) {
 			return *this = *this - other;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator--() {
-			return *this -= 1;
-		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator--(int) {
-			auto tmp(*this);
-			*this -= 1;
-			return tmp;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator*(
-			OtherInteger const &other) const {
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator*(Integer const &other) const {
 			return *this * build(other);
 		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator*(
-			OtherInteger const &other) {
-			return std::as_const(*this) * other;
-		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator*(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator*(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
 			return build(this->value * other.value);
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator*(
-			ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return std::as_const(*this) * other;
-		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> &operator*=(
-			OtherInteger const &other) {
+		template <typename Integer>
+		inline auto &operator*=(Integer const &other) {
 			return *this = *this * other;
 		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator/(
-			OtherInteger const &other) const {
-			return *this / build(other);
+		// Modulus operates directly on modded operand value.
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline auto operator%(Integer const &other) const {
+			return *this % build(other);
 		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> operator/(
-			OtherInteger const &other) {
-			return std::as_const(*this) / other;
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline auto operator%(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&other) const {
+			return build(this->value % other.value);
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator/(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
-			// This is only true if this has a multiplicative inverse, which is always
-			// true if the modulus is prime.
-			return *this * other.power(this->MODULUS - 2);
+		template <typename Integer>
+		inline auto &operator%=(Integer const &other) {
+			return *this = *this % other;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator/(
-			ModulusField<Integer, MODULUS_OUTER> const &other) {
-			return std::as_const(*this) / other;
+
+		// Unary operations are mostly shorthands for binary operations.
+		inline auto operator-() const { return 0 - *this; }
+		inline auto operator++() { return *this += 1; }
+		inline auto operator++(int) {
+			auto tmp(*this);
+			*this += 1;
+			return build(tmp);
 		}
-		template <typename OtherInteger>
-		inline ModulusField<Integer, MODULUS_OUTER> &operator/=(
-			OtherInteger const &other) {
-			return *this = *this / other;
+		inline auto operator--() { return *this -= 1; }
+		inline auto operator--(int) {
+			auto tmp(*this);
+			*this -= 1;
+			return build(tmp);
 		}
 
 		// The following are algorithmic functions based on the modulus field
@@ -273,21 +367,20 @@ namespace Rain::Algorithm {
 
 		// Versions of C++ before C++17 should use static member functions instead
 		// of static inline member variables. static inline
-		// std::vector<ModulusField<Integer, MODULUS_OUTER>> 	&factorials() {
-		// static std::vector<ModulusField<Integer, MODULUS_OUTER>> factorials;
-		// return factorials;
+		// std::vector<Derived> 	&factorials() {
+		// static std::vector<Derived>
+		// factorials; return factorials;
 		// }
-		// static inline std::vector<ModulusField<Integer, MODULUS_OUTER>>
+		// static inline std::vector<Derived>
 		// 	&invFactorials() {
-		// 	static std::vector<ModulusField<Integer, MODULUS_OUTER>>
+		// 	static std::vector<Derived>
 		// invFactorials; 	return invFactorials;
 		// }
-		static inline std::vector<ModulusField<Integer, MODULUS_OUTER>> factorials,
-			invFactorials;
+		static inline std::vector<Derived> factorials, invFactorials;
 
 		// Computes the factorials modulus a prime, up to and including N, in O(N).
 		// This enables the choose functions.
-		static void precomputeFactorials(std::size_t const N) {
+		static inline void precomputeFactorials(std::size_t const N) {
 			factorials.resize(N + 1);
 			invFactorials.resize(N + 1);
 			factorials[0] = 1;
@@ -300,22 +393,12 @@ namespace Rain::Algorithm {
 			}
 		}
 
-		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
-		// Must have called precomputeFactorials for the largest expected value of N
-		// first.
-		inline ModulusField<Integer, MODULUS_OUTER> choose(
-			std::size_t const K) const {
-			std::size_t const N{static_cast<std::size_t>(this->value)};
-			if (K < 0 || K > N) {
-				return build(0);
-			}
-			return factorials[N] * invFactorials[K] * invFactorials[N - K];
-		}
-
-		// O(ln N) exponentiation.
-		template <typename OtherInteger>
-		ModulusField<Integer, MODULUS_OUTER> power(
-			OtherInteger const &exponent) const {
+		// O(ln N) exponentiation. The exponent's value is used.
+		template <
+			typename Integer,
+			std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type * =
+				nullptr>
+		inline Derived power(Integer const &exponent) const {
 			if (exponent == 0) {
 				return build(1);
 			}
@@ -326,62 +409,225 @@ namespace Rain::Algorithm {
 				return half * half * *this;
 			}
 		}
+		template <
+			typename OtherDerived,
+			typename OtherUnderlying,
+			std::size_t OTHER_MODULUS_OUTER>
+		inline Derived power(
+			ModulusRingBase<OtherDerived, OtherUnderlying, OTHER_MODULUS_OUTER> const
+				&exponent) const {
+			return this->power(exponent.value);
+		}
+	};
+
+	// Any reasonable modulus will suffice, since we do not define multiplicative
+	// inverses in a ring.
+	template <typename Underlying, std::size_t MODULUS_OUTER = 0>
+	class ModulusRing : public ModulusRingBase<
+												ModulusRing<Underlying, MODULUS_OUTER>,
+												Underlying,
+												MODULUS_OUTER> {
+		private:
+		using TypeThis = ModulusRing<Underlying, MODULUS_OUTER>;
+		using TypeSuper = ModulusRingBase<TypeThis, Underlying, MODULUS_OUTER>;
+
+		public:
+		// Constructors must be inherited with the alias name, not the original
+		// name.
+		using TypeSuper::TypeSuper;
+
+		// For some reason, we must provide specific constructors for `build`, and
+		// they are not inherited.
+		template <
+			std::size_t MODULUS_INNER = MODULUS_OUTER,
+			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+		ModulusRing(TypeSuper const &other) : TypeSuper(other) {}
+		template <
+			std::size_t MODULUS_INNER = MODULUS_OUTER,
+			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
+		ModulusRing(Underlying const &modulus, TypeSuper const &other)
+				: TypeSuper(modulus, other) {}
+
+		using TypeSuper::build;
+
+		// `operator=` is always hidden by a dummy one in the derived class:
+		// <https://stackoverflow.com/questions/12009865/operator-and-functions-that-are-not-inherited-in-c>.
+		template <typename Integer>
+		inline TypeThis operator=(Integer const &other) {
+			return build(TypeSuper::operator=(other));
+		}
+
+		using TypeSuper::factorials;
+		using TypeSuper::invFactorials;
+	};
+
+	// Must be used with a prime modulus, but this cannot be checked at
+	// compile-time. If modulus is not prime, use ModulusRing instead.
+	template <typename Underlying, std::size_t MODULUS_OUTER = 0>
+	class ModulusField : public ModulusRingBase<
+												 ModulusField<Underlying, MODULUS_OUTER>,
+												 Underlying,
+												 MODULUS_OUTER> {
+		private:
+		using TypeThis = ModulusField<Underlying, MODULUS_OUTER>;
+		using TypeSuper = ModulusRingBase<TypeThis, Underlying, MODULUS_OUTER>;
+
+		public:
+		using TypeSuper::TypeSuper;
+
+		template <
+			std::size_t MODULUS_INNER = MODULUS_OUTER,
+			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+		ModulusField(TypeSuper const &other) : TypeSuper(other) {}
+		template <
+			std::size_t MODULUS_INNER = MODULUS_OUTER,
+			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
+		ModulusField(Underlying const &modulus, TypeSuper const &other)
+				: TypeSuper(modulus, other) {}
+
+		using TypeSuper::build;
+
+		template <typename Integer>
+		inline TypeThis operator=(Integer const &other) {
+			return build(TypeSuper::operator=(other));
+		}
+
+		// Division is only correct in fields, or rings with specific operands.
+		template <
+			typename Integer,
+			std::enable_if<!std::is_same<TypeThis, Integer>::value>::type * = nullptr>
+		inline TypeThis operator/(Integer const &other) const {
+			return *this / build(other);
+		}
+		inline TypeThis operator/(TypeThis const &other) const {
+			// This is only true if this has a multiplicative inverse, which is always
+			// true if the modulus is prime.
+			return *this * other.power(this->MODULUS - 2);
+		}
+		template <typename Integer>
+		inline TypeThis &operator/=(Integer const &other) {
+			return *this = *this / other;
+		}
+
+		using TypeSuper::factorials;
+		using TypeSuper::invFactorials;
+
+		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
+		// Must have called precomputeFactorials for the largest expected value of N
+		// first.
+		inline TypeThis choose(std::size_t const K) const {
+			std::size_t const N{static_cast<std::size_t>(this->value)};
+			if (K < 0 || K > N) {
+				return build(0);
+			}
+			return factorials[N] * invFactorials[K] * invFactorials[N - K];
+		}
 	};
 }
 
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator+(
-	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+// These operators are only called if the left operand is a raw integer.
+template <
+	typename Integer,
+	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
+		type * = nullptr,
+	typename Derived,
+	typename Underlying,
+	std::size_t MODULUS_OUTER>
+inline auto operator+(
+	Integer const &left,
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+		&right) {
 	return right.build(left) + right;
 }
-
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator-(
-	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+template <
+	typename Integer,
+	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
+		type * = nullptr,
+	typename Derived,
+	typename Underlying,
+	std::size_t MODULUS_OUTER>
+inline auto operator-(
+	Integer const &left,
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+		&right) {
 	return right.build(left) - right;
 }
-
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator*(
-	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+template <
+	typename Integer,
+	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
+		type * = nullptr,
+	typename Derived,
+	typename Underlying,
+	std::size_t MODULUS_OUTER>
+inline auto operator*(
+	Integer const &left,
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+		&right) {
 	return right.build(left) * right;
 }
-
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator/(
-	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+template <
+	typename Integer,
+	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
+		type * = nullptr,
+	typename Derived,
+	typename Underlying,
+	std::size_t MODULUS_OUTER>
+inline auto operator%(
+	Integer const &left,
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+		&right) {
+	return right.build(left) % right;
+}
+template <
+	typename Integer,
+	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
+		type * = nullptr,
+	typename Underlying,
+	std::size_t MODULUS_OUTER>
+inline auto operator/(
+	Integer const &left,
+	Rain::Algorithm::ModulusField<Underlying, MODULUS_OUTER> const &right) {
 	return right.build(left) / right;
 }
 
 // Ease-of-use streaming operators.
-template <typename Integer, std::size_t MODULUS_OUTER>
+template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
 inline std::ostream &operator<<(
 	std::ostream &stream,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+		&right) {
 	return stream << right.value;
 }
-template <typename Integer, std::size_t MODULUS_OUTER>
+template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
 inline std::istream &operator>>(
 	std::istream &stream,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> &right) {
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+		&right) {
 	stream >> right.value;
 	right.value = (right.modulus + right.value) % right.modulus;
 	return stream;
 }
 
 // Hash operator for this user-defined type, which hashes the inner value (not
-// the modulus).
+// the modulus). There is no way to define hash for only the base class, so we
+// define it for all user-facing classes directly:
+// <https://stackoverflow.com/questions/21900707/specializing-stdhash-to-derived-classes>.
 namespace std {
-	template <typename Integer, std::size_t MODULUS_OUTER>
-	struct hash<Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>> {
+	template <typename Underlying, std::size_t MODULUS_OUTER>
+	struct hash<Rain::Algorithm::ModulusRing<Underlying, MODULUS_OUTER>> {
 		size_t operator()(
-			Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &value)
+			Rain::Algorithm::ModulusRing<Underlying, MODULUS_OUTER> const &value)
 			const {
-			return Rain::Random::SplitMixHash<Integer>{}(value.value);
+			return Rain::Random::SplitMixHash<decltype(value.value)>{}(value.value);
+		}
+	};
+
+	template <typename Underlying, std::size_t MODULUS_OUTER>
+	struct hash<Rain::Algorithm::ModulusField<Underlying, MODULUS_OUTER>> {
+		size_t operator()(
+			Rain::Algorithm::ModulusField<Underlying, MODULUS_OUTER> const &value)
+			const {
+			return Rain::Random::SplitMixHash<decltype(value.value)>{}(value.value);
 		}
 	};
 }

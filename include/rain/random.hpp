@@ -84,7 +84,8 @@ namespace Rain::Random {
 			typename TypeInner = Type,
 			typename std::enable_if<
 				!Functional::isStdHashable<TypeInner>::value &&
-				Functional::isPair<TypeInner>::value>::type * = nullptr>
+				Functional::isBaseOfTemplate<std::pair, TypeInner>::value>::type * =
+				nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
 			combineHash(result, SplitMixHash<decltype(value.first)>{}(value.first));
@@ -97,7 +98,7 @@ namespace Rain::Random {
 			typename TypeInner = Type,
 			typename std::enable_if<
 				!Functional::isStdHashable<TypeInner>::value &&
-				!Functional::isPair<TypeInner>::value &&
+				!Functional::isBaseOfTemplate<std::pair, TypeInner>::value &&
 				Functional::isConstIterable<TypeInner>::value>::type * = nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
