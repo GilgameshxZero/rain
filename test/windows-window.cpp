@@ -1,10 +1,4 @@
-#include <rain/algorithm/geometry.hpp>
-#include <rain/literal.hpp>
-#include <rain/windows.hpp>
-
-#include <iostream>
-#include <thread>
-#include <vector>
+#include <rain.hpp>
 
 #ifdef RAIN_PLATFORM_WINDOWS
 

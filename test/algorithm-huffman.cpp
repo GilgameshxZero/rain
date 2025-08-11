@@ -1,12 +1,5 @@
 // Tests for Huffman en/de-coding.
-#include <rain/algorithm/huffman.hpp>
-#include <rain/filesystem.hpp>
-#include <rain/literal.hpp>
-#include <rain/time.hpp>
-
-#include <cassert>
-#include <fstream>
-#include <iostream>
+#include <rain.hpp>
 
 void assertEncodeDecode(std::string const &text) {
 	std::ostringstream encodedStream;
@@ -39,7 +32,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	auto timeBegin = std::chrono::steady_clock::now();
 	std::cout << "Filename: " << name << '.' << std::endl;
 
-	std::filesystem::path const filePath{"../test/" + name};
+	std::filesystem::path const filePath{"../../test/" + name};
 	std::ifstream fileIn(filePath, std::ios::binary);
 	std::array<std::size_t, UCHAR_MAX + 1> fileFrequency{0};
 	int nextC{fileIn.get()};
@@ -49,7 +42,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	}
 	fileIn.close();
 
-	std::filesystem::create_directory("algorithm-huffman.cpp-assets");
+	std::filesystem::create_directory("algorithm-huffman.cpp.assets");
 	std::filesystem::path const encodedPath{name + ".huff"};
 	std::ofstream encodedOut(encodedPath, std::ios::binary);
 	Rain::Algorithm::HuffmanStreamBuf encodedStreamBuf(
@@ -119,9 +112,9 @@ int main() {
 		"aaaaabcbaaaaaaaaaaaaaaaaaaacbbbbbbbbbbbbbcbcbaaaaaaaaabcbacbbbca"s);
 	assertEncodeDecode("testing the EOF SUB \x1a and NULL \x00 characters"s);
 
-	assertEncodeDecodeFile("algorithm-huffman.cpp-assets/text.txt");
-	assertEncodeDecodeFile("algorithm-huffman.cpp-assets/blue-orb.png");
-	assertEncodeDecodeFile("algorithm-huffman.cpp-assets/1905.02175.pdf");
+	assertEncodeDecodeFile("algorithm-huffman.cpp.assets/text.txt");
+	assertEncodeDecodeFile("algorithm-huffman.cpp.assets/blue-orb.png");
+	assertEncodeDecodeFile("algorithm-huffman.cpp.assets/1905.02175.pdf");
 
 	return 0;
 }

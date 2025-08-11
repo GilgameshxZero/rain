@@ -1,10 +1,5 @@
 // Very simple tests for Networking::Http::Client.
-#include <rain/networking/http/client.hpp>
-#include <rain/networking/socket-options.hpp>
-#include <rain/networking/specification.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

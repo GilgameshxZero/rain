@@ -1,10 +1,5 @@
 // Tests for Rain::Error::consumeThrowable.
-#include <rain/error/consume-throwable.hpp>
-#include <rain/literal.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <stdexcept>
+#include <rain.hpp>
 
 auto foo() {
 	static int count{0};

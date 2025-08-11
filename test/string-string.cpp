@@ -1,9 +1,5 @@
 // Tests string utilities from String.
-#include <rain/string/string.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <unordered_set>
+#include <rain.hpp>
 
 int main() {
 	std::string str{"WhAT? iS? thIs?"};

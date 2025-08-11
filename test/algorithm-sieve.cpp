@@ -1,6 +1,4 @@
-#include <rain/algorithm/sieve.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	auto [minFactor, primes]{Rain::Algorithm::linearSieve(1000000)};

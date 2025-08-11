@@ -9,22 +9,29 @@
 #include <vector>
 
 namespace Rain::Algorithm {
-	template <typename, typename, std::size_t>
+	template <
+		typename = std::nullptr_t,
+		typename = std::nullptr_t,
+		std::size_t = 0>
 	class ModulusRingBase;
 
-	// We must use our own templated SFINAE base class checker, since the one
-	// provided in Functional cannot work with non-type template parameters.
-	template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
-	std::true_type isDerivedFromModulusRingImpl(
-		ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const *);
-	// Must include default types here in case deduction fails (which it almost
-	// certainly will, and trigger SFINAE if it does, which is bad, since we need
-	// this type to be defined).
-	template <typename = void *, typename = void *, std::size_t = 0>
-	std::false_type isDerivedFromModulusRingImpl(...);
-	template <typename TypeDerived>
-	using isDerivedFromModulusRing =
-		decltype(isDerivedFromModulusRingImpl(std::declval<TypeDerived *>()));
+	template <>
+	class ModulusRingBase<std::nullptr_t, std::nullptr_t, 0> {
+		public:
+		// We must use our own templated SFINAE base class checker, since the one
+		// provided in Functional cannot work with non-type template parameters.
+		template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
+		static std::true_type isDerivedFromModulusRingImpl(
+			ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const *);
+		// Must include default types here in case deduction fails (which it almost
+		// certainly will, and trigger SFINAE if it does, which is bad, since we
+		// need this type to be defined).
+		template <typename = void *, typename = void *, std::size_t = 0>
+		static std::false_type isDerivedFromModulusRingImpl(...);
+		template <typename TypeDerived>
+		using isDerivedFromModulusRing =
+			decltype(isDerivedFromModulusRingImpl(std::declval<TypeDerived *>()));
+	};
 
 	// Implementation for a modulus ring CRTP over the integers,
 	// supporting basic operations add, subtract, multiply in O(1) and divide in
@@ -38,13 +45,13 @@ namespace Rain::Algorithm {
 	//
 	// Polymorphism CRTP is similar to the 2D CRTP in Networking, but without the
 	// additional layers and complexity.
-	template <
-		typename Derived,
-		typename Underlying,
-		std::size_t MODULUS_OUTER = 0>
+	template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
 	class ModulusRingBase {
 		private:
 		using TypeThis = ModulusRingBase<Derived, Underlying, MODULUS_OUTER>;
+		template <typename TypeDerived>
+		using isDerivedFromModulusRing =
+			ModulusRingBase<>::isDerivedFromModulusRing<TypeDerived>;
 
 		public:
 		Underlying const MODULUS;
@@ -528,8 +535,8 @@ namespace Rain::Algorithm {
 // These operators are only called if the left operand is a raw integer.
 template <
 	typename Integer,
-	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
-		type * = nullptr,
+	std::enable_if<!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+		Integer>::value>::type * = nullptr,
 	typename Derived,
 	typename Underlying,
 	std::size_t MODULUS_OUTER>
@@ -541,8 +548,8 @@ inline auto operator+(
 }
 template <
 	typename Integer,
-	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
-		type * = nullptr,
+	std::enable_if<!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+		Integer>::value>::type * = nullptr,
 	typename Derived,
 	typename Underlying,
 	std::size_t MODULUS_OUTER>
@@ -554,8 +561,8 @@ inline auto operator-(
 }
 template <
 	typename Integer,
-	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
-		type * = nullptr,
+	std::enable_if<!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+		Integer>::value>::type * = nullptr,
 	typename Derived,
 	typename Underlying,
 	std::size_t MODULUS_OUTER>
@@ -567,8 +574,8 @@ inline auto operator*(
 }
 template <
 	typename Integer,
-	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
-		type * = nullptr,
+	std::enable_if<!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+		Integer>::value>::type * = nullptr,
 	typename Derived,
 	typename Underlying,
 	std::size_t MODULUS_OUTER>
@@ -580,8 +587,8 @@ inline auto operator%(
 }
 template <
 	typename Integer,
-	std::enable_if<!Rain::Algorithm::isDerivedFromModulusRing<Integer>::value>::
-		type * = nullptr,
+	std::enable_if<!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+		Integer>::value>::type * = nullptr,
 	typename Underlying,
 	std::size_t MODULUS_OUTER>
 inline auto operator/(

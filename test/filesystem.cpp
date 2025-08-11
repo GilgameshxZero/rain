@@ -1,9 +1,5 @@
 // Tests for Rain::Filesystem.
-#include <rain/filesystem.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <unordered_map>
+#include <rain.hpp>
 
 int main() {
 	std::filesystem::path workingDir{std::filesystem::current_path()};

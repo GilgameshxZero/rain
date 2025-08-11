@@ -1,7 +1,4 @@
-#include <rain/functional.hpp>
-
-#include <array>
-#include <cassert>
+#include <rain.hpp>
 
 using namespace Rain;
 using namespace Functional;

@@ -1,8 +1,4 @@
-#include <rain/algorithm/bigint.hpp>
-#include <rain/algorithm/miller-rabin.hpp>
-#include <rain/literal.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

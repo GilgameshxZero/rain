@@ -1,6 +1,4 @@
-#include <rain/math.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	{

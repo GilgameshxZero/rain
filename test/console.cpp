@@ -1,4 +1,4 @@
-#include <rain/console.hpp>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain;

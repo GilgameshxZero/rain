@@ -1,10 +1,4 @@
-#include <rain/algorithm/bigint.hpp>
-#include <rain/algorithm/bit-manipulators.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <sstream>
-#include <unordered_set>
+#include <rain.hpp>
 
 int main() {
 	// 64-bits.

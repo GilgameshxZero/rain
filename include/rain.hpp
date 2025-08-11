@@ -1,21 +1,18 @@
 // Includes all rain libraries.
 #pragma once
 
-// Versioning.
-#define RAIN_VERSION_MAJOR 7
-#define RAIN_VERSION_MINOR 3
-#define RAIN_VERSION_REVISION 17
-
 // Disable secure warnings; the caller should be aware of out-of-bounds errors
 // when calling any not-bound-checked function.
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "rain/build.hpp"
+// Versioning information is included but does not trigger a rebuild.
+#include "../build/version.hpp"
 
 #include "rain/algorithm.hpp"
 #include "rain/console.hpp"
+#include "rain/data.hpp"
 #include "rain/error.hpp"
 #include "rain/filesystem.hpp"
 #include "rain/literal.hpp"

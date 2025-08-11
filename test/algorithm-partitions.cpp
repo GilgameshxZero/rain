@@ -1,6 +1,4 @@
-#include <rain/algorithm/partitions.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	auto partitions{Rain::Algorithm::partitionNumbers(300LL)};

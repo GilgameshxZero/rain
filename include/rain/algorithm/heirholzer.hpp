@@ -25,8 +25,8 @@ namespace Rain::Algorithm {
 		}
 		for (std::size_t i{0}; i < edges.size(); i++) {
 			if (
-				!directed && edges[i].size() % 2 != 0 ||
-				directed && edges[i].size() != inDegree[i]) {
+				(!directed && edges[i].size() % 2 != 0) ||
+				(directed && edges[i].size() != inDegree[i])) {
 				return {};
 			}
 		}

@@ -1,12 +1,5 @@
 // Tests Networking::Tcp, and in particular the iostream capability.
-#include <rain/networking/socket-options.hpp>
-#include <rain/networking/tcp/client.hpp>
-#include <rain/networking/tcp/server.hpp>
-#include <rain/networking/tcp/socket.hpp>
-#include <rain/networking/tcp/worker.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

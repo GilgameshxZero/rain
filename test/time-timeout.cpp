@@ -1,12 +1,5 @@
 // Tests for Time::Timeout.
-#include <rain/literal.hpp>
-#include <rain/time/time.hpp>
-
-#include <rain/time/timeout.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <thread>
+#include <rain.hpp>
 
 using namespace Rain::Literal;
 

@@ -1,11 +1,5 @@
 // Tests Networking::Http::Server.
-#include <rain/networking/http/client.hpp>
-#include <rain/networking/http/server.hpp>
-#include <rain/networking/http/worker.hpp>
-#include <rain/networking/socket-options.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

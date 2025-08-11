@@ -1,1 +1,0 @@
-#define RAIN_VERSION_BUILD 6747
