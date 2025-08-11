@@ -1,11 +1,6 @@
 // Tests the Knuth-Morris-Pratt string matching algorithm from
 // `rain/algorithm/kmp.hpp`.
-#include <rain/algorithm/kmp.hpp>
-#include <rain/literal.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <vector>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

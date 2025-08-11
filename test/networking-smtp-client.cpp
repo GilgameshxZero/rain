@@ -1,15 +1,6 @@
 // Tests for Networking::Smtp::Client. These tests require outgoing IPv4 port 25
 // to be unblocked by firewall.
-#include <rain/networking/smtp/client.hpp>
-#include <rain/networking/smtp/command.hpp>
-#include <rain/networking/smtp/status-code.hpp>
-#include <rain/networking/socket-options.hpp>
-#include <rain/networking/specification.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <stdexcept>
-#include <system_error>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

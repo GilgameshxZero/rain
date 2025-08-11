@@ -1,10 +1,5 @@
 // Test basic Socket Server/Client/Worker interactions from Rain::Networking.
-#include <rain/literal.hpp>
-#include <rain/networking/server.hpp>
-#include <rain/networking/socket-options.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

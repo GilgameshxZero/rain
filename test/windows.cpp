@@ -10,22 +10,16 @@
 //
 // We specify in code here because specifying in project is inconsistent with
 // build.bat.
-
-#include <rain/platform.hpp>
-
-#include <rain/literal.hpp>
-#include <rain/multithreading.hpp>
-#include <rain/time.hpp>
-#include <rain/windows.hpp>
+#include <rain.hpp>
 
 #ifdef RAIN_PLATFORM_WINDOWS
 // WinMain can only be used on SUBSYSTEM:WINDOWS.
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 int CALLBACK WinMain(
-	_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE,
-	_In_ LPSTR lpCmdLine,
-	_In_ int nCmdShow) {
+	HINSTANCE,
+	HINSTANCE,
+	LPSTR,
+	int) {
 	using namespace Rain::Literal;
 
 	char const CAPTION[]{"rain/test/windows"};

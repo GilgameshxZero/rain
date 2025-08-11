@@ -1,8 +1,5 @@
 // Tests for Networking::Host.
-#include <rain/networking/host.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

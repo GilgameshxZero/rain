@@ -1,6 +1,4 @@
-#include <rain/algorithm/edmonds-karp.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	// Implements the example in the Wikipedia article: <https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm>.

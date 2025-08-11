@@ -1,0 +1,6 @@
+#pragma once
+
+#define RAIN_VERSION_MAJOR 7
+#define RAIN_VERSION_MINOR 3
+#define RAIN_VERSION_REVISION 17
+#define RAIN_VERSION_BUILD 7039

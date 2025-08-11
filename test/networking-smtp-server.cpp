@@ -1,12 +1,5 @@
 // Tests for Networking::Smtp::Server.
-#include <rain/networking/smtp.hpp>
-#include <rain/networking/socket-options.hpp>
-#include <rain/networking/specification.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <stdexcept>
-#include <system_error>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

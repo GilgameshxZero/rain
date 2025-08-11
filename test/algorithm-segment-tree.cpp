@@ -1,11 +1,5 @@
 // Tests for segment tree.
-#include <rain/algorithm/algorithm.hpp>
-#include <rain/algorithm/segment-tree.hpp>
-#include <rain/literal.hpp>
-#include <rain/time.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 class MaxTreePolicy {
 	public:

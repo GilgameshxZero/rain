@@ -1,7 +1,5 @@
 // Tests for Fenwick tree.
-#include <rain/algorithm/fenwick.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	Rain::Algorithm::FenwickTree fenwick(100001);

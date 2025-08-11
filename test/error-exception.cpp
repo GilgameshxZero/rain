@@ -1,9 +1,5 @@
 // Tests for Rain::Error::Exception.
-#include <rain/error/exception.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <stdexcept>
+#include <rain.hpp>
 
 // Defines platform-independent codes.
 enum class Error {

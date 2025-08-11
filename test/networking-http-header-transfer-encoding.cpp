@@ -1,8 +1,5 @@
 // Tests Networking::Http::Header::TransferEncoding.
-#include "rain/networking/http/header/transfer-encoding.hpp"
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Networking::Http::Header;

@@ -1,10 +1,5 @@
 // Test the asynchronous getAddressInfo from rain/networking/resolve.hpp.
-#include <rain/literal.hpp>
-#include <rain/networking/resolve.hpp>
-#include <rain/time/time.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

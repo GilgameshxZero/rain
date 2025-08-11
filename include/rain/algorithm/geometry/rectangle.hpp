@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../windows/windows.hpp"
-#include "../math.hpp"
+#include "../../math.hpp"
 #include "point.hpp"
 
 #include <type_traits>

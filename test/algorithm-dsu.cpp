@@ -1,7 +1,5 @@
 // Tests for DSU/union-find.
-#include <rain/algorithm/dsu.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	Rain::Algorithm::DisjointSetUnion dsu(10);

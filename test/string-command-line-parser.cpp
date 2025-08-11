@@ -1,10 +1,5 @@
 // Tests for String::CommandLineParser.
-#include <rain/string/command-line-parser.hpp>
-
-#include <array>
-#include <cassert>
-#include <filesystem>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	Rain::String::CommandLineParser parser;

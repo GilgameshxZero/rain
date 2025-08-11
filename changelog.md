@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.3.18
+
+1. Update `makefile` to `utulek` version, with proper dependency tracking on all platforms.
+  1. Tests are now all pre-compiled with `#include <rain.hpp>`.
+  2. Versioning support is updated to parity on all platforms.
+2. Refactor `Matrix` into `Tensor`, with support for higher-dimensional tensors. This is still a work-in-progress.
+  1. Added `math-tensor` test.
+3. `BigInt` and `ModulusField` now have their SFINAE utilities properly hidden within the default template class, similar to `SegmentTreeLazy`.
+4. Update `BigInt` SFINAE to be more compliant, similar to `ModulusField`.
+5. Fixed bug that only arises if a program was built with `/SUBSYSTEM:WINDOWS`.
+
 ## 7.3.17
 
 1. Refactor math into its own namespace.

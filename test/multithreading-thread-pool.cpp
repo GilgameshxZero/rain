@@ -1,10 +1,5 @@
 // Test for Multithreading::ThreadPool.
-#include <rain/literal.hpp>
-#include <rain/multithreading/thread-pool.hpp>
-#include <rain/time.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

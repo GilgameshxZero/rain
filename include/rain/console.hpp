@@ -21,14 +21,18 @@ namespace Rain {
 	class Console {
 		private:
 #ifdef RAIN_PLATFORM_WINDOWS
-		// Ensures that virtual console mode is enabled, so that escape sequences
-		// work as expected.
+		// Ensures that if built with /SUBSYSTEM:CONSOLE, virtual console mode is
+		// enabled, so that escape sequences work as expected.
 		class Initializer {
 			private:
 			HANDLE const hStdOut;
 			DWORD const origMode;
 
 			static DWORD getConsoleMode(HANDLE hStdOut) {
+				// Invalid handle may occur if /SUBSYSTEM:WINDOWS is set.
+				if (hStdOut == NULL) {
+					return 0;
+				}
 				DWORD mode;
 				Windows::validateSystemCall(GetConsoleMode(hStdOut, &mode));
 				return mode;
@@ -38,10 +42,18 @@ namespace Rain {
 			Initializer()
 					: hStdOut{GetStdHandle(STD_OUTPUT_HANDLE)},
 						origMode{Initializer::getConsoleMode(this->hStdOut)} {
+				if (this->hStdOut == NULL) {
+					return;
+				}
 				DWORD mode{this->origMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING};
 				Windows::validateSystemCall(SetConsoleMode(this->hStdOut, mode));
 			}
-			~Initializer() { SetConsoleMode(this->hStdOut, this->origMode); }
+			~Initializer() {
+				if (this->hStdOut == NULL) {
+					return;
+				}
+				SetConsoleMode(this->hStdOut, this->origMode);
+			}
 		};
 		static inline Initializer _Initializer;
 #endif

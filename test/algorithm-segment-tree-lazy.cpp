@@ -1,11 +1,5 @@
 // Tests for segment tree.
-#include <rain/algorithm/segment-tree-lazy.hpp>
-#include <rain/literal.hpp>
-#include <rain/time.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <vector>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

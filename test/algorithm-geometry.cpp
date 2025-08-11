@@ -1,8 +1,4 @@
-#include <rain/algorithm/geometry.hpp>
-
-#include <cassert>
-#include <set>
-#include <unordered_set>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Algorithm::Geometry;

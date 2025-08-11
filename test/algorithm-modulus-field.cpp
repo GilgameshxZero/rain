@@ -1,14 +1,11 @@
-#include <rain/algorithm/fibonacci.hpp>
-#include <rain/algorithm/modulus-field.hpp>
-
-#include <cassert>
-#include <iostream>
-#include <unordered_set>
+#include <rain.hpp>
 
 int main() {
 	{
-		assert(!(Rain::Algorithm::isDerivedFromModulusRing<int>()).value);
-		assert((Rain::Algorithm::isDerivedFromModulusRing<
+		assert(
+			!(Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<int>())
+				 .value);
+		assert((Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
 							Rain::Algorithm::ModulusField<long long, 17>>())
 						 .value);
 		assert((2 * Rain::Algorithm::ModulusField<int, 7>{3}).value == 6);

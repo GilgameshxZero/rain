@@ -21,9 +21,9 @@
 			"group": { "kind": "build", "isDefault": true },
 
 			"command": "make",
-			"args": ["SOURCES=${fileBasename}"],
+			"args": ["BIN=${fileBasenameNoExtension}"],
 			"problemMatcher": ["$gcc"],
-			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
+			"windows": { "problemMatcher": ["$msCompile"] }
 		},
 		{
 			/* Build the open file in release mode. */
@@ -34,22 +34,9 @@
 			"group": "build",
 
 			"command": "make",
-			"args": ["SOURCES=${fileBasename}", "BUILD=1"],
+			"args": ["BIN=${fileBasenameNoExtension}", "BUILD=1"],
 			"problemMatcher": ["$gcc"],
-			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
-		},
-		{
-			/* Build and run all tests in debug x64. */
-			"type": "shell",
-			"label": "tests-debug-x64",
-			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true },
-			"group": "build",
-
-			"command": "make",
-			"args": ["tests"],
-			"problemMatcher": ["$gcc"],
-			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
+			"windows": { "problemMatcher": ["$msCompile"] }
 		}
 	]
 }

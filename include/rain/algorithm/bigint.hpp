@@ -7,11 +7,12 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <type_traits>
 #include <utility>
 
 namespace Rain::Algorithm {
 	// Forward declaration.
-	template <std::size_t LOG_BITS, bool SIGNED>
+	template <std::size_t = 0, bool = false>
 	class BigInt;
 }
 
@@ -36,6 +37,21 @@ namespace std {
 }
 
 namespace Rain::Algorithm {
+	template <>
+	class BigInt<0, false> {
+		public:
+		// We must use our own templated SFINAE base class checker, like in
+		// `ModulusRingBase`.
+		template <std::size_t LOG_BITS, bool SIGNED>
+		static std::true_type isDerivedFromBigIntImpl(
+			BigInt<LOG_BITS, SIGNED> const *);
+		template <std::size_t = 0, bool = true>
+		static std::false_type isDerivedFromBigIntImpl(...);
+		template <typename TypeDerived>
+		using isDerivedFromBigInt =
+			decltype(isDerivedFromBigIntImpl(std::declval<TypeDerived *>()));
+	};
+
 	// Shorthands.
 	template <std::size_t LOG_BITS>
 	using BigIntSigned = BigInt<LOG_BITS, true>;
@@ -232,6 +248,7 @@ namespace Rain::Algorithm {
 
 		// Constructing with a larger int than storable is ill-advised and disabled.
 
+		// Can also construct with the two components.
 		BigInt(SmallerIntUnsigned const &low, SmallerInt const &high = 0)
 				: low(low), high(high) {}
 
@@ -245,6 +262,13 @@ namespace Rain::Algorithm {
 				: low{other.low}, high(other.high) {}
 
 		// Assignment.
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
+		ThisInt &operator=(OtherInteger const &other) {
+			return *this = ThisInt(other);
+		}
 		ThisInt &operator=(ThisInt const &other) {
 			if (this == &other) {
 				return *this;
@@ -253,96 +277,58 @@ namespace Rain::Algorithm {
 			this->high = other.high;
 			return *this;
 		}
-		template <typename OtherInteger>
-		ThisInt &operator=(OtherInteger const &other) {
-			return *this = ThisInt(other);
-		}
 
 		// Comparison.
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline bool operator==(OtherInteger const &other) const {
 			return *this == ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline bool operator==(OtherInteger const &other) {
-			return std::as_const(*this) == other;
 		}
 		inline bool operator==(ThisInt const &other) const {
 			return this->low == other.low && this->high == other.high;
 		}
-		inline bool operator==(ThisInt const &other) {
-			return std::as_const(*this) == other;
-		}
-		template <typename OtherInteger>
-		inline bool operator!=(OtherInteger const &other) const {
-			return *this != ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline bool operator!=(OtherInteger const &other) {
-			return std::as_const(*this) != other;
-		}
-		inline bool operator!=(ThisInt const &other) const {
-			return !(*this == other);
-		}
-		inline bool operator!=(ThisInt const &other) {
-			return std::as_const(*this) != other;
-		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline bool operator<(OtherInteger const &other) const {
 			return *this < ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline bool operator<(OtherInteger const &other) {
-			return std::as_const(*this) < other;
 		}
 		inline bool operator<(ThisInt const &other) const {
 			return this->high < other.high ||
 				(this->high == other.high && this->low < other.low);
 		}
-		inline bool operator<(ThisInt const &other) {
-			return std::as_const(*this) < other;
-		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline bool operator<=(OtherInteger const &other) const {
 			return *this <= ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline bool operator<=(OtherInteger const &other) {
-			return std::as_const(*this) <= other;
 		}
 		inline bool operator<=(ThisInt const &other) const {
 			return *this < other || *this == other;
 		}
-		inline bool operator<=(ThisInt const &other) {
-			return std::as_const(*this) <= other;
-		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline bool operator>(OtherInteger const &other) const {
 			return *this > ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline bool operator>(OtherInteger const &other) {
-			return std::as_const(*this) > other;
 		}
 		inline bool operator>(ThisInt const &other) const {
 			return !(*this <= other);
 		}
-		inline bool operator>(ThisInt const &other) {
-			return std::as_const(*this) > other;
-		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline bool operator>=(OtherInteger const &other) const {
 			return *this >= ThisInt(other);
 		}
-		template <typename OtherInteger>
-		inline bool operator>=(OtherInteger const &other) {
-			return std::as_const(*this) >= other;
-		}
 		inline bool operator>=(ThisInt const &other) const {
 			return !(*this < other);
-		}
-		inline bool operator>=(ThisInt const &other) {
-			return std::as_const(*this) >= other;
 		}
 
 		// Shift.
@@ -357,10 +343,6 @@ namespace Rain::Algorithm {
 			ThisInt tmp{this->low >> shift, this->high >> shift};
 			SmallerInt lost{this->high - (tmp.high << shift)};
 			return {tmp.low + (lost << (halfBits - shift)), tmp.high};
-		}
-		template <typename OtherInteger>
-		inline ThisInt operator>>(OtherInteger const &shift) {
-			return std::as_const(*this) >> shift;
 		}
 		template <typename OtherInteger>
 		inline ThisInt &operator>>=(OtherInteger const &shift) {
@@ -381,10 +363,6 @@ namespace Rain::Algorithm {
 				tmp.high + static_cast<SmallerInt>(lost >> (halfBits - shift))};
 		}
 		template <typename OtherInteger>
-		inline ThisInt operator<<(OtherInteger const &shift) {
-			return std::as_const(*this) << shift;
-		}
-		template <typename OtherInteger>
 		inline ThisInt &operator<<=(OtherInteger const &shift) {
 			return *this = *this << shift;
 		}
@@ -393,19 +371,9 @@ namespace Rain::Algorithm {
 		inline ThisInt operator&(ThisInt const &other) const {
 			return {this->low & other.low, this->high & other.high};
 		}
-		inline ThisInt operator&(ThisInt const &other) {
-			return std::as_const(*this) & other;
-		}
 		inline ThisInt operator|(ThisInt const &other) const {
 			return {this->low & other.low, this->high & other.high};
 		}
-		inline ThisInt operator|(ThisInt const &other) {
-			return std::as_const(*this) | other;
-		}
-
-		// Unary.
-		inline ThisInt operator-() const { return ThisInt(0, 0) - *this; }
-		inline ThisInt operator-() { return -std::as_const(*this); }
 
 		// Cast.
 		explicit operator bool() const { return *this != 0; }
@@ -425,12 +393,11 @@ namespace Rain::Algorithm {
 		}
 
 		// Arithmetic.
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline ThisInt operator+(OtherInteger const &other) const {
-			return *this + ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline ThisInt operator+(OtherInteger const &other) {
 			return *this + ThisInt(other);
 		}
 		inline ThisInt operator+(ThisInt const &other) const {
@@ -441,24 +408,15 @@ namespace Rain::Algorithm {
 					(other.low >
 					 std::numeric_limits<SmallerIntUnsigned>::max() - this->low)};
 		}
-		inline ThisInt operator+(ThisInt const &other) {
-			return std::as_const(*this) + other;
-		}
-		inline ThisInt &operator+=(ThisInt const &other) {
+		template <typename OtherInteger>
+		inline ThisInt &operator+=(OtherInteger const &other) {
 			return *this = *this + other;
 		}
-		inline ThisInt operator++() { return *this += 1; }
-		inline ThisInt operator++(int) {
-			auto tmp(*this);
-			*this += 1;
-			return tmp;
-		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline ThisInt operator-(OtherInteger const &other) const {
-			return *this - ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline ThisInt operator-(OtherInteger const &other) {
 			return *this - ThisInt(other);
 		}
 		inline ThisInt operator-(ThisInt const &other) const {
@@ -467,24 +425,15 @@ namespace Rain::Algorithm {
 				this->low - other.low,
 				this->high - other.high - (this->low < other.low)};
 		}
-		inline ThisInt operator-(ThisInt const &other) {
-			return std::as_const(*this) - other;
-		}
-		inline ThisInt &operator-=(ThisInt const &other) {
+		template <typename OtherInteger>
+		inline ThisInt &operator-=(OtherInteger const &other) {
 			return *this = *this - other;
 		}
-		inline ThisInt operator--() { return *this -= 1; }
-		inline ThisInt operator--(int) {
-			auto tmp(*this);
-			*this -= 1;
-			return tmp;
-		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline ThisInt operator*(OtherInteger const &other) const {
-			return *this * ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline ThisInt operator*(OtherInteger const &other) {
 			return *this * ThisInt(other);
 		}
 		inline ThisInt operator*(ThisInt const &other) const {
@@ -498,75 +447,107 @@ namespace Rain::Algorithm {
 			}
 			return first;
 		}
-		inline ThisInt operator*(ThisInt const &other) {
-			return std::as_const(*this) * other;
-		}
-		inline ThisInt &operator*=(ThisInt const &other) {
+		template <typename OtherInteger>
+		inline ThisInt &operator*=(OtherInteger const &other) {
 			return *this = *this * other;
 		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline ThisInt operator/(OtherInteger const &other) const {
-			return *this / ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline ThisInt operator/(OtherInteger const &other) {
 			return *this / ThisInt(other);
 		}
 		inline ThisInt operator/(ThisInt const &other) const {
 			return bigIntDivide<LOG_BITS, SIGNED>(*this, other);
 		}
-		inline ThisInt operator/(ThisInt const &other) {
-			return std::as_const(*this) / other;
-		}
-		inline ThisInt &operator/=(ThisInt const &other) {
+		template <typename OtherInteger>
+		inline ThisInt &operator/=(OtherInteger const &other) {
 			return *this = *this / other;
 		}
-		template <typename OtherInteger>
+		template <
+			typename OtherInteger,
+			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
+			typename std::enable_if<notSame>::type * = nullptr>
 		inline ThisInt operator%(OtherInteger const &other) const {
-			return *this % ThisInt(other);
-		}
-		template <typename OtherInteger>
-		inline ThisInt operator%(OtherInteger const &other) {
 			return *this % ThisInt(other);
 		}
 		inline ThisInt operator%(ThisInt const &other) const {
 			auto quotient{*this / other};
 			return *this - other * quotient;
 		}
-		inline ThisInt operator%(ThisInt const &other) {
-			return std::as_const(*this) % other;
-		}
-		inline ThisInt &operator%=(ThisInt const &other) {
+		template <typename OtherInteger>
+		inline ThisInt &operator%=(OtherInteger const &other) {
 			return *this = *this % other;
+		}
+
+		// Unary.
+		inline ThisInt operator-() const { return ThisInt(0, 0) - *this; }
+		inline ThisInt operator++() { return *this += 1; }
+		inline ThisInt operator++(int) {
+			auto tmp(*this);
+			*this += 1;
+			return tmp;
+		}
+		inline ThisInt operator--() { return *this -= 1; }
+		inline ThisInt operator--(int) {
+			auto tmp(*this);
+			*this -= 1;
+			return tmp;
 		}
 	};
 }
 
-template <typename OtherInteger, std::size_t LOG_BITS, bool SIGNED>
+template <
+	typename OtherInteger,
+	std::size_t LOG_BITS,
+	bool SIGNED,
+	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+		OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator+(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
 	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) + right;
 }
-template <typename OtherInteger, std::size_t LOG_BITS, bool SIGNED>
+template <
+	typename OtherInteger,
+	std::size_t LOG_BITS,
+	bool SIGNED,
+	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+		OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator-(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
 	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) - right;
 }
-template <typename OtherInteger, std::size_t LOG_BITS, bool SIGNED>
+template <
+	typename OtherInteger,
+	std::size_t LOG_BITS,
+	bool SIGNED,
+	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+		OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator*(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
 	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) * right;
 }
-template <typename OtherInteger, std::size_t LOG_BITS, bool SIGNED>
+template <
+	typename OtherInteger,
+	std::size_t LOG_BITS,
+	bool SIGNED,
+	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+		OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator/(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
 	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) / right;
 }
-template <typename OtherInteger, std::size_t LOG_BITS, bool SIGNED>
+template <
+	typename OtherInteger,
+	std::size_t LOG_BITS,
+	bool SIGNED,
+	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+		OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator%(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {

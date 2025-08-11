@@ -1,6 +1,4 @@
-#include <rain/algorithm/gcd-lcm.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	assert(Rain::Algorithm::greatestCommonDivisor(948, 720) == 12);

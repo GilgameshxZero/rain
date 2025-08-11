@@ -1,8 +1,5 @@
 // Test for Networking::Http::Headers.
-#include <rain/networking/http/headers.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

@@ -1,12 +1,5 @@
 // Tests for pickle serialization/deserialization.
-#include <rain/data/serializer.hpp>
-#include <rain/literal.hpp>
-
-#include <cassert>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <vector>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

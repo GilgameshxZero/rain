@@ -1,10 +1,6 @@
 // Tests the Least-Recently-Used caching algorithm from
 // `rain/algorithm/lru.hpp`.
-#include <rain/algorithm/lru.hpp>
-#include <rain/literal.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

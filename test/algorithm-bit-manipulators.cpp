@@ -1,6 +1,4 @@
-#include <rain/algorithm/bit-manipulators.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	assert(Rain::Algorithm::mostSignificant1BitIdx(0x080c3948) == 27);

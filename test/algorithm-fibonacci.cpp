@@ -1,6 +1,4 @@
-#include <rain/algorithm/fibonacci.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	assert(Rain::Algorithm::fibonacciNumber(0) == 0);

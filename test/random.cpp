@@ -1,11 +1,4 @@
-#include <rain/random.hpp>
-
-#include <array>
-#include <cassert>
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
+#include <rain.hpp>
 
 int main() {
 	{

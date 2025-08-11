@@ -1,11 +1,6 @@
 // Tests compilation and instantiation of the Networking::Socket(Interface)
 // inheritance suite, including the Socket options.
-#include <rain/literal.hpp>
-#include <rain/networking/socket-options.hpp>
-#include <rain/networking/socket.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

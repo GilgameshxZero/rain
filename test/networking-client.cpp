@@ -1,11 +1,5 @@
 // Tests Networking::Client, as well as the implementation of send/recv.
-#include <rain/literal.hpp>
-#include <rain/networking/client.hpp>
-#include <rain/networking/socket-options.hpp>
-#include <rain/time/time.hpp>
-
-#include <cassert>
-#include <iostream>
+#include <rain.hpp>
 
 int main() {
 	using namespace Rain::Literal;

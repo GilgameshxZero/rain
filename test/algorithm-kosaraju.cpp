@@ -1,6 +1,4 @@
-#include <rain/algorithm/kosaraju.hpp>
-
-#include <cassert>
+#include <rain.hpp>
 
 int main() {
 	// Implements the example from
