@@ -55,12 +55,17 @@ int main() {
 		cout << c.slice({{{4, 6}, {4, 6}}}) + e << "\n\n";
 		c.slice({{{4, 6}, {4, 6}}}) += e;
 		cout << c << "\n\n";
-		try {
-			c += c.slice({{{4, 6}, {4, 6}}});
-			cout << c << "\n\n";
-		} catch (Tensor<>::Exception const &exception) {
-			cout << exception.what();
-		}
+
+		cout << c.slice({{{.step = 3}, {.step = 3}}}) << "\n\n";
+		Tensor<int, 2> f({4, 4});
+		f.fill(999);
+		c.slice({{{.step = 3}, {.step = 3}}}) -= f;
+		cout << c << "\n\n";
+		c *= -1;
+		cout << c << "\n\n";
+		auto g{c.slice({{{.step = 4}, {.step = 4}}})};
+		cout << g << "\n\n";
+		cout << g.transpose({{1, 0}}) << "\n\n";
 	}
 	return 0;
 }
