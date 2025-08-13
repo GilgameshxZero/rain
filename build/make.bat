@@ -3,10 +3,11 @@
 SETLOCAL ENABLEDELAYEDEXPANSION
 
 @REM Careful to not exceed the 8192 string limit.
-SET "INCL=..\include\*"
+SET "INCL_PCH=..\include\*"
 FOR /F "delims=" %%I IN ('DIR /B /S /AD ..\include') DO (
-	SET "INCL=%%I\* !INCL!"
+	SET "INCL_PCH=%%I\* !INCL_PCH!"
 )
+SET "INCL=%INCL_PCH%"
 
 @REM Suppresses CMD terminate prompt and error code.
 nmake /C %* || (

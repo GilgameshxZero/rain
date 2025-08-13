@@ -35,7 +35,7 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 # ------------------------------------------------------------------------------
 
 # nmake specific commands.
-ROOT_DIR = ..^\
+ROOT_DIR = $(MAKEDIR)\..^\
 REPO_NAME = rain
 !IFNDEF PROJ
 PROJ = test
@@ -85,7 +85,7 @@ PROJ_SRC_DIR = $(ROOT_DIR)$(PROJ_NAME)^\
 PROJ_SRC = $(patsubsti %,$(PROJ_SRC_DIR)\%,$(SRC_NAME))
 
 COMPILER = cl /c
-COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include
+COMPILER_FLAGS_INCLUDES = /I$(ROOT_DIR)include
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20 /D _CONSOLE\
 	/Fp$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch\
 	/fp:fast /MP /permissive-\
@@ -165,6 +165,7 @@ version.build.txt: $(INCL) $(PROJ_SRC)
 	@FOR %%I IN ($?) DO @ECHO Outdated: %%I.
 	@version.bat $(uppercase $(REPO_NAME))
 	@$(MAKE) /C /T version.build.txt
+
 # Precompiled headers.
 $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
 	@ECHO Building $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch...
@@ -175,7 +176,7 @@ $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
 	@$(COMPILER) $(COMPILER_FLAGS) /Yc\
 		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
 		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj pch.cpp
-pch.cpp: $(INCL)
+pch.cpp: $(INCL_PCH)
 
 # Build target.
 # First compile all outdated files (with /MP), then link everything together.
@@ -203,8 +204,9 @@ $(PROJ_BIN): $(PROJ_SRC)
 		CP $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
 			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb
 	@IF NOT EXIST $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb\
-		CP $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
-			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb
+		IF EXIST $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
+			CP $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
+				$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb
 	@$(COMPILER) $(COMPILER_FLAGS)\
 		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
 		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\ \
