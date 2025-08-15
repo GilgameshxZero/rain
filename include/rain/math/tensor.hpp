@@ -14,7 +14,7 @@ namespace Rain::Math {
 
 	template <>
 	class Tensor<std::nullptr_t, 0> {
-		template <class OtherValue, std::size_t OTHER_C_DIM>
+		template <class OtherValue, std::size_t OTHER_ORDER>
 		friend class Tensor;
 
 		public:
@@ -71,56 +71,56 @@ namespace Rain::Math {
 	};
 
 	// Tensor operations are generally not bounds-checked.
-	template <typename Value, std::size_t C_DIM>
+	template <typename Value, std::size_t ORDER>
 	class Tensor {
 		// Allow access of constructor one dimension down.
-		friend Tensor<Value, C_DIM + 1>;
+		friend Tensor<Value, ORDER + 1>;
 
 		private:
-		using TypeThis = Tensor<Value, C_DIM>;
+		using TypeThis = Tensor<Value, ORDER>;
 		using Range = Tensor<>::Range;
 
 		using Error = Tensor<>::Error;
 		using Exception = Tensor<>::Exception;
 
 		std::shared_ptr<Value[]> const VALUES;
-		std::array<Range, C_DIM> const RANGES;
+		std::array<Range, ORDER> const RANGES;
 		// Perceived size based on range.
-		std::array<std::size_t, C_DIM> const SIZES, SIZES_UNDERLYING;
+		std::array<std::size_t, ORDER> const SIZES, SIZES_UNDERLYING;
 		// Offset caused by previous indexing.
 		std::size_t const OFFSET;
 		// Store a permutation of dimensions for easy transpose & product.
-		std::array<std::size_t, C_DIM> const DIM_PERM;
+		std::array<std::size_t, ORDER> const TRANSPOSE;
 
 		static constexpr inline std::size_t calcSizesProduct(
-			std::array<std::size_t, C_DIM> const &sizes) {
+			std::array<std::size_t, ORDER> const &sizes) {
 			std::size_t result{1};
 			for (auto const &i : sizes) {
 				result *= i;
 			}
 			return result;
 		}
-		static constexpr inline std::array<Range, C_DIM> makeRangesDefault(
-			std::array<std::size_t, C_DIM> const &sizes) {
-			std::array<Range, C_DIM> ranges;
-			for (std::size_t i{0}; i < C_DIM; i++) {
+		static constexpr inline std::array<Range, ORDER> makeRangesDefault(
+			std::array<std::size_t, ORDER> const &sizes) {
+			std::array<Range, ORDER> ranges;
+			for (std::size_t i{0}; i < ORDER; i++) {
 				ranges[i] = {0, sizes[i], 1};
 			}
 			return ranges;
 		}
-		static constexpr inline std::array<std::size_t, C_DIM> calcSizes(
-			std::array<Range, C_DIM> const &ranges) {
-			std::array<std::size_t, C_DIM> sizes;
-			for (std::size_t i{0}; i < C_DIM; i++) {
+		static constexpr inline std::array<std::size_t, ORDER> calcSizes(
+			std::array<Range, ORDER> const &ranges) {
+			std::array<std::size_t, ORDER> sizes;
+			for (std::size_t i{0}; i < ORDER; i++) {
 				sizes[i] = (ranges[i].stop - ranges[i].start + ranges[i].step - 1) /
 					ranges[i].step;
 			}
 			return sizes;
 		}
-		static constexpr inline std::array<std::size_t, C_DIM>
+		static constexpr inline std::array<std::size_t, ORDER>
 		makeDimPermDefault() {
-			std::array<std::size_t, C_DIM> dimPerm;
-			for (std::size_t i{0}; i < C_DIM; i++) {
+			std::array<std::size_t, ORDER> dimPerm;
+			for (std::size_t i{0}; i < ORDER; i++) {
 				dimPerm[i] = i;
 			}
 			return dimPerm;
@@ -128,38 +128,38 @@ namespace Rain::Math {
 
 		Tensor(
 			std::shared_ptr<Value[]> values,
-			std::array<Range, C_DIM> const &ranges,
-			std::array<std::size_t, C_DIM> const &sizesUnderlying,
+			std::array<Range, ORDER> const &ranges,
+			std::array<std::size_t, ORDER> const &sizesUnderlying,
 			std::size_t offset,
-			std::array<std::size_t, C_DIM> const &dimPerm)
+			std::array<std::size_t, ORDER> const &dimPerm)
 				: VALUES{values},
 					RANGES{ranges},
 					SIZES{TypeThis::calcSizes(ranges)},
 					SIZES_UNDERLYING{sizesUnderlying},
 					OFFSET{offset},
-					DIM_PERM{dimPerm} {}
+					TRANSPOSE{dimPerm} {}
 
 		public:
-		Tensor(std::array<std::size_t, C_DIM> const &sizes, auto &&...values)
+		Tensor(std::array<std::size_t, ORDER> const &sizes, auto &&...values)
 				: VALUES{new Value[TypeThis::calcSizesProduct(sizes)]{
 						std::forward<decltype(values)>(values)...}},
 					RANGES{TypeThis::makeRangesDefault(sizes)},
 					SIZES{sizes},
 					SIZES_UNDERLYING{sizes},
 					OFFSET{0},
-					DIM_PERM{TypeThis::makeDimPermDefault()} {}
+					TRANSPOSE{TypeThis::makeDimPermDefault()} {}
 		Tensor(TypeThis const &other)
 				: VALUES{other.VALUES},
 					RANGES{other.RANGES},
 					SIZES{other.SIZES},
 					SIZES_UNDERLYING{other.SIZES_UNDERLYING},
 					OFFSET{other.OFFSET},
-					DIM_PERM{other.DIM_PERM} {}
+					TRANSPOSE{other.TRANSPOSE} {}
 
 		// We offer a template but also a specialization to the current class to
 		// help compilers recognize the copy assignment operator.
 		template <typename OtherValue>
-		auto &operator=(Tensor<OtherValue, C_DIM> const &other) {
+		auto &operator=(Tensor<OtherValue, ORDER> const &other) {
 			Tensor<>::applyOver(
 				[](Value &that, OtherValue const &other) { that = other; },
 				*this,
@@ -173,39 +173,39 @@ namespace Rain::Math {
 		}
 
 		template <
-			bool isVector = C_DIM == 1,
+			bool isVector = ORDER == 1,
 			typename std::enable_if<isVector>::type * = nullptr>
 		inline Value &operator[](std::size_t idx) {
 			return this->VALUES
 				[this->OFFSET + this->RANGES[0].start + this->RANGES[0].step * idx];
 		}
 		template <
-			bool isVector = C_DIM == 1,
+			bool isVector = ORDER == 1,
 			typename std::enable_if<isVector>::type * = nullptr>
 		inline Value const &operator[](std::size_t idx) const {
 			return const_cast<TypeThis *>(this)->operator[](idx);
 		}
 		template <
-			bool isNotVector = (C_DIM > 1),
+			bool isNotVector = (ORDER > 1),
 			typename std::enable_if<isNotVector>::type * = nullptr>
-		Tensor<Value, C_DIM - 1> operator[](std::size_t idx) {
+		Tensor<Value, ORDER - 1> operator[](std::size_t idx) {
 			// TODO: This does not handle dimension permutations correctly.
-			std::array<std::size_t, C_DIM - 1> dimPerm;
-			for (std::size_t i{1}; i < C_DIM; i++) {
+			std::array<std::size_t, ORDER - 1> dimPerm;
+			for (std::size_t i{1}; i < ORDER; i++) {
 				dimPerm[i - 1] =
-					this->DIM_PERM[i] + (this->DIM_PERM[i] > this->DIM_PERM[0] ? -1 : 0);
+					this->TRANSPOSE[i] + (this->TRANSPOSE[i] > this->TRANSPOSE[0] ? -1 : 0);
 			}
 
-			std::array<Range, C_DIM - 1> ranges;
-			std::array<std::size_t, C_DIM - 1> sizesUnderlying;
+			std::array<Range, ORDER - 1> ranges;
+			std::array<std::size_t, ORDER - 1> sizesUnderlying;
 			std::size_t rangeShift{
-				this->RANGES[this->DIM_PERM[0]].start +
-				this->RANGES[this->DIM_PERM[0]].step * idx};
-			for (std::size_t i{1}; i < C_DIM; i++) {
-				ranges[dimPerm[i - 1]] = this->RANGES[this->DIM_PERM[i]];
-				rangeShift *= this->SIZES_UNDERLYING[this->DIM_PERM[i]];
+				this->RANGES[this->TRANSPOSE[0]].start +
+				this->RANGES[this->TRANSPOSE[0]].step * idx};
+			for (std::size_t i{1}; i < ORDER; i++) {
+				ranges[dimPerm[i - 1]] = this->RANGES[this->TRANSPOSE[i]];
+				rangeShift *= this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
 				sizesUnderlying[dimPerm[i - 1]] =
-					this->SIZES_UNDERLYING[this->DIM_PERM[i]];
+					this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
 			}
 			return {
 				this->VALUES,
@@ -215,18 +215,18 @@ namespace Rain::Math {
 				dimPerm};
 		}
 		template <
-			bool isNotVector = (C_DIM > 1),
+			bool isNotVector = (ORDER > 1),
 			typename std::enable_if<isNotVector>::type * = nullptr>
-		Tensor<Value, C_DIM - 1> const operator[](std::size_t idx) const {
+		Tensor<Value, ORDER - 1> const operator[](std::size_t idx) const {
 			return const_cast<TypeThis *>(this)->operator[](idx);
 		}
 
 		// Binary operators.
 		template <typename OtherValue>
-		auto operator+(Tensor<OtherValue, C_DIM> const &other) const {
+		auto operator+(Tensor<OtherValue, ORDER> const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() + std::declval<OtherValue>());
-			Tensor<ResultValue, C_DIM> result(this->SIZES);
+			Tensor<ResultValue, ORDER> result(this->SIZES);
 			Tensor<>::applyOver(
 				[](ResultValue &result, Value const &that, OtherValue const &other) {
 					result = that + other;
@@ -237,14 +237,14 @@ namespace Rain::Math {
 			return result;
 		}
 		template <typename OtherValue>
-		auto &operator+=(Tensor<OtherValue, C_DIM> const &other) {
+		auto &operator+=(Tensor<OtherValue, ORDER> const &other) {
 			return *this = *this + other;
 		}
 		template <typename OtherValue>
-		auto operator-(Tensor<OtherValue, C_DIM> const &other) const {
+		auto operator-(Tensor<OtherValue, ORDER> const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() - std::declval<OtherValue>());
-			Tensor<ResultValue, C_DIM> result(this->SIZES);
+			Tensor<ResultValue, ORDER> result(this->SIZES);
 			Tensor<>::applyOver(
 				[](ResultValue &result, Value const &that, OtherValue const &other) {
 					result = that - other;
@@ -255,14 +255,14 @@ namespace Rain::Math {
 			return result;
 		}
 		template <typename OtherValue>
-		auto &operator-=(Tensor<OtherValue, C_DIM> const &other) {
+		auto &operator-=(Tensor<OtherValue, ORDER> const &other) {
 			return *this = *this - other;
 		}
 		template <typename OtherValue>
 		auto operator*(OtherValue const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>());
-			Tensor<ResultValue, C_DIM> result(this->SIZES);
+			Tensor<ResultValue, ORDER> result(this->SIZES);
 			Tensor<>::applyOver(
 				[&other](ResultValue &result, Value const &that) {
 					result = that * other;
@@ -277,7 +277,7 @@ namespace Rain::Math {
 		}
 
 		// Special functions.
-		inline std::array<std::size_t, C_DIM> size() const { return this->SIZES; }
+		inline std::array<std::size_t, ORDER> size() const { return this->SIZES; }
 		inline bool isEmpty() const {
 			bool result{false};
 			for (auto const &i : this->size()) {
@@ -285,9 +285,9 @@ namespace Rain::Math {
 			}
 			return result;
 		}
-		TypeThis slice(std::array<Range, C_DIM> &&ranges) {
-			std::array<Range, C_DIM> mergedRanges;
-			for (std::size_t i{0}; i < C_DIM; i++) {
+		TypeThis slice(std::array<Range, ORDER> &&ranges) {
+			std::array<Range, ORDER> mergedRanges;
+			for (std::size_t i{0}; i < ORDER; i++) {
 				mergedRanges[i].step =
 					ranges[i].step == std::numeric_limits<std::size_t>::max()
 					? this->RANGES[i].step
@@ -306,9 +306,9 @@ namespace Rain::Math {
 				mergedRanges,
 				this->SIZES_UNDERLYING,
 				this->OFFSET,
-				this->DIM_PERM};
+				this->TRANSPOSE};
 		}
-		auto slice(std::array<Range, C_DIM> &&ranges) const {
+		auto slice(std::array<Range, ORDER> &&ranges) const {
 			return const_cast<TypeThis *>(this)->slice(
 				std::forward<decltype(ranges)>(ranges));
 		}
@@ -316,7 +316,7 @@ namespace Rain::Math {
 			Tensor<>::applyOver([&other](Value &that) { that = other; }, *this);
 		}
 		// Must be a valid permutation.
-		TypeThis transpose(std::array<std::size_t, C_DIM> &&dimPerm) const {
+		TypeThis transpose(std::array<std::size_t, ORDER> &&dimPerm) const {
 			return {
 				this->VALUES,
 				this->RANGES,
@@ -325,10 +325,10 @@ namespace Rain::Math {
 				dimPerm};
 		}
 		// Tensor product is defined with a list of pairs of indices to contract.
-		template <typename OtherValue, std::size_t OTHER_C_DIM>
+		template <typename OtherValue, std::size_t OTHER_ORDER>
 		void product(
-			Tensor<OtherValue, OTHER_C_DIM> const &,
-			std::array<std::size_t, C_DIM> &&) {
+			Tensor<OtherValue, OTHER_ORDER> const &,
+			std::array<std::size_t, ORDER> &&) {
 			// Swap all contracted dimensions to the end.
 
 			// Iterate over all non-contracted dimensions, and compute inner product
@@ -354,12 +354,12 @@ inline std::ostream &operator<<(
 
 template <
 	typename Value,
-	std::size_t C_DIM,
-	bool isNotVector = (C_DIM > 1),
+	std::size_t ORDER,
+	bool isNotVector = (ORDER > 1),
 	typename std::enable_if<isNotVector>::type * = nullptr>
 inline std::ostream &operator<<(
 	std::ostream &stream,
-	Rain::Math::Tensor<Value, C_DIM> const &right) {
+	Rain::Math::Tensor<Value, ORDER> const &right) {
 	using namespace std;
 	if (right.isEmpty()) {
 		return stream << "[]";
