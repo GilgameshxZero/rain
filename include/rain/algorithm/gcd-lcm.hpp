@@ -15,13 +15,14 @@ namespace Rain::Algorithm {
 	}
 
 	// GCD using extended Euclidean algorithm gives Bezout's identity
-	// coefficients.
+	// coefficients. `Integer` must allow integer division.
 	template <typename Integer>
 	inline std::tuple<Integer, Integer, Integer> greatestCommonDivisorExtended(
 		Integer x,
 		Integer y) {
 		Integer cX{0}, cY{1}, nX{1}, nY{0}, ratio;
 		while (x != 0) {
+			// Relies on integer division.
 			ratio = y / x;
 			std::tie(y, x) = std::make_pair(x, y - ratio * x);
 			std::tie(cX, nX) = std::make_pair(nX, cX - ratio * nX);
