@@ -5,11 +5,11 @@
 **/.stignore
 **/.stversions
 
-// Custom temporary.
+// Personal temporary.
 **/.*.tmp.*
 **/.*.tmp
 
-// System/app temporary.
+// General temporary.
 **/*~
 **/*.crdownload
 **/*.part
@@ -27,15 +27,17 @@
 **/ehthumbs.db
 **/Thumbs.db
 
-// Custom development.
-**/.vs/
+// Personal development.
 **/.venv/
 **/.data/
 **/.bin/
 **/.obj/
 
 // General development.
-**/__pycache__/
+**/.vs/
 **/.ipynb_checkpoints/
-**/jspm_packages/
+**/__pycache__/
+**/*.egg-info/
 **/node_modules/
+**/jspm_packages/
+**/*.nebo-files/
