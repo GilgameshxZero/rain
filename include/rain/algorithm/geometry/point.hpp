@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../../math.hpp"
 #include "../../random.hpp"
 #include "../../windows/windows.hpp"
-#include "../../math.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -25,7 +25,9 @@ namespace Rain::Algorithm::Geometry {
 #endif
 
 		inline long double distanceTo(Point const &other) const {
-			return std::sqrtl(
+			// `sqrtl` is not in `gcc` due to a bug:
+			// <https://stackoverflow.com/questions/58208398/c-gcc-error-sqrtl-is-not-a-member-of-std>.
+			return std::sqrt(
 				static_cast<long double>(this->x - other.x) * (this->x - other.x) +
 				static_cast<long double>(this->y - other.y) * (this->y - other.y));
 		}
