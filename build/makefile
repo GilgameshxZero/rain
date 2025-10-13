@@ -162,7 +162,7 @@ tests: version.build.txt
 # Updated version may not be propagated until clean.
 # Order dependencies so that output is ordered; not super important.
 version.build.txt: $(INCL) $(PROJ_SRC)
-	@FOR %%I IN ($?) DO @ECHO Outdated: %%I.
+# @FOR %%I IN ($?) DO @ECHO Outdated: %%I.
 	@version.bat $(uppercase $(REPO_NAME))
 	@$(MAKE) /C /T version.build.txt
 
@@ -351,8 +351,7 @@ tests: version.build.txt
 	done
 
 version.build.txt: $(INCL) $(PROJ_SRC)
-	@for i in $?; do\
-		echo Outdated: $$i.;\
+	@for i in $?; do echo Outdated: $$i.;\
 	done
 	@./version.sh $(shell echo $(REPO_NAME) | tr '[:lower:]' '[:upper:]')
 
