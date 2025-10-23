@@ -23,6 +23,9 @@ namespace Rain {
 #ifdef RAIN_PLATFORM_WINDOWS
 		// Ensures that if built with /SUBSYSTEM:CONSOLE, virtual console mode is
 		// enabled, so that escape sequences work as expected.
+		//
+		// Piping the console causes GetConsoleMode/SetConsoleMode to fail, so we
+		// purposely do not check for exceptions here.
 		class Initializer {
 			private:
 			HANDLE const hStdOut;
@@ -30,11 +33,15 @@ namespace Rain {
 
 			static DWORD getConsoleMode(HANDLE hStdOut) {
 				// Invalid handle may occur if /SUBSYSTEM:WINDOWS is set.
-				if (hStdOut == NULL) {
+				if (hStdOut == NULL || hStdOut == INVALID_HANDLE_VALUE) {
 					return 0;
 				}
 				DWORD mode;
-				Windows::validateSystemCall(GetConsoleMode(hStdOut, &mode));
+				try {
+					Windows::validateSystemCall(GetConsoleMode(hStdOut, &mode));
+				} catch (...) {
+					return NULL;
+				}
 				return mode;
 			}
 
@@ -42,14 +49,17 @@ namespace Rain {
 			Initializer()
 					: hStdOut{GetStdHandle(STD_OUTPUT_HANDLE)},
 						origMode{Initializer::getConsoleMode(this->hStdOut)} {
-				if (this->hStdOut == NULL) {
+				if (this->hStdOut == NULL || hStdOut == INVALID_HANDLE_VALUE) {
 					return;
 				}
 				DWORD mode{this->origMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING};
-				Windows::validateSystemCall(SetConsoleMode(this->hStdOut, mode));
+				try {
+					Windows::validateSystemCall(SetConsoleMode(this->hStdOut, mode));
+				} catch (...) {
+				}
 			}
 			~Initializer() {
-				if (this->hStdOut == NULL) {
+				if (this->hStdOut == NULL || hStdOut == INVALID_HANDLE_VALUE) {
 					return;
 				}
 				SetConsoleMode(this->hStdOut, this->origMode);
