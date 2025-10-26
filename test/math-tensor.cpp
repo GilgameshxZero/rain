@@ -6,6 +6,14 @@ using namespace std;
 
 int main() {
 	{
+		Tensor<int, 2> a{{2, 3}, 1, 2, 3, 4, 5, 6},
+			b{{3, 2}, 10, 11, 20, 21, 30, 31};
+		auto c{a.product<1>(b, {1}, {0})};
+		cout << a << '\n' << b << '\n' << c << '\n';
+		cout << '\n';
+	}
+
+	{
 		Tensor<int, 2> a{{10, 10}};
 		for (int i{0}; i < 10; i++) {
 			for (int j{0}; j < 10; j++) {
