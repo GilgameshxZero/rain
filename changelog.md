@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.3.21
+
+1. Properly handle scalar (`ORDER` = 0) edge cases of `product`.
+2. Fix `product` for tensors of differing order.
+3. Implement `*` and inner/outer product shorthands for matrices.
+4. Prepare inverse.
+5. Add product policies for tensor product, and allow their selection in `product`.
+6. Add R-value reference overloads for `applyOver`.
+7. Carry through `const` modifiers on tensor indexing.
+8. Add `power` and Strassen product, though the latter is not fast enough for general use.
+
 ## 7.3.20
 
 1. Implement `Tensor::product`, and an ah-hoc test.
