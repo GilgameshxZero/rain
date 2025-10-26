@@ -58,10 +58,22 @@ namespace Rain::Math {
 					result[i], std::forward<decltype(others)>(others).operator[](i)...);
 			}
 		}
+		// An explicit overload for `applyOver` which does nothing, which may be
+		// called from `product` if one matrix is completely contracted.
+		template <std::size_t REMAINING_ORDER = 0, typename ResultValue>
+		static void applyOver(
+			auto &&callable,
+			Tensor<ResultValue, REMAINING_ORDER> result,
+			auto &&...others) {
+			callable(result, std::forward<decltype(others)>(others)...);
+		}
+		// General reducing `applyOver`.
 		template <
 			std::size_t REMAINING_ORDER = 0,
 			typename ResultValue,
-			std::size_t RESULT_ORDER>
+			std::size_t RESULT_ORDER,
+			bool isReducing = (REMAINING_ORDER < RESULT_ORDER),
+			typename std::enable_if<isReducing>::type * = nullptr>
 		static void applyOver(
 			auto &&callable,
 			Tensor<ResultValue, RESULT_ORDER> result,
@@ -80,8 +92,9 @@ namespace Rain::Math {
 	// operations.
 	template <typename Value, std::size_t ORDER>
 	class Tensor {
-		// Allow access of constructor one dimension down.
-		friend Tensor<Value, ORDER + 1>;
+		// Allow access of any other Tensor for proper product implementation.
+		template <class OtherValue, std::size_t OTHER_ORDER>
+		friend class Tensor;
 
 		private:
 		using TypeThis = Tensor<Value, ORDER>;
@@ -175,6 +188,9 @@ namespace Rain::Math {
 					SIZES_UNDERLYING{other.SIZES_UNDERLYING},
 					OFFSET{other.OFFSET},
 					TRANSPOSE{other.TRANSPOSE} {}
+
+		// An empty default constructor.
+		Tensor() : Tensor(std::array<std::size_t, ORDER>{}) {}
 
 		// Copy assignment copies a reference, and not the underlying data.
 		//
@@ -280,7 +296,9 @@ namespace Rain::Math {
 		template <typename OtherValue>
 		auto &operator+=(Tensor<OtherValue, ORDER> const &other) {
 			Tensor<>::applyOver(
-				[&other](Value &that, OtherValue const &other) { that += other; },
+				[](Value &thatValue, OtherValue const &otherValue) {
+					thatValue += otherValue;
+				},
 				*this,
 				other);
 			return *this;
@@ -321,7 +339,9 @@ namespace Rain::Math {
 		template <typename OtherValue>
 		auto &operator-=(Tensor<OtherValue, ORDER> const &other) {
 			Tensor<>::applyOver(
-				[&other](Value &that, OtherValue const &other) { that -= other; },
+				[](Value &thatValue, OtherValue const &otherValue) {
+					thatValue -= otherValue;
+				},
 				*this,
 				other);
 			return *this;
@@ -471,8 +491,8 @@ namespace Rain::Math {
 			std::size_t OTHER_ORDER>
 		auto product(
 			Tensor<OtherValue, OTHER_ORDER> const &other,
-			std::array<std::size_t, CONTRACT_ORDER> &&thisContractDims,
-			std::array<std::size_t, CONTRACT_ORDER> &&otherContractDims) const {
+			std::array<std::size_t, CONTRACT_ORDER> const &thisContractDims,
+			std::array<std::size_t, CONTRACT_ORDER> const &otherContractDims) const {
 			using ResultValue =
 				decltype(std::declval<Value>() + std::declval<OtherValue>());
 			std::size_t const RESULT_ORDER{ORDER + OTHER_ORDER - CONTRACT_ORDER * 2};
@@ -488,7 +508,8 @@ namespace Rain::Math {
 			}
 
 			// Transpose all contracted dimensions to the end.
-			std::bitset<ORDER> isThisContracted, isOtherContracted;
+			std::bitset<ORDER> isThisContracted;
+			std::bitset<OTHER_ORDER> isOtherContracted;
 			for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
 				isThisContracted[thisContractDims[i]] = true;
 				isOtherContracted[otherContractDims[i]] = true;
@@ -511,11 +532,12 @@ namespace Rain::Math {
 				thisDimPerm[ORDER - i] = thisContractDims[CONTRACT_ORDER - i];
 				otherDimPerm[OTHER_ORDER - i] = otherContractDims[CONTRACT_ORDER - i];
 			}
-			auto thisTransposed{this->asTranspose(thisDimPerm)},
-				otherTransposed{other.asTranspose(otherDimPerm)};
+			auto thisTransposed{this->asTranspose(thisDimPerm)};
+			auto otherTransposed{other.asTranspose(otherDimPerm)};
 
 			std::array<std::size_t, RESULT_ORDER> resultSize;
-			auto thisSize{thisTransposed.size()}, otherSize{otherTransposed.size()};
+			auto thisSize{thisTransposed.size()};
+			auto otherSize{otherTransposed.size()};
 			for (std::size_t i{0}; i < ORDER - CONTRACT_ORDER; i++) {
 				resultSize[i] = thisSize[i];
 			}
