@@ -406,10 +406,13 @@ namespace Rain::Algorithm {
 			typename std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type
 				* = nullptr>
 		inline Derived power(Integer const &exponent) const {
+			// Double base case to cover 0 but also avoid a single product sometimes.
 			if (exponent == 0) {
 				return build(1);
+			} else if (exponent == 1) {
+				return *this;
 			}
-			auto half = this->power(exponent / 2);
+			auto half{this->power(exponent / 2)};
 			if (exponent % 2 == 0) {
 				return half * half;
 			} else {
