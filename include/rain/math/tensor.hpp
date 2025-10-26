@@ -274,7 +274,14 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator+=(Tensor<OtherValue, ORDER> const &other) {
-			return *this = *this + other;
+			Tensor<>::applyOver(
+				[&other](Value &result, Value const &that, OtherValue const &other) {
+					result = that + other;
+				},
+				*this,
+				*this,
+				other);
+			return *this;
 		}
 		template <typename OtherValue>
 		auto operator+(OtherValue const &other) const {
@@ -291,7 +298,11 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator+=(OtherValue const &other) {
-			return *this = *this + other;
+			Tensor<>::applyOver(
+				[&other](Value &result, Value const &that) { result = that + other; },
+				*this,
+				*this);
+			return *this;
 		}
 		template <typename OtherValue>
 		auto operator-(Tensor<OtherValue, ORDER> const &other) const {
@@ -310,7 +321,14 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator-=(Tensor<OtherValue, ORDER> const &other) {
-			return *this = *this - other;
+			Tensor<>::applyOver(
+				[&other](Value &result, Value const &that, OtherValue const &other) {
+					result = that - other;
+				},
+				*this,
+				*this,
+				other);
+			return *this;
 		}
 		template <typename OtherValue>
 		auto operator-(OtherValue const &other) const {
@@ -348,7 +366,11 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator*=(OtherValue const &other) {
-			return *this = *this * other;
+			Tensor<>::applyOver(
+				[&other](Value &result, Value const &that) { result = that * other; },
+				*this,
+				*this);
+			return *this;
 		}
 		template <typename OtherValue>
 		auto operator/(OtherValue const &other) const {
@@ -365,7 +387,11 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator/=(OtherValue const &other) {
-			return *this = *this / other;
+			Tensor<>::applyOver(
+				[&other](Value &result, Value const &that) { result = that / other; },
+				*this,
+				*this);
+			return *this;
 		}
 
 		// Utility functions.

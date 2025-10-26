@@ -20,6 +20,7 @@ int main() {
 		b.transpose({1, 0});
 		cout << b << '\n';
 		cout << a << '\n';
+		cout << '\n';
 	}
 
 	{
@@ -38,7 +39,7 @@ int main() {
 		cout << a << '\n';
 		a.transpose({1, 2, 0});
 		cout << a << '\n';
-		return 0;
+		cout << '\n';
 	}
 
 	{
