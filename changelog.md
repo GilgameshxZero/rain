@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.3.20
+
+1. Implement `Tensor::product`, and an ah-hoc test.
+
 ## 7.3.19
 
 1. Standardize `.gitignore` to `monochrome` format.

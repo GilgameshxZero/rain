@@ -4,6 +4,7 @@
 #include "../platform.hpp"
 
 #include <array>
+#include <bitset>
 #include <iomanip>
 #include <iostream>
 #include <type_traits>
@@ -46,24 +47,27 @@ namespace Rain::Math {
 		};
 
 		private:
-		// Perform an operation over all indices.
-		template <typename ResultValue>
+		// Perform an operation over all indices, or over the first few indices.
+		template <std::size_t REMAINING_ORDER = 0, typename ResultValue>
 		static void applyOver(
 			auto &&callable,
-			Tensor<ResultValue, 1> result,
+			Tensor<ResultValue, REMAINING_ORDER + 1> result,
 			auto &&...others) {
 			for (std::size_t i{0}; i < result.size()[0]; i++) {
 				callable(
 					result[i], std::forward<decltype(others)>(others).operator[](i)...);
 			}
 		}
-		template <typename ResultValue, std::size_t DIM>
+		template <
+			std::size_t REMAINING_ORDER = 0,
+			typename ResultValue,
+			std::size_t RESULT_ORDER>
 		static void applyOver(
 			auto &&callable,
-			Tensor<ResultValue, DIM> result,
+			Tensor<ResultValue, RESULT_ORDER> result,
 			auto &&...others) {
 			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				applyOver(
+				applyOver<REMAINING_ORDER>(
 					std::forward<decltype(callable)>(callable),
 					result[i],
 					std::forward<decltype(others)>(others).operator[](i)...);
@@ -71,7 +75,9 @@ namespace Rain::Math {
 		}
 	};
 
-	// Tensor operations are generally only checked on dimensionality in DEBUG.
+	// Flexible order tensor implementation. Most operations give views of the
+	// same underlying data; this is not the case for the binary arithmetic
+	// operations.
 	template <typename Value, std::size_t ORDER>
 	class Tensor {
 		// Allow access of constructor one dimension down.
@@ -212,7 +218,6 @@ namespace Rain::Math {
 				}
 			}
 
-			// TODO: This does not handle dimension permutations correctly.
 			std::array<std::size_t, ORDER - 1> newDimPerm;
 			for (std::size_t i{1}; i < ORDER; i++) {
 				newDimPerm[i - 1] = this->TRANSPOSE[i] +
@@ -275,10 +280,7 @@ namespace Rain::Math {
 		template <typename OtherValue>
 		auto &operator+=(Tensor<OtherValue, ORDER> const &other) {
 			Tensor<>::applyOver(
-				[&other](Value &result, Value const &that, OtherValue const &other) {
-					result = that + other;
-				},
-				*this,
+				[&other](Value &that, OtherValue const &other) { that += other; },
 				*this,
 				other);
 			return *this;
@@ -298,10 +300,7 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator+=(OtherValue const &other) {
-			Tensor<>::applyOver(
-				[&other](Value &result, Value const &that) { result = that + other; },
-				*this,
-				*this);
+			Tensor<>::applyOver([&other](Value &that) { that += other; }, *this);
 			return *this;
 		}
 		template <typename OtherValue>
@@ -322,10 +321,7 @@ namespace Rain::Math {
 		template <typename OtherValue>
 		auto &operator-=(Tensor<OtherValue, ORDER> const &other) {
 			Tensor<>::applyOver(
-				[&other](Value &result, Value const &that, OtherValue const &other) {
-					result = that - other;
-				},
-				*this,
+				[&other](Value &that, OtherValue const &other) { that -= other; },
 				*this,
 				other);
 			return *this;
@@ -345,10 +341,7 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator-=(OtherValue const &other) {
-			Tensor<>::applyOver(
-				[&other](Value &result, Value const &that) { result = that - other; },
-				*this,
-				*this);
+			Tensor<>::applyOver([&other](Value &that) { that -= other; }, *this);
 			return *this;
 		}
 		template <typename OtherValue>
@@ -366,10 +359,7 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator*=(OtherValue const &other) {
-			Tensor<>::applyOver(
-				[&other](Value &result, Value const &that) { result = that * other; },
-				*this,
-				*this);
+			Tensor<>::applyOver([&other](Value &that) { that *= other; }, *this);
 			return *this;
 		}
 		template <typename OtherValue>
@@ -387,10 +377,7 @@ namespace Rain::Math {
 		}
 		template <typename OtherValue>
 		auto &operator/=(OtherValue const &other) {
-			Tensor<>::applyOver(
-				[&other](Value &result, Value const &that) { result = that / other; },
-				*this,
-				*this);
+			Tensor<>::applyOver([&other](Value &that) { that /= other; }, *this);
 			return *this;
 		}
 
@@ -443,19 +430,19 @@ namespace Rain::Math {
 			Tensor<>::applyOver([&other](Value &that) { that = other; }, *this);
 		}
 		// Must be a valid permutation of [0, ORDER). Checked iff DEBUG.
-		TypeThis asTranspose(std::array<std::size_t, ORDER> &&transpose) const {
+		TypeThis asTranspose(std::array<std::size_t, ORDER> const &dimPerm) const {
 			if (Platform::isDebug()) {
-				std::array<std::size_t, ORDER> transposeSorted{this->TRANSPOSE};
-				std::sort(transposeSorted.begin(), transposeSorted.end());
+				std::array<std::size_t, ORDER> dimPermSorted{this->TRANSPOSE};
+				std::sort(dimPermSorted.begin(), dimPermSorted.end());
 				for (std::size_t i{0}; i < ORDER; i++) {
-					if (transposeSorted[i] != i) {
+					if (dimPermSorted[i] != i) {
 						throw Exception(Error::SIZES_MISMATCH);
 					}
 				}
 			}
 			std::array<std::size_t, ORDER> newDimPerm{};
 			for (std::size_t i{0}; i < ORDER; i++) {
-				newDimPerm[i] = this->TRANSPOSE[transpose[i]];
+				newDimPerm[i] = this->TRANSPOSE[dimPerm[i]];
 			}
 			return {
 				this->VALUES,
@@ -464,19 +451,106 @@ namespace Rain::Math {
 				this->OFFSET,
 				newDimPerm};
 		}
-		TypeThis transpose(std::array<std::size_t, ORDER> &&dimPerm) {
-			return *this =
-							 this->asTranspose(std::forward<decltype(dimPerm)>(dimPerm));
+		TypeThis transpose(std::array<std::size_t, ORDER> const &dimPerm) {
+			return *this = this->asTranspose(dimPerm);
 		}
-		// Tensor product is defined with a list of pairs of indices to contract.
-		template <typename OtherValue, std::size_t OTHER_ORDER>
-		void product(
-			Tensor<OtherValue, OTHER_ORDER> const &,
-			std::array<std::size_t, ORDER> &&) const {
-			// Swap all contracted dimensions to the end.
 
-			// Iterate over all non-contracted dimensions, and compute inner product
-			// of all remaining dimensions.
+		// Tensor product is defined with a list of pairs of indices to contract.
+		//
+		// Type of result tensor is the same as the type of Value * OtherValue,
+		// without consideration for the contraction + operation.
+		//
+		// Contraction (+) should be presumed to be commutative. Expansion (*) need
+		// not be. Result values are first default-constructed, and should be
+		// assumed to be identity w.r.t. contraction.
+		//
+		// Checks that contraction dimensions are identical iff DEBUG.
+		template <
+			std::size_t CONTRACT_ORDER,
+			typename OtherValue,
+			std::size_t OTHER_ORDER>
+		auto product(
+			Tensor<OtherValue, OTHER_ORDER> const &other,
+			std::array<std::size_t, CONTRACT_ORDER> &&thisContractDims,
+			std::array<std::size_t, CONTRACT_ORDER> &&otherContractDims) const {
+			using ResultValue =
+				decltype(std::declval<Value>() + std::declval<OtherValue>());
+			std::size_t const RESULT_ORDER{ORDER + OTHER_ORDER - CONTRACT_ORDER * 2};
+
+			if (Platform::isDebug()) {
+				for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
+					if (
+						this->SIZES[this->TRANSPOSE[thisContractDims[i]]] !=
+						other.SIZES[other.TRANSPOSE[otherContractDims[i]]]) {
+						throw Exception(Error::SIZES_MISMATCH);
+					}
+				}
+			}
+
+			// Transpose all contracted dimensions to the end.
+			std::bitset<ORDER> isThisContracted, isOtherContracted;
+			for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
+				isThisContracted[thisContractDims[i]] = true;
+				isOtherContracted[otherContractDims[i]] = true;
+			}
+			std::array<std::size_t, ORDER> thisDimPerm;
+			std::array<std::size_t, OTHER_ORDER> otherDimPerm;
+			for (std::size_t i{0}, j{0}; i < ORDER; i++) {
+				if (isThisContracted[i]) {
+					continue;
+				}
+				thisDimPerm[j++] = i;
+			}
+			for (std::size_t i{0}, j{0}; i < OTHER_ORDER; i++) {
+				if (isOtherContracted[i]) {
+					continue;
+				}
+				otherDimPerm[j++] = i;
+			}
+			for (std::size_t i{CONTRACT_ORDER}; i > 0; i--) {
+				thisDimPerm[ORDER - i] = thisContractDims[CONTRACT_ORDER - i];
+				otherDimPerm[OTHER_ORDER - i] = otherContractDims[CONTRACT_ORDER - i];
+			}
+			auto thisTransposed{this->asTranspose(thisDimPerm)},
+				otherTransposed{other.asTranspose(otherDimPerm)};
+
+			std::array<std::size_t, RESULT_ORDER> resultSize;
+			auto thisSize{thisTransposed.size()}, otherSize{otherTransposed.size()};
+			for (std::size_t i{0}; i < ORDER - CONTRACT_ORDER; i++) {
+				resultSize[i] = thisSize[i];
+			}
+			for (std::size_t i{0}; i < OTHER_ORDER - CONTRACT_ORDER; i++) {
+				resultSize[ORDER - CONTRACT_ORDER + i] = otherSize[i];
+			}
+
+			// Iterate over all non-contracted dimensions, and compute contraction
+			// (sum) of inner product over all remaining dimensions.
+			Tensor<ResultValue, RESULT_ORDER> result(resultSize);
+			Tensor<>::applyOver<OTHER_ORDER - CONTRACT_ORDER>(
+				[&otherTransposed](
+					Tensor<ResultValue, OTHER_ORDER - CONTRACT_ORDER> resultOuter,
+					Tensor<Value, CONTRACT_ORDER> const &thatInner) {
+					Tensor<>::applyOver(
+						[&thatInner](
+							ResultValue &resultInner,
+							Tensor<OtherValue, CONTRACT_ORDER> const &otherInner) {
+							// Actually, both `thatInner` and `otherInner` are kept `const`,
+							// but we are lazy and don't code the `const` override for
+							// `applyOver`.
+							Tensor<>::applyOver(
+								[&resultInner](
+									Value const &thatValue, OtherValue const &otherValue) {
+									resultInner += thatValue * otherValue;
+								},
+								thatInner,
+								otherInner);
+						},
+						resultOuter,
+						otherTransposed);
+				},
+				result,
+				thisTransposed);
+			return result;
 		}
 	};
 }
