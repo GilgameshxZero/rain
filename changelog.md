@@ -1,5 +1,19 @@
 # Changelog
 
+## 7.3.19
+
+1. Standardize `.gitignore` to `monochrome` format.
+2. Update `launch.json` to use the new `.bin` format.
+3. Updated console reveal options and re-ordered launch options to be consistent with `monochrome`.
+4. Added headers to pre-compilation option.
+5. Fix "Outdated" tracker in `makefile` for systems where command line length is limited.
+6. Replaced `sqrtl` with `sqrt` because GCC has a bug where `sqrtl` is not properly implemented in `std`, and `sqrt` will choose the correct version anyway.
+7. Added necessary `typename`s to `modulus-field` to enable compilation on Ubuntu GCC.
+8. Added `catch`s for pipe-related failures to the Windows `Rain::Console` initializer.
+9. Implemented proper copy assignment and allocation elision in `Tensor`.
+10. Implemented proper `Tensor::transpose`.
+11. Added a few ad-hoc tests for `Tensor`, but this still needs more work/asserts.
+
 ## 7.3.18
 
 1. Update `makefile` to `utulek` version, with proper dependency tracking on all platforms.

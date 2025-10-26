@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../error/exception.hpp"
+#include "../platform.hpp"
 
 #include <array>
 #include <iomanip>
@@ -27,7 +28,7 @@ namespace Rain::Math {
 					case Error::NONE:
 						return "None.";
 					case Error::SIZES_MISMATCH:
-						return "Tensors are not of compatible size for operation.";
+						return "Tensor(s) are not of compatible size for operation.";
 					default:
 						return "Generic.";
 				}
@@ -70,7 +71,7 @@ namespace Rain::Math {
 		}
 	};
 
-	// Tensor operations are generally not bounds-checked.
+	// Tensor operations are generally only checked on dimensionality in DEBUG.
 	template <typename Value, std::size_t ORDER>
 	class Tensor {
 		// Allow access of constructor one dimension down.
@@ -83,14 +84,14 @@ namespace Rain::Math {
 		using Error = Tensor<>::Error;
 		using Exception = Tensor<>::Exception;
 
-		std::shared_ptr<Value[]> const VALUES;
-		std::array<Range, ORDER> const RANGES;
+		std::shared_ptr<Value[]> VALUES;
+		std::array<Range, ORDER> RANGES;
 		// Perceived size based on range.
-		std::array<std::size_t, ORDER> const SIZES, SIZES_UNDERLYING;
+		std::array<std::size_t, ORDER> SIZES, SIZES_UNDERLYING;
 		// Offset caused by previous indexing.
-		std::size_t const OFFSET;
+		std::size_t OFFSET;
 		// Store a permutation of dimensions for easy transpose & product.
-		std::array<std::size_t, ORDER> const TRANSPOSE;
+		std::array<std::size_t, ORDER> TRANSPOSE;
 
 		static constexpr inline std::size_t calcSizesProduct(
 			std::array<std::size_t, ORDER> const &sizes) {
@@ -126,6 +127,19 @@ namespace Rain::Math {
 			return dimPerm;
 		}
 
+		template <typename OtherValue>
+		inline void debugAssertEqualSizes(
+			Tensor<OtherValue, ORDER> const &other) const {
+			if (Platform::isDebug()) {
+				auto thisSize{this->size()}, otherSize{other.size()};
+				for (std::size_t i{0}; i < ORDER; i++) {
+					if (thisSize[i] != otherSize[i]) {
+						throw Exception(Error::SIZES_MISMATCH);
+					}
+				}
+			}
+		}
+
 		Tensor(
 			std::shared_ptr<Value[]> values,
 			std::array<Range, ORDER> const &ranges,
@@ -156,44 +170,53 @@ namespace Rain::Math {
 					OFFSET{other.OFFSET},
 					TRANSPOSE{other.TRANSPOSE} {}
 
+		// Copy assignment copies a reference, and not the underlying data.
+		//
 		// We offer a template but also a specialization to the current class to
 		// help compilers recognize the copy assignment operator.
 		template <typename OtherValue>
 		auto &operator=(Tensor<OtherValue, ORDER> const &other) {
-			Tensor<>::applyOver(
-				[](Value &that, OtherValue const &other) { that = other; },
-				*this,
-				other);
+			this->VALUES = other.VALUES;
+			this->RANGES = other.RANGES;
+			this->SIZES = other.SIZES;
+			this->SIZES_UNDERLYING = other.SIZES_UNDERLYING;
+			this->OFFSET = other.OFFSET;
+			this->TRANSPOSE = other.TRANSPOSE;
 			return *this;
 		}
 		auto &operator=(TypeThis const &other) {
-			Tensor<>::applyOver(
-				[](Value &that, Value const &other) { that = other; }, *this, other);
+			this->VALUES = other.VALUES;
+			this->RANGES = other.RANGES;
+			this->SIZES = other.SIZES;
+			this->SIZES_UNDERLYING = other.SIZES_UNDERLYING;
+			this->OFFSET = other.OFFSET;
+			this->TRANSPOSE = other.TRANSPOSE;
 			return *this;
 		}
 
+		// Checks in-range iff DEBUG.
 		template <
 			bool isVector = ORDER == 1,
 			typename std::enable_if<isVector>::type * = nullptr>
-		inline Value &operator[](std::size_t idx) {
+		inline Value &operator[](std::size_t idx) const {
 			return this->VALUES
 				[this->OFFSET + this->RANGES[0].start + this->RANGES[0].step * idx];
 		}
 		template <
-			bool isVector = ORDER == 1,
-			typename std::enable_if<isVector>::type * = nullptr>
-		inline Value const &operator[](std::size_t idx) const {
-			return const_cast<TypeThis *>(this)->operator[](idx);
-		}
-		template <
 			bool isNotVector = (ORDER > 1),
 			typename std::enable_if<isNotVector>::type * = nullptr>
-		Tensor<Value, ORDER - 1> operator[](std::size_t idx) {
+		Tensor<Value, ORDER - 1> operator[](std::size_t idx) const {
+			if (Platform::isDebug()) {
+				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
+					throw Exception(Error::SIZES_MISMATCH);
+				}
+			}
+
 			// TODO: This does not handle dimension permutations correctly.
-			std::array<std::size_t, ORDER - 1> dimPerm;
+			std::array<std::size_t, ORDER - 1> newDimPerm;
 			for (std::size_t i{1}; i < ORDER; i++) {
-				dimPerm[i - 1] =
-					this->TRANSPOSE[i] + (this->TRANSPOSE[i] > this->TRANSPOSE[0] ? -1 : 0);
+				newDimPerm[i - 1] = this->TRANSPOSE[i] +
+					(this->TRANSPOSE[i] > this->TRANSPOSE[0] ? -1 : 0);
 			}
 
 			std::array<Range, ORDER - 1> ranges;
@@ -202,31 +225,44 @@ namespace Rain::Math {
 				this->RANGES[this->TRANSPOSE[0]].start +
 				this->RANGES[this->TRANSPOSE[0]].step * idx};
 			for (std::size_t i{1}; i < ORDER; i++) {
-				ranges[dimPerm[i - 1]] = this->RANGES[this->TRANSPOSE[i]];
-				rangeShift *= this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
-				sizesUnderlying[dimPerm[i - 1]] =
+				sizesUnderlying[newDimPerm[i - 1]] =
 					this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
+				if (this->TRANSPOSE[i] > this->TRANSPOSE[0]) {
+					rangeShift *= this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
+					ranges[newDimPerm[i - 1]] = this->RANGES[this->TRANSPOSE[i]];
+				} else {
+					// `stop` and `start` are calculated from the new `step`.
+					ranges[newDimPerm[i - 1]].step =
+						this->RANGES[this->TRANSPOSE[i]].step *
+						this->SIZES_UNDERLYING[this->TRANSPOSE[0]];
+					ranges[newDimPerm[i - 1]].start =
+						this->RANGES[this->TRANSPOSE[i]].start *
+						this->SIZES_UNDERLYING[this->TRANSPOSE[0]];
+					ranges[newDimPerm[i - 1]].stop = ranges[newDimPerm[i - 1]].start +
+						this->RANGES[this->TRANSPOSE[i]].step *
+							this->SIZES_UNDERLYING[this->TRANSPOSE[0]] *
+							this->SIZES[this->TRANSPOSE[i]];
+				}
 			}
 			return {
 				this->VALUES,
 				ranges,
 				sizesUnderlying,
 				this->OFFSET + rangeShift,
-				dimPerm};
-		}
-		template <
-			bool isNotVector = (ORDER > 1),
-			typename std::enable_if<isNotVector>::type * = nullptr>
-		Tensor<Value, ORDER - 1> const operator[](std::size_t idx) const {
-			return const_cast<TypeThis *>(this)->operator[](idx);
+				newDimPerm};
 		}
 
-		// Binary operators.
+		// Binary operators. Checks dimension equality iff DEBUG.
+		//
+		// Binary assignment operators perform operations in-place. Non-assignment
+		// versions are constant and will perform allocations of the appropriate
+		// size.
 		template <typename OtherValue>
 		auto operator+(Tensor<OtherValue, ORDER> const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() + std::declval<OtherValue>());
-			Tensor<ResultValue, ORDER> result(this->SIZES);
+			this->debugAssertEqualSizes(other);
+			Tensor<ResultValue, ORDER> result(this->size());
 			Tensor<>::applyOver(
 				[](ResultValue &result, Value const &that, OtherValue const &other) {
 					result = that + other;
@@ -241,10 +277,28 @@ namespace Rain::Math {
 			return *this = *this + other;
 		}
 		template <typename OtherValue>
+		auto operator+(OtherValue const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<OtherValue>());
+			Tensor<ResultValue, ORDER> result(this->size());
+			Tensor<>::applyOver(
+				[&other](ResultValue &result, Value const &that) {
+					result = that + other;
+				},
+				result,
+				*this);
+			return result;
+		}
+		template <typename OtherValue>
+		auto &operator+=(OtherValue const &other) {
+			return *this = *this + other;
+		}
+		template <typename OtherValue>
 		auto operator-(Tensor<OtherValue, ORDER> const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() - std::declval<OtherValue>());
-			Tensor<ResultValue, ORDER> result(this->SIZES);
+			this->debugAssertEqualSizes(other);
+			Tensor<ResultValue, ORDER> result(this->size());
 			Tensor<>::applyOver(
 				[](ResultValue &result, Value const &that, OtherValue const &other) {
 					result = that - other;
@@ -259,10 +313,31 @@ namespace Rain::Math {
 			return *this = *this - other;
 		}
 		template <typename OtherValue>
+		auto operator-(OtherValue const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<OtherValue>());
+			Tensor<ResultValue, ORDER> result(this->size());
+			Tensor<>::applyOver(
+				[&other](ResultValue &result, Value const &that) {
+					result = that - other;
+				},
+				result,
+				*this);
+			return result;
+		}
+		template <typename OtherValue>
+		auto &operator-=(OtherValue const &other) {
+			Tensor<>::applyOver(
+				[&other](Value &result, Value const &that) { result = that - other; },
+				*this,
+				*this);
+			return *this;
+		}
+		template <typename OtherValue>
 		auto operator*(OtherValue const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>());
-			Tensor<ResultValue, ORDER> result(this->SIZES);
+			Tensor<ResultValue, ORDER> result(this->size());
 			Tensor<>::applyOver(
 				[&other](ResultValue &result, Value const &that) {
 					result = that * other;
@@ -275,17 +350,44 @@ namespace Rain::Math {
 		auto &operator*=(OtherValue const &other) {
 			return *this = *this * other;
 		}
-
-		// Special functions.
-		inline std::array<std::size_t, ORDER> size() const { return this->SIZES; }
-		inline bool isEmpty() const {
-			bool result{false};
-			for (auto const &i : this->size()) {
-				result |= i == 0;
-			}
+		template <typename OtherValue>
+		auto operator/(OtherValue const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<OtherValue>());
+			Tensor<ResultValue, ORDER> result(this->size());
+			Tensor<>::applyOver(
+				[&other](ResultValue &result, Value const &that) {
+					result = that / other;
+				},
+				result,
+				*this);
 			return result;
 		}
-		TypeThis slice(std::array<Range, ORDER> &&ranges) {
+		template <typename OtherValue>
+		auto &operator/=(OtherValue const &other) {
+			return *this = *this / other;
+		}
+
+		// Utility functions.
+
+		// Transposition does not change `SIZES`, and so some functions should use
+		// `SIZES`, while others should use `size()`.
+		inline std::array<std::size_t, ORDER> size() const {
+			std::array<std::size_t, ORDER> sizesTransposed;
+			for (std::size_t i{0}; i < ORDER; i++) {
+				sizesTransposed[i] = this->SIZES[this->TRANSPOSE[i]];
+			}
+			return sizesTransposed;
+		}
+		inline bool isEmpty() const {
+			for (auto const &i : this->SIZES) {
+				if (i == 0) {
+					return true;
+				}
+			}
+			return false;
+		}
+		TypeThis asSlice(std::array<Range, ORDER> &&ranges) const {
 			std::array<Range, ORDER> mergedRanges;
 			for (std::size_t i{0}; i < ORDER; i++) {
 				mergedRanges[i].step =
@@ -308,27 +410,43 @@ namespace Rain::Math {
 				this->OFFSET,
 				this->TRANSPOSE};
 		}
-		auto slice(std::array<Range, ORDER> &&ranges) const {
-			return const_cast<TypeThis *>(this)->slice(
-				std::forward<decltype(ranges)>(ranges));
+		TypeThis slice(std::array<Range, ORDER> &&ranges) {
+			return *this = this->asSlice(std::forward<decltype(ranges)>(ranges));
 		}
 		void fill(Value const &other) {
 			Tensor<>::applyOver([&other](Value &that) { that = other; }, *this);
 		}
-		// Must be a valid permutation.
-		TypeThis transpose(std::array<std::size_t, ORDER> &&dimPerm) const {
+		// Must be a valid permutation of [0, ORDER). Checked iff DEBUG.
+		TypeThis asTranspose(std::array<std::size_t, ORDER> &&transpose) const {
+			if (Platform::isDebug()) {
+				std::array<std::size_t, ORDER> transposeSorted{this->TRANSPOSE};
+				std::sort(transposeSorted.begin(), transposeSorted.end());
+				for (std::size_t i{0}; i < ORDER; i++) {
+					if (transposeSorted[i] != i) {
+						throw Exception(Error::SIZES_MISMATCH);
+					}
+				}
+			}
+			std::array<std::size_t, ORDER> newDimPerm{};
+			for (std::size_t i{0}; i < ORDER; i++) {
+				newDimPerm[i] = this->TRANSPOSE[transpose[i]];
+			}
 			return {
 				this->VALUES,
 				this->RANGES,
 				this->SIZES_UNDERLYING,
 				this->OFFSET,
-				dimPerm};
+				newDimPerm};
+		}
+		TypeThis transpose(std::array<std::size_t, ORDER> &&dimPerm) {
+			return *this =
+							 this->asTranspose(std::forward<decltype(dimPerm)>(dimPerm));
 		}
 		// Tensor product is defined with a list of pairs of indices to contract.
 		template <typename OtherValue, std::size_t OTHER_ORDER>
 		void product(
 			Tensor<OtherValue, OTHER_ORDER> const &,
-			std::array<std::size_t, ORDER> &&) {
+			std::array<std::size_t, ORDER> &&) const {
 			// Swap all contracted dimensions to the end.
 
 			// Iterate over all non-contracted dimensions, and compute inner product
