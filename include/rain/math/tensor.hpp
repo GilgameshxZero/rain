@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../algorithm/bit-manipulators.hpp"
 #include "../error/exception.hpp"
+#include "../literal.hpp"
 #include "../platform.hpp"
 
 #include <array>
@@ -896,15 +898,16 @@ namespace Rain::Math {
 		}
 		// Strassen's exists for higher orders, but we do not provide it here.
 		// Current Strassen's pads at the beginning, so only use for large matrices
-		// where the n^0.17 matters.
+		// where the n^0.19 matters.
+		//
+		// Strassen's does not work on semi-rings (such as min-plus), and thus does
+		// not admit a product policy in this form.
 		//
 		// Under and including size (1_zu << BASE_SIZE_POWER), Strassen will switch
 		// to use standard computation instead.
 		//
 		// TODO: There should be additional options to optimize square MM w.r.t
 		// memory locality & re-allocation.
-		//
-		// TODO: Refactor into product policy.
 		template <
 			std::size_t BASE_SIZE_POWER = 8,
 			typename OtherValue,
@@ -987,11 +990,7 @@ namespace Rain::Math {
 			bool isMatrix = ORDER == 2,
 			typename std::enable_if<isMatrix>::type * = nullptr>
 		auto inverse() const {
-			if (Platform::isDebug()) {
-				if (this->SIZES[0] != this->SIZES[1]) {
-					throw Exception(Error::SIZES_MISMATCH);
-				}
-			}
+			this->debugAssertSquare();
 
 			// TODO: Implement `inverse`.
 			return *this;
