@@ -2,6 +2,7 @@
 
 #include "../algorithm/bit-manipulators.hpp"
 #include "../error/exception.hpp"
+#include "../functional.hpp"
 #include "../literal.hpp"
 #include "../platform.hpp"
 
@@ -85,126 +86,94 @@ namespace Rain::Math {
 		};
 
 		private:
+		// SFINAE to check if a type is a tensor.
+		template <typename Value, std::size_t ORDER>
+		static std::true_type isDerivedFromTensorImpl(Tensor<Value, ORDER> *);
+		template <typename = nullptr_t, std::size_t = 0>
+		static std::false_type isDerivedFromTensorImpl(...);
+		template <typename TypeDerived>
+		using isDerivedFromTensor = decltype(isDerivedFromTensorImpl(
+			std::declval<typename std::remove_const<TypeDerived>::type *>()));
+
+		// SFINAE to check an arbitrary type with a tensor of a given order.
+		template <
+			std::size_t TARGET_ORDER,
+			template <std::size_t, std::size_t> class Comparator,
+			typename Value,
+			std::size_t ORDER,
+			typename std::enable_if<Comparator<TARGET_ORDER, ORDER>::value>::type * =
+				nullptr>
+		static std::true_type isTensorOfComparativeOrderImpl(
+			Tensor<Value, ORDER> *);
+		template <
+			std::size_t = 0,
+			template <std::size_t, std::size_t> class = Functional::isEqualTo,
+			typename = nullptr_t,
+			std::size_t = 0,
+			typename = nullptr_t>
+		static std::false_type isTensorOfComparativeOrderImpl(...);
+		template <
+			std::size_t TARGET_ORDER,
+			template <std::size_t, std::size_t> class Comparator,
+			typename TypeDerived>
+		using isTensorOfComparativeOrder =
+			decltype(isTensorOfComparativeOrderImpl<TARGET_ORDER, Comparator>(
+				std::declval<typename std::remove_const<TypeDerived>::type *>()));
+
 		// Perform an operation over all indices, or over the first few indices.
-		template <std::size_t REMAINING_ORDER, typename ResultValue>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, REMAINING_ORDER + 1> const &result,
-			auto &&...others) {
+		//
+		// Each function is template-overloaded to handle both `const &` and `&`
+		// versions of `result. An additional function is provided to handle `&&`
+		// versions by degrading the rvalue reference into an lvalue.
+		template <
+			std::size_t REMAINING_ORDER,
+			typename ResultType,
+			typename std::enable_if<isTensorOfComparativeOrder<
+				REMAINING_ORDER,
+				Functional::isLessThan,
+				ResultType>::value>::type * = nullptr>
+		static inline void
+		applyOver(auto &&callable, ResultType &result, auto &&...others) {
 			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				callable(
-					result[i], std::forward<decltype(others)>(others).operator[](i)...);
+				Tensor<>::applyOver<REMAINING_ORDER>(
+					std::forward<decltype(callable)>(callable),
+					std::forward<decltype(result[i])>(result[i]),
+					std::forward<decltype(others[i])>(others[i])...);
 			}
 		}
-		// An explicit overload for `applyOver` which does nothing, which may be
-		// called from `product` if one matrix is completely contracted.
-		template <std::size_t REMAINING_ORDER, typename ResultValue>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, REMAINING_ORDER> const &result,
-			auto &&...others) {
+		// An explicit overload for `applyOver` which does nothing (i.e. base case),
+		// which may be called from `product` if one matrix is completely
+		// contracted.
+		template <
+			std::size_t REMAINING_ORDER,
+			typename ResultType,
+			typename std::enable_if<isTensorOfComparativeOrder<
+				REMAINING_ORDER,
+				Functional::isEqualTo,
+				ResultType>::value>::type * = nullptr>
+		static inline void
+		applyOver(auto &&callable, ResultType &result, auto &&...others) {
 			callable(result, std::forward<decltype(others)>(others)...);
 		}
-		// `applyOver` which reduces ORDER.
+		// `applyOver` called without a Tensor will simply call the function.
 		template <
-			std::size_t REMAINING_ORDER,
-			typename ResultValue,
-			std::size_t RESULT_ORDER,
-			bool isReducing = (REMAINING_ORDER < RESULT_ORDER),
-			typename std::enable_if<isReducing>::type * = nullptr>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, RESULT_ORDER> const &result,
-			auto &&...others) {
-			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				Tensor<>::applyOver<REMAINING_ORDER>(
-					std::forward<decltype(callable)>(callable),
-					result[i],
-					std::forward<decltype(others)>(others).operator[](i)...);
-			}
+			std::size_t,
+			typename ResultType,
+			typename std::enable_if<!isDerivedFromTensor<ResultType>::value>::type * =
+				nullptr>
+		static inline void
+		applyOver(auto &&callable, ResultType &result, auto &&...others) {
+			callable(result, std::forward<decltype(others)>(others)...);
 		}
-
-		// L-value versions of `applyOver`.
-		template <std::size_t REMAINING_ORDER, typename ResultValue>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, REMAINING_ORDER + 1> &result,
-			auto &&...others) {
-			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				callable(
-					std::forward<decltype(result[i])>(result[i]),
-					std::forward<decltype(others)>(others).operator[](i)...);
-			}
-		}
-		template <std::size_t REMAINING_ORDER, typename ResultValue>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, REMAINING_ORDER> &result,
-			auto &&...others) {
-			callable(
-				// We believe std::move is necessary here because it makes it into an
-				// r-value reference, instead of decaying it into an lvalue, which we
-				// don't have an overload for.
-				std::move(result),
+		// R-value reference versions of `applyOver`. We degrade `result` into a
+		// l-value reference.
+		template <std::size_t REMAINING_ORDER>
+		static inline void
+		applyOver(auto &&callable, auto &&result, auto &&...others) {
+			Tensor<>::applyOver<REMAINING_ORDER>(
+				std::forward<decltype(callable)>(callable),
+				result,
 				std::forward<decltype(others)>(others)...);
-		}
-		template <
-			std::size_t REMAINING_ORDER,
-			typename ResultValue,
-			std::size_t RESULT_ORDER,
-			bool isReducing = (REMAINING_ORDER < RESULT_ORDER),
-			typename std::enable_if<isReducing>::type * = nullptr>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, RESULT_ORDER> &result,
-			auto &&...others) {
-			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				Tensor<>::applyOver<REMAINING_ORDER>(
-					std::forward<decltype(callable)>(callable),
-					std::forward<decltype(result[i])>(result[i]),
-					std::forward<decltype(others)>(others).operator[](i)...);
-			}
-		}
-
-		// R-value reference versions of `applyOver`. We cannot have one set of
-		// functions call another set, because that degrades the qualifiers on
-		// `result`, which need to be exact when passed to `callable`.
-		template <std::size_t REMAINING_ORDER, typename ResultValue>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, REMAINING_ORDER + 1> &&result,
-			auto &&...others) {
-			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				callable(
-					std::forward<decltype(result[i])>(result[i]),
-					std::forward<decltype(others)>(others).operator[](i)...);
-			}
-		}
-		template <std::size_t REMAINING_ORDER, typename ResultValue>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, REMAINING_ORDER> &&result,
-			auto &&...others) {
-			callable(
-				std::forward<decltype(result)>(result),
-				std::forward<decltype(others)>(others)...);
-		}
-		template <
-			std::size_t REMAINING_ORDER,
-			typename ResultValue,
-			std::size_t RESULT_ORDER,
-			bool isReducing = (REMAINING_ORDER < RESULT_ORDER),
-			typename std::enable_if<isReducing>::type * = nullptr>
-		static void applyOver(
-			auto &&callable,
-			Tensor<ResultValue, RESULT_ORDER> &&result,
-			auto &&...others) {
-			for (std::size_t i{0}; i < result.size()[0]; i++) {
-				Tensor<>::applyOver<REMAINING_ORDER>(
-					std::forward<decltype(callable)>(callable),
-					std::forward<decltype(result[i])>(result[i]),
-					std::forward<decltype(others)>(others).operator[](i)...);
-			}
 		}
 
 		// Compute the total number of entries in a tensor.
@@ -264,9 +233,6 @@ namespace Rain::Math {
 		std::size_t OFFSET;
 		// Store a permutation of dimensions for easy transpose & product.
 		std::array<std::size_t, ORDER> TRANSPOSE;
-
-		// Only used by the wrapping variant of the scalar constructor.
-		Value *P_SCALAR{nullptr};
 
 		static constexpr inline std::array<Range, ORDER> makeRangesDefault(
 			std::array<std::size_t, ORDER> const &sizes) {
@@ -412,21 +378,6 @@ namespace Rain::Math {
 		// The default constructor generates a Tensor with only a single element.
 		Tensor() : Tensor(TypeThis::makeOnesSizes()) {}
 
-		// Scalar constructor elides sizes. Allows for free conversion between
-		// scalars and Values, alongside the relevant `operator`s.
-		template <
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
-		Tensor(Value const &value) : Tensor({}, value) {}
-		// A scalar tensor can also wrap an existing value, but this needs special
-		// treatment.
-		template <
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
-		Tensor(Value &value) : Tensor({}) {
-			this->P_SCALAR = &value;
-		}
-
 		// Copy assignment copies a reference, and not the underlying data.
 		//
 		// We offer a template but also a specialization to the current class to
@@ -448,6 +399,15 @@ namespace Rain::Math {
 			this->SIZES_UNDERLYING = other.SIZES_UNDERLYING;
 			this->OFFSET = other.OFFSET;
 			this->TRANSPOSE = other.TRANSPOSE;
+			return *this;
+		}
+
+		// Convenience operator for scalar tensors.
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
+		auto &operator=(Value const &other) {
+			this->VALUES[this->OFFSET] = other;
 			return *this;
 		}
 
@@ -482,10 +442,7 @@ namespace Rain::Math {
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
 		inline operator Value const &() const {
-			if (this->P_SCALAR != nullptr) {
-				return *this->P_SCALAR;
-			}
-			return this->VALUES[0];
+			return this->VALUES[this->OFFSET];
 		}
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
@@ -498,6 +455,14 @@ namespace Rain::Math {
 		// build on it.
 		//
 		// Checks in-range iff DEBUG.
+		//
+		// We provide two versions of the indexing operator, to
+		// preserve const-ness.
+		//
+		// The base level indexing operator MUST return a Value reference, and NOT a
+		// scalar tensor. While scalar tensors are valid and will work, the
+		// conversion during `applyOver` dominates the runtime  and incurs a heavy
+		// performance penalty.
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
@@ -512,8 +477,6 @@ namespace Rain::Math {
 			return const_cast<Value &>(
 				const_cast<TypeThis const *>(this)->operator[](idx));
 		}
-		// We provide two versions of the higher-order indexing operator, to
-		// preserve const-ness.
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER > 1)>::type * = nullptr>
@@ -954,12 +917,25 @@ namespace Rain::Math {
 			Tensor<ResultValue, RESULT_ORDER> result(resultSize);
 			Tensor<>::applyOver<OTHER_ORDER - CONTRACT_ORDER>(
 				[&otherTransposed](
-					Tensor<ResultValue, OTHER_ORDER - CONTRACT_ORDER> &&resultOuter,
-					Tensor<Value, CONTRACT_ORDER> const &thatInner) {
+					// Based on how much `applyOver` unravels, we either end up with a
+					// base Value or a higher order Tensor. We need to be able to handle
+					// both here.
+					typename std::conditional<
+						OTHER_ORDER - CONTRACT_ORDER == 0,
+						ResultValue,
+						Tensor<ResultValue, OTHER_ORDER - CONTRACT_ORDER>>::type
+						&resultOuter,
+					typename std::conditional<
+						CONTRACT_ORDER == 0,
+						Value,
+						Tensor<Value, CONTRACT_ORDER>>::type const &thatInner) {
 					Tensor<>::applyOver<0>(
 						[&thatInner](
 							ResultValue &resultInner,
-							Tensor<OtherValue, CONTRACT_ORDER> const &otherInner) {
+							typename std::conditional<
+								CONTRACT_ORDER == 0,
+								OtherValue,
+								Tensor<OtherValue, CONTRACT_ORDER>>::type const &otherInner) {
 							// Actually, both `thatInner` and `otherInner` are kept `const`,
 							// but we are lazy and don't code the `const` override for
 							// `applyOver`.
@@ -977,6 +953,8 @@ namespace Rain::Math {
 						resultOuter,
 						otherTransposed);
 				},
+				// For some reason, our implementation of `applyOver` only allows
+				// non-const parameters in the first position.
 				result,
 				thisTransposed);
 			return result;
