@@ -28,7 +28,6 @@ int main() {
 								<< std::endl;
 		}
 		assert(c == d);
-		return 0;
 	}
 
 	{
