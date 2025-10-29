@@ -43,4 +43,18 @@ namespace Rain::Functional {
 		Type,
 		std::void_t<decltype(std::declval<std::hash<Type>>()(
 			std::declval<Type>()))>> : std::true_type {};
+
+	// SFINAE-friendly comparators.
+	template <std::size_t LEFT, std::size_t RIGHT>
+	struct isEqualTo {
+		static constexpr bool value{LEFT == RIGHT};
+	};
+	template <std::size_t LEFT, std::size_t RIGHT>
+	struct isLessThan {
+		static constexpr bool value{LEFT < RIGHT};
+	};
+	template <std::size_t LEFT, std::size_t RIGHT>
+	struct isGreaterThan {
+		static constexpr bool value{LEFT > RIGHT};
+	};
 }

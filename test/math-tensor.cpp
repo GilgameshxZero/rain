@@ -7,13 +7,21 @@ using namespace std;
 int main() {
 	{
 		Tensor<int, 2> a{{512, 512}}, b{{512, 512}}, c, d;
-		for (int i{0}; i < 512; i++) {
-			for (int j{0}; j < 512; j++) {
-				a[i][j] = i * 10 + j;
-				b[i][j] = 512 * 512 + i * 10 + j;
+		{
+			std::cout << "Start set." << std::endl;
+			auto timeBegin = std::chrono::steady_clock::now();
+			for (int i{0}; i < 512; i++) {
+				for (int j{0}; j < 512; j++) {
+					a[i][j] = i * 10 + j;
+					b[i][j] = 512 * 512 + i * 10 + j;
+				}
 			}
+			auto timeEnd = std::chrono::steady_clock::now();
+			std::cout << "Time elapsed (set): " << timeEnd - timeBegin << '.'
+								<< std::endl;
 		}
 		{
+			std::cout << "Start multiplication." << std::endl;
 			auto timeBegin = std::chrono::steady_clock::now();
 			c = a * b;
 			auto timeEnd = std::chrono::steady_clock::now();
@@ -21,6 +29,7 @@ int main() {
 								<< std::endl;
 		}
 		{
+			std::cout << "Start multiplication." << std::endl;
 			auto timeBegin = std::chrono::steady_clock::now();
 			d = a.productStrassen(b);
 			auto timeEnd = std::chrono::steady_clock::now();
