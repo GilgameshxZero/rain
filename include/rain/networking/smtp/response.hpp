@@ -30,7 +30,7 @@ namespace Rain::Networking::Smtp {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 	};
 
 	template <typename Message>

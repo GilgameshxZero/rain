@@ -1,5 +1,20 @@
 # Changelog
 
+## 7.3.22
+
+1. Miscellaneous style changes.
+  1. Using `using` in favor of `typedef` everywhere.
+  2. Replace unnecessary `std::enable_if` splitting; i.e. it is unnecessary as long as some part other part of the template will evaluate to something that is used in the `enable_if` clause.
+  3. Add one base case to `ModulusField::power`.
+  4. Rename `math.cpp` to `math-prime.cpp`.
+2. Additional capabilities on `Tensor`.
+  1. Clarifying comments.
+  2. Friend stream operators.
+  3. Fix stream out padding for tensors of order >= 3.
+  4. Added the concept of a "clean" Tensor in preparation for copy and reshape.
+  5. Half of `reshape`.
+  6. Benchmarked Strassen's, and added it to the tests.
+
 ## 7.3.21
 
 1. Properly handle scalar (`ORDER` = 0) edge cases of `product`.

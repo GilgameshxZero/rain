@@ -39,7 +39,7 @@ namespace Rain::Algorithm {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		private:
 		// SFINAE base class which conditionally defines defaultValue() and

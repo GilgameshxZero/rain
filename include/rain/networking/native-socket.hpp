@@ -33,11 +33,11 @@ namespace Rain::Networking {
 	// Abstraction of platform socket. Error/invalid differences between
 	// platforms.
 #ifdef RAIN_PLATFORM_WINDOWS
-	typedef SOCKET NativeSocket;
+	using NativeSocket = SOCKET;
 	static NativeSocket const NATIVE_SOCKET_INVALID = INVALID_SOCKET;
 	static int const NATIVE_SOCKET_ERROR = SOCKET_ERROR;
 #else
-	typedef int NativeSocket;
+	using NativeSocket = int;
 	static NativeSocket const NATIVE_SOCKET_INVALID = -1;
 	static int const NATIVE_SOCKET_ERROR = -1;
 #endif

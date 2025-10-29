@@ -23,10 +23,9 @@ namespace Rain::Algorithm {
 		typename KeyEqual = std::equal_to<Key>>
 	class LruCache {
 		private:
-		typedef std::list<std::pair<Key const &, Value>> InternalList;
-		typedef std::
-			unordered_map<Key, typename InternalList::iterator, Hash, KeyEqual>
-				InternalHashMap;
+		using InternalList = std::list<std::pair<Key const &, Value>>;
+		using InternalHashMap =
+			std::unordered_map<Key, typename InternalList::iterator, Hash, KeyEqual>;
 
 		// List stores key/value pairs in LRU order; hashMap looks up list iterators
 		// based on key. Key reference in list points to key owned by hashMap.

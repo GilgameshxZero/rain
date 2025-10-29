@@ -12,10 +12,10 @@ namespace Rain::Networking::Smtp {
 	class SocketSpecInterface : virtual public ReqRes::SocketSpecInterface {
 		protected:
 		// Import Smtp namespace names for subclasses.
-		typedef AuthMethod AuthMethod;
-		typedef Command Command;
-		typedef Mailbox Mailbox;
-		typedef StatusCode StatusCode;
+		using AuthMethod = AuthMethod;
+		using Command = Command;
+		using Mailbox = Mailbox;
+		using StatusCode = StatusCode;
 	};
 
 	template <typename Socket>

@@ -264,8 +264,8 @@ namespace Rain::Algorithm {
 		// Assignment.
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
 		ThisInt &operator=(OtherInteger const &other) {
 			return *this = ThisInt(other);
 		}
@@ -281,8 +281,7 @@ namespace Rain::Algorithm {
 		// Comparison.
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline bool operator==(OtherInteger const &other) const {
 			return *this == ThisInt(other);
 		}
@@ -291,8 +290,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline bool operator<(OtherInteger const &other) const {
 			return *this < ThisInt(other);
 		}
@@ -302,8 +300,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline bool operator<=(OtherInteger const &other) const {
 			return *this <= ThisInt(other);
 		}
@@ -312,8 +309,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline bool operator>(OtherInteger const &other) const {
 			return *this > ThisInt(other);
 		}
@@ -322,8 +318,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline bool operator>=(OtherInteger const &other) const {
 			return *this >= ThisInt(other);
 		}
@@ -395,8 +390,7 @@ namespace Rain::Algorithm {
 		// Arithmetic.
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline ThisInt operator+(OtherInteger const &other) const {
 			return *this + ThisInt(other);
 		}
@@ -414,8 +408,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline ThisInt operator-(OtherInteger const &other) const {
 			return *this - ThisInt(other);
 		}
@@ -431,8 +424,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline ThisInt operator*(OtherInteger const &other) const {
 			return *this * ThisInt(other);
 		}
@@ -453,8 +445,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline ThisInt operator/(OtherInteger const &other) const {
 			return *this / ThisInt(other);
 		}
@@ -467,8 +458,7 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			bool notSame = !std::is_same<ThisInt, OtherInteger>::value,
-			typename std::enable_if<notSame>::type * = nullptr>
+			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
 		inline ThisInt operator%(OtherInteger const &other) const {
 			return *this % ThisInt(other);
 		}

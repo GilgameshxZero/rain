@@ -32,7 +32,7 @@ namespace Rain::String {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		// Parse a list of command-line arguments. Do not pass the first argument
 		// (typically filename) into this parser. Command-line arguments come in

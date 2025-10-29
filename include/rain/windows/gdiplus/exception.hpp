@@ -20,7 +20,7 @@ namespace Rain::Windows::Gdiplus {
 			}
 		}
 	};
-	typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+	using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 	// Gdiplus functions return Gdiplus::Status::Ok on success.
 	inline void validateGdiplusCall(::Gdiplus::Status result) {

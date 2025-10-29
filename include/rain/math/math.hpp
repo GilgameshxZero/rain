@@ -5,16 +5,20 @@
 #include <cmath>
 
 namespace Rain::Math {
-	template <typename OutputType, typename InputType>
-	inline typename std::
-		enable_if<std::is_same<OutputType, long>::value, OutputType>::type
-		round(InputType const &input) {
+	template <
+		typename OutputType,
+		typename InputType,
+		typename std::enable_if<std::is_same<OutputType, long>::value>::type * =
+			nullptr>
+	inline OutputType round(InputType const &input) {
 		return std::lround(input);
 	}
-	template <typename OutputType, typename InputType>
-	inline typename std::
-		enable_if<std::is_same<OutputType, long long>::value, OutputType>::type
-		round(InputType const &input) {
+	template <
+		typename OutputType,
+		typename InputType,
+		typename std::enable_if<std::is_same<OutputType, long long>::value>::type * =
+			nullptr>
+	inline OutputType round(InputType const &input) {
 		return std::llround(input);
 	}
 

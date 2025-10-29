@@ -18,7 +18,7 @@ namespace Rain::Math {
 
 	template <>
 	class Tensor<std::nullptr_t, 0> {
-		template <class OtherValue, std::size_t OTHER_ORDER>
+		template <class, std::size_t>
 		friend class Tensor;
 
 		public:
@@ -37,7 +37,7 @@ namespace Rain::Math {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		class Range {
 			public:
@@ -48,7 +48,7 @@ namespace Rain::Math {
 				step{std::numeric_limits<std::size_t>::max()};
 		};
 
-		// Standard policy for Tensor products.
+		// Standard policy for Tensor products. This forms a ring.
 		template <typename Left, typename Right>
 		class PlusMultProductPolicy {
 			public:
@@ -66,7 +66,7 @@ namespace Rain::Math {
 		};
 
 		// Policy for Tensor products where + is replaced with min and * is replaced
-		// with +.
+		// with +. This form a semi-ring.
 		template <typename Left, typename Right>
 		class MinPlusProductPolicy {
 			public:
@@ -206,6 +206,17 @@ namespace Rain::Math {
 					std::forward<decltype(others)>(others).operator[](i)...);
 			}
 		}
+
+		// Compute the total number of entries in a tensor.
+		template <std::size_t TENSOR_ORDER>
+		static constexpr inline std::size_t calcSizesProduct(
+			std::array<std::size_t, TENSOR_ORDER> const &sizes) {
+			std::size_t result{1};
+			for (auto const &i : sizes) {
+				result *= i;
+			}
+			return result;
+		}
 	};
 
 	// Flexible order tensor implementation. Most operations give views of the
@@ -213,9 +224,30 @@ namespace Rain::Math {
 	// operations.
 	template <typename Value, std::size_t ORDER>
 	class Tensor {
-		// Allow access of any other Tensor for proper product implementation.
-		template <class OtherValue, std::size_t OTHER_ORDER>
+		// Allow access of any other Tensor for a proper product implementation.
+		template <typename, std::size_t>
 		friend class Tensor;
+
+		// Allow access from stream operators. It is fine that we only friend one
+		// template here, since the template gets expanded into all the versions.
+		//
+		// Note that the operator is located within the Rain::Math namespace, and
+		// this is fine and preferred.
+		//
+		// Note that we cannot put a default argument for a third argument, simply
+		// because this is not a real template definition, but a template
+		// declaration.
+		template <
+			typename TensorValue,
+			std::size_t TENSOR_ORDER,
+			typename std::enable_if<(TENSOR_ORDER >= 1)>::type *>
+		friend std::ostream &operator<<(
+			std::ostream &,
+			Tensor<TensorValue, TENSOR_ORDER> const &);
+		template <typename TensorValue, std::size_t TENSOR_ORDER>
+		friend std::istream &operator>>(
+			std::istream &,
+			Tensor<TensorValue, TENSOR_ORDER> const &);
 
 		private:
 		using TypeThis = Tensor<Value, ORDER>;
@@ -236,14 +268,6 @@ namespace Rain::Math {
 		// Only used by the wrapping variant of the scalar constructor.
 		Value *P_SCALAR{nullptr};
 
-		static constexpr inline std::size_t calcSizesProduct(
-			std::array<std::size_t, ORDER> const &sizes) {
-			std::size_t result{1};
-			for (auto const &i : sizes) {
-				result *= i;
-			}
-			return result;
-		}
 		static constexpr inline std::array<Range, ORDER> makeRangesDefault(
 			std::array<std::size_t, ORDER> const &sizes) {
 			std::array<Range, ORDER> ranges;
@@ -275,6 +299,13 @@ namespace Rain::Math {
 			return sizes;
 		}
 
+		// DEBUG helpers.
+		//
+		// Recall that SFINAE requires the expression within `enable_if` to be
+		// dependent on a parameter in the current template, which is why we proxy
+		// TENSOR_ORDER as the same as ORDER, so that we can use ORDER (through
+		// TENSOR_ORDER) in that conditional. Additionally, if the conditional
+		// always evaluates true or false, the compiler may refuse to compile.
 		template <typename OtherValue>
 		inline void debugAssertEqualSizes(
 			Tensor<OtherValue, ORDER> const &other) const {
@@ -288,8 +319,8 @@ namespace Rain::Math {
 			}
 		}
 		template <
-			bool isVector = ORDER == 2,
-			typename std::enable_if<isVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		inline void debugAssertSquare() const {
 			if (Platform::isDebug()) {
 				if (this->SIZES[0] != this->SIZES[1]) {
@@ -298,6 +329,44 @@ namespace Rain::Math {
 			}
 		}
 
+		// Additional helpers.
+
+		// Stream out to a std::ostream where each line is padded with additional
+		// spaces.
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
+		std::ostream &streamOutPadded(std::ostream &stream, std::size_t) const {
+			if (this->SIZES[0] == 0) {
+				return stream << "[]";
+			}
+			stream << '[' << std::setw(4) << (*this)[0];
+			for (std::size_t i{1}; i < this->SIZES[0]; i++) {
+				stream << ' ' << std::setw(4) << (*this)[i];
+			}
+			return stream << ']';
+		}
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER >= 2)>::type * = nullptr>
+		std::ostream &streamOutPadded(std::ostream &stream, std::size_t padding)
+			const {
+			auto size{this->size()};
+			if (size[0] == 0) {
+				// Attempting to stream a higher order tensor with a 0 dimension will
+				// erase traces of the following dimensions.
+				return stream << "[]";
+			}
+			stream << '[';
+			(*this)[0].streamOutPadded(stream, padding + 1);
+			for (std::size_t i{1}; i < size[0]; i++) {
+				stream << "\n" << std::string(padding + 1, ' ');
+				(*this)[i].streamOutPadded(stream, padding + 1);
+			}
+			return stream << ']';
+		}
+
+		// Internal constructor for manually specifying underlyings.
 		Tensor(
 			std::shared_ptr<Value[]> values,
 			std::array<Range, ORDER> const &ranges,
@@ -312,8 +381,20 @@ namespace Rain::Math {
 					TRANSPOSE{dimPerm} {}
 
 		public:
+		// Identity, implemented only for matrices.
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
+		static constexpr inline auto identity(std::size_t size) {
+			Tensor<Value, 2> result({size, size});
+			for (std::size_t i{0}; i < size; i++) {
+				result[i][i] = 1;
+			}
+			return result;
+		}
+
 		Tensor(std::array<std::size_t, ORDER> const &sizes, auto &&...values)
-				: VALUES{new Value[TypeThis::calcSizesProduct(sizes)]{
+				: VALUES{new Value[Tensor<>::calcSizesProduct(sizes)]{
 						std::forward<decltype(values)>(values)...}},
 					RANGES{TypeThis::makeRangesDefault(sizes)},
 					SIZES{sizes},
@@ -334,28 +415,16 @@ namespace Rain::Math {
 		// Scalar constructor elides sizes. Allows for free conversion between
 		// scalars and Values, alongside the relevant `operator`s.
 		template <
-			bool isScalar = ORDER == 0,
-			typename std::enable_if<isScalar>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
 		Tensor(Value const &value) : Tensor({}, value) {}
 		// A scalar tensor can also wrap an existing value, but this needs special
 		// treatment.
 		template <
-			bool isScalar = ORDER == 0,
-			typename std::enable_if<isScalar>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
 		Tensor(Value &value) : Tensor({}) {
 			this->P_SCALAR = &value;
-		}
-
-		// Identity, implemented only for matrices.
-		template <
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
-		static constexpr inline auto identity(std::size_t size) {
-			Tensor<Value, 2> result({size, size});
-			for (std::size_t i{0}; i < size; i++) {
-				result[i][i] = 1;
-			}
-			return result;
 		}
 
 		// Copy assignment copies a reference, and not the underlying data.
@@ -410,8 +479,8 @@ namespace Rain::Math {
 		// It is always constructed without specifying SIZES, and so its underlying
 		// size is 1 and must contain a scalar.
 		template <
-			bool isScalar = ORDER == 0,
-			typename std::enable_if<isScalar>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
 		inline operator Value const &() const {
 			if (this->P_SCALAR != nullptr) {
 				return *this->P_SCALAR;
@@ -419,8 +488,8 @@ namespace Rain::Math {
 			return this->VALUES[0];
 		}
 		template <
-			bool isScalar = ORDER == 0,
-			typename std::enable_if<isScalar>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 0)>::type * = nullptr>
 		inline operator Value &() {
 			return const_cast<Value &>(this->operator Value const &());
 		}
@@ -430,15 +499,15 @@ namespace Rain::Math {
 		//
 		// Checks in-range iff DEBUG.
 		template <
-			bool isVector = ORDER == 1,
-			typename std::enable_if<isVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
 		inline Value const &operator[](std::size_t idx) const {
 			return this->VALUES
 				[this->OFFSET + this->RANGES[0].start + this->RANGES[0].step * idx];
 		}
 		template <
-			bool isVector = ORDER == 1,
-			typename std::enable_if<isVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
 		inline Value &operator[](std::size_t idx) {
 			return const_cast<Value &>(
 				const_cast<TypeThis const *>(this)->operator[](idx));
@@ -446,8 +515,8 @@ namespace Rain::Math {
 		// We provide two versions of the higher-order indexing operator, to
 		// preserve const-ness.
 		template <
-			bool isNotVector = (ORDER > 1),
-			typename std::enable_if<isNotVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER > 1)>::type * = nullptr>
 		Tensor<Value, ORDER - 1> const operator[](std::size_t idx) const {
 			if (Platform::isDebug()) {
 				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
@@ -495,8 +564,8 @@ namespace Rain::Math {
 				newDimPerm};
 		}
 		template <
-			bool isNotVector = (ORDER > 1),
-			typename std::enable_if<isNotVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER > 1)>::type * = nullptr>
 		Tensor<Value, ORDER - 1> operator[](std::size_t idx) {
 			return const_cast<Tensor<Value, ORDER - 1> &&>(
 				const_cast<TypeThis const *>(this)->operator[](idx));
@@ -598,16 +667,16 @@ namespace Rain::Math {
 		// `product`.
 		template <
 			typename OtherValue,
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto operator*(Tensor<OtherValue, ORDER> const &other) const {
 			// No need to check sizes here, since `product` will do it.
 			return this->product<1>(other, {1}, {0});
 		}
 		template <
 			typename OtherValue,
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto &operator*=(Tensor<OtherValue, ORDER> const &other) {
 			// Since allocation will happen anyway, we don't care about doing it
 			// in-place.
@@ -654,8 +723,6 @@ namespace Rain::Math {
 
 		// Transposition does not change `SIZES`, and so some functions should use
 		// `SIZES`, while others should use `size()`.
-		//
-		// TODO: Consider caching this each time `transpose` is called.
 		inline std::array<std::size_t, ORDER> size() const {
 			std::array<std::size_t, ORDER> sizesTransposed;
 			for (std::size_t i{0}; i < ORDER; i++) {
@@ -675,10 +742,6 @@ namespace Rain::Math {
 		TypeThis asSlice(std::array<Range, ORDER> const &ranges) const {
 			std::array<Range, ORDER> mergedRanges;
 			for (std::size_t i{0}; i < ORDER; i++) {
-				mergedRanges[i].step =
-					ranges[i].step == std::numeric_limits<std::size_t>::max()
-					? this->RANGES[i].step
-					: this->RANGES[i].step * ranges[i].step;
 				mergedRanges[i].start =
 					ranges[i].start == std::numeric_limits<std::size_t>::max()
 					? this->RANGES[i].start
@@ -687,6 +750,10 @@ namespace Rain::Math {
 					ranges[i].stop == std::numeric_limits<std::size_t>::max()
 					? this->RANGES[i].stop
 					: this->RANGES[i].start + this->RANGES[i].step * ranges[i].stop;
+				mergedRanges[i].step =
+					ranges[i].step == std::numeric_limits<std::size_t>::max()
+					? this->RANGES[i].step
+					: this->RANGES[i].step * ranges[i].step;
 				// We do not check that start < stop here, since zero-dimensions are
 				// technically valid.
 			}
@@ -700,6 +767,70 @@ namespace Rain::Math {
 		TypeThis slice(std::array<Range, ORDER> const &ranges) {
 			return *this = this->asSlice(ranges);
 		}
+		// A tensor is "clean" if its elements are contiguous, in order of
+		// dimension (i.e. default start/stop/step/transpose). Usually, transposing
+		// or taking a view via slicing will give a "dirty" tensor. However, some
+		// views remain clean.
+		bool isClean() const {
+			std::array<std::size_t, ORDER> transposeSorted{this->TRANSPOSE};
+			std::sort(transposeSorted.begin(), transposeSorted.end());
+			if (transposeSorted != this->TRANSPOSE) {
+				return false;
+			}
+			for (std::size_t i{0}; i < ORDER; i++) {
+				if (
+					this->RANGES[i].start != 0 ||
+					this->RANGES[i].stop != this->SIZES[i] || this->RANGES[i].step != 1) {
+					return false;
+				}
+			}
+			return true;
+			// TODO: Copy/clean function.
+		}
+		// Reshape preserves the transpose. Use `-1` to attempt to infer the
+		// dimension from the total number of entries. Do not use more than one
+		// `-1`. Will throw if sizes are incompatible.
+		//
+		// If Tensor has default start/stop/step and default transpose (i.e. is
+		// "clean"), reshape will return a view. Otherwise, reshape
+		// returns a copy.
+		template <std::size_t NEW_ORDER>
+		auto asReshape(std::array<std::size_t, NEW_ORDER> const &sizes) const {
+			std::size_t toInfer{NEW_ORDER}, newTotalSize{1},
+				totalSize{Tensor<>::calcSizesProduct(this->SIZES)};
+			for (std::size_t i{0}; i < NEW_ORDER; i++) {
+				if (sizes[i] == -1) {
+					if (toInfer != NEW_ORDER) {
+						throw Exception(Error::SIZES_MISMATCH);
+					}
+					toInfer = i;
+					continue;
+				}
+				newTotalSize *= sizes[i];
+			}
+			if (toInfer != NEW_ORDER) {
+				if (totalSize % newTotalSize != 0) {
+					throw Exception(Error::SIZES_MISMATCH);
+				}
+				sizes[toInfer] = totalSize / newTotalSize;
+			} else {
+				if (totalSize != newTotalSize) {
+					throw Exception(Error::SIZES_MISMATCH);
+				}
+			}
+			// TODO.
+			return Tensor<Value, NEW_ORDER>{
+				this->VALUES,
+				this->RANGES,
+				this->SIZES_UNDERLYING,
+				this->OFFSET,
+				this->TRANSPOSE};
+		}
+		template <std::size_t NEW_ORDER>
+		auto reshape(std::array<std::size_t, NEW_ORDER> const &sizes) {
+			return *this = this->asReshape(sizes);
+		}
+		// Fills every value with the quality operator.
 		void fill(Value const &other) {
 			Tensor<>::applyOver<0>([&other](Value &that) { that = other; }, *this);
 		}
@@ -836,15 +967,15 @@ namespace Rain::Math {
 		// Inner and outer product are defined iff ORDER == 1 (vectors).
 		template <
 			typename OtherValue,
-			bool isVector = ORDER == 1,
-			typename std::enable_if<isVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
 		auto productInner(Tensor<OtherValue, 1> const &other) const {
 			return this->product<1>(other, {0}, {0});
 		}
 		template <
 			typename OtherValue,
-			bool isVector = ORDER == 1,
-			typename std::enable_if<isVector>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
 		auto productOuter(Tensor<OtherValue, 1> const &other) const {
 			return this->product<0>(other, {}, {});
 		}
@@ -856,8 +987,8 @@ namespace Rain::Math {
 		// the way. This is because each `1` bit will cause a vector mult as opposed
 		// to a matrix mult.
 		template <
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto power(std::size_t exponent) const {
 			if (exponent == 0) {
 				this->debugAssertSquare();
@@ -877,8 +1008,8 @@ namespace Rain::Math {
 		//
 		// May not allocate if this is already a power of 2.
 		template <
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto asNearestPowerOf2() const {
 			this->debugAssertSquare();
 			auto mSig{Algorithm::mostSignificant1BitIdx(this->SIZES[0])};
@@ -905,14 +1036,11 @@ namespace Rain::Math {
 		//
 		// Under and including size (1_zu << BASE_SIZE_POWER), Strassen will switch
 		// to use standard computation instead.
-		//
-		// TODO: There should be additional options to optimize square MM w.r.t
-		// memory locality & re-allocation.
 		template <
-			std::size_t BASE_SIZE_POWER = 8,
+			std::size_t BASE_SIZE_POWER = 6,
 			typename OtherValue,
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr,
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr,
 			typename ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>())>
 		auto productStrassen(Tensor<OtherValue, 2> const &other) const {
@@ -987,8 +1115,8 @@ namespace Rain::Math {
 		}
 		// Inverses may exist for higher orders, but we do not provide it here.
 		template <
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto inverse() const {
 			this->debugAssertSquare();
 
@@ -996,43 +1124,29 @@ namespace Rain::Math {
 			return *this;
 		}
 		template <
-			bool isMatrix = ORDER == 2,
-			typename std::enable_if<isMatrix>::type * = nullptr>
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto invert() {
 			return *this = this->inverse();
 		}
 	};
-}
 
-template <typename Value>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Math::Tensor<Value, 1> const &right) {
-	using namespace std;
-	if (right.isEmpty()) {
-		return stream << "[]";
+	// Declare the operators here so they can be friended. Streaming a scalar
+	// converts automatically to the base type.
+	template <
+		typename Value,
+		std::size_t OTHER_ORDER,
+		typename std::enable_if<(OTHER_ORDER >= 1)>::type * = nullptr>
+	std::ostream &operator<<(
+		std::ostream &stream,
+		Rain::Math::Tensor<Value, OTHER_ORDER> const &right) {
+		return right.streamOutPadded(stream, 0);
 	}
-	stream << '[' << setw(4) << right[0];
-	for (std::size_t i{1}; i < right.size()[0]; i++) {
-		stream << ' ' << setw(4) << right[i];
+	template <typename Value, std::size_t OTHER_ORDER>
+	std::istream &operator>>(
+		std::istream &stream,
+		Rain::Math::Tensor<Value, OTHER_ORDER> const &) {
+		// TODO.
+		return stream;
 	}
-	return stream << ']';
-}
-template <
-	typename Value,
-	std::size_t ORDER,
-	bool isNotVector = (ORDER > 1),
-	typename std::enable_if<isNotVector>::type * = nullptr>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Math::Tensor<Value, ORDER> const &right) {
-	using namespace std;
-	if (right.isEmpty()) {
-		return stream << "[]";
-	}
-	stream << '[' << right[0];
-	for (std::size_t i{1}; i < right.size()[0]; i++) {
-		stream << "\n " << right[i];
-	}
-	return stream << ']';
 }

@@ -11,12 +11,12 @@ namespace Rain::Networking::Http {
 		protected:
 		// Import Http namespace names for subclasses declared outside
 		// Rain::Networking::Http.
-		typedef StatusCode StatusCode;
-		typedef Method Method;
-		typedef Headers Headers;
-		typedef Body Body;
-		typedef Version Version;
-		typedef MediaType MediaType;
+		using StatusCode = StatusCode;
+		using Method = Method;
+		using Headers = Headers;
+		using Body = Body;
+		using Version = Version;
+		using MediaType = MediaType;
 	};
 
 	template <typename Socket>

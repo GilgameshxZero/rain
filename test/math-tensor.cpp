@@ -6,6 +6,38 @@ using namespace std;
 
 int main() {
 	{
+		Tensor<int, 2> a{{512, 512}}, b{{512, 512}}, c, d;
+		for (int i{0}; i < 512; i++) {
+			for (int j{0}; j < 512; j++) {
+				a[i][j] = i * 10 + j;
+				b[i][j] = 512 * 512 + i * 10 + j;
+			}
+		}
+		{
+			auto timeBegin = std::chrono::steady_clock::now();
+			c = a * b;
+			auto timeEnd = std::chrono::steady_clock::now();
+			std::cout << "Time elapsed (naive): " << timeEnd - timeBegin << '.'
+								<< std::endl;
+		}
+		{
+			auto timeBegin = std::chrono::steady_clock::now();
+			d = a.productStrassen(b);
+			auto timeEnd = std::chrono::steady_clock::now();
+			std::cout << "Time elapsed (Strassen): " << timeEnd - timeBegin << '.'
+								<< std::endl;
+		}
+		assert(c == d);
+		return 0;
+	}
+
+	{
+		Tensor<int, 2> a{{0, 3}}, b{{3, 0}};
+		cout << a << '\n' << b << '\n';
+		cout << '\n';
+	}
+
+	{
 		Tensor<int, 1> a{{4}, 1, 2, 3, 4}, b{{4}, 5, 6, 7, 8};
 		cout << a.productOuter(b) << '\n' << a.productInner(b) << '\n';
 		cout << '\n';

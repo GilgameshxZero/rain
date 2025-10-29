@@ -30,8 +30,8 @@ namespace Rain::Networking {
 													virtual public SocketProtocolInterface {
 		public:
 		// Import names for external subclass ease-of-use.
-		typedef NativeSocket NativeSocket;
-		typedef Host Host;
+		using NativeSocket = NativeSocket;
+		using Host = Host;
 
 		// Sockets implementing this interface cannot be copied nor moved. In
 		// addition, for resource management polymorphism, their destructor must be
@@ -168,8 +168,7 @@ namespace Rain::Networking {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename>
-		class...>
+		template <typename> class...>
 	class Socket;
 
 	// Implements SocketInterface with concrete resource management for a
@@ -194,10 +193,11 @@ namespace Rain::Networking {
 
 		public:
 		Socket()
-				: _nativeSocket(validateSystemCall(::socket(
-						static_cast<int>(this->family()),
-						static_cast<int>(this->type()),
-						static_cast<int>(this->protocol())))) {
+				: _nativeSocket(validateSystemCall(
+						::socket(
+							static_cast<int>(this->family()),
+							static_cast<int>(this->type()),
+							static_cast<int>(this->protocol())))) {
 			this->unblock();
 		}
 		virtual ~Socket() {
@@ -244,10 +244,8 @@ namespace Rain::Networking {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename>
-		class SocketOption,
-		template <typename>
-		class... SocketOptions>
+		template <typename> class SocketOption,
+		template <typename> class... SocketOptions>
 	class Socket<
 		SocketFamilyInterface,
 		SocketTypeInterface,
@@ -319,18 +317,19 @@ namespace Rain::Networking {
 					return bytesSent;
 				}
 
-				bytesSent += validateSystemCall(::send(
-					this->nativeSocket(),
+				bytesSent += validateSystemCall(
+					::send(
+						this->nativeSocket(),
 #ifdef RAIN_PLATFORM_WINDOWS
-					buffer,
-					static_cast<int>(bufferLen),
-					0));
+						buffer,
+						static_cast<int>(bufferLen),
+						0));
 #else
-					reinterpret_cast<const void *>(buffer),
-					bufferLen,
-					// IMPORTANT! sending to a disconnected client on POSIX may generate
-					// SIGPIPE.
-					MSG_NOSIGNAL));
+						reinterpret_cast<const void *>(buffer),
+						bufferLen,
+						// IMPORTANT! sending to a disconnected client on POSIX may generate
+						// SIGPIPE.
+						MSG_NOSIGNAL));
 #endif
 			}
 			return bytesSent;	 // Should equal bufferLen.
@@ -350,16 +349,17 @@ namespace Rain::Networking {
 				return 0;
 			}
 
-			return validateSystemCall(::recv(
-				this->nativeSocket(),
+			return validateSystemCall(
+				::recv(
+					this->nativeSocket(),
 #ifdef RAIN_PLATFORM_WINDOWS
-				buffer,
-				static_cast<int>(bufferLen),
+					buffer,
+					static_cast<int>(bufferLen),
 #else
-				reinterpret_cast<void *>(buffer),
-				bufferLen,
+					reinterpret_cast<void *>(buffer),
+					bufferLen,
 #endif
-				0));
+					0));
 		}
 		std::size_t recv(std::string &buffer, Time::Timeout timeout = 15s) {
 			buffer.resize(buffer.capacity());
@@ -378,21 +378,23 @@ namespace Rain::Networking {
 			ShutdownOpt opt = ShutdownOpt::GRACEFUL,
 			Time::Timeout timeout = 15s) {
 			auto const shutdownRead = [this]() {
-				validateSystemCall(::shutdown(
-					this->nativeSocket(),
+				validateSystemCall(
+					::shutdown(
+						this->nativeSocket(),
 #ifdef RAIN_PLATFORM_WINDOWS
-					SD_RECEIVE));
+						SD_RECEIVE));
 #else
-					SHUT_RD));
+						SHUT_RD));
 #endif
 			};
 			auto const shutdownWrite = [this]() {
-				validateSystemCall(::shutdown(
-					this->nativeSocket(),
+				validateSystemCall(
+					::shutdown(
+						this->nativeSocket(),
 #ifdef RAIN_PLATFORM_WINDOWS
-					SD_SEND));
+						SD_SEND));
 #else
-					SHUT_WR));
+						SHUT_WR));
 #endif
 			};
 
@@ -404,12 +406,13 @@ namespace Rain::Networking {
 					shutdownWrite();
 					break;
 				case ShutdownOpt::BOTH:
-					validateSystemCall(::shutdown(
-						this->nativeSocket(),
+					validateSystemCall(
+						::shutdown(
+							this->nativeSocket(),
 #ifdef RAIN_PLATFORM_WINDOWS
-						SD_BOTH));
+							SD_BOTH));
 #else
-						SHUT_RDWR));
+							SHUT_RDWR));
 #endif
 					break;
 				case ShutdownOpt::GRACEFUL:
@@ -423,8 +426,7 @@ namespace Rain::Networking {
 					// by peer abort.
 					Rain::Error::consumeThrowable([this, timeout]() {
 						char buffer[1_zu << 10];
-						while (this->recv(buffer, sizeof(buffer), timeout))
-							;
+						while (this->recv(buffer, sizeof(buffer), timeout));
 					})();
 					break;
 			}
@@ -446,9 +448,7 @@ namespace Rain::Networking {
 			// RVO guaranteed, will be moved at worst.
 			return addressInfo;
 		}
-		Host peerHost() const {
-			return getNumericHost(this->peerName());
-		}
+		Host peerHost() const { return getNumericHost(this->peerName()); }
 	};
 
 	// No-op.

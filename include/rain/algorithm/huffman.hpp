@@ -52,7 +52,7 @@ namespace Rain::Algorithm {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		private:
 		std::streambuf &underlying;

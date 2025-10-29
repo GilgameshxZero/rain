@@ -5,8 +5,8 @@
 #include "../error/exception.hpp"
 #include "../literal.hpp"
 #include "../platform.hpp"
-#include "../windows/windows.hpp"
 #include "../windows/exception.hpp"
+#include "../windows/windows.hpp"
 #include "native-socket.hpp"
 
 namespace Rain::Networking {
@@ -57,7 +57,7 @@ namespace Rain::Networking {
 #endif
 		}
 	};
-	typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+	using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 	// Return a system error code via errno or WSAGetLastError.
 	inline Error getSystemError() noexcept {
