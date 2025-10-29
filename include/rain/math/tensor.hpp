@@ -708,15 +708,18 @@ namespace Rain::Math {
 			return true;
 		}
 		auto asClean() const {
-			// TODO.
+			Tensor<Value, ORDER> result{this->size()};
+			Tensor<>::applyOver<0>(
+				[](Value &resultValue, Value const &thisValue) {
+					resultValue = thisValue;
+				},
+				result,
+				*this);
+			return result;
 		}
-		auto clean() {
-			// TODO.
-		}
+		auto clean() { return *this = this->asClean(); }
 		// Alias for `asClean`.
-		auto copy() const {
-			// TODO.
-		}
+		auto copy() const { return this->asClean(); }
 
 		// Property functions.
 
@@ -741,6 +744,10 @@ namespace Rain::Math {
 		void fill(Value const &other) {
 			Tensor<>::applyOver<0>([&other](Value &that) { that = other; }, *this);
 		}
+		// Public access to underlying. Can test for views. `const` version is a
+		// little fake.
+		std::shared_ptr<Value const[]> data() const { return this->VALUES; }
+		std::shared_ptr<Value[]> data() { return this->VALUES; }
 
 		// View functions.
 
@@ -798,9 +805,9 @@ namespace Rain::Math {
 		TypeThis transpose(std::array<std::size_t, ORDER> const &dimPerm) {
 			return *this = this->asTranspose(dimPerm);
 		}
-		// Reshape preserves the transpose. Use `-1` to attempt to infer the
+		// Reshape preserves the transpose. Use `0` to attempt to infer the
 		// dimension from the total number of entries. Do not use more than one
-		// `-1`. Will throw if sizes are incompatible.
+		// `0`. Will throw if sizes are incompatible.
 		//
 		// If Tensor has default start/stop/step and default transpose (i.e. is
 		// "clean"), reshape will return a view. Otherwise, reshape
@@ -810,7 +817,7 @@ namespace Rain::Math {
 			std::size_t toInfer{NEW_ORDER}, newTotalSize{1},
 				totalSize{Tensor<>::calcSizesProduct(this->SIZES)};
 			for (std::size_t i{0}; i < NEW_ORDER; i++) {
-				if (sizes[i] == -1) {
+				if (sizes[i] == 0) {
 					if (toInfer != NEW_ORDER) {
 						throw Exception(Error::SIZES_MISMATCH);
 					}
@@ -819,26 +826,42 @@ namespace Rain::Math {
 				}
 				newTotalSize *= sizes[i];
 			}
+			std::array<std::size_t, NEW_ORDER> newSizes{sizes};
 			if (toInfer != NEW_ORDER) {
 				if (totalSize % newTotalSize != 0) {
 					throw Exception(Error::SIZES_MISMATCH);
 				}
-				sizes[toInfer] = totalSize / newTotalSize;
+				newSizes[toInfer] = totalSize / newTotalSize;
 			} else {
 				if (totalSize != newTotalSize) {
 					throw Exception(Error::SIZES_MISMATCH);
 				}
 			}
-			// TODO.
-			return Tensor<Value, NEW_ORDER>{
-				this->VALUES,
-				this->RANGES,
-				this->SIZES_UNDERLYING,
-				this->OFFSET,
-				this->TRANSPOSE};
+
+			if (this->isClean()) {
+				std::array<Range, NEW_ORDER> newRanges;
+				for (std::size_t i{0}; i < NEW_ORDER; i++) {
+					newRanges[i] = {0, newSizes[i], 1};
+				}
+				std::array<std::size_t, NEW_ORDER> newTranspose;
+				for (std::size_t i{0}; i < NEW_ORDER; i++) {
+					newTranspose[i] = i;
+				}
+				return Tensor<Value, NEW_ORDER>{
+					this->VALUES, newRanges, newSizes, this->OFFSET, newTranspose};
+			} else {
+				Tensor<Value, NEW_ORDER> result{newSizes};
+				std::size_t idx{0};
+				Tensor<>::applyOver<0>(
+					[&idx, &result](Value const &thisValue) {
+						result.VALUES[idx++] = thisValue;
+					},
+					*this);
+				return result;
+			}
 		}
-		template <std::size_t NEW_ORDER>
-		auto reshape(std::array<std::size_t, NEW_ORDER> const &sizes) {
+		// No `reshape` exists for different orders since they are different types.
+		auto reshape(std::array<std::size_t, ORDER> const &sizes) {
 			return *this = this->asReshape(sizes);
 		}
 
