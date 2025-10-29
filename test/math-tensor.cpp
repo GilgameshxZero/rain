@@ -6,6 +6,36 @@ using namespace std;
 
 int main() {
 	{
+		Tensor<int, 1> a{{12}, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+		cout << a << '\n';
+		auto b{a.asReshape<2>({3, 4})};
+		cout << b << '\n';
+		cout << b.asReshape<3>({2, 0, 2}) << '\n';
+		assert(a.data() == b.data());
+		auto c{a.slice({{0, 12, 2}}).asReshape<2>({3, 2})};
+		cout << c << '\n';
+		assert(a.data() != c.data());
+		cout << '\n';
+	}
+
+	{
+		Tensor<int, 2> a{{10, 10}};
+		for (int i{0}; i < 10; i++) {
+			for (int j{0}; j < 10; j++) {
+				a[i][j] = i * 10 + j;
+			}
+		}
+		assert(a.isClean());
+		a = a.slice({{{0, 10, 2}, {0, 10, 2}}});
+		assert(!a.isClean());
+		cout << a << '\n';
+		a.clean();
+		assert(a.isClean());
+		cout << a << '\n';
+		cout << '\n';
+	}
+
+	{
 		Tensor<int, 2> a{{512, 512}}, b{{512, 512}}, c, d;
 		{
 			std::cout << "Start set." << std::endl;
