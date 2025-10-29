@@ -719,7 +719,39 @@ namespace Rain::Math {
 			return *this;
 		}
 
-		// Utility functions.
+		// Memory functions.
+
+		// A tensor is "clean" if its elements are contiguous, in order of
+		// dimension (i.e. default start/stop/step/transpose). Usually, transposing
+		// or taking a view via slicing will give a "dirty" tensor. However, some
+		// views remain clean.
+		bool isClean() const {
+			std::array<std::size_t, ORDER> transposeSorted{this->TRANSPOSE};
+			std::sort(transposeSorted.begin(), transposeSorted.end());
+			if (transposeSorted != this->TRANSPOSE) {
+				return false;
+			}
+			for (std::size_t i{0}; i < ORDER; i++) {
+				if (
+					this->RANGES[i].start != 0 ||
+					this->RANGES[i].stop != this->SIZES[i] || this->RANGES[i].step != 1) {
+					return false;
+				}
+			}
+			return true;
+		}
+		auto asClean() const {
+			// TODO.
+		}
+		auto clean() {
+			// TODO.
+		}
+		// Alias for `asClean`.
+		auto copy() const {
+			// TODO.
+		}
+
+		// Property functions.
 
 		// Transposition does not change `SIZES`, and so some functions should use
 		// `SIZES`, while others should use `size()`.
@@ -738,6 +770,13 @@ namespace Rain::Math {
 			}
 			return false;
 		}
+		// Fills every value with the quality operator.
+		void fill(Value const &other) {
+			Tensor<>::applyOver<0>([&other](Value &that) { that = other; }, *this);
+		}
+
+		// View functions.
+
 		// Slicing returns a view.
 		TypeThis asSlice(std::array<Range, ORDER> const &ranges) const {
 			std::array<Range, ORDER> mergedRanges;
@@ -767,25 +806,30 @@ namespace Rain::Math {
 		TypeThis slice(std::array<Range, ORDER> const &ranges) {
 			return *this = this->asSlice(ranges);
 		}
-		// A tensor is "clean" if its elements are contiguous, in order of
-		// dimension (i.e. default start/stop/step/transpose). Usually, transposing
-		// or taking a view via slicing will give a "dirty" tensor. However, some
-		// views remain clean.
-		bool isClean() const {
-			std::array<std::size_t, ORDER> transposeSorted{this->TRANSPOSE};
-			std::sort(transposeSorted.begin(), transposeSorted.end());
-			if (transposeSorted != this->TRANSPOSE) {
-				return false;
-			}
-			for (std::size_t i{0}; i < ORDER; i++) {
-				if (
-					this->RANGES[i].start != 0 ||
-					this->RANGES[i].stop != this->SIZES[i] || this->RANGES[i].step != 1) {
-					return false;
+		// Must be a valid permutation of [0, ORDER). Checked iff DEBUG.
+		TypeThis asTranspose(std::array<std::size_t, ORDER> const &dimPerm) const {
+			if (Platform::isDebug()) {
+				std::array<std::size_t, ORDER> dimPermSorted{this->TRANSPOSE};
+				std::sort(dimPermSorted.begin(), dimPermSorted.end());
+				for (std::size_t i{0}; i < ORDER; i++) {
+					if (dimPermSorted[i] != i) {
+						throw Exception(Error::SIZES_MISMATCH);
+					}
 				}
 			}
-			return true;
-			// TODO: Copy/clean function.
+			std::array<std::size_t, ORDER> newDimPerm{};
+			for (std::size_t i{0}; i < ORDER; i++) {
+				newDimPerm[i] = this->TRANSPOSE[dimPerm[i]];
+			}
+			return {
+				this->VALUES,
+				this->RANGES,
+				this->SIZES_UNDERLYING,
+				this->OFFSET,
+				newDimPerm};
+		}
+		TypeThis transpose(std::array<std::size_t, ORDER> const &dimPerm) {
+			return *this = this->asTranspose(dimPerm);
 		}
 		// Reshape preserves the transpose. Use `-1` to attempt to infer the
 		// dimension from the total number of entries. Do not use more than one
@@ -830,35 +874,8 @@ namespace Rain::Math {
 		auto reshape(std::array<std::size_t, NEW_ORDER> const &sizes) {
 			return *this = this->asReshape(sizes);
 		}
-		// Fills every value with the quality operator.
-		void fill(Value const &other) {
-			Tensor<>::applyOver<0>([&other](Value &that) { that = other; }, *this);
-		}
-		// Must be a valid permutation of [0, ORDER). Checked iff DEBUG.
-		TypeThis asTranspose(std::array<std::size_t, ORDER> const &dimPerm) const {
-			if (Platform::isDebug()) {
-				std::array<std::size_t, ORDER> dimPermSorted{this->TRANSPOSE};
-				std::sort(dimPermSorted.begin(), dimPermSorted.end());
-				for (std::size_t i{0}; i < ORDER; i++) {
-					if (dimPermSorted[i] != i) {
-						throw Exception(Error::SIZES_MISMATCH);
-					}
-				}
-			}
-			std::array<std::size_t, ORDER> newDimPerm{};
-			for (std::size_t i{0}; i < ORDER; i++) {
-				newDimPerm[i] = this->TRANSPOSE[dimPerm[i]];
-			}
-			return {
-				this->VALUES,
-				this->RANGES,
-				this->SIZES_UNDERLYING,
-				this->OFFSET,
-				newDimPerm};
-		}
-		TypeThis transpose(std::array<std::size_t, ORDER> const &dimPerm) {
-			return *this = this->asTranspose(dimPerm);
-		}
+
+		// Product functions.
 
 		// Tensor product is defined with a list of pairs of indices to contract.
 		//
@@ -1113,6 +1130,9 @@ namespace Rain::Math {
 				m[5]);
 			return c.asSlice({{{0, this->SIZES[0]}, {0, this->SIZES[0]}}});
 		}
+
+		// Advanced functions.
+
 		// Inverses may exist for higher orders, but we do not provide it here.
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
