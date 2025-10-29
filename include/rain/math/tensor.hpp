@@ -220,10 +220,6 @@ namespace Rain::Math {
 		friend std::ostream &operator<<(
 			std::ostream &,
 			Tensor<TensorValue, TENSOR_ORDER> const &);
-		template <typename TensorValue, std::size_t TENSOR_ORDER>
-		friend std::istream &operator>>(
-			std::istream &,
-			Tensor<TensorValue, TENSOR_ORDER> const &);
 
 		private:
 		using TypeThis = Tensor<Value, ORDER>;
@@ -1164,12 +1160,5 @@ namespace Rain::Math {
 		std::ostream &stream,
 		Rain::Math::Tensor<Value, OTHER_ORDER> const &right) {
 		return right.streamOutPadded(stream, 0);
-	}
-	template <typename Value, std::size_t OTHER_ORDER>
-	std::istream &operator>>(
-		std::istream &stream,
-		Rain::Math::Tensor<Value, OTHER_ORDER> const &) {
-		// TODO.
-		return stream;
 	}
 }
