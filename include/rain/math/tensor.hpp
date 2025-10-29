@@ -53,16 +53,20 @@ namespace Rain::Math {
 		template <typename Left, typename Right>
 		class PlusMultProductPolicy {
 			public:
-			static decltype(std::declval<Left>() * std::declval<Right>())
-				const DEFAULT_RESULT{0};
-
-			static constexpr inline auto sum(Left const &left, Right const &right) {
-				return left + right;
-			}
-			static constexpr inline auto product(
+			static constexpr inline auto contract(
 				Left const &left,
 				Right const &right) {
 				return left * right;
+			}
+
+			using Result =
+				decltype(contract(std::declval<Left>(), std::declval<Right>()));
+			static Result const DEFAULT_RESULT{0};
+
+			static constexpr inline auto aggregate(
+				Result const &left,
+				Result const &right) {
+				return left + right;
 			}
 		};
 
@@ -71,17 +75,20 @@ namespace Rain::Math {
 		template <typename Left, typename Right>
 		class MinPlusProductPolicy {
 			public:
-			static decltype(std::declval<Left>() + std::declval<Right>())
-				const DEFAULT_RESULT{std::numeric_limits<
-					decltype(std::declval<Left>() + std::declval<Right>())>::max()};
-
-			static constexpr inline auto sum(Left const &left, Right const &right) {
-				return std::min(left, right);
-			}
-			static constexpr inline auto product(
+			static constexpr inline auto contract(
 				Left const &left,
 				Right const &right) {
 				return left + right;
+			}
+
+			using Result =
+				decltype(contract(std::declval<Left>(), std::declval<Right>()));
+			static Result const DEFAULT_RESULT{std::numeric_limits<Result>::max()};
+
+			static constexpr inline auto aggregate(
+				Result const &left,
+				Result const &right) {
+				return std::min(left, right);
 			}
 		};
 
@@ -134,7 +141,7 @@ namespace Rain::Math {
 				ResultType>::value>::type * = nullptr>
 		static inline void
 		applyOver(auto &&callable, ResultType &result, auto &&...others) {
-			for (std::size_t i{0}; i < result.size()[0]; i++) {
+			for (std::size_t i{0}; i < result.SIZES[result.TRANSPOSE[0]]; i++) {
 				Tensor<>::applyOver<REMAINING_ORDER>(
 					std::forward<decltype(callable)>(callable),
 					std::forward<decltype(result[i])>(result[i]),
@@ -234,7 +241,7 @@ namespace Rain::Math {
 		// Store a permutation of dimensions for easy transpose & product.
 		std::array<std::size_t, ORDER> TRANSPOSE;
 
-		static constexpr inline std::array<Range, ORDER> makeRangesDefault(
+		static constexpr inline auto makeRangesDefault(
 			std::array<std::size_t, ORDER> const &sizes) {
 			std::array<Range, ORDER> ranges;
 			for (std::size_t i{0}; i < ORDER; i++) {
@@ -242,7 +249,7 @@ namespace Rain::Math {
 			}
 			return ranges;
 		}
-		static constexpr inline std::array<std::size_t, ORDER> calcSizes(
+		static constexpr inline auto calcSizes(
 			std::array<Range, ORDER> const &ranges) {
 			std::array<std::size_t, ORDER> sizes;
 			for (std::size_t i{0}; i < ORDER; i++) {
@@ -251,15 +258,14 @@ namespace Rain::Math {
 			}
 			return sizes;
 		}
-		static constexpr inline std::array<std::size_t, ORDER>
-		makeDimPermDefault() {
+		static constexpr inline auto makeDimPermDefault() {
 			std::array<std::size_t, ORDER> dimPerm;
 			for (std::size_t i{0}; i < ORDER; i++) {
 				dimPerm[i] = i;
 			}
 			return dimPerm;
 		}
-		static constexpr inline std::array<std::size_t, ORDER> makeOnesSizes() {
+		static constexpr inline auto makeOnesSizes() {
 			std::array<std::size_t, ORDER> sizes;
 			sizes.fill(1);
 			return sizes;
@@ -317,22 +323,21 @@ namespace Rain::Math {
 			typename std::enable_if<(TENSOR_ORDER >= 2)>::type * = nullptr>
 		std::ostream &streamOutPadded(std::ostream &stream, std::size_t padding)
 			const {
-			auto size{this->size()};
-			if (size[0] == 0) {
+			if (this->SIZES[this->TRANSPOSE[0]] == 0) {
 				// Attempting to stream a higher order tensor with a 0 dimension will
 				// erase traces of the following dimensions.
 				return stream << "[]";
 			}
 			stream << '[';
 			(*this)[0].streamOutPadded(stream, padding + 1);
-			for (std::size_t i{1}; i < size[0]; i++) {
+			for (std::size_t i{1}; i < this->SIZES[this->TRANSPOSE[0]]; i++) {
 				stream << "\n" << std::string(padding + 1, ' ');
 				(*this)[i].streamOutPadded(stream, padding + 1);
 			}
 			return stream << ']';
 		}
 
-		// Internal constructor for manually specifying underlyings.
+		// Internal constructor for manually specifying underlying.
 		Tensor(
 			std::shared_ptr<Value[]> values,
 			std::array<Range, ORDER> const &ranges,
@@ -467,6 +472,11 @@ namespace Rain::Math {
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * = nullptr>
 		inline Value const &operator[](std::size_t idx) const {
+			if (Platform::isDebug()) {
+				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
+					throw Exception(Error::SIZES_MISMATCH);
+				}
+			}
 			return this->VALUES
 				[this->OFFSET + this->RANGES[0].start + this->RANGES[0].step * idx];
 		}
@@ -626,20 +636,14 @@ namespace Rain::Math {
 			return *this;
 		}
 		// Binary operators *, *= are defined with another Tensor operand iff they
-		// are both ORDER 2 and of compatible size. This is a shorthand for
+		// are of compatible size. This is a shorthand for
 		// `product`.
-		template <
-			typename OtherValue,
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
+		template <typename OtherValue>
 		auto operator*(Tensor<OtherValue, ORDER> const &other) const {
 			// No need to check sizes here, since `product` will do it.
-			return this->product<1>(other, {1}, {0});
+			return this->product<1>(other, {ORDER - 1}, {0});
 		}
-		template <
-			typename OtherValue,
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
+		template <typename OtherValue>
 		auto &operator*=(Tensor<OtherValue, ORDER> const &other) {
 			// Since allocation will happen anyway, we don't care about doing it
 			// in-place.
@@ -856,9 +860,7 @@ namespace Rain::Math {
 				Tensor<>::PlusMultProductPolicy,
 			typename OtherValue,
 			std::size_t OTHER_ORDER,
-			typename ResultValue = decltype(Policy<Value, OtherValue>::product(
-				std::declval<Value>(),
-				std::declval<OtherValue>())),
+			typename ResultValue = typename Policy<Value, OtherValue>::Result,
 			std::size_t RESULT_ORDER = ORDER + OTHER_ORDER - CONTRACT_ORDER * 2>
 		auto product(
 			Tensor<OtherValue, OTHER_ORDER> const &other,
@@ -913,7 +915,7 @@ namespace Rain::Math {
 			}
 
 			// Iterate over all non-contracted dimensions, and compute contraction
-			// (sum) of inner product over all remaining dimensions.
+			// (aggregate) of inner product over all remaining dimensions.
 			Tensor<ResultValue, RESULT_ORDER> result(resultSize);
 			Tensor<>::applyOver<OTHER_ORDER - CONTRACT_ORDER>(
 				[&otherTransposed](
@@ -943,9 +945,9 @@ namespace Rain::Math {
 							Tensor<>::applyOver<0>(
 								[&resultInner](
 									Value const &thatValue, OtherValue const &otherValue) {
-									resultInner = Policy<Value, OtherValue>::sum(
+									resultInner = Policy<Value, OtherValue>::aggregate(
 										resultInner,
-										Policy<Value, OtherValue>::product(thatValue, otherValue));
+										Policy<Value, OtherValue>::contract(thatValue, otherValue));
 								},
 								thatInner,
 								otherInner);
