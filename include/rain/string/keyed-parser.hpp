@@ -31,11 +31,11 @@ namespace Rain::String {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		// Parser signature. The argument stores the string to be parsed. The
 		// function implicitly knows where to store the result.
-		typedef std::function<bool(std::string const &)> Parser;
+		using Parser = std::function<bool(std::string const &)>;
 
 		private:
 		std::unordered_map<std::string, Parser> parsers;

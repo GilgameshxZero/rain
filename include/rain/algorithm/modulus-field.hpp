@@ -410,7 +410,7 @@ namespace Rain::Algorithm {
 			if (exponent == 0) {
 				return build(1);
 			} else if (exponent == 1) {
-				return *this;
+				return build(*this);
 			}
 			auto half{this->power(exponent / 2)};
 			if (exponent % 2 == 0) {

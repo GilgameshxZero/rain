@@ -32,7 +32,7 @@ class ErrorCategory : public std::error_category {
 };
 
 // The custom exception class is simply defined from Error and ErrorCategory.
-typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 int main() {
 	// Throw and catch an exceptions.

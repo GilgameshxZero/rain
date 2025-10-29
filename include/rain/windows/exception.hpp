@@ -54,7 +54,7 @@ namespace Rain::Windows {
 			return ErrorCategory::getLastErrorMessage(error);
 		}
 	};
-	typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+	using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 	// Return a system error code via errno or WSAGetLastError.
 	inline Error getSystemError() noexcept {

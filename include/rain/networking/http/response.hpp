@@ -44,7 +44,7 @@ namespace Rain::Networking::Http {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		protected:
 		// Custom streambuf for HTTP/0.9 body parsing, which prioritizes the first

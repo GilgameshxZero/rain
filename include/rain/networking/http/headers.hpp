@@ -44,14 +44,13 @@ namespace Rain::Networking::Http {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
-		typedef std::unordered_multimap<
+		using Super = std::unordered_multimap<
 			std::string,
 			std::string,
 			String::CaseAgnosticHash,
-			String::CaseAgnosticEqual>
-			Super;
+			String::CaseAgnosticEqual>;
 
 		Headers() = default;
 
@@ -277,8 +276,9 @@ inline std::istream &operator>>(
 	std::size_t totalHeadersBytes{0};
 	std::string line(1_zu << 12, '\0');
 	while (stream.getline(&line[0], line.length())) {
-		line.resize(static_cast<std::size_t>(
-			std::max(std::streamsize(0), stream.gcount() - 1)));
+		line.resize(
+			static_cast<std::size_t>(
+				std::max(std::streamsize(0), stream.gcount() - 1)));
 
 		// If line is only \r, we are done.
 		if (line == "\r") {

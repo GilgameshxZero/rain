@@ -30,7 +30,7 @@ namespace Rain::Multithreading {
 		public:
 		// A task is simply a callable which is executed. Parameters should be
 		// captured in the lambda used as function. Should not throw.
-		typedef std::function<void()> Task;
+		using Task = std::function<void()>;
 
 		private:
 		// Maximum number of threads the ThreadPool will spawn. Zero is unbounded.

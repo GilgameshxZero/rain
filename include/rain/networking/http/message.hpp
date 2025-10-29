@@ -41,7 +41,7 @@ namespace Rain::Networking::Http {
 				}
 			}
 		};
-		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
+		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
 
 		protected:
 		// streambufs which interpret a single layer of Transfer-Encoding, given the
