@@ -24,6 +24,20 @@
 #include <sstream>
 #include <string>
 
+template <typename Value, std::size_t SIZE>
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	std::array<Value, SIZE> const &values) {
+	if (values.empty()) {
+		return stream << "[]";
+	}
+	stream << '[' << std::setw(4) << values[0];
+	for (std::size_t i{1}; i < SIZE; i++) {
+		stream << ' ' << std::setw(4) << values[i];
+	}
+	return stream << ']';
+}
+
 namespace Rain {
 	// strcasecmp does not exist on Windows.
 	inline int strcasecmp(char const *left, char const *right) {
@@ -96,13 +110,16 @@ namespace Rain::String {
 	// Internally, rain uses the strto* variants instead of the sto* variants as
 	// the former returns valid results on error and do not throw.
 	template <typename To, typename From>
-	inline To anyToAny(From from) {
-		To to;
+	inline To anyToAny(From const &from) {
 		std::stringstream ss;
 		ss << from;
-		ss >> to;
-		return to;
+		return ss.str();
 	}
+	template <typename From>
+	inline auto anyToString(From const &from) {
+		return anyToAny<std::string>(from);
+	}
+
 	// Comparison operator for ASCII C-strings for use in std::maps and the like.
 	struct CStringCompare {
 		bool operator()(char const *left, char const *right) const {
