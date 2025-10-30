@@ -1,5 +1,19 @@
 # Changelog
 
+## 7.3.23
+
+1. `Tensor`.
+  1. Implement reduced row-echelon form reducer.
+  2. Allow rectangle Strassen's.
+  3. `reshape`, `data`.
+  4. Re-order naive product to be more vector/cache friendly.
+  5. Clean up `applyOver` and remove scalar tensors where possible.
+  6. Clean up tests.
+2. Miscellaneous.
+  1. `anyToString`.
+  2. `operator<<` for `std::array`.
+  3. Various bugfixes in `ModulusField`.
+
 ## 7.3.22
 
 1. Miscellaneous style changes.

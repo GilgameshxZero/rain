@@ -20,6 +20,7 @@
 #include <cinttypes>
 #include <cstring>
 #include <functional>
+#include <iomanip>
 #include <locale>
 #include <sstream>
 #include <string>
