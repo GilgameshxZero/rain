@@ -1093,13 +1093,13 @@ namespace Rain::Math {
 				b21{b.asSlice({{{halfSize, halfSize * 2}, {0, halfSize}}})},
 				b22{b.asSlice({{{halfSize, halfSize * 2}, {halfSize, halfSize * 2}}})};
 			std::array<Tensor<ResultValue, 2>, 7> m{
-				{{(a11 + a22).productStrassen(b11 + b22)},
-				 {(a21 + a22).productStrassen(b11)},
-				 {a11.productStrassen(b12 - b22)},
-				 {a22.productStrassen(b21 - b11)},
-				 {(a11 + a12).productStrassen(b22)},
-				 {(a21 - a11).productStrassen(b11 + b12)},
-				 {(a12 - a22).productStrassen(b21 + b22)}}};
+				{{(a11 + a22).productStrassen<BASE_SIZE_POWER>(b11 + b22)},
+				 {(a21 + a22).productStrassen<BASE_SIZE_POWER>(b11)},
+				 {a11.productStrassen<BASE_SIZE_POWER>(b12 - b22)},
+				 {a22.productStrassen<BASE_SIZE_POWER>(b21 - b11)},
+				 {(a11 + a12).productStrassen<BASE_SIZE_POWER>(b22)},
+				 {(a21 - a11).productStrassen<BASE_SIZE_POWER>(b11 + b12)},
+				 {(a12 - a22).productStrassen<BASE_SIZE_POWER>(b21 + b22)}}};
 			Tensor<ResultValue, 2> c{{halfSize * 2, halfSize * 2}};
 			Tensor<>::applyOver<0>(
 				[](
