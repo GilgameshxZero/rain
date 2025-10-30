@@ -617,10 +617,9 @@ inline std::ostream &operator<<(
 template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
 inline std::istream &operator>>(
 	std::istream &stream,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> &right) {
 	stream >> right.value;
-	right.value = (right.modulus + right.value) % right.modulus;
+	right.value = (right.MODULUS + right.value) % right.MODULUS;
 	return stream;
 }
 
