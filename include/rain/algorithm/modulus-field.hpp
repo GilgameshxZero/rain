@@ -77,7 +77,7 @@ namespace Rain::Algorithm {
 				: MODULUS{MODULUS_OUTER},
 					value(
 						value < 0 ? this->MODULUS - ((0 - value) % this->MODULUS)
-											: value % this->MODULUS) {}
+											: static_cast<Underlying>(value) % this->MODULUS) {}
 		template <
 			typename Integer = std::size_t,
 			typename std::enable_if<!isDerivedFromModulusRing<Integer>::value>::type
@@ -88,7 +88,7 @@ namespace Rain::Algorithm {
 				: MODULUS{modulus},
 					value(
 						value < 0 ? this->MODULUS - ((0 - value) % this->MODULUS)
-											: value % this->MODULUS) {}
+											: static_cast<Underlying>(value) % this->MODULUS) {}
 		template <
 			typename OtherDerived,
 			typename OtherUnderlying,
@@ -102,7 +102,7 @@ namespace Rain::Algorithm {
 					value(
 						other.value < 0
 							? this->MODULUS - ((0 - other.value) % this->MODULUS)
-							: other.value % this->MODULUS) {}
+							: static_cast<Underlying>(other.value) % this->MODULUS) {}
 		template <
 			typename OtherDerived,
 			typename OtherUnderlying,
@@ -117,7 +117,7 @@ namespace Rain::Algorithm {
 					value(
 						other.value < 0
 							? this->MODULUS - ((0 - other.value) % this->MODULUS)
-							: other.value % this->MODULUS) {}
+							: static_cast<Underlying>(other.value) % this->MODULUS) {}
 
 		// Explicit copy constructor helps avoid compiler warnings on `clang`.
 		ModulusRingBase(TypeThis const &other)
@@ -125,7 +125,7 @@ namespace Rain::Algorithm {
 					value{
 						other.value < 0
 							? this->MODULUS - ((0 - other.value) % this->MODULUS)
-							: other.value % this->MODULUS} {}
+							: static_cast<Underlying>(other.value) % this->MODULUS} {}
 
 		// Builds a Derived type, but with the same underlying modulus value. Uses
 		// more specialized SFINAE to differentiate otherwise identical signatures.
@@ -534,93 +534,94 @@ namespace Rain::Algorithm {
 			return factorials[N] * invFactorials[K] * invFactorials[N - K];
 		}
 	};
-}
 
-// These operators are only called if the left operand is a raw integer.
-template <
-	typename Integer,
-	typename std::enable_if<!Rain::Algorithm::ModulusRingBase<>::
-														isDerivedFromModulusRing<Integer>::value>::type * =
-		nullptr,
-	typename Derived,
-	typename Underlying,
-	std::size_t MODULUS_OUTER>
-inline auto operator+(
-	Integer const &left,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
-	return right.build(left) + right;
-}
-template <
-	typename Integer,
-	typename std::enable_if<!Rain::Algorithm::ModulusRingBase<>::
-														isDerivedFromModulusRing<Integer>::value>::type * =
-		nullptr,
-	typename Derived,
-	typename Underlying,
-	std::size_t MODULUS_OUTER>
-inline auto operator-(
-	Integer const &left,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
-	return right.build(left) - right;
-}
-template <
-	typename Integer,
-	typename std::enable_if<!Rain::Algorithm::ModulusRingBase<>::
-														isDerivedFromModulusRing<Integer>::value>::type * =
-		nullptr,
-	typename Derived,
-	typename Underlying,
-	std::size_t MODULUS_OUTER>
-inline auto operator*(
-	Integer const &left,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
-	return right.build(left) * right;
-}
-template <
-	typename Integer,
-	typename std::enable_if<!Rain::Algorithm::ModulusRingBase<>::
-														isDerivedFromModulusRing<Integer>::value>::type * =
-		nullptr,
-	typename Derived,
-	typename Underlying,
-	std::size_t MODULUS_OUTER>
-inline auto operator%(
-	Integer const &left,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
-	return right.build(left) % right;
-}
-template <
-	typename Integer,
-	typename std::enable_if<!Rain::Algorithm::ModulusRingBase<>::
-														isDerivedFromModulusRing<Integer>::value>::type * =
-		nullptr,
-	typename Underlying,
-	std::size_t MODULUS_OUTER>
-inline auto operator/(
-	Integer const &left,
-	Rain::Algorithm::ModulusField<Underlying, MODULUS_OUTER> const &right) {
-	return right.build(left) / right;
-}
+	// These operators are only called if the left operand is a raw integer.
+	template <
+		typename Integer,
+		typename std::enable_if<
+			!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
+		typename Derived,
+		typename Underlying,
+		std::size_t MODULUS_OUTER>
+	inline auto operator+(
+		Integer const &left,
+		Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+			&right) {
+		return right.build(left) + right;
+	}
+	template <
+		typename Integer,
+		typename std::enable_if<
+			!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
+		typename Derived,
+		typename Underlying,
+		std::size_t MODULUS_OUTER>
+	inline auto operator-(
+		Integer const &left,
+		Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+			&right) {
+		return right.build(left) - right;
+	}
+	template <
+		typename Integer,
+		typename std::enable_if<
+			!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
+		typename Derived,
+		typename Underlying,
+		std::size_t MODULUS_OUTER>
+	inline auto operator*(
+		Integer const &left,
+		Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+			&right) {
+		return right.build(left) * right;
+	}
+	template <
+		typename Integer,
+		typename std::enable_if<
+			!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
+		typename Derived,
+		typename Underlying,
+		std::size_t MODULUS_OUTER>
+	inline auto operator%(
+		Integer const &left,
+		Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+			&right) {
+		return right.build(left) % right;
+	}
+	template <
+		typename Integer,
+		typename std::enable_if<
+			!Rain::Algorithm::ModulusRingBase<>::isDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
+		typename Underlying,
+		std::size_t MODULUS_OUTER>
+	inline auto operator/(
+		Integer const &left,
+		Rain::Algorithm::ModulusField<Underlying, MODULUS_OUTER> const &right) {
+		return right.build(left) / right;
+	}
 
-// Ease-of-use streaming operators.
-template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
-	return stream << right.value;
-}
-template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
-inline std::istream &operator>>(
-	std::istream &stream,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> &right) {
-	stream >> right.value;
-	right.value = (right.MODULUS + right.value) % right.MODULUS;
-	return stream;
+	// Ease-of-use streaming operators.
+	template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
+	inline std::ostream &operator<<(
+		std::ostream &stream,
+		Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
+			&right) {
+		return stream << right.value;
+	}
+	template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
+	inline std::istream &operator>>(
+		std::istream &stream,
+		Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER>
+			&right) {
+		stream >> right.value;
+		right.value = (right.MODULUS + right.value) % right.MODULUS;
+		return stream;
+	}
 }
 
 // Hash operator for this user-defined type, which hashes the inner value (not

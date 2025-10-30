@@ -111,13 +111,17 @@ namespace Rain::String {
 	// the former returns valid results on error and do not throw.
 	template <typename To, typename From>
 	inline To anyToAny(From const &from) {
+		To to;
+		std::stringstream ss;
+		ss << from;
+		ss >> to;
+		return to;
+	}
+	template <typename From>
+	inline std::string anyToString(From const &from) {
 		std::stringstream ss;
 		ss << from;
 		return ss.str();
-	}
-	template <typename From>
-	inline auto anyToString(From const &from) {
-		return anyToAny<std::string>(from);
 	}
 
 	// Comparison operator for ASCII C-strings for use in std::maps and the like.

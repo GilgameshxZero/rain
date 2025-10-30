@@ -1182,12 +1182,13 @@ namespace Rain::Math {
 			if (col == size[1]) {
 				return col;
 			}
+			Value factor{1 / tensorRow[col]};
 			for (std::size_t i{0}; i < size[0]; i++) {
 				if (i == row) {
 					continue;
 				}
 				auto thisRow{(*this)[i]};
-				Value ratio{thisRow[col] / tensorRow[col]};
+				Value ratio{thisRow[col] * factor};
 				for (std::size_t j{0}; j < size[1]; j++) {
 					thisRow[j] -= ratio * tensorRow[j];
 				}
@@ -1197,7 +1198,7 @@ namespace Rain::Math {
 		// Normalize row so that the leading coefficient is 1. Optionally provide
 		// the index of the leading coefficient.
 		//
-		// Returns the normalization factor (original leading coefficient).
+		// Returns the normalization factor (1 / original leading coefficient).
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
@@ -1206,10 +1207,10 @@ namespace Rain::Math {
 			Value factor{0};
 			for (std::size_t i{0}; i < this->SIZES[this->TRANSPOSE[1]]; i++) {
 				if (tensorRow[i] != 0 && factor == 0) {
-					factor = tensorRow[i];
+					factor = 1 / tensorRow[i];
 					tensorRow[i] = 1;
 				} else if (factor != 0) {
-					tensorRow[i] /= factor;
+					tensorRow[i] *= factor;
 				}
 			}
 			return factor == 0 ? 1 : factor;
