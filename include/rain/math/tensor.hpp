@@ -870,6 +870,15 @@ namespace Rain::Math {
 		inline auto reshape(std::array<std::size_t, ORDER> const &sizes) {
 			return *this = this->asReshape(sizes);
 		}
+		// Swaps two top-level indices, considering transposition. Not a transpose.
+		inline void swap(std::array<std::size_t, 2> const &idx) {
+			Tensor<>::applyOver<0>(
+				[](Value &firstValue, Value &secondValue) {
+					std::swap(firstValue, secondValue);
+				},
+				(*this)[idx[0]],
+				(*this)[idx[1]]);
+		}
 
 		// Product functions.
 
@@ -1153,13 +1162,98 @@ namespace Rain::Math {
 
 		// Advanced functions.
 
+		// Reduces all other rows by the first nonzero coordinate in selected row.
+		// Does nothing if the row is zero.
+		//
+		// Returns the index of the leading column in the row, or size[1] if it is
+		// zero.
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
+		std::size_t reduceByRow(std::size_t row) {
+			auto size{this->size()};
+			auto tensorRow{(*this)[row]};
+			std::size_t col{0};
+			for (; col < size[1]; col++) {
+				if (tensorRow[col] != 0) {
+					break;
+				}
+			}
+			if (col == size[1]) {
+				return col;
+			}
+			for (std::size_t i{0}; i < size[0]; i++) {
+				if (i == row) {
+					continue;
+				}
+				auto thisRow{(*this)[i]};
+				Value ratio{thisRow[col] / tensorRow[col]};
+				for (std::size_t j{0}; j < size[1]; j++) {
+					thisRow[j] -= ratio * tensorRow[j];
+				}
+			}
+			return col;
+		}
+		// Normalize row so that the leading coefficient is 1. Optionally provide
+		// the index of the leading coefficient.
+		//
+		// Returns the normalization factor (original leading coefficient).
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
+		Value normalizeRow(std::size_t row) {
+			auto tensorRow{(*this)[row]};
+			Value factor{0};
+			for (std::size_t i{0}; i < this->SIZES[this->TRANSPOSE[1]]; i++) {
+				if (tensorRow[i] != 0 && factor == 0) {
+					factor = tensorRow[i];
+					tensorRow[i] = 1;
+				} else if (factor != 0) {
+					tensorRow[i] /= factor;
+				}
+			}
+			return factor == 0 ? 1 : factor;
+		}
+		// Reduce to reduced row echelon form.
+		//
+		// Returns the total modification factor to the determinant during the
+		// process.
+		template <
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
+		Value reduceToRre() {
+			auto size{this->size()};
+			Value factor{1};
+			std::unique_ptr<std::pair<std::size_t, std::size_t>[]> leadingPerRow{
+				new std::pair<std::size_t, std::size_t>[size[0]]};
+			for (std::size_t i{0}; i < size[0]; i++) {
+				leadingPerRow[i] = {this->reduceByRow(i), i};
+				factor *= this->normalizeRow(i);
+			}
+			std::sort(leadingPerRow.get(), leadingPerRow.get() + size[0]);
+			std::size_t cSwaps{0};
+			std::unique_ptr<bool[]> visitedRow{new bool[size[0]]};
+			std::fill(visitedRow.get(), visitedRow.get() + size[0], false);
+			for (std::size_t i{0}; i < size[0]; i++) {
+				if (visitedRow[i]) {
+					continue;
+				}
+				std::size_t current{i};
+				while (leadingPerRow[current].second != i) {
+					this->swap({current, leadingPerRow[current].second});
+					cSwaps++;
+					visitedRow[current] = true;
+					current = leadingPerRow[current].second;
+				}
+				visitedRow[current] = true;
+			}
+			return factor * (cSwaps % 2 == 0 ? 1 : -1);
+		}
 		// Inverses may exist for higher orders, but we do not provide it here.
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
 		auto inverse() const {
-			this->debugAssertSquare();
-
 			// TODO: Implement `inverse`.
 			return *this;
 		}
