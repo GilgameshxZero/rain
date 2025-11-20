@@ -1,23 +1,29 @@
 /* Recommended settings for VSCode. Copy and customize to `settings.json`. */
 {
 	"debug.console.closeOnEnd": false,
+
 	"editor.rulers": [80, 120],
 	"editor.insertSpaces": false,
 	"editor.tabSize": 2,
+
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
 
-	"C_Cpp.default.includePath": ["include/"],
-	"C_Cpp.default.cppStandard": "c++20",
-	"C_Cpp.autoAddFileAssociations": false,
-
 	"[cpp]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools",
+		"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
 		"editor.wordWrap": "on"
 	},
 
 	"files.associations": {
 		"settings.DEFAULT.json": "jsonc",
 		"*.vstemplate": "xml"
-	}
+	},
+
+	// `code`
+	"C_Cpp.default.includePath": ["include/"],
+	"C_Cpp.default.cppStandard": "c++20",
+	"C_Cpp.autoAddFileAssociations": false,
+
+	// `codium`
+	"clangd.fallbackFlags": ["-I${workspaceFolder}/include/", "-std=c++20"]
 }
