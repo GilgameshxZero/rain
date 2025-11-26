@@ -24,6 +24,6 @@
 	"C_Cpp.default.cppStandard": "c++20",
 	"C_Cpp.autoAddFileAssociations": false,
 
-	// `codium`
+	// `codium`. Needs to be here so can reference ${workspaceFolder}.
 	"clangd.fallbackFlags": ["-I${workspaceFolder}/include/", "-std=c++20"]
 }

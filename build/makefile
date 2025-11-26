@@ -2,7 +2,7 @@
 # Conditional logic implemented with differing end-of-line comment syntax.
 # To enable multithreaded compilation, nmake compiles all files together with
 # 	/MP, while gmake compiles separately with -jN.
-# Files are pre-compiled with pch.cpp.
+# Files are pre-compiled with pch.cpp. PCH support on Linux is still faulty.
 
 # Variables:
 # PROJ: a repository can have multiple *project*s, each in their own directory
@@ -262,10 +262,10 @@ else
 BUILD_NAME := debug
 endif
 ARCH ?= 64
-# PCH is not yet supported on non-Windows systems.
-PCH := 0
+PCH ?= 0
 
 INCL := $(call rwildcard,$(ROOT_DIR)include,*.hpp)
+INCL_PCH := $(INCL)
 
 BIN_DIR := $(ROOT_DIR).bin/
 PROJ_BIN := $(BIN_DIR)$(PROJ_NAME)/$(BIN_NAME).$(BUILD_NAME).x$(ARCH)
@@ -355,13 +355,23 @@ version.build.txt: $(INCL) $(PROJ_SRC)
 	done
 	@./version.sh $(shell echo $(REPO_NAME) | tr '[:lower:]' '[:upper:]')
 
+# Precompiled headers.
+$(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/pch.pch: pch.cpp $(INCL_PCH) version.build.txt
+	@echo Building $@...
+	@$(COMPILER) $(COMPILER_FLAGS) -xc++-header -c $< -o $@
+
 # Compile rule. The first line includes all header dependencies.
 # Stem % matches source file name.
 $(PROJ_OBJ): $(INCL)
 $(PROJ_OBJ): $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/%.o : $(PROJ_SRC_DIR)$$*.cpp
 	@mkdir -p $(@D)
 	@echo Building $@...
+ifeq ($(PCH), 1)
+	@$(MAKE) $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/pch.pch PROJ=$(PROJ) BIN=$(BIN) SRC="$(SRC)" BUILD=$(BUILD) ARCH=$(ARCH) PCH=$(PCH)
+	@$(COMPILER) $(COMPILER_FLAGS) -include-pch $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/pch.pch -c $< -o $@
+else
 	@$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@
+endif
 
 # Link rule.
 $(PROJ_BIN): $(BIN_DIR)% : $(PROJ_OBJ)
