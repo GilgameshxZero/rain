@@ -7,7 +7,7 @@
 
 #include "../string/string.hpp"
 
-#include <stdexcept>
+#include <exception>
 #include <system_error>
 
 namespace Rain::Error {

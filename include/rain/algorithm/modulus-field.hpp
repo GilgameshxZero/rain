@@ -5,7 +5,6 @@
 #include "../random.hpp"
 
 #include <iostream>
-#include <stdexcept>
 #include <vector>
 
 namespace Rain::Algorithm {
