@@ -1,3 +1,4 @@
+// Needs `sudo DevToolsSecurity -enable` on MacOS.
 {
 	"version": "0.2.0",
 	"configurations": [
@@ -31,8 +32,7 @@
 
 			"windows": {
 				"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64.exe"
-			},
-			"osx": { "type": "cppdbg", "MIMode": "lldb" }
+			}
 		}
 	]
 }
