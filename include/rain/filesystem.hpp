@@ -6,7 +6,9 @@
 
 namespace Rain::Filesystem {
 	// Returns true if descendent path is under the directory subtree of the
-	// ancestor path.
+	// ancestor path. This does not traverse symbolic links (though, it will
+	// traverse initial symbolic links given to `descendant` and `ancestor` via
+	// `canonical`).
 	//
 	// Internally converts to canonical or weakly canonical paths. Note that
 	// absolute paths do not remove `..` elements in paths.
