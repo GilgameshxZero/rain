@@ -78,7 +78,7 @@ int main() {
 		std::cout << "Time elapsed: " << timeElapsed << std::endl;
 
 		// Failed DNS lookups can take a while.
-		assert(timeElapsed < 3s);
+		assert(timeElapsed < 10s);
 	}
 
 	// MX record lookup.
