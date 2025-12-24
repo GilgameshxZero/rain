@@ -6,7 +6,7 @@
 			"type": "shell",
 			"label": "clean",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "never", "close": true },
+			"presentation": { "clear": true, "reveal": "silent", "close": true },
 
 			"command": "make",
 			"args": ["clean"]
@@ -16,7 +16,9 @@
 			"type": "shell",
 			"label": "build-debug-x64",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "never" },
+			/* Reveal integrated terminal in view only on problem.
+			Terminals in editor will always be revealed. */
+			"presentation": { "clear": true, "reveal": "silent" },
 			"group": { "kind": "build", "isDefault": true },
 
 			"command": "make",
@@ -29,7 +31,9 @@
 			"type": "shell",
 			"label": "build-release-x64",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "never" },
+			/* Reveal integrated terminal in view only on problem.
+			Terminals in editor will always be revealed. */
+			"presentation": { "clear": true, "reveal": "silent" },
 			"group": "build",
 
 			"command": "make",
