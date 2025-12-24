@@ -6,11 +6,10 @@
 			"type": "shell",
 			"label": "clean",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "never" },
+			"presentation": { "clear": true, "reveal": "never", "close": true },
 
 			"command": "make",
-			"args": ["clean"],
-			"windows": { "command": "nmake" }
+			"args": ["clean"]
 		},
 		{
 			/* Build the open file in debug mode. */

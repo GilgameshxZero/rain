@@ -1,4 +1,4 @@
-// Needs `sudo DevToolsSecurity -enable` on MacOS.
+// May require `sudo DevToolsSecurity -enable` on MacOS.
 {
 	"version": "0.2.0",
 	"configurations": [
@@ -8,7 +8,7 @@
 			"request": "launch",
 			"preLaunchTask": "build-debug-x64",
 			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64",
-			"cwd": "${workspaceFolder}/.bin",
+			"cwd": "${workspaceFolder}${pathSeparator}.bin",
 			"console": "integratedTerminal",
 			"terminal": "integrated",
 			"internalConsoleOptions": "neverOpen",
@@ -24,7 +24,7 @@
 			"request": "launch",
 			"preLaunchTask": "build-release-x64",
 			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64",
-			"cwd": "${workspaceFolder}/.bin",
+			"cwd": "${workspaceFolder}${pathSeparator}.bin",
 			"console": "integratedTerminal",
 			"terminal": "integrated",
 			"internalConsoleOptions": "neverOpen",
