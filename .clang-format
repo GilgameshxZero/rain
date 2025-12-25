@@ -24,7 +24,7 @@
 
 	AlignTrailingComments: false,
 	ReflowComments: true,
-	ColumnLimit: 80,
+	ColumnLimit: 60,
 
 	IncludeBlocks: Preserve,
 	SortUsingDeclarations: false
