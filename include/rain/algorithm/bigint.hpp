@@ -19,19 +19,25 @@ namespace Rain::Algorithm {
 namespace std {
 	// Limits.
 	template <std::size_t LOG_BITS, bool SIGNED>
-	class numeric_limits<Rain::Algorithm::BigInt<LOG_BITS, SIGNED>> {
+	class numeric_limits<
+		Rain::Algorithm::BigInt<LOG_BITS, SIGNED>> {
 		public:
-		using ThisInt = Rain::Algorithm::BigInt<LOG_BITS, SIGNED>;
+		using ThisInt =
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED>;
 
 		static constexpr ThisInt min() {
 			return {
-				numeric_limits<typename ThisInt::SmallerIntUnsigned>::min(),
-				numeric_limits<typename ThisInt::SmallerInt>::min()};
+				numeric_limits<
+					typename ThisInt::SmallerIntUnsigned>::min(),
+				numeric_limits<
+					typename ThisInt::SmallerInt>::min()};
 		};
 		static constexpr ThisInt max() {
 			return {
-				numeric_limits<typename ThisInt::SmallerIntUnsigned>::max(),
-				numeric_limits<typename ThisInt::SmallerInt>::max()};
+				numeric_limits<
+					typename ThisInt::SmallerIntUnsigned>::max(),
+				numeric_limits<
+					typename ThisInt::SmallerInt>::max()};
 		};
 	};
 }
@@ -40,8 +46,8 @@ namespace Rain::Algorithm {
 	template <>
 	class BigInt<0, false> {
 		public:
-		// We must use our own templated SFINAE base class checker, like in
-		// `ModulusRingBase`.
+		// We must use our own templated SFINAE base class
+		// checker, like in `ModulusRingBase`.
 		template <std::size_t LOG_BITS, bool SIGNED>
 		static std::true_type isDerivedFromBigIntImpl(
 			BigInt<LOG_BITS, SIGNED> const *);
@@ -49,7 +55,8 @@ namespace Rain::Algorithm {
 		static std::false_type isDerivedFromBigIntImpl(...);
 		template <typename TypeDerived>
 		using isDerivedFromBigInt =
-			decltype(isDerivedFromBigIntImpl(std::declval<TypeDerived *>()));
+			decltype(isDerivedFromBigIntImpl(
+				std::declval<TypeDerived *>()));
 	};
 
 	// Shorthands.
@@ -59,16 +66,17 @@ namespace Rain::Algorithm {
 	template <std::size_t LOG_BITS>
 	using BigIntUnsigned = BigInt<LOG_BITS, false>;
 
-	// Maps log bits to the system type or big int type. Helps with template
-	// specialization recursion.
+	// Maps log bits to the system type or big int type. Helps
+	// with template specialization recursion.
 	template <std::size_t LOG_BITS, bool SIGNED>
 	class BigIntTypeMap {
 		public:
 		using Type = BigInt<LOG_BITS, SIGNED>;
 	};
 
-	// Template recursion base case 2**5 = 32. Requires 64-bit integer to be
-	// available to support the overflow multiplication & division defined later.
+	// Template recursion base case 2**5 = 32. Requires 64-bit
+	// integer to be available to support the overflow
+	// multiplication & division defined later.
 	template <>
 	class BigIntTypeMap<5, true> {
 		public:
@@ -80,21 +88,29 @@ namespace Rain::Algorithm {
 		using Type = std::uint32_t;
 	};
 
-	// Overflow multiplication and division. Multiplication returns {low, high} of
-	// the result. Division returns {low, high} of the result.
+	// Overflow multiplication and division. Multiplication
+	// returns {low, high} of the result. Division returns
+	// {low, high} of the result.
 	template <std::size_t LOG_BITS, bool SIGNED>
 	inline std::pair<
 		typename BigIntTypeMap<LOG_BITS, false>::Type,
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type>
 	bigIntMultiply(
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type const &X,
-		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type const &Y) {
-		using ThisIntUnsigned = typename BigIntTypeMap<LOG_BITS, false>::Type;
-		using ThisInt = typename BigIntTypeMap<LOG_BITS, SIGNED>::Type;
-		auto [lll, llh]{bigIntMultiply<LOG_BITS - 1, false>(X.low, Y.low)};
-		auto [lhl, lhh]{bigIntMultiply<LOG_BITS - 1, SIGNED>(X.low, Y.high)};
-		auto [hll, hlh]{bigIntMultiply<LOG_BITS - 1, SIGNED>(X.high, Y.low)};
-		auto [hhl, hhh]{bigIntMultiply<LOG_BITS - 1, SIGNED>(X.high, Y.high)};
+		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type const
+			&Y) {
+		using ThisIntUnsigned =
+			typename BigIntTypeMap<LOG_BITS, false>::Type;
+		using ThisInt =
+			typename BigIntTypeMap<LOG_BITS, SIGNED>::Type;
+		auto [lll, llh]{
+			bigIntMultiply<LOG_BITS - 1, false>(X.low, Y.low)};
+		auto [lhl, lhh]{
+			bigIntMultiply<LOG_BITS - 1, SIGNED>(X.low, Y.high)};
+		auto [hll, hlh]{
+			bigIntMultiply<LOG_BITS - 1, SIGNED>(X.high, Y.low)};
+		auto [hhl, hhh]{
+			bigIntMultiply<LOG_BITS - 1, SIGNED>(X.high, Y.high)};
 		ThisIntUnsigned first{lll, 0};
 		ThisInt second{0, hhh};
 		char firstHighFlow{0}, secondLowFlow{0};
@@ -102,42 +118,52 @@ namespace Rain::Algorithm {
 		first.high += llh;
 		firstHighFlow +=
 			(first.high >
-			 std::numeric_limits<typename ThisIntUnsigned::SmallerInt>::max() - lhl);
+			 std::numeric_limits<
+				 typename ThisIntUnsigned::SmallerInt>::max() -
+				 lhl);
 		first.high += lhl;
 		firstHighFlow +=
 			(first.high >
-			 std::numeric_limits<typename ThisIntUnsigned::SmallerInt>::max() - hll);
+			 std::numeric_limits<
+				 typename ThisIntUnsigned::SmallerInt>::max() -
+				 hll);
 		first.high += hll;
 		secondLowFlow -= (firstHighFlow < 0);
 		second.low += firstHighFlow;
 		secondLowFlow +=
 			(lhh > 0 &&
 			 second.low >
-				 std::numeric_limits<typename ThisInt::SmallerIntUnsigned>::max() -
+				 std::numeric_limits<
+					 typename ThisInt::SmallerIntUnsigned>::max() -
 					 lhh) -
 			(lhh < 0 &&
 			 second.low <
-				 std::numeric_limits<typename ThisInt::SmallerIntUnsigned>::min() -
+				 std::numeric_limits<
+					 typename ThisInt::SmallerIntUnsigned>::min() -
 					 lhh);
 		second.low += lhh;
 		secondLowFlow +=
 			(hlh > 0 &&
 			 second.low >
-				 std::numeric_limits<typename ThisInt::SmallerIntUnsigned>::max() -
+				 std::numeric_limits<
+					 typename ThisInt::SmallerIntUnsigned>::max() -
 					 hlh) -
 			(hlh < 0 &&
 			 second.low <
-				 std::numeric_limits<typename ThisInt::SmallerIntUnsigned>::min() -
+				 std::numeric_limits<
+					 typename ThisInt::SmallerIntUnsigned>::min() -
 					 hlh);
 		second.low += hlh;
 		secondLowFlow +=
 			(hhl > 0 &&
 			 second.low >
-				 std::numeric_limits<typename ThisInt::SmallerIntUnsigned>::max() -
+				 std::numeric_limits<
+					 typename ThisInt::SmallerIntUnsigned>::max() -
 					 hhl) -
 			(hhl < 0 &&
 			 second.low <
-				 std::numeric_limits<typename ThisInt::SmallerIntUnsigned>::min() -
+				 std::numeric_limits<
+					 typename ThisInt::SmallerIntUnsigned>::min() -
 					 hhl);
 		second.low += hhl;
 		second.high += secondLowFlow;
@@ -150,7 +176,8 @@ namespace Rain::Algorithm {
 	bigIntMultiply<5, false>(
 		typename BigIntTypeMap<5, false>::Type const &X,
 		typename BigIntTypeMap<5, false>::Type const &Y) {
-		using ThisIntUnsigned = typename BigIntTypeMap<5, false>::Type;
+		using ThisIntUnsigned =
+			typename BigIntTypeMap<5, false>::Type;
 
 		std::uint64_t result{X};
 		result *= Y;
@@ -165,20 +192,24 @@ namespace Rain::Algorithm {
 	bigIntMultiply<5, true>(
 		typename BigIntTypeMap<5, true>::Type const &X,
 		typename BigIntTypeMap<5, true>::Type const &Y) {
-		using ThisIntUnsigned = typename BigIntTypeMap<5, false>::Type;
+		using ThisIntUnsigned =
+			typename BigIntTypeMap<5, false>::Type;
 		using ThisInt = typename BigIntTypeMap<5, true>::Type;
 
 		std::int64_t result{X};
 		result *= Y;
 		return {
-			static_cast<ThisIntUnsigned>(result), static_cast<ThisInt>(result >> 32)};
+			static_cast<ThisIntUnsigned>(result),
+			static_cast<ThisInt>(result >> 32)};
 	}
 
 	template <std::size_t LOG_BITS, bool SIGNED>
-	inline typename BigIntTypeMap<LOG_BITS, SIGNED>::Type bigIntDivide(
+	inline typename BigIntTypeMap<LOG_BITS, SIGNED>::Type
+	bigIntDivide(
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type X,
 		typename BigIntTypeMap<LOG_BITS, SIGNED>::Type Y) {
-		using ThisInt = typename BigIntTypeMap<LOG_BITS, SIGNED>::Type;
+		using ThisInt =
+			typename BigIntTypeMap<LOG_BITS, SIGNED>::Type;
 		if (Y == 0) {
 			throw std::runtime_error("Cannot divide by 0.");
 		}
@@ -197,7 +228,8 @@ namespace Rain::Algorithm {
 		ThisInt low{0}, high{X};
 		while (low + 1 < high) {
 			ThisInt mid{low + ((high - low) >> 1)};
-			auto [productLow, productHigh]{bigIntMultiply<LOG_BITS, SIGNED>(mid, Y)};
+			auto [productLow, productHigh]{
+				bigIntMultiply<LOG_BITS, SIGNED>(mid, Y)};
 			if (productHigh > 0 || productLow > X) {
 				high = mid;
 			} else {
@@ -207,64 +239,79 @@ namespace Rain::Algorithm {
 		return negative ? -low : low;
 	}
 	template <bool SIGNED>
-	inline typename BigIntTypeMap<5, SIGNED>::Type bigIntDivide(
+	inline typename BigIntTypeMap<5, SIGNED>::Type
+	bigIntDivide(
 		typename BigIntTypeMap<5, SIGNED>::Type X,
 		typename BigIntTypeMap<5, SIGNED>::Type Y) {
 		return X / Y;
 	}
 
-	// Two ints of half the size form a larger int. Implements arithmetic, bit
-	// shift, binary, and modulus operators, as well as comparison, i/o, and cast
-	// operators. Unsigned overflow/underflow is well-defined, but not signed
-	// overflow/underflow.
+	// Two ints of half the size form a larger int. Implements
+	// arithmetic, bit shift, binary, and modulus operators,
+	// as well as comparison, i/o, and cast operators.
+	// Unsigned overflow/underflow is well-defined, but not
+	// signed overflow/underflow.
 	template <std::size_t LOG_BITS, bool SIGNED>
 	class BigInt {
 		public:
 		using ThisInt = BigInt<LOG_BITS, SIGNED>;
 		using SmallerIntUnsigned =
 			typename BigIntTypeMap<LOG_BITS - 1, false>::Type;
-		using SmallerInt = typename BigIntTypeMap<LOG_BITS - 1, SIGNED>::Type;
+		using SmallerInt =
+			typename BigIntTypeMap<LOG_BITS - 1, SIGNED>::Type;
 
-		static std::size_t const halfBits{1_zu << (LOG_BITS - 1)};
+		static std::size_t const halfBits{
+			1_zu << (LOG_BITS - 1)};
 
 		SmallerIntUnsigned low;
 		SmallerInt high;
 
 		template <
 			typename Integer = int,
-			typename std::enable_if<sizeof(Integer) * 8 <= halfBits>::type * =
-				nullptr>
-		BigInt(Integer const &value = 0) : low(value), high((value < 0) ? -1 : 0) {}
+			typename std::enable_if<
+				sizeof(Integer) * 8 <= halfBits>::type * = nullptr>
+		BigInt(Integer const &value = 0)
+				: low(value), high((value < 0) ? -1 : 0) {}
 		template <
 			typename Integer = int,
-			typename std::enable_if<sizeof(Integer) * 8 == halfBits * 2>::type * =
+			typename std::enable_if<
+				sizeof(Integer) * 8 == halfBits * 2>::type * =
 				nullptr>
 		BigInt(Integer const &value = 0)
 				: low(static_cast<SmallerIntUnsigned>(value)),
-					high(static_cast<SmallerInt>(value >> (1_zu << (LOG_BITS - 1)))) {}
+					high(
+						static_cast<SmallerInt>(
+							value >> (1_zu << (LOG_BITS - 1)))) {}
 
 		// Constructing with bool.
-		BigInt(bool const value) : low(value ? 1 : 0), high(0) {}
+		BigInt(bool const value)
+				: low(value ? 1 : 0), high(0) {}
 
-		// Constructing with a larger int than storable is ill-advised and disabled.
+		// Constructing with a larger int than storable is
+		// ill-advised and disabled.
 
 		// Can also construct with the two components.
-		BigInt(SmallerIntUnsigned const &low, SmallerInt const &high = 0)
+		BigInt(
+			SmallerIntUnsigned const &low,
+			SmallerInt const &high = 0)
 				: low(low), high(high) {}
 
-		// Explicit copy constructor helps avoid compiler warnings on `clang`.
+		// Explicit copy constructor helps avoid compiler
+		// warnings on `clang`.
 		BigInt(BigInt<LOG_BITS, SIGNED> const &other)
 				: low{other.low}, high(other.high) {}
 		template <
 			bool OTHER_SIGNED,
-			typename std::enable_if<OTHER_SIGNED != SIGNED>::type * = nullptr>
+			typename std::enable_if<OTHER_SIGNED != SIGNED>::type
+				* = nullptr>
 		BigInt(BigInt<LOG_BITS, OTHER_SIGNED> const &other)
 				: low{other.low}, high(other.high) {}
 
 		// Assignment.
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
 				* = nullptr>
 		ThisInt &operator=(OtherInteger const &other) {
 			return *this = ThisInt(other);
@@ -281,16 +328,22 @@ namespace Rain::Algorithm {
 		// Comparison.
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline bool operator==(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline bool operator==(
+			OtherInteger const &other) const {
 			return *this == ThisInt(other);
 		}
 		inline bool operator==(ThisInt const &other) const {
-			return this->low == other.low && this->high == other.high;
+			return this->low == other.low &&
+				this->high == other.high;
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
 		inline bool operator<(OtherInteger const &other) const {
 			return *this < ThisInt(other);
 		}
@@ -300,8 +353,11 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline bool operator<=(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline bool operator<=(
+			OtherInteger const &other) const {
 			return *this <= ThisInt(other);
 		}
 		inline bool operator<=(ThisInt const &other) const {
@@ -309,7 +365,9 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
 		inline bool operator>(OtherInteger const &other) const {
 			return *this > ThisInt(other);
 		}
@@ -318,8 +376,11 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline bool operator>=(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline bool operator>=(
+			OtherInteger const &other) const {
 			return *this >= ThisInt(other);
 		}
 		inline bool operator>=(ThisInt const &other) const {
@@ -328,34 +389,48 @@ namespace Rain::Algorithm {
 
 		// Shift.
 		template <typename OtherInteger>
-		inline ThisInt operator>>(OtherInteger const &shift) const {
-			if (shift >= static_cast<OtherInteger>(halfBits * 2)) {
+		inline ThisInt operator>>(
+			OtherInteger const &shift) const {
+			if (
+				shift >= static_cast<OtherInteger>(halfBits * 2)) {
 				return 0;
-			} else if (shift >= static_cast<OtherInteger>(halfBits)) {
-				return ThisInt{static_cast<SmallerIntUnsigned>(this->high), 0} >>
+			} else if (
+				shift >= static_cast<OtherInteger>(halfBits)) {
+				return ThisInt{
+								 static_cast<SmallerIntUnsigned>(
+									 this->high),
+								 0} >>
 					(shift - halfBits);
 			}
 			ThisInt tmp{this->low >> shift, this->high >> shift};
 			SmallerInt lost{this->high - (tmp.high << shift)};
-			return {tmp.low + (lost << (halfBits - shift)), tmp.high};
+			return {
+				tmp.low + (lost << (halfBits - shift)), tmp.high};
 		}
 		template <typename OtherInteger>
 		inline ThisInt &operator>>=(OtherInteger const &shift) {
 			return *this = *this >> shift;
 		}
 		template <typename OtherInteger>
-		inline ThisInt operator<<(OtherInteger const &shift) const {
-			if (shift >= static_cast<OtherInteger>(halfBits * 2)) {
+		inline ThisInt operator<<(
+			OtherInteger const &shift) const {
+			if (
+				shift >= static_cast<OtherInteger>(halfBits * 2)) {
 				return 0;
-			} else if (shift >= static_cast<OtherInteger>(halfBits)) {
-				return ThisInt{0, static_cast<SmallerInt>(this->low)}
+			} else if (
+				shift >= static_cast<OtherInteger>(halfBits)) {
+				return ThisInt{
+								 0, static_cast<SmallerInt>(this->low)}
 				<< (shift - halfBits);
 			}
 			ThisInt tmp{this->low << shift, this->high << shift};
-			SmallerIntUnsigned lost{this->low - (tmp.low >> shift)};
+			SmallerIntUnsigned lost{
+				this->low - (tmp.low >> shift)};
 			return {
 				tmp.low,
-				tmp.high + static_cast<SmallerInt>(lost >> (halfBits - shift))};
+				tmp.high +
+					static_cast<SmallerInt>(
+						lost >> (halfBits - shift))};
 		}
 		template <typename OtherInteger>
 		inline ThisInt &operator<<=(OtherInteger const &shift) {
@@ -364,10 +439,12 @@ namespace Rain::Algorithm {
 
 		// Binary.
 		inline ThisInt operator&(ThisInt const &other) const {
-			return {this->low & other.low, this->high & other.high};
+			return {
+				this->low & other.low, this->high & other.high};
 		}
 		inline ThisInt operator|(ThisInt const &other) const {
-			return {this->low & other.low, this->high & other.high};
+			return {
+				this->low & other.low, this->high & other.high};
 		}
 
 		// Cast.
@@ -375,23 +452,31 @@ namespace Rain::Algorithm {
 		operator BigInt<LOG_BITS, !SIGNED>() const {
 			return {
 				this->low,
-				static_cast<typename BigIntTypeMap<LOG_BITS - 1, !SIGNED>::Type>(
-					this->high)};
+				static_cast<typename BigIntTypeMap<
+					LOG_BITS - 1,
+					!SIGNED>::Type>(this->high)};
 		}
-		operator typename BigIntTypeMap<5, SIGNED>::Type() const {
+		operator typename BigIntTypeMap<5, SIGNED>::Type()
+			const {
 			if (this->high < 0) {
 				auto tmp{
-					std::numeric_limits<SmallerIntUnsigned>::max() - this->low + 1};
-				return static_cast<typename BigIntTypeMap<5, SIGNED>::Type>(0 - tmp);
+					std::numeric_limits<SmallerIntUnsigned>::max() -
+					this->low + 1};
+				return static_cast<
+					typename BigIntTypeMap<5, SIGNED>::Type>(0 - tmp);
 			}
-			return static_cast<typename BigIntTypeMap<5, SIGNED>::Type>(this->low);
+			return static_cast<
+				typename BigIntTypeMap<5, SIGNED>::Type>(this->low);
 		}
 
 		// Arithmetic.
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline ThisInt operator+(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline ThisInt operator+(
+			OtherInteger const &other) const {
 			return *this + ThisInt(other);
 		}
 		inline ThisInt operator+(ThisInt const &other) const {
@@ -400,7 +485,8 @@ namespace Rain::Algorithm {
 				this->low + other.low,
 				this->high + other.high +
 					(other.low >
-					 std::numeric_limits<SmallerIntUnsigned>::max() - this->low)};
+					 std::numeric_limits<SmallerIntUnsigned>::max() -
+						 this->low)};
 		}
 		template <typename OtherInteger>
 		inline ThisInt &operator+=(OtherInteger const &other) {
@@ -408,8 +494,11 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline ThisInt operator-(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline ThisInt operator-(
+			OtherInteger const &other) const {
 			return *this - ThisInt(other);
 		}
 		inline ThisInt operator-(ThisInt const &other) const {
@@ -424,16 +513,21 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline ThisInt operator*(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline ThisInt operator*(
+			OtherInteger const &other) const {
 			return *this * ThisInt(other);
 		}
 		inline ThisInt operator*(ThisInt const &other) const {
-			auto [first, second]{bigIntMultiply<LOG_BITS, SIGNED>(*this, other)};
+			auto [first, second]{
+				bigIntMultiply<LOG_BITS, SIGNED>(*this, other)};
 			if (second < 0) {
 				auto tmp{
 					std::numeric_limits<
-						typename BigIntTypeMap<LOG_BITS, false>::Type>::max() -
+						typename BigIntTypeMap<LOG_BITS, false>::Type>::
+						max() -
 					first + 1};
 				return ThisInt(0, 0) - ThisInt(tmp.low, tmp.high);
 			}
@@ -445,8 +539,11 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline ThisInt operator/(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline ThisInt operator/(
+			OtherInteger const &other) const {
 			return *this / ThisInt(other);
 		}
 		inline ThisInt operator/(ThisInt const &other) const {
@@ -458,8 +555,11 @@ namespace Rain::Algorithm {
 		}
 		template <
 			typename OtherInteger,
-			typename std::enable_if<!std::is_same<ThisInt, OtherInteger>::value>::type * = nullptr>
-		inline ThisInt operator%(OtherInteger const &other) const {
+			typename std::enable_if<
+				!std::is_same<ThisInt, OtherInteger>::value>::type
+				* = nullptr>
+		inline ThisInt operator%(
+			OtherInteger const &other) const {
 			return *this % ThisInt(other);
 		}
 		inline ThisInt operator%(ThisInt const &other) const {
@@ -472,7 +572,9 @@ namespace Rain::Algorithm {
 		}
 
 		// Unary.
-		inline ThisInt operator-() const { return ThisInt(0, 0) - *this; }
+		inline ThisInt operator-() const {
+			return ThisInt(0, 0) - *this;
+		}
 		inline ThisInt operator++() { return *this += 1; }
 		inline ThisInt operator++(int) {
 			auto tmp(*this);
@@ -492,62 +594,74 @@ template <
 	typename OtherInteger,
 	std::size_t LOG_BITS,
 	bool SIGNED,
-	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-		OtherInteger>::value>::type * = nullptr>
+	typename std::enable_if<
+		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+			OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator+(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) + right;
+	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) +
+		right;
 }
 template <
 	typename OtherInteger,
 	std::size_t LOG_BITS,
 	bool SIGNED,
-	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-		OtherInteger>::value>::type * = nullptr>
+	typename std::enable_if<
+		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+			OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator-(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) - right;
+	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) -
+		right;
 }
 template <
 	typename OtherInteger,
 	std::size_t LOG_BITS,
 	bool SIGNED,
-	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-		OtherInteger>::value>::type * = nullptr>
+	typename std::enable_if<
+		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+			OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator*(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) * right;
+	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) *
+		right;
 }
 template <
 	typename OtherInteger,
 	std::size_t LOG_BITS,
 	bool SIGNED,
-	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-		OtherInteger>::value>::type * = nullptr>
+	typename std::enable_if<
+		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+			OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator/(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) / right;
+	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) /
+		right;
 }
 template <
 	typename OtherInteger,
 	std::size_t LOG_BITS,
 	bool SIGNED,
-	typename std::enable_if<!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-		OtherInteger>::value>::type * = nullptr>
+	typename std::enable_if<
+		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+			OtherInteger>::value>::type * = nullptr>
 inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator%(
 	OtherInteger const &left,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) % right;
+	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) %
+		right;
 }
 
 template <std::size_t LOG_BITS, bool SIGNED>
 inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
+	// TODO: a trivial optimization is to output 9 digits at
+	// once, but need to care for leading 0s.
 	if (right < 0) {
 		stream.put('-');
 		return stream << -right;
@@ -557,8 +671,8 @@ inline std::ostream &operator<<(
 	}
 	auto first{right % 10};
 	auto second{
-		static_cast<typename Rain::Algorithm::BigIntTypeMap<5, SIGNED>::Type>(
-			first)};
+		static_cast<typename Rain::Algorithm::
+									BigIntTypeMap<5, SIGNED>::Type>(first)};
 	return stream.put(second + '0');
 }
 template <std::size_t LOG_BITS, bool SIGNED>
@@ -574,17 +688,21 @@ inline std::istream &operator>>(
 	return stream;
 }
 
-// Hash operator for this user-defined type, which combines hashes of the inner
-// type.
+// Hash operator for this user-defined type, which combines
+// hashes of the inner type.
 namespace std {
 	template <std::size_t LOG_BITS, bool SIGNED>
 	struct hash<Rain::Algorithm::BigInt<LOG_BITS, SIGNED>> {
 		size_t operator()(
-			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &value) const {
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&value) const {
 			size_t result{
-				Rain::Random::SplitMixHash<decltype(value.high)>{}(value.high)};
+				Rain::Random::SplitMixHash<decltype(value.high)>{}(
+					value.high)};
 			Rain::Random::combineHash(
-				result, Rain::Random::SplitMixHash<decltype(value.low)>{}(value.low));
+				result,
+				Rain::Random::SplitMixHash<decltype(value.low)>{}(
+					value.low));
 			return result;
 		}
 	};
