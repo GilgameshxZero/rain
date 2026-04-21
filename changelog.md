@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.3.24
+
+1. Format all files with new `.clangd` guidelines (mainly, 60 line length).
+2. Update makefile to new unified format.
+  1. This include PCH support on all platforms, and better avoidance of rebuilding w/ versioning.
+3. Update includes where previously missing.
+  1. `clangd` now does not warn for unused includes.
+4. Switch to codium OSS extensions from vscode extensions.
+5. Clarify `isSubpath` symbolic link behavior.
+6. Set up for serial `BigInt` TODO implementation.
+7. Increase DNS resolution timeout in test.
+
 ## 7.3.23
 
 1. `Tensor`.
