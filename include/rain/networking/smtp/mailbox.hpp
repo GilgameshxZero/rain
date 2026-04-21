@@ -1,6 +1,7 @@
 // Represents an email example@example.com from RFC 5322.
 #pragma once
 
+#include "../../data/serializer.hpp"
 #include "../../string/string.hpp"
 #include "../host.hpp"
 
@@ -53,4 +54,23 @@ inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Smtp::Mailbox const &mailbox) {
 	return stream << static_cast<std::string>(mailbox);
+}
+
+namespace Rain::Data {
+	template <>
+	struct serialize<Rain::Networking::Smtp::Mailbox> {
+		void operator()(
+			Rain::Data::Serializer &serializer,
+			Rain::Networking::Smtp::Mailbox const &data) {
+			serializer << data.name << data.host;
+		}
+	};
+	template <>
+	struct deserialize<Rain::Networking::Smtp::Mailbox> {
+		void operator()(
+			Rain::Data::Deserializer &deserializer,
+			Rain::Networking::Smtp::Mailbox &data) {
+			deserializer >> data.name >> data.host;
+		}
+	};
 }

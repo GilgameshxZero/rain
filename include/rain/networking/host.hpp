@@ -2,6 +2,7 @@
 // node/service specification for an internet address.
 #pragma once
 
+#include "../data/serializer.hpp"
 #include "../literal.hpp"
 #include "../string.hpp"
 
@@ -77,4 +78,22 @@ inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Host const &host) {
 	return stream << host.asStr();
+}
+namespace Rain::Data {
+	template <>
+	struct serialize<Rain::Networking::Host> {
+		void operator()(
+			Rain::Data::Serializer &serializer,
+			Rain::Networking::Host const &data) {
+			serializer << data.node << data.service;
+		}
+	};
+	template <>
+	struct deserialize<Rain::Networking::Host> {
+		void operator()(
+			Rain::Data::Deserializer &deserializer,
+			Rain::Networking::Host &data) {
+			deserializer >> data.node >> data.service;
+		}
+	};
 }

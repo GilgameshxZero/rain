@@ -7,44 +7,20 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
-// Forward-declared prototypes.
 namespace Rain::Data {
 	class Serializer;
 	class Deserializer;
-}
 
-template <typename Data>
-inline void serialize(
-	Rain::Data::Serializer &,
-	Data const &);
-template <typename Data>
-inline void deserialize(Rain::Data::Deserializer &, Data &);
-template <
-	typename CharT,
-	typename Traits = std::char_traits<CharT>,
-	typename Allocator = std::allocator<CharT> >
-inline void serialize(
-	Rain::Data::Serializer &,
-	std::basic_string<CharT, Traits, Allocator> const &);
-template <
-	typename CharT,
-	typename Traits = std::char_traits<CharT>,
-	typename Allocator = std::allocator<CharT> >
-inline void deserialize(
-	Rain::Data::Deserializer &,
-	std::basic_string<CharT, Traits, Allocator> &);
-template <typename Data>
-inline void serialize(
-	Rain::Data::Serializer &,
-	std::vector<Data> const &);
-template <typename Data>
-inline void deserialize(
-	Rain::Data::Deserializer &,
-	std::vector<Data> &);
+	template <typename Data>
+	struct serialize;
+	template <typename Data>
+	struct deserialize;
 
-namespace Rain::Data {
 	// Serializes and deserializes data to/from std::iostream.
 	//
 	// Custom types are (de)serialized with free functions
@@ -69,12 +45,49 @@ namespace Rain::Data {
 			this->rdbuf(this->streambufManager->rdbuf());
 		}
 
-		// Serialization and deserialization use the stream
-		// operators.
+		// Operators redirect to a template type which can be
+		// overloaded, and provides a default.
 		template <typename Data>
-		Serializer &operator<<(Data const &data) {
-			// Call free function.
-			::serialize(*this, data);
+		inline Rain::Data::Serializer &operator<<(
+			Data const &data) {
+			serialize<Data>()(*this, data);
+			return *this;
+		}
+		template <
+			typename CharT,
+			typename Traits,
+			typename Allocator>
+		inline Rain::Data::Serializer &operator<<(
+			std::basic_string<CharT, Traits, Allocator> const
+				&data) {
+			*this << data.size();
+			this->write(
+				reinterpret_cast<char const *>(data.data()),
+				sizeof(CharT) * data.size());
+			return *this;
+		}
+		template <typename T, typename Allocator>
+		inline Rain::Data::Serializer &operator<<(
+			std::vector<T, Allocator> const &data) {
+			*this << data.size();
+			for (auto &i : data) {
+				*this << i;
+			}
+			return *this;
+		}
+		template <
+			typename Key,
+			typename Hash,
+			typename KeyEqual,
+			typename Allocator>
+		inline Rain::Data::Serializer &operator<<(
+			std::
+				unordered_set<Key, Hash, KeyEqual, Allocator> const
+					&data) {
+			*this << data.size();
+			for (auto &i : data) {
+				*this << i;
+			}
 			return *this;
 		}
 	};
@@ -95,80 +108,75 @@ namespace Rain::Data {
 			this->rdbuf(this->streambufManager->rdbuf());
 		}
 
-		// Deserialization stream operators.
+		// Operators redirect to a template type which can be
+		// overloaded, and provides a default.
 		template <typename Data>
-		Deserializer &operator>>(Data &data) {
-			// Call free function.
-			::deserialize(*this, data);
+		inline Rain::Data::Deserializer &operator>>(
+			Data &data) {
+			deserialize<Data>()(*this, data);
+			return *this;
+		}
+		template <
+			typename CharT,
+			typename Traits,
+			typename Allocator>
+		inline Rain::Data::Deserializer &operator>>(
+			std::basic_string<CharT, Traits, Allocator> &data) {
+			std::size_t size;
+			*this >> size;
+			data.resize(size);
+			this->read(
+				reinterpret_cast<char *>(&data[0]),
+				sizeof(CharT) * size);
+			return *this;
+		}
+		template <typename T, typename Allocator>
+		inline Rain::Data::Deserializer &operator>>(
+			std::vector<T, Allocator> &data) {
+			std::size_t size;
+			*this >> size;
+			data.resize(size);
+			for (auto &i : data) {
+				*this >> i;
+			}
+			return *this;
+		}
+		template <
+			typename Key,
+			typename Hash,
+			typename KeyEqual,
+			typename Allocator>
+		inline Rain::Data::Deserializer &operator>>(
+			std::unordered_set<Key, Hash, KeyEqual, Allocator>
+				&data) {
+			std::size_t size;
+			*this >> size;
+			Key key;
+			for (std::size_t i{0}; i < size; i++) {
+				*this >> key;
+				data.insert(key);
+			}
 			return *this;
 		}
 	};
-}
 
-// Free functions for types for (de)serialization.
-
-// Fixed-size types and native arrays.
-template <typename Data>
-inline void serialize(
-	Rain::Data::Serializer &serializer,
-	Data const &data) {
-	serializer.write(
-		reinterpret_cast<char const *>(&data), sizeof(Data));
-}
-template <typename Data>
-inline void deserialize(
-	Rain::Data::Deserializer &deserializer,
-	Data &data) {
-	deserializer.read(
-		reinterpret_cast<char *>(&data), sizeof(Data));
-}
-
-// std::string.
-template <
-	typename CharT,
-	typename Traits,
-	typename Allocator>
-inline void serialize(
-	Rain::Data::Serializer &serializer,
-	std::basic_string<CharT, Traits, Allocator> const &data) {
-	serializer << data.size();
-	serializer.write(
-		reinterpret_cast<char const *>(data.data()),
-		sizeof(CharT) * data.size());
-}
-template <
-	typename CharT,
-	typename Traits,
-	typename Allocator>
-inline void deserialize(
-	Rain::Data::Deserializer &deserializer,
-	std::basic_string<CharT, Traits, Allocator> &data) {
-	std::size_t size;
-	deserializer >> size;
-	data.resize(size);
-	deserializer.read(
-		reinterpret_cast<char *>(&data[0]),
-		sizeof(CharT) * size);
-}
-
-// std::vector.
-template <typename Data>
-inline void serialize(
-	Rain::Data::Serializer &serializer,
-	std::vector<Data> const &data) {
-	serializer << data.size();
-	for (auto &i : data) {
-		serializer << i;
-	}
-}
-template <typename Data>
-inline void deserialize(
-	Rain::Data::Deserializer &deserializer,
-	std::vector<Data> &data) {
-	std::size_t size;
-	deserializer >> size;
-	data.resize(size);
-	for (auto &i : data) {
-		deserializer >> i;
-	}
+	template <typename Data>
+	struct serialize {
+		void operator()(
+			Serializer &serializer,
+			Data const &data) {
+			serializer.write(
+				reinterpret_cast<char const *>(&data),
+				sizeof(Data));
+		}
+	};
+	template <typename Data>
+	struct deserialize {
+		void operator()(
+			Deserializer &deserializer,
+			Data &data) {
+			deserializer.read(
+				reinterpret_cast<char *>(&data), sizeof(Data));
+		}
+	};
 }
