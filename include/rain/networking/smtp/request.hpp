@@ -1,7 +1,8 @@
 // Request-specific SMTP parsing.
 #pragma once
 
-#include "../req-res/request.hpp"
+#include "../../literal.hpp"
+#include "../req_res/request.hpp"
 #include "command.hpp"
 #include "message.hpp"
 
@@ -10,7 +11,8 @@ namespace Rain::Networking::Smtp {
 			: virtual public MessageSpecInterface,
 				virtual public ReqRes::RequestMessageSpecInterface {
 		public:
-		// Exception class required for catching from R/R onWork.
+		// Exception class required for catching from R/R
+		// onWork.
 		enum class Error { SYNTAX_ERROR_COMMAND = 1 };
 		class ErrorCategory : public std::error_category {
 			public:
@@ -26,12 +28,14 @@ namespace Rain::Networking::Smtp {
 				}
 			}
 		};
-		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
+		using Exception =
+			Rain::Error::Exception<Error, ErrorCategory>;
 	};
 
 	template <typename Message>
-	class RequestMessageSpec : public Message,
-														 virtual public RequestMessageSpecInterface {
+	class RequestMessageSpec
+			: public Message,
+				virtual public RequestMessageSpecInterface {
 		public:
 		// Command/verb of Request.
 		Command command;
@@ -43,15 +47,19 @@ namespace Rain::Networking::Smtp {
 		RequestMessageSpec(
 			Command command = Command::HELO,
 			std::string const &parameter = "")
-				: Message(), command(command), parameter(parameter) {}
+				: Message(),
+					command(command),
+					parameter(parameter) {}
 		RequestMessageSpec(RequestMessageSpec &&other)
 				: Message(std::move(other)),
 					command(other.command),
 					parameter(std::move(other.parameter)) {}
 
-		// Overrides for Super versions implement protocol behavior.
+		// Overrides for Super versions implement protocol
+		// behavior.
 		//
-		// Calls (almost) no-op Message sendWith/recvWith to check transmissability.
+		// Calls (almost) no-op Message sendWith/recvWith to
+		// check transmissability.
 		virtual void sendWith(std::ostream &stream) override {
 			stream << this->command;
 			if (!this->parameter.empty()) {
@@ -73,17 +81,22 @@ namespace Rain::Networking::Smtp {
 			// Next character is a space.
 			stream.get();
 
-			// After that, it is the parameter. No longer than 1K allowed.
+			// After that, it is the parameter. No longer than 1K
+			// allowed.
 			this->parameter.resize(1_zu << 10);
-			stream.getline(&this->parameter[0], this->parameter.length());
+			stream.getline(
+				&this->parameter[0], this->parameter.length());
 			// -2 to discard the \r\0.
-			this->parameter.resize(static_cast<std::size_t>(
-				std::max(std::streamsize(0), stream.gcount() - 2)));
+			this->parameter.resize(
+				static_cast<std::size_t>(std::max(
+					std::streamsize(0), stream.gcount() - 2)));
 		}
 	};
 
 	// Shorthand.
-	class Request : public RequestMessageSpec<MessageSpec<ReqRes::Request>> {
-		using RequestMessageSpec<MessageSpec<ReqRes::Request>>::RequestMessageSpec;
+	class Request : public RequestMessageSpec<
+										MessageSpec<ReqRes::Request>> {
+		using RequestMessageSpec<
+			MessageSpec<ReqRes::Request>>::RequestMessageSpec;
 	};
 }

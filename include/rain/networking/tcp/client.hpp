@@ -7,11 +7,13 @@
 namespace Rain::Networking::Tcp {
 	class ClientSocketSpecInterface
 			: virtual public ConnectedSocketSpecInterface,
-				virtual public Networking::ClientSocketSpecInterface {};
+				virtual public Networking::
+					ClientSocketSpecInterface {};
 
 	template <typename Socket>
-	class ClientSocketSpec : public Socket,
-													 virtual public ClientSocketSpecInterface {
+	class ClientSocketSpec
+			: public Socket,
+				virtual public ClientSocketSpecInterface {
 		using Socket::Socket;
 	};
 
@@ -24,18 +26,18 @@ namespace Rain::Networking::Tcp {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename>
-		class... SocketOptions>
-	class Client : public ClientSocketSpec<ConnectedSocketSpec<
-									 sendBufferLen,
-									 recvBufferLen,
-									 sendTimeoutMs,
-									 recvTimeoutMs,
-									 NamedSocketSpec<SocketSpec<Networking::Client<
-										 SocketFamilyInterface,
-										 SocketTypeInterface,
-										 SocketProtocolInterface,
-										 SocketOptions...>>>>> {
+		template <typename> class... SocketOptions>
+	class Client
+			: public ClientSocketSpec<ConnectedSocketSpec<
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					NamedSocketSpec<SocketSpec<Networking::Client<
+						SocketFamilyInterface,
+						SocketTypeInterface,
+						SocketProtocolInterface,
+						SocketOptions...>>>>> {
 		using ClientSocketSpec<ConnectedSocketSpec<
 			sendBufferLen,
 			recvBufferLen,

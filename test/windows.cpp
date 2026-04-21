@@ -1,35 +1,37 @@
-// Test compilation of Windows.h include and WinMain entry point and linking of
-// Windows libraries.
+// Test compilation of Windows.h include and WinMain entry
+// point and linking of Windows libraries.
 //
-// Windows applications must specify in project settings or pragma comments the
-// linker subsystem, or else it will default to CONSOLE.
+// Windows applications must specify in project settings or
+// pragma comments the linker subsystem, or else it will
+// default to CONSOLE.
 //
-// Specifying in code rather than in the project settings will cause the project
-// to build and run fine, but the console to popup during Visual Studio
-// debugging (since the linker still thinks the subsystem is CONSOLE).
+// Specifying in code rather than in the project settings
+// will cause the project to build and run fine, but the
+// console to popup during Visual Studio debugging (since
+// the linker still thinks the subsystem is CONSOLE).
 //
-// We specify in code here because specifying in project is inconsistent with
-// build.bat.
+// We specify in code here because specifying in project is
+// inconsistent with build.bat.
 #include <rain.hpp>
 
 #ifdef RAIN_PLATFORM_WINDOWS
 // WinMain can only be used on SUBSYSTEM:WINDOWS.
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
-int CALLBACK WinMain(
-	HINSTANCE,
-	HINSTANCE,
-	LPSTR,
-	int) {
+int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	using namespace Rain::Literal;
 
 	char const CAPTION[]{"rain/test/windows"};
 
 	std::thread([&]() {
 		std::this_thread::sleep_for(3s);
-		PostMessage(FindWindow(NULL, CAPTION), WM_COMMAND, IDOK, 0);
+		PostMessage(
+			FindWindow(NULL, CAPTION), WM_COMMAND, IDOK, 0);
 	}).detach();
 	return !MessageBox(
-		NULL, "Hello world! Waiting for 3s...", CAPTION, MB_OKCANCEL);
+		NULL,
+		"Hello world! Waiting for 3s...",
+		CAPTION,
+		MB_OKCANCEL);
 }
 #else
 int main() {

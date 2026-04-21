@@ -20,7 +20,8 @@ int main() {
 		cache.insertOrAssign(3, 3);
 		try {
 			res = cache.at(2);
-			std::cout << "cache.at(2): " << res << "." << std::endl;
+			std::cout << "cache.at(2): " << res << "."
+								<< std::endl;
 			assert(0);
 		} catch (std::out_of_range const &exception) {
 			std::cout << exception.what() << std::endl;
@@ -30,7 +31,8 @@ int main() {
 		cache.insertOrAssign(4, 4);
 		try {
 			res = cache.at(1);
-			std::cout << "cache.at(1): " << res << "." << std::endl;
+			std::cout << "cache.at(1): " << res << "."
+								<< std::endl;
 			assert(0);
 		} catch (std::out_of_range const &exception) {
 			std::cout << exception.what() << std::endl;
@@ -47,18 +49,23 @@ int main() {
 		// Assign.
 		cache.insertOrAssign(4, 5);
 		res = cache.at(4);
-		std::cout << "cache.at(4): " << cache.at(4) << "." << std::endl;
+		std::cout << "cache.at(4): " << cache.at(4) << "."
+							<< std::endl;
 		assert(res == 5);
 	}
 
 	// Copy/move construct test.
 	{
-		std::vector<std::string> person{"Ben", "Jerry", "Mary", "Thomas", "Kelly"};
-		std::vector<std::string> color{"red", "green", "blue", "purple", "orange"};
-		Rain::Algorithm::LruCache<std::string, std::string> cache(2);
+		std::vector<std::string> person{
+			"Ben", "Jerry", "Mary", "Thomas", "Kelly"};
+		std::vector<std::string> color{
+			"red", "green", "blue", "purple", "orange"};
+		Rain::Algorithm::LruCache<std::string, std::string>
+			cache(2);
 
 		// Move-construct a person/color pair.
-		cache.insertOrAssign(std::move(person[0]), std::move(color[0]));
+		cache.insertOrAssign(
+			std::move(person[0]), std::move(color[0]));
 		assert(person[0].length() == 0);
 		assert(color[0].length() == 0);
 
@@ -75,12 +82,14 @@ int main() {
 		assert(cache.find("Ben") != cache.end());
 
 		// Adding a third value makes find return end.
-		cache.insertOrAssign(std::move(person[2]), std::move(color[2]));
+		cache.insertOrAssign(
+			std::move(person[2]), std::move(color[2]));
 		assert(cache.find("Jerry") == cache.end());
 
 		// Iteration works as expected.
 		for (auto const &it : cache) {
-			std::cout << it.first << ": " << it.second << std::endl;
+			std::cout << it.first << ": " << it.second
+								<< std::endl;
 		}
 	}
 

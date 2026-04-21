@@ -1,8 +1,10 @@
-// Protocol layer Tcp builds upon the basic types of Socket(Interface),
-// NamedSocket(Interface), ConnectedSocket(Interface), ClientSocket(Interface),
+// Protocol layer Tcp builds upon the basic types of
+// Socket(Interface), NamedSocket(Interface),
+// ConnectedSocket(Interface), ClientSocket(Interface),
 // WorkerSocket(Interface), and ServerSocket(Interface).
 //
-// Tcp does not add additional socket options nor F/T/P selectors.
+// Tcp does not add additional socket options nor F/T/P
+// selectors.
 #pragma once
 
 #include "../socket.hpp"
@@ -10,74 +12,92 @@
 #include <iostream>
 
 namespace Rain::Networking::Tcp {
-	// TCP Sockets have the additional requirement that they can only be applied
-	// to Type Stream and Protocol TCP.
-	class SocketSpecInterface : virtual public Networking::SocketInterface,
-															virtual public StreamTypeInterface,
-															virtual public TcpProtocolInterface {};
+	// TCP Sockets have the additional requirement that they
+	// can only be applied to Type Stream and Protocol TCP.
+	class SocketSpecInterface
+			: virtual public Networking::SocketInterface,
+				virtual public StreamTypeInterface,
+				virtual public TcpProtocolInterface {};
 
 	template <typename Socket>
-	class SocketSpec : public Socket, virtual public SocketSpecInterface {
+	class SocketSpec : public Socket,
+										 virtual public SocketSpecInterface {
 		using Socket::Socket;
 	};
 
 	class NamedSocketSpecInterface
 			: virtual public SocketSpecInterface,
-				virtual public Networking::NamedSocketSpecInterface {};
+				virtual public Networking::
+					NamedSocketSpecInterface {};
 
 	template <typename Socket>
-	class NamedSocketSpec : public Socket,
-													virtual public NamedSocketSpecInterface {
+	class NamedSocketSpec
+			: public Socket,
+				virtual public NamedSocketSpecInterface {
 		using Socket::Socket;
 	};
 
-	// ConnectedSocket(Interface) in TCP protocol layer must provide subclassing
-	// for std::iostream.
+	// ConnectedSocket(Interface) in TCP protocol layer must
+	// provide subclassing for std::iostream.
 	class ConnectedSocketSpecInterface
 			: public std::iostream,
 				virtual public NamedSocketSpecInterface,
-				virtual public Networking::ConnectedSocketSpecInterface {
+				virtual public Networking::
+					ConnectedSocketSpecInterface {
 		public:
-		// All interfaces must have default constructors to allow for easy virtual
-		// inheritance.
-		ConnectedSocketSpecInterface() : std::iostream(nullptr) {}
+		// All interfaces must have default constructors to
+		// allow for easy virtual inheritance.
+		ConnectedSocketSpecInterface()
+				: std::iostream(nullptr) {}
 	};
 
-	// Must instantiate a valid std::iostream and underlying streambuf with
-	// params.
+	// Must instantiate a valid std::iostream and underlying
+	// streambuf with params.
 	//
-	// Once recv times out once, the stream is set to an invalid state and will no
-	// longer be readable. send timeout functions similarly. However, the send
-	// timeout is per-progress: as long as non-zero progress is made per timeout
-	// period, send is not considered to have timed out. Thus, flush may consume
-	// upwards of (send timeout) * (sendBufferLen) time.
+	// Once recv times out once, the stream is set to an
+	// invalid state and will no longer be readable. send
+	// timeout functions similarly. However, the send timeout
+	// is per-progress: as long as non-zero progress is made
+	// per timeout period, send is not considered to have
+	// timed out. Thus, flush may consume upwards of (send
+	// timeout) * (sendBufferLen) time.
 	template <
 		std::size_t sendBufferLen,
 		std::size_t recvBufferLen,
 		long long sendTimeoutMs,
 		long long recvTimeoutMs,
 		typename Socket>
-	class ConnectedSocketSpec : public Socket,
-															virtual public ConnectedSocketSpecInterface {
+	class ConnectedSocketSpec
+			: public Socket,
+				virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
 
 		private:
-		// A custom subclass of std::streambuf as underlying the std::iostream.
+		// A custom subclass of std::streambuf as underlying the
+		// std::iostream.
 		class IoStreamBuf : public std::streambuf {
 			private:
 			// A reference to the incomplete "underlying" socket.
 			ConnectedSocketSpecInterface *socket;
 
-			// Internal buffer to prevent delegating to kernel send/recv too often.
-			// sendBuffer is actually 1 larger than specified to allow for easy
-			// overflow.
-			char sendBuffer[sendBufferLen + 1], recvBuffer[recvBufferLen];
+			// Internal buffer to prevent delegating to kernel
+			// send/recv too often. sendBuffer is actually 1
+			// larger than specified to allow for easy overflow.
+			char sendBuffer[sendBufferLen + 1],
+				recvBuffer[recvBufferLen];
 
 			public:
-			IoStreamBuf(ConnectedSocketSpecInterface *socket) : socket(socket) {
-				// Set internal pointers corresponding to empty buffers.
-				this->setg(this->recvBuffer, this->recvBuffer, this->recvBuffer);
-				this->setp(this->sendBuffer, this->sendBuffer + sendBufferLen);
+			IoStreamBuf(ConnectedSocketSpecInterface *socket)
+					: socket(socket) {
+				// Set internal pointers corresponding to empty
+				// buffers.
+				this->setg(
+					this->recvBuffer,
+					this->recvBuffer,
+					this->recvBuffer);
+				this->setp(
+					this->sendBuffer,
+					this->sendBuffer + sendBufferLen);
 			}
 
 			// Disable copy construct and assignment and move.
@@ -87,7 +107,8 @@ namespace Rain::Networking::Tcp {
 			IoStreamBuf &operator=(IoStreamBuf &&) = delete;
 
 			protected:
-			// Ran out of characters while receiving from the socket.
+			// Ran out of characters while receiving from the
+			// socket.
 			virtual int_type underflow() noexcept override {
 				// Only refill buffer if it has been exhausted.
 				if (this->gptr() == this->egptr()) {
@@ -99,28 +120,35 @@ namespace Rain::Networking::Tcp {
 							recvBufferLen,
 							std::chrono::milliseconds(recvTimeoutMs));
 					} catch (...) {
-						// recv throws (perhaps on peer abort) are consumed, setting the
-						// buffer as invalid instead.
+						// recv throws (perhaps on peer abort) are
+						// consumed, setting the buffer as invalid
+						// instead.
 					}
 
 					if (result == 0) {
-						// The invariant this->gptr() == this->egptr() is maintained.
+						// The invariant this->gptr() == this->egptr()
+						// is maintained.
 						return traits_type::eof();
 					}
 
 					this->setg(
-						this->recvBuffer, this->recvBuffer, this->recvBuffer + result);
+						this->recvBuffer,
+						this->recvBuffer,
+						this->recvBuffer + result);
 				}
 
 				return traits_type::to_int_type(*this->gptr());
 			}
 
-			// Ran out of buffer space while sending to the socket.
+			// Ran out of buffer space while sending to the
+			// socket.
 			virtual int_type overflow(
-				int_type ch = traits_type::eof()) noexcept override {
-				if (!traits_type::eq_int_type(ch, traits_type::eof())) {
-					// Push ch to the send buffer (final character in sendBuffer is
-					// reserved by us).
+				int_type ch =
+					traits_type::eof()) noexcept override {
+				if (!traits_type::eq_int_type(
+							ch, traits_type::eof())) {
+					// Push ch to the send buffer (final character in
+					// sendBuffer is reserved by us).
 					*this->pptr() = ch;
 					this->pbump(1);
 
@@ -138,7 +166,8 @@ namespace Rain::Networking::Tcp {
 				// Send available buffer.
 				try {
 					std::size_t bytesSent{0},
-						bytesTotal{static_cast<std::size_t>(this->pptr() - this->pbase())};
+						bytesTotal{static_cast<std::size_t>(
+							this->pptr() - this->pbase())};
 					while (bytesSent < bytesTotal) {
 						auto result = this->socket->send(
 							this->sendBuffer + bytesSent,
@@ -156,7 +185,9 @@ namespace Rain::Networking::Tcp {
 				}
 
 				// Mark the send buffer as empty.
-				this->setp(this->sendBuffer, this->sendBuffer + sendBufferLen);
+				this->setp(
+					this->sendBuffer,
+					this->sendBuffer + sendBufferLen);
 
 				return 0;
 			}
@@ -166,8 +197,8 @@ namespace Rain::Networking::Tcp {
 		IoStreamBuf ioStreamBuf{IoStreamBuf(this)};
 
 		private:
-		// Custom defaulted default constructor behavior to add onto base class
-		// constructor behavior.
+		// Custom defaulted default constructor behavior to add
+		// onto base class constructor behavior.
 		class _ConnectedSocketSpec {
 			public:
 			_ConnectedSocketSpec(ConnectedSocketSpec *that) {

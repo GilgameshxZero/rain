@@ -1,7 +1,8 @@
 #pragma once
 
 namespace Rain::Math {
-	// `constexpr` sqrt by <https://stackoverflow.com/a/27709195>.
+	// `constexpr` sqrt by
+	// <https://stackoverflow.com/a/27709195>.
 	template <typename T>
 	constexpr T sqrtImpl(T x, T lo, T hi) {
 		if (lo == hi) {

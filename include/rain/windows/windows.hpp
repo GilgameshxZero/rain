@@ -1,6 +1,7 @@
-// Includes Windows.h headers in a way that it is impossible to interfere with
-// Windows-related APIs used elsewhere in Rain. Including this on a non-Windows
-// platform does nothing.
+// Includes Windows.h headers in a way that it is impossible
+// to interfere with Windows-related APIs used elsewhere in
+// Rain. Including this on a non-Windows platform does
+// nothing.
 #pragma once
 
 #include "../platform.hpp"
@@ -16,8 +17,8 @@
 #undef _UNICODE
 #endif
 
-// Prevents Windows.h from automatically include Winsock 1.1; Rain uses
-// Winsock 2.
+// Prevents Windows.h from automatically include
+// Winsock 1.1; Rain uses Winsock 2.
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif

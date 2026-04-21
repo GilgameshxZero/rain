@@ -6,7 +6,8 @@
 #include "host.hpp"
 #include "specification.hpp"
 
-// This file uses kernel networking calls and none of its includes do.
+// This file uses kernel networking calls and none of its
+// includes do.
 #include "wsa.hpp"
 
 #ifdef RAIN_PLATFORM_WINDOWS
@@ -52,8 +53,8 @@ namespace Rain::Networking {
 
 		std::string canonName;
 
-		// sockaddr_storage is large enough to store both IPv4 and IPv6 socket
-		// addresses.
+		// sockaddr_storage is large enough to store both IPv4
+		// and IPv6 socket addresses.
 		sockaddr_storage address;
 		socklen_t addressLen;
 	};
@@ -66,17 +67,19 @@ namespace Rain::Networking {
 			static_cast<int>(left) | static_cast<int>(right));
 	}
 
-	// Utility function to retrieve hostname (node and service) from an address in
-	// sockaddr_storage returned by getAddressInfo. Internally uses getnameinfo,
-	// but with the numeric flags this should not trigger a reverse DNS lookup and
-	// thus should not block.
+	// Utility function to retrieve hostname (node and
+	// service) from an address in sockaddr_storage returned
+	// by getAddressInfo. Internally uses getnameinfo, but
+	// with the numeric flags this should not trigger a
+	// reverse DNS lookup and thus should not block.
 	inline Host getNumericHost(
 		sockaddr_storage const &address,
 		socklen_t addressLen) {
 		char node[NI_MAXHOST], service[NI_MAXSERV];
 
-		// reinterpret_cast here does not break strict aliasing, since we do not
-		// dereference. That job is up to getnameinfo's implementation.
+		// reinterpret_cast here does not break strict aliasing,
+		// since we do not dereference. That job is up to
+		// getnameinfo's implementation.
 		if (
 			getnameinfo(
 				reinterpret_cast<sockaddr const *>(&address),
@@ -86,14 +89,17 @@ namespace Rain::Networking {
 				service,
 				static_cast<socklen_t>(sizeof(service)),
 				NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
-			throw Networking::Exception(Networking::getSystemError());
+			throw Networking::Exception(
+				Networking::getSystemError());
 		}
 
 		// Guaranteed RVO.
 		return {node, service};
 	}
-	inline Host getNumericHost(AddressInfo const &addressInfo) {
-		return getNumericHost(addressInfo.address, addressInfo.addressLen);
+	inline Host getNumericHost(
+		AddressInfo const &addressInfo) {
+		return getNumericHost(
+			addressInfo.address, addressInfo.addressLen);
 	}
 
 	// Calls (blocking) getaddrinfo.
@@ -105,7 +111,8 @@ namespace Rain::Networking {
 		Type type = Type::ANY,
 		Protocol protocol = Protocol::ANY,
 		AddressInfo::Flag flags = AddressInfo::Flag::V4MAPPED |
-			AddressInfo::Flag::ADDRCONFIG | AddressInfo::Flag::ALL) {
+			AddressInfo::Flag::ADDRCONFIG |
+			AddressInfo::Flag::ALL) {
 		std::vector<AddressInfo> addressInfos;
 
 		addrinfo hints;
@@ -127,25 +134,31 @@ namespace Rain::Networking {
 			if (addresses != nullptr) {
 				freeaddrinfo(addresses);
 			}
-			throw Networking::Exception(static_cast<Networking::Error>(result));
+			throw Networking::Exception(
+				static_cast<Networking::Error>(result));
 		} else {
 			addrinfo *curAddr;
 
-			// getaddrinfo completed successfully. Transcribe all addresses, then
-			// free.
+			// getaddrinfo completed successfully. Transcribe all
+			// addresses, then free.
 			curAddr = addresses;
 			while (curAddr != nullptr) {
 				addressInfos.push_back(
-					{static_cast<AddressInfo::Flag>(curAddr->ai_flags),
+					{static_cast<AddressInfo::Flag>(
+						 curAddr->ai_flags),
 					 static_cast<Family>(curAddr->ai_family),
 					 static_cast<Type>(curAddr->ai_socktype),
 					 static_cast<Protocol>(curAddr->ai_protocol),
-					 {curAddr->ai_canonname == nullptr ? "" : curAddr->ai_canonname},
+					 {curAddr->ai_canonname == nullptr
+							? ""
+							: curAddr->ai_canonname},
 					 // memcpy sockaddr_storage later.
 					 {},
 					 static_cast<socklen_t>(curAddr->ai_addrlen)});
 				std::memcpy(
-					&addressInfos.back().address, curAddr->ai_addr, curAddr->ai_addrlen);
+					&addressInfos.back().address,
+					curAddr->ai_addr,
+					curAddr->ai_addrlen);
 				curAddr = curAddr->ai_next;
 			}
 
@@ -155,33 +168,38 @@ namespace Rain::Networking {
 		return addressInfos;
 	}
 
-	// Gets MX records for a host, and sorts them in order of priority.
-	inline std::vector<std::pair<std::size_t, std::string>> getMxRecords(
-		Host const &host) {
-		std::vector<std::pair<std::size_t, std::string>> mxRecords;
+	// Gets MX records for a host, and sorts them in order of
+	// priority.
+	inline std::vector<std::pair<std::size_t, std::string>>
+	getMxRecords(Host const &host) {
+		std::vector<std::pair<std::size_t, std::string>>
+			mxRecords;
 
 #ifdef RAIN_PLATFORM_WINDOWS
-		// Rain builds with UNICODE, but we will call the ANSI functions here
-		// directly, since DNS records do not resolve to wide strings.
+		// Rain builds with UNICODE, but we will call the ANSI
+		// functions here directly, since DNS records do not
+		// resolve to wide strings.
 
-		// DnsQuery is synchronous, while DnsQueryEx is asynchronous. However,
-		// since A/AAAA lookup potentially dangles a thread, we will risk that
-		// here as well. In addition, the non-Windows code is necessarily
-		// synchronous too, without introducing much further resolver
-		// complexity.
+		// DnsQuery is synchronous, while DnsQueryEx is
+		// asynchronous. However, since A/AAAA lookup
+		// potentially dangles a thread, we will risk that here
+		// as well. In addition, the non-Windows code is
+		// necessarily synchronous too, without introducing much
+		// further resolver complexity.
 		DNS_RECORDA *dnsRecord;
 		DNS_STATUS dnsQueryStatus = DnsQuery_A(
 			host.node.c_str(),
 			DNS_TYPE_MX,
 			DNS_QUERY_STANDARD,
 			NULL,
-			// Cast directly to the generic version since we are using ANSI
-			// here.
+			// Cast directly to the generic version since we are
+			// using ANSI here.
 			reinterpret_cast<DNS_RECORD **>(&dnsRecord),
 			NULL);
 		if (dnsQueryStatus == 0) {
 			DNS_RECORDA *curDnsRecord = dnsRecord;
-			while (curDnsRecord != NULL && curDnsRecord->wType == DNS_TYPE_MX) {
+			while (curDnsRecord != NULL &&
+						 curDnsRecord->wType == DNS_TYPE_MX) {
 				mxRecords.emplace_back(
 					curDnsRecord->Data.MX.wPreference,
 					curDnsRecord->Data.MX.pNameExchange);
@@ -195,9 +213,14 @@ namespace Rain::Networking {
 #else
 		u_char dnsRes[NS_PACKETSZ];
 
-		// Make the DNS MX query. Remember to use FQDN with period at end.
+		// Make the DNS MX query. Remember to use FQDN with
+		// period at end.
 		int queryLen = res_query(
-			(host.node + ".").c_str(), ns_c_in, ns_t_mx, dnsRes, sizeof(dnsRes));
+			(host.node + ".").c_str(),
+			ns_c_in,
+			ns_t_mx,
+			dnsRes,
+			sizeof(dnsRes));
 		if (queryLen < 0) {
 			throw Exception(Error::RES_QUERY_FAILED);
 		}
@@ -221,16 +244,26 @@ namespace Rain::Networking {
 			if (ns_parserr(&hMsgs, ns_s_an, msgIdx, &record)) {
 				continue;
 			}
-			// `ns_sprintrr` is rarely used thus deprecated and we are recommended to use/build our own DNS parsing library.
+			// `ns_sprintrr` is rarely used thus deprecated and we
+			// are recommended to use/build our own DNS parsing
+			// library.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 			if (
-				ns_sprintrr(&hMsgs, &record, NULL, NULL, buffer, sizeof(buffer)) < 0) {
+				ns_sprintrr(
+					&hMsgs,
+					&record,
+					NULL,
+					NULL,
+					buffer,
+					sizeof(buffer)) < 0) {
 #pragma GCC diagnostic pop
 				continue;
 			}
 
-			if (ns_rr_class(record) == ns_c_in && ns_rr_type(record) == ns_t_mx) {
+			if (
+				ns_rr_class(record) == ns_c_in &&
+				ns_rr_type(record) == ns_t_mx) {
 				if (
 					dn_expand(
 						ns_msg_base(hMsgs),
@@ -241,7 +274,8 @@ namespace Rain::Networking {
 					continue;
 				}
 
-				mxRecords.emplace_back(ns_get16(ns_rr_rdata(record)), mxNameBuffer);
+				mxRecords.emplace_back(
+					ns_get16(ns_rr_rdata(record)), mxNameBuffer);
 			}
 		}
 #endif

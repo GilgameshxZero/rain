@@ -1,7 +1,7 @@
 // Request-specific HTTP parsing.
 #pragma once
 
-#include "../req-res/request.hpp"
+#include "../req_res/request.hpp"
 #include "message.hpp"
 #include "method.hpp"
 
@@ -10,7 +10,8 @@ namespace Rain::Networking::Http {
 			: virtual public MessageSpecInterface,
 				virtual public ReqRes::RequestMessageSpecInterface {
 		public:
-		// Exception class required for catching from R/R onWork.
+		// Exception class required for catching from R/R
+		// onWork.
 		enum class Error {
 			HTTP_VERSION_NOT_SUPPORTED = 1,
 			METHOD_NOT_ALLOWED,
@@ -34,19 +35,22 @@ namespace Rain::Networking::Http {
 					case Error::MALFORMED_HEADERS:
 						return "Malformed HTTP headers.";
 					case Error::MALFORMED_BODY:
-						return "Malformed HTTP body, possibly due to Transfer-Encoding and "
+						return "Malformed HTTP body, possibly due to "
+									 "Transfer-Encoding and "
 									 "Content-Length.";
 					default:
 						return "Generic.";
 				}
 			}
 		};
-		using Exception = Rain::Error::Exception<Error, ErrorCategory>;
+		using Exception =
+			Rain::Error::Exception<Error, ErrorCategory>;
 	};
 
 	template <typename Message>
-	class RequestMessageSpec : public Message,
-														 virtual public RequestMessageSpecInterface {
+	class RequestMessageSpec
+			: public Message,
+				virtual public RequestMessageSpecInterface {
 		public:
 		// Method/verb of request.
 		Method method;
@@ -62,8 +66,9 @@ namespace Rain::Networking::Http {
 			Body &&body = {},
 			Version version = {})
 				: Message(
-						// bind version to rvalue reference to be perfect forwarded by
-						// SuperInterface to Message.
+						// bind version to rvalue reference to be
+						// perfect forwarded by SuperInterface to
+						// Message.
 						std::move(headers),
 						std::move(body),
 						version),
@@ -74,9 +79,11 @@ namespace Rain::Networking::Http {
 					method(other.method),
 					target(std::move(other.target)) {}
 
-		// Overrides for Super versions implement protocol behavior.
+		// Overrides for Super versions implement protocol
+		// behavior.
 		//
-		// Calls (almost) no-op Message sendWith/recvWith to check transmissability.
+		// Calls (almost) no-op Message sendWith/recvWith to
+		// check transmissability.
 		virtual void sendWith(std::ostream &stream) override {
 			// pp-chain.
 			this->ppEstimateContentLength(false);
@@ -86,54 +93,62 @@ namespace Rain::Networking::Http {
 			switch (this->version) {
 				case Version::_1_0:
 				case Version::_1_1:
-					stream << this->method << " " << this->target << " HTTP/"
-								 << this->version << "\r\n";
+					stream << this->method << " " << this->target
+								 << " HTTP/" << this->version << "\r\n";
 					stream << this->headers << "\r\n" << this->body;
 					break;
 
 				case Version::_0_9:
-					stream << this->method << " " << this->target << "\r\n";
+					stream << this->method << " " << this->target
+								 << "\r\n";
 
 					// HTTP/0.9 Requests don't have headers nor body.
 					break;
 
 				default:
-					throw Exception(Error::HTTP_VERSION_NOT_SUPPORTED);
+					throw Exception(
+						Error::HTTP_VERSION_NOT_SUPPORTED);
 			}
 
 			stream.flush();
 		}
 		virtual void recvWith(std::istream &stream) override {
-			// Receive startline. Take care to limit token length to avoid suffering
-			// from maliciously long tokens.
+			// Receive startline. Take care to limit token length
+			// to avoid suffering from maliciously long tokens.
 			try {
 				stream >> this->method;
 			} catch (...) {
 				throw Exception(Error::METHOD_NOT_ALLOWED);
 			}
 
-			// Target. May be terminated with \n instead of ' ' in the case of
-			// HTTP/0.9.
+			// Target. May be terminated with \n instead of ' ' in
+			// the case of HTTP/0.9.
 			this->target.resize(1_zu << 12);
-			stream.getline(&this->target[0], this->target.size(), '\n');
+			stream.getline(
+				&this->target[0], this->target.size(), '\n');
 
 			// -2 for \r\0.
-			this->target.resize(static_cast<std::size_t>(
-				std::max(std::streamsize(0), stream.gcount() - 2)));
+			this->target.resize(
+				static_cast<std::size_t>(std::max(
+					std::streamsize(0), stream.gcount() - 2)));
 
-			// Version. Response version requires special parsing, so this can't be
-			// abstracted out.
+			// Version. Response version requires special parsing,
+			// so this can't be abstracted out.
 			try {
-				// versionStr is 8 characters (e.g. HTTP/1.1), so we reserve +3 for the
-				// nullptr and \r, and delimiter.
+				// versionStr is 8 characters (e.g. HTTP/1.1), so we
+				// reserve +3 for the nullptr and \r, and delimiter.
 				// versionStr must be in the format HTTP/-.-.
-				this->version = Version(this->target.substr(this->target.length() - 3));
+				this->version = Version(
+					this->target.substr(this->target.length() - 3));
 
 				// Remove the version from the target.
 				this->target.resize(
-					std::min(this->target.length(), this->target.length() - 9));
+					std::min(
+						this->target.length(),
+						this->target.length() - 9));
 			} catch (...) {
-				// Bad version, assume it is 0.9, and the target remains the same.
+				// Bad version, assume it is 0.9, and the target
+				// remains the same.
 				this->version = Version::_0_9;
 			}
 
@@ -160,13 +175,16 @@ namespace Rain::Networking::Http {
 					break;
 
 				default:
-					throw Exception(Error::HTTP_VERSION_NOT_SUPPORTED);
+					throw Exception(
+						Error::HTTP_VERSION_NOT_SUPPORTED);
 			}
 		}
 	};
 
 	// Shorthand.
-	class Request : public RequestMessageSpec<MessageSpec<ReqRes::Request>> {
-		using RequestMessageSpec<MessageSpec<ReqRes::Request>>::RequestMessageSpec;
+	class Request : public RequestMessageSpec<
+										MessageSpec<ReqRes::Request>> {
+		using RequestMessageSpec<
+			MessageSpec<ReqRes::Request>>::RequestMessageSpec;
 	};
 }

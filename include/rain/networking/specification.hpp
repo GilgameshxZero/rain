@@ -1,12 +1,17 @@
-// Implements enums for protocol/address family, socket type, socket protocol,
-// and other networking-related specification flags used in multiple locations.
+// Implements enums for protocol/address family, socket
+// type, socket protocol, and other networking-related
+// specification flags used in multiple locations.
 #pragma once
 
-#include "native-socket.hpp"
+#include "native_socket.hpp"
 
 namespace Rain::Networking {
 	// Under the assumption that AF/PF map to the same values.
-	enum class Family { UNSPEC = AF_UNSPEC, INET = AF_INET, INET6 = AF_INET6 };
+	enum class Family {
+		UNSPEC = AF_UNSPEC,
+		INET = AF_INET,
+		INET6 = AF_INET6
+	};
 	enum class Type {
 		ANY = 0,
 		STREAM = SOCK_STREAM,
@@ -21,11 +26,12 @@ namespace Rain::Networking {
 		ICMPV6 = IPPROTO_ICMPV6
 	};
 
-	// Sockets derive from F/T/P classes to configure their F/T/P.
+	// Sockets derive from F/T/P classes to configure their
+	// F/T/P.
 	//
-	// Anything which expects F/T/P should inherit the interfaces virtually.
-	// Otherwise, declaring either F/T/P should be done by inheriting a concrete
-	// F/T/P class.
+	// Anything which expects F/T/P should inherit the
+	// interfaces virtually. Otherwise, declaring either F/T/P
+	// should be done by inheriting a concrete F/T/P class.
 	class SocketFamilyInterface {
 		public:
 		virtual Family family() const noexcept = 0;
@@ -40,13 +46,15 @@ namespace Rain::Networking {
 	};
 
 	// F-Spec classes.
-	class Ipv4FamilyInterface : virtual public SocketFamilyInterface {
+	class Ipv4FamilyInterface
+			: virtual public SocketFamilyInterface {
 		public:
 		virtual Family family() const noexcept final override {
 			return Family::INET;
 		}
 	};
-	class Ipv6FamilyInterface : virtual public SocketFamilyInterface {
+	class Ipv6FamilyInterface
+			: virtual public SocketFamilyInterface {
 		public:
 		virtual Family family() const noexcept final override {
 			return Family::INET6;
@@ -54,41 +62,58 @@ namespace Rain::Networking {
 	};
 
 	// T-Spec classes.
-	class StreamTypeInterface : virtual public SocketTypeInterface {
+	class StreamTypeInterface
+			: virtual public SocketTypeInterface {
 		public:
-		virtual Type type() const noexcept final override { return Type::STREAM; }
+		virtual Type type() const noexcept final override {
+			return Type::STREAM;
+		}
 	};
-	class DGramTypeInterface : virtual public SocketTypeInterface {
+	class DGramTypeInterface
+			: virtual public SocketTypeInterface {
 		public:
-		virtual Type type() const noexcept final override { return Type::DGRAM; }
+		virtual Type type() const noexcept final override {
+			return Type::DGRAM;
+		}
 	};
-	class RawTypeInterface : virtual public SocketTypeInterface {
+	class RawTypeInterface
+			: virtual public SocketTypeInterface {
 		public:
-		virtual Type type() const noexcept final override { return Type::RAW; }
+		virtual Type type() const noexcept final override {
+			return Type::RAW;
+		}
 	};
 
 	// P-Spec classes.
-	class IcmpProtocolInterface : virtual public SocketProtocolInterface {
+	class IcmpProtocolInterface
+			: virtual public SocketProtocolInterface {
 		public:
-		virtual Protocol protocol() const noexcept final override {
+		virtual Protocol protocol()
+			const noexcept final override {
 			return Protocol::ICMP;
 		}
 	};
-	class TcpProtocolInterface : virtual public SocketProtocolInterface {
+	class TcpProtocolInterface
+			: virtual public SocketProtocolInterface {
 		public:
-		virtual Protocol protocol() const noexcept final override {
+		virtual Protocol protocol()
+			const noexcept final override {
 			return Protocol::TCP;
 		}
 	};
-	class UdpProtocolInterface : virtual public SocketProtocolInterface {
+	class UdpProtocolInterface
+			: virtual public SocketProtocolInterface {
 		public:
-		virtual Protocol protocol() const noexcept final override {
+		virtual Protocol protocol()
+			const noexcept final override {
 			return Protocol::UDP;
 		}
 	};
-	class Icmpv6ProtocolInterface : virtual public SocketProtocolInterface {
+	class Icmpv6ProtocolInterface
+			: virtual public SocketProtocolInterface {
 		public:
-		virtual Protocol protocol() const noexcept final override {
+		virtual Protocol protocol()
+			const noexcept final override {
 			return Protocol::ICMPV6;
 		}
 	};

@@ -1,25 +1,28 @@
 // HTTP Server specialization.
 #pragma once
 
-#include "../req-res/server.hpp"
+#include "../req_res/server.hpp"
 #include "socket.hpp"
 
 namespace Rain::Networking::Http {
 	// HTTP Server specialization.
 	class ServerSocketSpecInterfaceInterface
 			: virtual public NamedSocketSpecInterface,
-				virtual public ReqRes::ServerSocketSpecInterfaceInterface {};
+				virtual public ReqRes::
+					ServerSocketSpecInterfaceInterface {};
 
 	template <typename WorkerSocketSpec>
 	class ServerSocketSpecInterface
 			: virtual public ServerSocketSpecInterfaceInterface,
-				virtual public ReqRes::ServerSocketSpecInterface<WorkerSocketSpec> {};
+				virtual public ReqRes::ServerSocketSpecInterface<
+					WorkerSocketSpec> {};
 
 	// Server specialization for HTTP protocol Sockets.
 	template <typename WorkerSocketSpec, typename Socket>
 	class ServerSocketSpec
 			: public Socket,
-				virtual public ServerSocketSpecInterface<WorkerSocketSpec>,
+				virtual public ServerSocketSpecInterface<
+					WorkerSocketSpec>,
 				virtual public ServerSocketSpecInterfaceInterface {
 		using Socket::Socket;
 	};
@@ -30,16 +33,16 @@ namespace Rain::Networking::Http {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename>
-		class... SocketOptions>
-	class Server : public ServerSocketSpec<
-									 WorkerSocketSpec,
-									 NamedSocketSpec<SocketSpec<ReqRes::Server<
-										 WorkerSocketSpec,
-										 SocketFamilyInterface,
-										 SocketTypeInterface,
-										 SocketProtocolInterface,
-										 SocketOptions...>>>> {
+		template <typename> class... SocketOptions>
+	class Server
+			: public ServerSocketSpec<
+					WorkerSocketSpec,
+					NamedSocketSpec<SocketSpec<ReqRes::Server<
+						WorkerSocketSpec,
+						SocketFamilyInterface,
+						SocketTypeInterface,
+						SocketProtocolInterface,
+						SocketOptions...>>>> {
 		using ServerSocketSpec<
 			WorkerSocketSpec,
 			NamedSocketSpec<SocketSpec<ReqRes::Server<

@@ -1,16 +1,17 @@
 // HTTP Socket subclassing R/R Socket.
 #pragma once
 
-#include "../req-res/socket.hpp"
+#include "../req_res/socket.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
 namespace Rain::Networking::Http {
 	// HTTP Socket subclassing R/R Socket.
-	class SocketSpecInterface : virtual public ReqRes::SocketSpecInterface {
+	class SocketSpecInterface
+			: virtual public ReqRes::SocketSpecInterface {
 		protected:
-		// Import Http namespace names for subclasses declared outside
-		// Rain::Networking::Http.
+		// Import Http namespace names for subclasses declared
+		// outside Rain::Networking::Http.
 		using StatusCode = StatusCode;
 		using Method = Method;
 		using Headers = Headers;
@@ -20,7 +21,8 @@ namespace Rain::Networking::Http {
 	};
 
 	template <typename Socket>
-	class SocketSpec : public Socket, virtual public SocketSpecInterface {
+	class SocketSpec : public Socket,
+										 virtual public SocketSpecInterface {
 		using Socket::Socket;
 	};
 
@@ -29,18 +31,21 @@ namespace Rain::Networking::Http {
 				virtual public ReqRes::NamedSocketSpecInterface {};
 
 	template <typename Socket>
-	class NamedSocketSpec : public Socket,
-													virtual public NamedSocketSpecInterface {
+	class NamedSocketSpec
+			: public Socket,
+				virtual public NamedSocketSpecInterface {
 		using Socket::Socket;
 	};
 
 	class ConnectedSocketSpecInterface
 			: virtual public NamedSocketSpecInterface,
-				virtual public ReqRes::ConnectedSocketSpecInterface {};
+				virtual public ReqRes::
+					ConnectedSocketSpecInterface {};
 
 	template <typename Socket>
-	class ConnectedSocketSpec : public Socket,
-															virtual public ConnectedSocketSpecInterface {
+	class ConnectedSocketSpec
+			: public Socket,
+				virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
 	};
 }

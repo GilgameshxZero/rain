@@ -1,13 +1,14 @@
 #pragma once
 
 #include <type_traits>
+#include "sqrt.hpp"
 
 namespace Rain::Math {
 	// Compile-time primality checker.
 	template <std::size_t N, std::size_t D>
 	struct IsIndivisibleByAtMost {
-		static constexpr bool value =
-			(N % D != 0) && IsIndivisibleByAtMost<N, D - 1>::value;
+		static constexpr bool value = (N % D != 0) &&
+			IsIndivisibleByAtMost<N, D - 1>::value;
 	};
 	template <std::size_t N>
 	struct IsIndivisibleByAtMost<N, 1> : std::true_type {};

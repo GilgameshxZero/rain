@@ -3,12 +3,14 @@
 #include <vector>
 
 namespace Rain::Algorithm {
-	// Computes up to the N-th partition number in O(N\sqrt{N}) using the
-	// pentagonal numbers/generating function. This can be done in O(N\lg N) but
-	// may involve polynomial exponentiation or log, which are significantly more
-	// complicated.
+	// Computes up to the N-th partition number in
+	// O(N\sqrt{N}) using the pentagonal numbers/generating
+	// function. This can be done in O(N\lg N) but may involve
+	// polynomial exponentiation or log, which are
+	// significantly more complicated.
 	template <typename Integer>
-	inline std::vector<Integer> partitionNumbers(Integer const &N) {
+	inline std::vector<Integer> partitionNumbers(
+		Integer const &N) {
 		std::vector<Integer> partitions(N + 1, 0);
 		partitions[0] = 1;
 		for (Integer i{1}; i <= N; i++) {

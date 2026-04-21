@@ -1,5 +1,5 @@
-// Tests for Networking::Smtp::Client. These tests require outgoing IPv4 port 25
-// to be unblocked by firewall.
+// Tests for Networking::Smtp::Client. These tests require
+// outgoing IPv4 port 25 to be unblocked by firewall.
 #include <rain.hpp>
 
 int main() {
@@ -20,9 +20,12 @@ int main() {
 			NoLingerSocketOption>
 			client(getMxRecords("gmail.com"));
 	} catch (Rain::Networking::Exception const &exception) {
-		if (exception.getError() == Rain::Networking::Error::TIMED_OUT) {
+		if (
+			exception.getError() ==
+			Rain::Networking::Error::TIMED_OUT) {
 			// Likely SMTP is blocked by ISP; skip test.
-			std::cout << "SMTP blocked (by ISP). Skipping test...\n";
+			std::cout
+				<< "SMTP blocked (by ISP). Skipping test...\n";
 			return 0;
 		}
 
@@ -45,57 +48,73 @@ int main() {
 			client(getMxRecords("gmail.com"));
 
 		{
-			std::cout << "Connected to " << client.peerHost() << "." << std::endl;
+			std::cout << "Connected to " << client.peerHost()
+								<< "." << std::endl;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::SERVICE_READY);
-		}
-		{
-			Smtp::Request req(Smtp::Command::HELO, "domain.name.blocked.for.privacy");
-			std::cout << req;
-			client << req;
-			auto res = client.recv();
-			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::REQUEST_COMPLETED);
+			assert(
+				res.statusCode == Smtp::StatusCode::SERVICE_READY);
 		}
 		{
 			Smtp::Request req(
-				Smtp::Command::MAIL, "FROM:<from@domain.name.blocked.for.privacy>");
-			std::cout << req;
-			client << req;
-			auto res = client.recv();
-			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::REQUEST_COMPLETED);
-		}
-
-		// Multiple FROM commands overwrite the previous one.
-		{
-			Smtp::Request req(
-				Smtp::Command::MAIL, "FROM:<from-2@domain.name.blocked.for.privacy>");
-			std::cout << req;
-			client << req;
-			auto res = client.recv();
-			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::REQUEST_COMPLETED);
-		}
-
-		{
-			Smtp::Request req(Smtp::Command::RCPT, "TO:<test@gmail.com>");
+				Smtp::Command::HELO,
+				"domain.name.blocked.for.privacy");
 			std::cout << req;
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
 			assert(
 				res.statusCode ==
-				Smtp::StatusCode::REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT);
+				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
 		{
-			Smtp::Request req(Smtp::Command::VRFY, "<test@gmail.com>");
+			Smtp::Request req(
+				Smtp::Command::MAIL,
+				"FROM:<from@domain.name.blocked.for.privacy>");
 			std::cout << req;
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::CANNOT_VERIFY);
+			assert(
+				res.statusCode ==
+				Smtp::StatusCode::REQUEST_COMPLETED);
+		}
+
+		// Multiple FROM commands overwrite the previous one.
+		{
+			Smtp::Request req(
+				Smtp::Command::MAIL,
+				"FROM:<from-2@domain.name.blocked.for.privacy>");
+			std::cout << req;
+			client << req;
+			auto res = client.recv();
+			std::cout << res;
+			assert(
+				res.statusCode ==
+				Smtp::StatusCode::REQUEST_COMPLETED);
+		}
+
+		{
+			Smtp::Request req(
+				Smtp::Command::RCPT, "TO:<test@gmail.com>");
+			std::cout << req;
+			client << req;
+			auto res = client.recv();
+			std::cout << res;
+			assert(
+				res.statusCode ==
+				Smtp::StatusCode::
+					REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT);
+		}
+		{
+			Smtp::Request req(
+				Smtp::Command::VRFY, "<test@gmail.com>");
+			std::cout << req;
+			client << req;
+			auto res = client.recv();
+			std::cout << res;
+			assert(
+				res.statusCode == Smtp::StatusCode::CANNOT_VERIFY);
 		}
 		{
 			Smtp::Request req(Smtp::Command::NOOP);
@@ -103,7 +122,9 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::REQUEST_COMPLETED);
+			assert(
+				res.statusCode ==
+				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
 		{
 			Smtp::Request req(Smtp::Command::HELP);
@@ -111,7 +132,8 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::HELP_MESSAGE);
+			assert(
+				res.statusCode == Smtp::StatusCode::HELP_MESSAGE);
 		}
 		{
 			Smtp::Request req(Smtp::Command::QUIT);
@@ -119,7 +141,9 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::SERVICE_CLOSING);
+			assert(
+				res.statusCode ==
+				Smtp::StatusCode::SERVICE_CLOSING);
 		}
 
 		client.shutdown();
@@ -141,19 +165,25 @@ int main() {
 			client(getMxRecords("gmail.com"));
 
 		{
-			std::cout << "Connected to " << client.peerHost() << "." << std::endl;
+			std::cout << "Connected to " << client.peerHost()
+								<< "." << std::endl;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::SERVICE_READY);
+			assert(
+				res.statusCode == Smtp::StatusCode::SERVICE_READY);
 		}
 
 		{
-			Smtp::Request req(Smtp::Command::EHLO, "domain.name.blocked.for.privacy");
+			Smtp::Request req(
+				Smtp::Command::EHLO,
+				"domain.name.blocked.for.privacy");
 			std::cout << req;
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(res.statusCode == Smtp::StatusCode::REQUEST_COMPLETED);
+			assert(
+				res.statusCode ==
+				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
 	}
 

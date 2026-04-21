@@ -6,8 +6,9 @@ int main() {
 	PointLl a{1, 2}, b{3, 4};
 	assert(a.cross(b) == -2);
 
-	LineSegmentLl l1{{0, 0}, {100, 100}}, l2{{100, 0}, {0, 100}},
-		l3{{-1, -1}, {100, -1}}, l4{{-1, -1}, {1, 1}};
+	LineSegmentLl l1{{0, 0}, {100, 100}},
+		l2{{100, 0}, {0, 100}}, l3{{-1, -1}, {100, -1}},
+		l4{{-1, -1}, {1, 1}};
 	std::unordered_set<LineSegmentLl> s1;
 	std::set<LineSegmentLl> s2;
 	s1.insert(l1);
@@ -22,8 +23,8 @@ int main() {
 	assert(!l2.intersects(l3));
 	assert(!l3.intersects(l2));
 
-	// These lines technically intersect, but our code guarantees that parallel lines never
-	// intersect.
+	// These lines technically intersect, but our code
+	// guarantees that parallel lines never intersect.
 	assert(!l1.intersects(l4));
 	assert(!l4.intersects(l1));
 

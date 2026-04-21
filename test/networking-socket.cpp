@@ -1,5 +1,6 @@
-// Tests compilation and instantiation of the Networking::Socket(Interface)
-// inheritance suite, including the Socket options.
+// Tests compilation and instantiation of the
+// Networking::Socket(Interface) inheritance suite,
+// including the Socket options.
 #include <rain.hpp>
 
 int main() {
@@ -7,10 +8,11 @@ int main() {
 	using namespace Rain::Networking;
 
 	{
-		// Instantiate a Socket with options by inheriting them from the
-		// implementing interfaces.
+		// Instantiate a Socket with options by inheriting them
+		// from the implementing interfaces.
 		//
-		// This is an IPv6, Stream, TCP Socket which is dual-stack.
+		// This is an IPv6, Stream, TCP Socket which is
+		// dual-stack.
 		Socket<
 			Ipv6FamilyInterface,
 			StreamTypeInterface,
@@ -19,9 +21,10 @@ int main() {
 			NoLingerSocketOption>
 			socket;
 
-		// Confirm that the socket options and socket F/T/P is as desired.
-		std::cout << socket.family() << ' ' << socket.type() << ' '
-							<< socket.protocol() << std::endl;
+		// Confirm that the socket options and socket F/T/P is
+		// as desired.
+		std::cout << socket.family() << ' ' << socket.type()
+							<< ' ' << socket.protocol() << std::endl;
 		assert(socket.family() == Family::INET6);
 		assert(socket.type() == Type::STREAM);
 		assert(socket.protocol() == Protocol::TCP);
@@ -29,11 +32,14 @@ int main() {
 		// Make sure subtypes are inherited correctly.
 		// std::string *str = &socket;
 		assert(
-			static_cast<SocketFamilyInterface &>(socket).family() == Family::INET6);
-		assert(static_cast<SocketTypeInterface &>(socket).type() == Type::STREAM);
+			static_cast<SocketFamilyInterface &>(socket)
+				.family() == Family::INET6);
 		assert(
-			static_cast<SocketProtocolInterface &>(socket).protocol() ==
-			Protocol::TCP);
+			static_cast<SocketTypeInterface &>(socket).type() ==
+			Type::STREAM);
+		assert(
+			static_cast<SocketProtocolInterface &>(socket)
+				.protocol() == Protocol::TCP);
 		// DGramSocketInterface *dgramSocket = &socket;
 
 		// Make sure copy/move disabled.

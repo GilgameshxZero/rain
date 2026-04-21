@@ -1,5 +1,5 @@
-// Error category for general networking errors, obtained via errno or
-// WSAGetLastError.
+// Error category for general networking errors, obtained
+// via errno or WSAGetLastError.
 #pragma once
 
 #include "../error/exception.hpp"
@@ -7,7 +7,7 @@
 #include "../platform.hpp"
 #include "../windows/exception.hpp"
 #include "../windows/windows.hpp"
-#include "native-socket.hpp"
+#include "native_socket.hpp"
 
 namespace Rain::Networking {
 	enum class Error {
@@ -25,17 +25,21 @@ namespace Rain::Networking {
 		NOT_CONNECTED = ENOTCONN,
 #endif
 
-		// Resolver errors are also thrown as base Networking errors.
+		// Resolver errors are also thrown as base Networking
+		// errors.
 		RES_QUERY_FAILED = 1_zu << 16,
 		NS_INITPARSE_FAILED,
 		NS_MSG_COUNT_FAILED,
 
-		// Additional errors from base SocketInterface are thrown here too.
+		// Additional errors from base SocketInterface are
+		// thrown here too.
 		POLL_INVALID
 	};
 	class ErrorCategory : public std::error_category {
 		public:
-		char const *name() const noexcept { return "Rain::Networking"; }
+		char const *name() const noexcept {
+			return "Rain::Networking";
+		}
 		std::string message(int error) const noexcept {
 			switch (static_cast<Error>(error)) {
 				case Error::RES_QUERY_FAILED:
@@ -51,15 +55,18 @@ namespace Rain::Networking {
 			}
 
 #ifdef RAIN_PLATFORM_WINDOWS
-			return Windows::ErrorCategory::getLastErrorMessage(error);
+			return Windows::ErrorCategory::getLastErrorMessage(
+				error);
 #else
 			return std::strerror(error);
 #endif
 		}
 	};
-	using Exception = Rain::Error::Exception<Error, ErrorCategory>;
+	using Exception =
+		Rain::Error::Exception<Error, ErrorCategory>;
 
-	// Return a system error code via errno or WSAGetLastError.
+	// Return a system error code via errno or
+	// WSAGetLastError.
 	inline Error getSystemError() noexcept {
 #ifdef RAIN_PLATFORM_WINDOWS
 		return static_cast<Error>(WSAGetLastError());
@@ -68,9 +75,10 @@ namespace Rain::Networking {
 #endif
 	}
 
-	// Helper function throws a system exception if return value is an error
-	// value.
-	inline NativeSocket validateSystemCall(NativeSocket result) {
+	// Helper function throws a system exception if return
+	// value is an error value.
+	inline NativeSocket validateSystemCall(
+		NativeSocket result) {
 		if (result == NATIVE_SOCKET_INVALID) {
 			throw Exception(getSystemError());
 		}

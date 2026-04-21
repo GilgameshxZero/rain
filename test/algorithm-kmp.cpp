@@ -1,5 +1,5 @@
-// Tests the Knuth-Morris-Pratt string matching algorithm from
-// `rain/algorithm/kmp.hpp`.
+// Tests the Knuth-Morris-Pratt string matching algorithm
+// from `rain/algorithm/kmp.hpp`.
 #include <rain.hpp>
 
 int main() {
@@ -17,34 +17,43 @@ int main() {
 	}
 	assert(
 		partialMatch ==
-		std::vector<std::size_t>({SIZE_MAX, 0, 0, 0, 0, 0, 0,				 SIZE_MAX, 0,
-															2,				0, 0, 0, 0, 0, SIZE_MAX, 0,				 0,
-															3,				0, 0, 0, 0, 0, 0}));
+		std::vector<std::size_t>(
+			{SIZE_MAX, 0, 0, 0, 0, 0, 0,				SIZE_MAX, 0,
+			 2,				 0, 0, 0, 0, 0, SIZE_MAX, 0,				0,
+			 3,				 0, 0, 0, 0, 0, 0}));
 
 	// Partial table computation.
 	s = "\r\n";
-	partialMatch = Rain::Algorithm::computeKmpPartialMatch(s.c_str(), s.length());
-	std::cout << std::endl << "Partial match table for \\r\\n: ";
-	for (size_t i{0}; i < partialMatch.size(); i++) {
-		std::cout << partialMatch[i] << " ";
-	}
-	assert(partialMatch == std::vector<std::size_t>({SIZE_MAX, 0, 0}));
-
-	// Partial table computation.
-	s = "\r\n\r\n";
-	partialMatch = Rain::Algorithm::computeKmpPartialMatch(s.c_str(), s.length());
-	std::cout << std::endl << "Partial match table for \\r\\n\\r\\n: ";
+	partialMatch = Rain::Algorithm::computeKmpPartialMatch(
+		s.c_str(), s.length());
+	std::cout << std::endl
+						<< "Partial match table for \\r\\n: ";
 	for (size_t i{0}; i < partialMatch.size(); i++) {
 		std::cout << partialMatch[i] << " ";
 	}
 	assert(
-		partialMatch == std::vector<std::size_t>({SIZE_MAX, 0, SIZE_MAX, 0, 2}));
+		partialMatch ==
+		std::vector<std::size_t>({SIZE_MAX, 0, 0}));
+
+	// Partial table computation.
+	s = "\r\n\r\n";
+	partialMatch = Rain::Algorithm::computeKmpPartialMatch(
+		s.c_str(), s.length());
+	std::cout << std::endl
+						<< "Partial match table for \\r\\n\\r\\n: ";
+	for (size_t i{0}; i < partialMatch.size(); i++) {
+		std::cout << partialMatch[i] << " ";
+	}
+	assert(
+		partialMatch ==
+		std::vector<std::size_t>(
+			{SIZE_MAX, 0, SIZE_MAX, 0, 2}));
 
 	// String search.
 	s = "ABC ABCDAB ABCDABCDABDE";
 	std::string w{"ABCDABD"};
-	std::string match =
-		s.substr(Rain::Algorithm::kmpSearch(s, w).first, w.length());
+	std::string match = s.substr(
+		Rain::Algorithm::kmpSearch(s, w).first, w.length());
 	std::string matchStr(match, w.length());
 	std::cout << std::endl
 						<< "String: " << s << std::endl

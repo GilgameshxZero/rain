@@ -39,7 +39,8 @@ int main() {
 		assert(x.low == 4294967295);
 		assert(x.high == 69);
 
-		Rain::Algorithm::BigIntSigned<6> y(1000000007), z(1000000009);
+		Rain::Algorithm::BigIntSigned<6> y(1000000007),
+			z(1000000009);
 		x = y * z;
 		assert(x.low == 1628479551);
 		assert(x.high == 232830647);
@@ -79,11 +80,12 @@ int main() {
 	}
 
 	{
-		Rain::Algorithm::BigIntSigned<7> x(18446744073709551557ULL);
+		Rain::Algorithm::BigIntSigned<7> x(
+			18446744073709551557ULL);
 		x /= 998244353;
 		assert(x == 18479187002);
-		// Need literal here because constructors cannot handle unsigned integers
-		// too well.
+		// Need literal here because constructors cannot handle
+		// unsigned integers too well.
 		x = 18446744073709551557ULL;
 		x *= 998244353;
 		assert(x.low.low == 1233125317);
@@ -93,17 +95,21 @@ int main() {
 	}
 
 	{
-		Rain::Algorithm::BigIntSigned<7> x(18446744073709551557ULL), y(5);
+		Rain::Algorithm::BigIntSigned<7> x(
+			18446744073709551557ULL),
+			y(5);
 		x = 12 + y + 100 + y + y + 3;
 		assert(x == 130);
 
-		Rain::Algorithm::BigIntSigned<7> const Z(18446744073709551557ULL);
+		Rain::Algorithm::BigIntSigned<7> const Z(
+			18446744073709551557ULL);
 		std::size_t lsb{leastSignificant1BitIdx(Z - 1)};
 		assert(lsb == 2);
 	}
 
 	{
-		Rain::Algorithm::BigIntSigned<7> x(18446744073709551557ULL);
+		Rain::Algorithm::BigIntSigned<7> x(
+			18446744073709551557ULL);
 		x *= 1000000009;
 
 		std::stringstream ss;

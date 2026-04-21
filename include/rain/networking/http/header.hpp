@@ -2,5 +2,5 @@
 #pragma once
 
 #include "header/authorization.hpp"
-#include "header/set-cookie.hpp"
-#include "header/transfer-encoding.hpp"
+#include "header/set_cookie.hpp"
+#include "header/transfer_encoding.hpp"

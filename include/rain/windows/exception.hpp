@@ -1,4 +1,5 @@
-// Common error-handling and exceptions for GetLastError-like errors.
+// Common error-handling and exceptions for
+// GetLastError-like errors.
 #pragma once
 
 #include "../error/exception.hpp"
@@ -8,17 +9,21 @@ namespace Rain::Windows {
 	enum class Error { NONE = 0 };
 	class ErrorCategory : public std::error_category {
 		public:
-		// Shared code to translate a value from GetLastError/WSAGetLastError into a
-		// meaningful message.
+		// Shared code to translate a value from
+		// GetLastError/WSAGetLastError into a meaningful
+		// message.
 #ifdef RAIN_PLATFORM_WINDOWS
-		static std::string getLastErrorMessage(int error) noexcept {
-			// While Rain builds with UNICODE, we call the ANSI functions here, since
-			// error messages are not to be wide strings. Failure should always free
-			// buffer if it is successfully allocated.
+		static std::string getLastErrorMessage(
+			int error) noexcept {
+			// While Rain builds with UNICODE, we call the ANSI
+			// functions here, since error messages are not to be
+			// wide strings. Failure should always free buffer if
+			// it is successfully allocated.
 			LPSTR buffer;
 			if (
 				FormatMessageA(
-					FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+					FORMAT_MESSAGE_ALLOCATE_BUFFER |
+						FORMAT_MESSAGE_FROM_SYSTEM |
 						FORMAT_MESSAGE_IGNORE_INSERTS,
 					nullptr,
 					static_cast<DWORD>(error),
@@ -27,13 +32,16 @@ namespace Rain::Windows {
 					reinterpret_cast<LPSTR>(&buffer),
 					0,
 					nullptr) == 0) {
-				// If FormatMessage fails, don't attempt to interpret the error anymore.
-				return "FormatMessage failed while retrieving message.";
+				// If FormatMessage fails, don't attempt to
+				// interpret the error anymore.
+				return "FormatMessage failed while retrieving "
+							 "message.";
 			}
 
 			std::string msg(buffer);
 			if (LocalFree(buffer) != nullptr) {
-				return "LocalFree failed while retrieving message. Original message: " +
+				return "LocalFree failed while retrieving message. "
+							 "Original message: " +
 					msg;
 			}
 
@@ -44,19 +52,24 @@ namespace Rain::Windows {
 			return msg;
 #else
 		static std::string getLastErrorMessage(int) noexcept {
-			return "Attempted to retrieve Windows exception message on non-Windows "
+			return "Attempted to retrieve Windows exception "
+						 "message on non-Windows "
 						 "platform.";
 #endif
 		}
 
-		char const *name() const noexcept { return "Rain::Windows"; }
+		char const *name() const noexcept {
+			return "Rain::Windows";
+		}
 		std::string message(int error) const noexcept {
 			return ErrorCategory::getLastErrorMessage(error);
 		}
 	};
-	using Exception = Rain::Error::Exception<Error, ErrorCategory>;
+	using Exception =
+		Rain::Error::Exception<Error, ErrorCategory>;
 
-	// Return a system error code via errno or WSAGetLastError.
+	// Return a system error code via errno or
+	// WSAGetLastError.
 	inline Error getSystemError() noexcept {
 #ifdef RAIN_PLATFORM_WINDOWS
 		return static_cast<Error>(GetLastError());
@@ -65,8 +78,9 @@ namespace Rain::Windows {
 #endif
 	}
 
-	// Helper function throws a system exception if return value is an error
-	// value. Most Windows system calls return NULL or 0 on failure.
+	// Helper function throws a system exception if return
+	// value is an error value. Most Windows system calls
+	// return NULL or 0 on failure.
 	template <typename Result>
 	inline auto validateSystemCall(Result &&result) {
 		if (result == NULL) {
@@ -76,16 +90,19 @@ namespace Rain::Windows {
 	}
 
 #ifdef RAIN_PLATFORM_WINDOWS
-	// Some Windows functions return ERROR_SUCCESS (0) on success, and the error
-	// directly otherwise.
+	// Some Windows functions return ERROR_SUCCESS (0) on
+	// success, and the error directly otherwise.
 	inline void validateSystemCallDirect(LRESULT &&result) {
 		if (result != ERROR_SUCCESS) {
 			throw Exception(Error(result));
 		}
 	}
 
-	// Waits until the time is up or mutex is acquired. Retries if abandoned.
-	inline void waitSingleOrThrow(HANDLE hHandle, DWORD dwMilliseconds) {
+	// Waits until the time is up or mutex is acquired.
+	// Retries if abandoned.
+	inline void waitSingleOrThrow(
+		HANDLE hHandle,
+		DWORD dwMilliseconds) {
 		switch (WaitForSingleObject(hHandle, dwMilliseconds)) {
 			case WAIT_ABANDONED:
 				waitSingleOrThrow(hHandle, dwMilliseconds);

@@ -5,13 +5,15 @@
 #include <fstream>
 
 namespace Rain::Filesystem {
-	// Returns true if descendent path is under the directory subtree of the
-	// ancestor path. This does not traverse symbolic links (though, it will
-	// traverse initial symbolic links given to `descendant` and `ancestor` via
+	// Returns true if descendent path is under the directory
+	// subtree of the ancestor path. This does not traverse
+	// symbolic links (though, it will traverse initial
+	// symbolic links given to `descendant` and `ancestor` via
 	// `canonical`).
 	//
-	// Internally converts to canonical or weakly canonical paths. Note that
-	// absolute paths do not remove `..` elements in paths.
+	// Internally converts to canonical or weakly canonical
+	// paths. Note that absolute paths do not remove `..`
+	// elements in paths.
 	inline bool isSubpath(
 		std::filesystem::path const &descendant,
 		std::filesystem::path const &ancestor) {
@@ -29,9 +31,12 @@ namespace Rain::Filesystem {
 	inline bool compareFiles(
 		std::filesystem::path const &firstPath,
 		std::filesystem::path const &secondPath) {
-		std::ifstream first(firstPath, std::ifstream::binary | std::ifstream::ate);
+		std::ifstream first(
+			firstPath,
+			std::ifstream::binary | std::ifstream::ate);
 		std::ifstream second(
-			secondPath, std::ifstream::binary | std::ifstream::ate);
+			secondPath,
+			std::ifstream::binary | std::ifstream::ate);
 		if (first.fail() || second.fail()) {
 			return false;
 		}

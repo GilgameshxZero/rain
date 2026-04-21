@@ -8,7 +8,8 @@ namespace Rain::Math {
 	template <
 		typename OutputType,
 		typename InputType,
-		typename std::enable_if<std::is_same<OutputType, long>::value>::type * =
+		typename std::enable_if<
+			std::is_same<OutputType, long>::value>::type * =
 			nullptr>
 	inline OutputType round(InputType const &input) {
 		return std::lround(input);
@@ -16,13 +17,15 @@ namespace Rain::Math {
 	template <
 		typename OutputType,
 		typename InputType,
-		typename std::enable_if<std::is_same<OutputType, long long>::value>::type * =
+		typename std::enable_if<
+			std::is_same<OutputType, long long>::value>::type * =
 			nullptr>
 	inline OutputType round(InputType const &input) {
 		return std::llround(input);
 	}
 
-	// Some compilers do not have these functions in `std`, for some reason.
+	// Some compilers do not have these functions in `std`,
+	// for some reason.
 	template <typename OutputType, typename InputType>
 	inline OutputType floor(InputType const &input) {
 		return round<OutputType>(::floorl(input));

@@ -7,7 +7,8 @@
 #include <iostream>
 
 namespace Rain::Networking::Smtp {
-	// Represents an email example@example.com from RFC 5322 Section 3.4.1.
+	// Represents an email example@example.com from RFC 5322
+	// Section 3.4.1.
 	class Mailbox {
 		public:
 		std::string name;
@@ -15,12 +16,15 @@ namespace Rain::Networking::Smtp {
 		// The domain is a host with an unspecified port.
 		Host host;
 
-		// name@domain notation. Default construction leaves both empty.
+		// name@domain notation. Default construction leaves
+		// both empty.
 		Mailbox(std::string const &str = "")
 				: name(str.substr(0, str.find_last_of('@'))),
-					host(
-						str.substr(std::min(str.find_last_of('@'), str.length() - 1) + 1)) {
-		}
+					host(str.substr(
+						std::min(
+							str.find_last_of('@'),
+							str.length() - 1) +
+						1)) {}
 
 		Mailbox(std::string const &name, Host const &host)
 				: name(name), host(host) {}
@@ -31,14 +35,16 @@ namespace Rain::Networking::Smtp {
 
 		// Equality for unordered_ types.
 		bool operator==(Mailbox const &other) const noexcept {
-			return this->name == other.name && this->host == other.host;
+			return this->name == other.name &&
+				this->host == other.host;
 		}
 	};
 
 	// Hash Mailbox for unordered_set and unordered_map.
 	struct HashMailbox {
 		std::size_t operator()(Mailbox const &mailbox) const {
-			return std::hash<std::string>()(mailbox.operator std::string());
+			return std::hash<std::string>()(
+				mailbox.operator std::string());
 		}
 	};
 }

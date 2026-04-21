@@ -2,9 +2,9 @@
 #pragma once
 
 #include "../../algorithm/kmp.hpp"
-#include "../../string/base-64.hpp"
-#include "../req-res/worker.hpp"
-#include "auth-method.hpp"
+#include "../../string/base_64.hpp"
+#include "../req_res/worker.hpp"
+#include "auth_method.hpp"
 #include "mailbox.hpp"
 #include "socket.hpp"
 
@@ -15,13 +15,14 @@ namespace Rain::Networking::Smtp {
 	// SMTP Worker specialization.
 	class WorkerSocketSpecInterfaceInterface
 			: virtual public ConnectedSocketSpecInterface,
-				virtual public ReqRes::WorkerSocketSpecInterfaceInterface {
+				virtual public ReqRes::
+					WorkerSocketSpecInterfaceInterface {
 		protected:
 		// Custom streambuf which reads data after DATA.
 		class DataIStreamBuf : public std::streambuf {
 			private:
-			// The TCP Socket stream from which we will read from to fill up this
-			// streambuf.
+			// The TCP Socket stream from which we will read from
+			// to fill up this streambuf.
 			std::istream *const sourceStream;
 
 			// Internal buffer.
@@ -35,17 +36,23 @@ namespace Rain::Networking::Smtp {
 			DataIStreamBuf(
 				std::istream *sourceStream,
 				std::size_t bufferLen = 1_zu << 10)
-					: sourceStream(sourceStream), candidate(0), match(nullptr) {
+					: sourceStream(sourceStream),
+						candidate(0),
+						match(nullptr) {
 				this->buffer.reserve(bufferLen);
 				this->buffer.resize(this->buffer.capacity());
 
 				// Set internal pointers for empty buffers.
-				this->setg(&this->buffer[0], &this->buffer[0], &this->buffer[0]);
+				this->setg(
+					&this->buffer[0],
+					&this->buffer[0],
+					&this->buffer[0]);
 			}
 
 			// Disable copy.
 			DataIStreamBuf(DataIStreamBuf const &) = delete;
-			DataIStreamBuf &operator=(DataIStreamBuf const &) = delete;
+			DataIStreamBuf &operator=(DataIStreamBuf const &) =
+				delete;
 
 			protected:
 			// Re-fill the buffer from the source until \r\n.\r\n.
@@ -61,54 +68,64 @@ namespace Rain::Networking::Smtp {
 					if (!this->sourceStream->good()) {
 						return traits_type::eof();
 					}
-					this->sourceStream->get(&this->buffer[0], this->buffer.length());
-					std::size_t cFilled =
-						static_cast<std::size_t>(this->sourceStream->gcount());
+					this->sourceStream->get(
+						&this->buffer[0], this->buffer.length());
+					std::size_t cFilled = static_cast<std::size_t>(
+						this->sourceStream->gcount());
 					this->buffer[cFilled++] = '\n';
 					this->sourceStream->get();
 
-					// Run matcher. A match will set this->match to an invalid, but
-					// non-null location.
+					// Run matcher. A match will set this->match to an
+					// invalid, but non-null location.
 					static std::string const terminator{"\r\n.\r\n"};
 					static auto const terminatorPartialMatch =
 						Algorithm::computeKmpPartialMatch(terminator);
-					std::tie(this->match, this->candidate) = Algorithm::kmpSearch(
-						&this->buffer[0],
-						cFilled,
-						terminator,
-						terminatorPartialMatch,
-						this->candidate);
+					std::tie(this->match, this->candidate) =
+						Algorithm::kmpSearch(
+							&this->buffer[0],
+							cFilled,
+							terminator,
+							terminatorPartialMatch,
+							this->candidate);
 
-					// Regardless of match results (interpreted next time), return current
-					// bytes.
+					// Regardless of match results (interpreted next
+					// time), return current bytes.
 					this->setg(
-						&this->buffer[0], &this->buffer[0], &this->buffer[0] + cFilled);
+						&this->buffer[0],
+						&this->buffer[0],
+						&this->buffer[0] + cFilled);
 				}
 				return traits_type::to_int_type(*this->gptr());
 			}
 		};
 	};
 
-	template <typename RequestMessageSpec, typename ResponseMessageSpec>
+	template <
+		typename RequestMessageSpec,
+		typename ResponseMessageSpec>
 	class WorkerSocketSpecInterface
 			: virtual public WorkerSocketSpecInterfaceInterface,
-				virtual public ReqRes::
-					WorkerSocketSpecInterface<RequestMessageSpec, ResponseMessageSpec> {
+				virtual public ReqRes::WorkerSocketSpecInterface<
+					RequestMessageSpec,
+					ResponseMessageSpec> {
 		protected:
 		class ResponseAction {
 			public:
 			std::optional<ResponseMessageSpec> response;
 
-			// If true, closes after the ResponseMessageSpec is sent, or aborts with
-			// no ResponseMessageSpec.
+			// If true, closes after the ResponseMessageSpec is
+			// sent, or aborts with no ResponseMessageSpec.
 			bool toClose;
 
 			// Close.
 			ResponseAction() : toClose(true), response() {}
 
 			// Send response, optionally close.
-			ResponseAction(ResponseMessageSpec &&response, bool toClose = false)
-					: response(std::forward<ResponseMessageSpec>(response)),
+			ResponseAction(
+				ResponseMessageSpec &&response,
+				bool toClose = false)
+					: response(
+							std::forward<ResponseMessageSpec>(response)),
 						toClose(toClose) {}
 
 			// Don't send response, optionally close.
@@ -116,7 +133,8 @@ namespace Rain::Networking::Smtp {
 					: response(), toClose(toClose) {}
 
 			ResponseAction(ResponseAction const &) = delete;
-			ResponseAction &operator=(ResponseAction const &) = delete;
+			ResponseAction &operator=(ResponseAction const &) =
+				delete;
 			ResponseAction(ResponseAction &&other) = delete;
 			ResponseAction &operator=(ResponseAction &&) = delete;
 		};
@@ -126,18 +144,21 @@ namespace Rain::Networking::Smtp {
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		typename Socket>
-	class WorkerSocketSpec : public Socket,
-													 virtual public WorkerSocketSpecInterface<
-														 RequestMessageSpec,
-														 ResponseMessageSpec>,
-													 virtual public WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpec
+			: public Socket,
+				virtual public WorkerSocketSpecInterface<
+					RequestMessageSpec,
+					ResponseMessageSpec>,
+				virtual public WorkerSocketSpecInterfaceInterface {
 		using Socket::Socket;
 
 		protected:
 		protected:
-		// Import dependent names. Must prefix with Http:: to specify the templated
-		// dependent typename, otherwise compiler will interpret this as the Tcp::
-		// non-templated non-dependent typename during phase 1 of name resolution.
+		// Import dependent names. Must prefix with Http:: to
+		// specify the templated dependent typename, otherwise
+		// compiler will interpret this as the Tcp::
+		// non-templated non-dependent typename during phase 1
+		// of name resolution.
 		using typename Smtp::WorkerSocketSpecInterface<
 			RequestMessageSpec,
 			ResponseMessageSpec>::ResponseAction;
@@ -150,26 +171,29 @@ namespace Rain::Networking::Smtp {
 		std::optional<Mailbox> mailFrom;
 		std::unordered_set<Mailbox, HashMailbox> rcptTo;
 
-		// Protected to allow for overrides to call if necessary.
+		// Protected to allow for overrides to call if
+		// necessary.
 
 		// Delegate handlers for subclass overriding.
 		virtual bool onInitialResponse() override {
-			this->send(ResponseMessageSpec{StatusCode::SERVICE_READY});
+			this->send(
+				ResponseMessageSpec{StatusCode::SERVICE_READY});
 			return false;
 		}
 		virtual ResponseAction onHelo(RequestMessageSpec &) {
 			return {{StatusCode::REQUEST_COMPLETED}};
 		}
-		virtual ResponseAction onMailMailbox(Mailbox const &mailbox) {
-			// By default, accept all MAIL FROM, replacing earlier commands with this
-			// one.
+		virtual ResponseAction onMailMailbox(
+			Mailbox const &mailbox) {
+			// By default, accept all MAIL FROM, replacing earlier
+			// commands with this one.
 			this->mailFrom = mailbox;
 			return {{StatusCode::REQUEST_COMPLETED}};
 		}
 		virtual ResponseAction onMail(RequestMessageSpec &req) {
 			try {
-				// Parse the parameter between the <, >. Does not modify the original
-				// parameter.
+				// Parse the parameter between the <, >. Does not
+				// modify the original parameter.
 				std::stringstream parameterStream(req.parameter);
 				parameterStream.ignore(
 					std::numeric_limits<std::streamsize>::max(), '<');
@@ -180,14 +204,17 @@ namespace Rain::Networking::Smtp {
 				return this->onMailMailbox({mailboxStr});
 			} catch (...) {
 				// Exceptions cause bad status code.
-				return {{StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT}};
+				return {
+					{StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT}};
 			}
 		}
 
 		// onRcpt subhandler after parsing mailbox.
-		virtual ResponseAction onRcptMailbox(Mailbox const &mailbox) {
+		virtual ResponseAction onRcptMailbox(
+			Mailbox const &mailbox) {
 			if (this->rcptTo.size() > (1_zu << 10)) {
-				return {{StatusCode::REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE}};
+				return {{StatusCode::
+									 REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE}};
 			}
 			this->rcptTo.insert(mailbox);
 			return {{StatusCode::REQUEST_COMPLETED}};
@@ -195,8 +222,8 @@ namespace Rain::Networking::Smtp {
 
 		virtual ResponseAction onRcpt(RequestMessageSpec &req) {
 			try {
-				// Parse the parameter between the <, >. Does not modify the original
-				// parameter.
+				// Parse the parameter between the <, >. Does not
+				// modify the original parameter.
 				std::stringstream parameterStream(req.parameter);
 				parameterStream.ignore(
 					std::numeric_limits<std::streamsize>::max(), '<');
@@ -207,27 +234,34 @@ namespace Rain::Networking::Smtp {
 				return this->onRcptMailbox({mailboxStr});
 			} catch (...) {
 				// Exceptions cause bad status code.
-				return {{StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT}};
+				return {
+					{StatusCode::SYNTAX_ERROR_PARAMETER_ARGUMENT}};
 			}
 		}
 
-		// Subclasses override this to return a ResponseMessageSpec in response to a
-		// data istream.
-		virtual ResponseAction onDataStream(std::istream &stream) {
+		// Subclasses override this to return a
+		// ResponseMessageSpec in response to a data istream.
+		virtual ResponseAction onDataStream(
+			std::istream &stream) {
 			// Ignore all the data, then reject it.
-			stream.ignore(std::numeric_limits<std::streamsize>::max());
+			stream.ignore(
+				std::numeric_limits<std::streamsize>::max());
 			return {{StatusCode::TRANSACTION_FAILED}};
 		}
 
 		virtual ResponseAction onData(RequestMessageSpec &) {
-			// Accept data as long as at to/from addresses have been issued already.
+			// Accept data as long as at to/from addresses have
+			// been issued already.
 			if (!this->mailFrom || this->rcptTo.size() == 0) {
 				return {{StatusCode::BAD_SEQUENCE_COMMAND}};
 			}
 
-			// Send a 354, and set up the stream for streaming the data.
-			this->send(ResponseMessageSpec{StatusCode::START_MAIL_INPUT});
-			std::unique_ptr<std::streambuf> dataIStreamBuf(new DataIStreamBuf(this));
+			// Send a 354, and set up the stream for streaming the
+			// data.
+			this->send(
+				ResponseMessageSpec{StatusCode::START_MAIL_INPUT});
+			std::unique_ptr<std::streambuf> dataIStreamBuf(
+				new DataIStreamBuf(this));
 			std::istream stream(dataIStreamBuf.get());
 
 			// Return no ResponseMessageSpec without closing.
@@ -271,57 +305,75 @@ namespace Rain::Networking::Smtp {
 			return this->onHelo(req);
 		}
 
-		// AUTH delegates to virtual method handlers after parsing.
-		virtual ResponseAction onAuthPlain(RequestMessageSpec &) {
-			return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
+		// AUTH delegates to virtual method handlers after
+		// parsing.
+		virtual ResponseAction onAuthPlain(
+			RequestMessageSpec &) {
+			return {
+				{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 		}
-		// Allow subclass override to provide authentication on username/password
-		// from AUTH LOGIN.
+		// Allow subclass override to provide authentication on
+		// username/password from AUTH LOGIN.
 		virtual ResponseAction onAuthLogin(
 			std::string const &,
 			std::string const &) {
 			// Reject all by default.
 			return {{StatusCode::AUTHENTICATION_INVALID}};
 		}
-		virtual ResponseAction onAuthLogin(RequestMessageSpec &) {
-			// Default AUTH LOGIN handler parses for username and password and sends
-			// to delegate handler.
+		virtual ResponseAction onAuthLogin(
+			RequestMessageSpec &) {
+			// Default AUTH LOGIN handler parses for username and
+			// password and sends to delegate handler.
 
 			static std::string const usernamePromptB64 =
-																 String::Base64::encode("Username"),
+																 String::Base64::encode(
+																	 "Username"),
 															 passwordPromptB64 =
-																 String::Base64::encode("Password");
+																 String::Base64::encode(
+																	 "Password");
 
 			// Client AUTH username/password can be at most ~1K.
-			std::string usernameB64(1_zu << 10, '\0'), passwordB64(1_zu << 10, '\0');
-			this->send(ResponseMessageSpec{
-				StatusCode::SERVER_CHALLENGE, {{usernamePromptB64}}});
+			std::string usernameB64(1_zu << 10, '\0'),
+				passwordB64(1_zu << 10, '\0');
+			this->send(
+				ResponseMessageSpec{
+					StatusCode::SERVER_CHALLENGE,
+					{{usernamePromptB64}}});
 			this->getline(&usernameB64[0], usernameB64.length());
 			// -2 for \r delimiter.
-			usernameB64.resize(static_cast<std::size_t>(
-				std::max(std::streamsize(0), this->gcount() - 2)));
-			this->send(ResponseMessageSpec{
-				StatusCode::SERVER_CHALLENGE, {{passwordPromptB64}}});
+			usernameB64.resize(
+				static_cast<std::size_t>(std::max(
+					std::streamsize(0), this->gcount() - 2)));
+			this->send(
+				ResponseMessageSpec{
+					StatusCode::SERVER_CHALLENGE,
+					{{passwordPromptB64}}});
 			this->getline(&passwordB64[0], passwordB64.length());
-			passwordB64.resize(static_cast<std::size_t>(
-				std::max(std::streamsize(0), this->gcount() - 2)));
+			passwordB64.resize(
+				static_cast<std::size_t>(std::max(
+					std::streamsize(0), this->gcount() - 2)));
 
 			// Decode both from Base64 and delegate.
-			std::string username = String::Base64::decode(usernameB64),
-									password = String::Base64::decode(passwordB64);
+			std::string username =
+										String::Base64::decode(usernameB64),
+									password =
+										String::Base64::decode(passwordB64);
 			return this->onAuthLogin(username, password);
 		}
-		virtual ResponseAction onAuthCramMd5(RequestMessageSpec &) {
-			return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
+		virtual ResponseAction onAuthCramMd5(
+			RequestMessageSpec &) {
+			return {
+				{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 		}
 		virtual ResponseAction onAuth(RequestMessageSpec &req) {
 			AuthMethod authMethod;
 			try {
 				// First token of parameter is AuthMethod.
-				authMethod =
-					AuthMethod(req.parameter.substr(0, req.parameter.find(' ')));
+				authMethod = AuthMethod(
+					req.parameter.substr(0, req.parameter.find(' ')));
 			} catch (...) {
-				return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
+				return {
+					{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 			}
 
 			switch (authMethod) {
@@ -332,7 +384,8 @@ namespace Rain::Networking::Smtp {
 				case AuthMethod::CRAM_MD5:
 					return this->onAuthCramMd5(req);
 				default:
-					return {{StatusCode::COMMAND_PARAMETER_NOT_IMPLEMENTED}};
+					return {{StatusCode::
+										 COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 			}
 		}
 
@@ -342,7 +395,8 @@ namespace Rain::Networking::Smtp {
 			Rain::Error::consumeThrowable(
 				[this]() {
 					this->send(
-						ResponseMessageSpec{StatusCode::REQUEST_ABORTED_LOCAL_ERROR});
+						ResponseMessageSpec{
+							StatusCode::REQUEST_ABORTED_LOCAL_ERROR});
 					this->shutdown();
 					throw;
 				},
@@ -352,15 +406,17 @@ namespace Rain::Networking::Smtp {
 
 		// R/R Worker overrides.
 		//
-		// Handle non-error RequestMessageSpec. Must not throw. Invokes chains in
-		// order.
-		virtual bool onRequest(RequestMessageSpec &req) final override {
+		// Handle non-error RequestMessageSpec. Must not throw.
+		// Invokes chains in order.
+		virtual bool onRequest(
+			RequestMessageSpec &req) final override {
 			// Get PreResponse based on the command.
 			auto result = [this, &req]() -> ResponseAction {
 				try {
 					switch (req.command) {
 						case Command::HELO:
-						// Default never occurs since req.command is enforced.
+						// Default never occurs since req.command is
+						// enforced.
 						default:
 							return this->onHelo(req);
 						case Command::MAIL:
@@ -396,8 +452,8 @@ namespace Rain::Networking::Smtp {
 							return this->onAuth(req);
 					}
 				} catch (...) {
-					// Any exceptions during processing are caught to the subclass
-					// handler.
+					// Any exceptions during processing are caught to
+					// the subclass handler.
 					return {nullptr, this->onCommandException()};
 				}
 			}();
@@ -411,24 +467,32 @@ namespace Rain::Networking::Smtp {
 			}
 
 			if (result.toClose) {
-				Rain::Error::consumeThrowable([this]() { this->shutdown(); })();
+				Rain::Error::consumeThrowable(
+					[this]() { this->shutdown(); })();
 				return true;
 			}
 			return false;
 		};
 
-		// Catch exceptions during request receiving. Must not throw.
+		// Catch exceptions during request receiving. Must not
+		// throw.
 		virtual void onRequestException() final override {
 			try {
 				throw;
-			} catch (typename RequestMessageSpec::Exception const &exception) {
+			} catch (typename RequestMessageSpec::Exception const
+								 &exception) {
 				Rain::Error::consumeThrowable([this, exception]() {
 					switch (exception.getError()) {
-						case RequestMessageSpec::Error::SYNTAX_ERROR_COMMAND:
-							this->send(ResponseMessageSpec{StatusCode::SYNTAX_ERROR_COMMAND});
+						case RequestMessageSpec::Error::
+							SYNTAX_ERROR_COMMAND:
+							this->send(
+								ResponseMessageSpec{
+									StatusCode::SYNTAX_ERROR_COMMAND});
 							break;
 						default:
-							this->send(ResponseMessageSpec{StatusCode::TRANSACTION_FAILED});
+							this->send(
+								ResponseMessageSpec{
+									StatusCode::TRANSACTION_FAILED});
 							break;
 					}
 
@@ -437,8 +501,9 @@ namespace Rain::Networking::Smtp {
 				})();
 			}
 
-			// No exceptions should leak through here. Any exceptions leaking through
-			// will get caught by consumeThrowable on ReqRes Worker.
+			// No exceptions should leak through here. Any
+			// exceptions leaking through will get caught by
+			// consumeThrowable on ReqRes Worker.
 		}
 	};
 
@@ -453,36 +518,37 @@ namespace Rain::Networking::Smtp {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename>
-		class... SocketOptions>
+		template <typename> class... SocketOptions>
 	class Worker
 			: public WorkerSocketSpec<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					ConnectedSocketSpec<NamedSocketSpec<SocketSpec<ReqRes::Worker<
-						RequestMessageSpec,
-						ResponseMessageSpec,
-						sendBufferLen,
-						recvBufferLen,
-						sendTimeoutMs,
-						recvTimeoutMs,
-						SocketFamilyInterface,
-						SocketTypeInterface,
-						SocketProtocolInterface,
-						SocketOptions...>>>>> {
+					ConnectedSocketSpec<
+						NamedSocketSpec<SocketSpec<ReqRes::Worker<
+							RequestMessageSpec,
+							ResponseMessageSpec,
+							sendBufferLen,
+							recvBufferLen,
+							sendTimeoutMs,
+							recvTimeoutMs,
+							SocketFamilyInterface,
+							SocketTypeInterface,
+							SocketProtocolInterface,
+							SocketOptions...>>>>> {
 		using WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,
-			ConnectedSocketSpec<NamedSocketSpec<SocketSpec<ReqRes::Worker<
-				RequestMessageSpec,
-				ResponseMessageSpec,
-				sendBufferLen,
-				recvBufferLen,
-				sendTimeoutMs,
-				recvTimeoutMs,
-				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
-				SocketOptions...>>>>>::WorkerSocketSpec;
+			ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<ReqRes::Worker<
+					RequestMessageSpec,
+					ResponseMessageSpec,
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					SocketFamilyInterface,
+					SocketTypeInterface,
+					SocketProtocolInterface,
+					SocketOptions...>>>>>::WorkerSocketSpec;
 	};
 }

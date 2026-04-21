@@ -1,13 +1,14 @@
-// RAII class which increments on constructions and decrements on destruction,
-// used with exception-safe code.
+// RAII class which increments on constructions and
+// decrements on destruction, used with exception-safe code.
 #pragma once
 
 #include <utility>
 
 namespace Rain::Error {
-	// RAII class which increments on constructions and decrements on destruction,
-	// used with exception-safe coding. Wraps an externally-allocated counter,
-	// which must exist for the duration of this object.
+	// RAII class which increments on constructions and
+	// decrements on destruction, used with exception-safe
+	// coding. Wraps an externally-allocated counter, which
+	// must exist for the duration of this object.
 	template <typename Counter>
 	class Incrementer {
 		private:
@@ -16,9 +17,13 @@ namespace Rain::Error {
 
 		public:
 		// Incrementing constructor.
-		Incrementer(Counter &counter) noexcept : counter(counter) { counter++; }
+		Incrementer(Counter &counter) noexcept
+				: counter(counter) {
+			counter++;
+		}
 
-		// Decrementing destructor if incrementing constructor was called.
+		// Decrementing destructor if incrementing constructor
+		// was called.
 		~Incrementer() { this->counter--; }
 
 		// Forbid copy (and move).

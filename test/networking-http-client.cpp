@@ -22,11 +22,14 @@ int main() {
 		Http::Response res;
 		client >> res;
 
-		std::cout << "HTTP/" << res.version << " " << res.statusCode << " "
-							<< res.reasonPhrase << "\r\n"
+		std::cout << "HTTP/" << res.version << " "
+							<< res.statusCode << " " << res.reasonPhrase
+							<< "\r\n"
 							<< res.headers << std::endl;
 		assert(res.version == Http::Version::_1_1);
-		assert(res.statusCode == Http::StatusCode::MOVED_PERMANENTLY);
+		assert(
+			res.statusCode ==
+			Http::StatusCode::MOVED_PERMANENTLY);
 	}
 	return 0;
 }

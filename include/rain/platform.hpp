@@ -1,7 +1,7 @@
 // Utilities for platform and build detection.
 //
-// Rain supports distinguishing between 3 major platforms: Windows, MacOS, and
-// Linux-based.
+// Rain supports distinguishing between 3 major platforms:
+// Windows, MacOS, and Linux-based.
 #pragma once
 
 #include <iostream>
@@ -18,7 +18,8 @@
 #define RAIN_PLATFORM_LINUX
 #endif
 
-#if !defined(RAIN_PLATFORM_WINDOWS) && !defined(RAIN_PLATFORM_MACOS) && \
+#if !defined(RAIN_PLATFORM_WINDOWS) && \
+	!defined(RAIN_PLATFORM_MACOS) &&     \
 	!defined(RAIN_PLATFORM_LINUX)
 #define RAIN_PLATFORM_OTHER
 #endif

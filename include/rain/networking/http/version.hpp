@@ -10,22 +10,26 @@ namespace Rain::Networking::Http {
 	// HTTP version (0.9, 1.0, 1.1, etc.).
 	class Version {
 		public:
-		// Unscoped enum allows for direct name resolution from wrapper class.
+		// Unscoped enum allows for direct name resolution from
+		// wrapper class.
 		enum Value { _0_9 = 0, _1_0, _1_1, _2_0, _3_0 };
 		Value value;
 
 		// Maps strings to Value.
-		static inline std::unordered_map<std::string, Value> const fromStr{
-			{"0.9", _0_9},
-			{"1.0", _1_0},
-			{"1.1", _1_1},
-			{"2.0", _2_0},
-			{"3.0", _3_0}};
+		static inline std::
+			unordered_map<std::string, Value> const fromStr{
+				{"0.9", _0_9},
+				{"1.0", _1_0},
+				{"1.1", _1_1},
+				{"2.0", _2_0},
+				{"3.0", _3_0}};
 
 		public:
 		// Direct constructors.
-		constexpr Version(Value value = _1_1) noexcept : value(value) {}
-		Version(std::string const &str) : value(Version::fromStr.at(str)) {}
+		constexpr Version(Value value = _1_1) noexcept
+				: value(value) {}
+		Version(std::string const &str)
+				: value(Version::fromStr.at(str)) {}
 
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }
@@ -49,8 +53,8 @@ namespace Rain::Networking::Http {
 	};
 }
 
-// Stream operators. istream operator>> will take a token in the format
-// HTTP/-.-.
+// Stream operators. istream operator>> will take a token in
+// the format HTTP/-.-.
 inline std::ostream &operator<<(
 	std::ostream &stream,
 	Rain::Networking::Http::Version version) {

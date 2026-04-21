@@ -7,19 +7,21 @@
 namespace Rain::Networking::Tcp {
 	class ServerSocketSpecInterfaceInterface
 			: virtual public NamedSocketSpecInterface,
-				virtual public Networking::ServerSocketSpecInterfaceInterface {};
+				virtual public Networking::
+					ServerSocketSpecInterfaceInterface {};
 
 	template <typename WorkerSocketSpec>
 	class ServerSocketSpecInterface
 			: virtual public ServerSocketSpecInterfaceInterface,
-				virtual public Networking::ServerSocketSpecInterface<WorkerSocketSpec> {
-	};
+				virtual public Networking::
+					ServerSocketSpecInterface<WorkerSocketSpec> {};
 
 	// Server specialization for TCP protocol Sockets.
 	template <typename WorkerSocketSpec, typename Socket>
 	class ServerSocketSpec
 			: public Socket,
-				virtual public ServerSocketSpecInterface<WorkerSocketSpec>,
+				virtual public ServerSocketSpecInterface<
+					WorkerSocketSpec>,
 				virtual public ServerSocketSpecInterfaceInterface {
 		using Socket::Socket;
 	};
@@ -30,16 +32,16 @@ namespace Rain::Networking::Tcp {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename>
-		class... SocketOptions>
-	class Server : public ServerSocketSpec<
-									 WorkerSocketSpec,
-									 NamedSocketSpec<SocketSpec<Networking::Server<
-										 WorkerSocketSpec,
-										 SocketFamilyInterface,
-										 SocketTypeInterface,
-										 SocketProtocolInterface,
-										 SocketOptions...>>>> {
+		template <typename> class... SocketOptions>
+	class Server
+			: public ServerSocketSpec<
+					WorkerSocketSpec,
+					NamedSocketSpec<SocketSpec<Networking::Server<
+						WorkerSocketSpec,
+						SocketFamilyInterface,
+						SocketTypeInterface,
+						SocketProtocolInterface,
+						SocketOptions...>>>> {
 		using ServerSocketSpec<
 			WorkerSocketSpec,
 			NamedSocketSpec<SocketSpec<Networking::Server<

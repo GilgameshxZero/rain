@@ -5,14 +5,16 @@ int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking::Http;
 
-	// List-initializing a Request with some default arguments and a body.
+	// List-initializing a Request with some default arguments
+	// and a body.
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
 		std::string body("a few bytes");
 		Request req{
 			{},
 			"/",
-			{{{"Host", "google.com"}, {"Transfer-Encoding", "identity"}}},
+			{{{"Host", "google.com"},
+				{"Transfer-Encoding", "identity"}}},
 			{body},
 			Version::_1_1};
 		req.headers.contentLength(body.length());
@@ -23,8 +25,11 @@ int main() {
 		// req.sendWith(stream);
 		std::cout << stream.str() << std::endl;
 
-		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
-		std::cout << "Time elapsed: " << timeElapsed << std::endl << std::endl;
+		auto timeElapsed =
+			std::chrono::steady_clock::now() - timeBegin;
+		std::cout << "Time elapsed: " << timeElapsed
+							<< std::endl
+							<< std::endl;
 		assert(timeElapsed < 0.1s);
 	}
 
@@ -32,7 +37,8 @@ int main() {
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
 		std::stringstream stream(
-			"POST /not-a-real-uri HTTP/1.1\r\nHost: google.com\r\nTransfer-Encoding: "
+			"POST /not-a-real-uri HTTP/1.1\r\nHost: "
+			"google.com\r\nTransfer-Encoding: "
 			"identity\r\nContent-Length: 11\r\n\r\na few bytes");
 		Request req;
 		stream >> req;
@@ -45,7 +51,8 @@ int main() {
 		assert(req.headers.host().node == "google.com");
 		assert(req.headers.transferEncoding().size() == 1);
 		assert(
-			req.headers.transferEncoding()[0] == Header::TransferEncoding::IDENTITY);
+			req.headers.transferEncoding()[0] ==
+			Header::TransferEncoding::IDENTITY);
 		assert(req.headers.contentLength() == 11);
 
 		std::string buffer(1_zu << 2, '\0'), body;
@@ -54,8 +61,11 @@ int main() {
 		}
 		assert(body == "a few bytes");
 
-		auto timeElapsed = std::chrono::steady_clock::now() - timeBegin;
-		std::cout << "Time elapsed: " << timeElapsed << std::endl << std::endl;
+		auto timeElapsed =
+			std::chrono::steady_clock::now() - timeBegin;
+		std::cout << "Time elapsed: " << timeElapsed
+							<< std::endl
+							<< std::endl;
 		assert(timeElapsed < 0.1s);
 	}
 

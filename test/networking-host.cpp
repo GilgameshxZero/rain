@@ -5,7 +5,8 @@ int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
 
-	// Empty constructor and implicit conversions work as expected.
+	// Empty constructor and implicit conversions work as
+	// expected.
 	{
 		Host host;
 
@@ -25,7 +26,8 @@ int main() {
 		assert(host.node == "google.com");
 		assert(host.service == "80");
 
-		assert(static_cast<std::string>(host) == "google.com:80");
+		assert(
+			static_cast<std::string>(host) == "google.com:80");
 	}
 	{
 		Host host("google.com:");

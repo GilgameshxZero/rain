@@ -6,10 +6,12 @@ int main() {
 
 	int sData[]{1, 4, 5, 10, -5, -49, 3049};
 	std::string sStr{"yahallo!"};
-	std::vector<long long> sVrLL{439548549457045LL, 348LL, 3934957LL, 39LL, -4LL};
+	std::vector<long long> sVrLL{
+		439548549457045LL, 348LL, 3934957LL, 39LL, -4LL};
 	std::vector<std::string> sVrStr{"hello", "world", "! :D"};
 	{
-		Rain::Data::Serializer serializer("data-serializer.txt");
+		Rain::Data::Serializer serializer(
+			"data-serializer.txt");
 		serializer << sData << sStr << sVrLL << sVrStr;
 	}
 
@@ -17,7 +19,8 @@ int main() {
 	decltype(sStr) dStr;
 	decltype(sVrLL) dVrLL;
 	decltype(sVrStr) dVrStr;
-	Rain::Data::Deserializer deserializer("data-serializer.txt");
+	Rain::Data::Deserializer deserializer(
+		"data-serializer.txt");
 	deserializer >> dData >> dStr >> dVrLL >> dVrStr;
 
 	assert(memcmp(sData, dData, sizeof(sData)) == 0);

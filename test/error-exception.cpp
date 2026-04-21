@@ -10,11 +10,14 @@ enum class Error {
 	ERROR_2
 };
 
-// ErrorCategory classes are required to implement name and message.
+// ErrorCategory classes are required to implement name and
+// message.
 class ErrorCategory : public std::error_category {
 	public:
 	// Name of this category of errors.
-	char const *name() const noexcept { return "Error Category"; }
+	char const *name() const noexcept {
+		return "Error Category";
+	}
 
 	// Translates Errors from the enum into string messages.
 	std::string message(int error) const noexcept {
@@ -31,8 +34,10 @@ class ErrorCategory : public std::error_category {
 	}
 };
 
-// The custom exception class is simply defined from Error and ErrorCategory.
-using Exception = Rain::Error::Exception<Error, ErrorCategory>;
+// The custom exception class is simply defined from Error
+// and ErrorCategory.
+using Exception =
+	Rain::Error::Exception<Error, ErrorCategory>;
 
 int main() {
 	// Throw and catch an exceptions.
@@ -41,13 +46,15 @@ int main() {
 		try {
 			throw Exception(Error::ERROR_1);
 
-			throw std::runtime_error("Did not throw an error where expected.");
+			throw std::runtime_error(
+				"Did not throw an error where expected.");
 		} catch (Exception const &exception) {
 			std::cout << exception.what();
 			assert(
 				strcmp(
 					exception.what(),
-					"Error Category, 1: Error message for error 1.\n") == 0);
+					"Error Category, 1: Error message for error "
+					"1.\n") == 0);
 		}
 		std::cout << std::endl;
 	}

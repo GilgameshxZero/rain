@@ -13,7 +13,9 @@ int main() {
 		assert(headers["Host"] == "google.com");
 		assert(headers["host"] == "google.com");
 		assert(headers["hOsT"] == "google.com");
-		assert(static_cast<std::string>(headers.host()) == "google.com");
+		assert(
+			static_cast<std::string>(headers.host()) ==
+			"google.com");
 
 		headers.host({"google.com:"});
 		assert(headers["Host"] == "google.com");
@@ -42,10 +44,15 @@ int main() {
 
 	// Transfer-Encoding wrap/unwrap.
 	{
-		Headers headers{{{"Transfer-Encoding", "gzip, chunked"}}};
+		Headers headers{
+			{{"Transfer-Encoding", "gzip, chunked"}}};
 		assert(headers.transferEncoding().size() == 2);
-		assert(headers.transferEncoding()[0] == Header::TransferEncoding::GZIP);
-		assert(headers.transferEncoding()[1] == Header::TransferEncoding::CHUNKED);
+		assert(
+			headers.transferEncoding()[0] ==
+			Header::TransferEncoding::GZIP);
+		assert(
+			headers.transferEncoding()[1] ==
+			Header::TransferEncoding::CHUNKED);
 	}
 
 	return 0;

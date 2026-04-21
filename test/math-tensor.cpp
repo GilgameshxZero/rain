@@ -12,7 +12,8 @@ int main() {
 	{
 		// Clean, indexing, data.
 		Tensor<int, 2> a{{12, 12}};
-		a.applyOver<0>([&dist](int &value) { value = dist(generator); });
+		a.applyOver<0>(
+			[&dist](int &value) { value = dist(generator); });
 		assert(a.isClean());
 		assert((a.size() == array<size_t, 2>{{12, 12}}));
 
@@ -49,7 +50,8 @@ int main() {
 		cout << e << '\n';
 
 		// Advanced slicing.
-		auto f{a.asReshape<1>({0}).slice({{{.start = 19, .stop = 87, .step = 3}}})};
+		auto f{a.asReshape<1>({0}).slice(
+			{{{.start = 19, .stop = 87, .step = 3}}})};
 		cout << f << '\n';
 		assert(f.size()[0] == 23);
 		assert(f[0] == a[1][7]);
@@ -77,25 +79,47 @@ int main() {
 		cout << e << '\n';
 		e.transpose({2, 1, 0});
 		cout << e << '\n';
-		assert((e == Tensor<int, 3>{{2, 2, 2}, 0, 4, 2, 6, 1, 5, 3, 7}));
+		assert(
+			(e ==
+			 Tensor<int, 3>{{2, 2, 2}, 0, 4, 2, 6, 1, 5, 3, 7}));
 		e.transpose({2, 1, 0});
 		cout << e << '\n';
-		assert((e == Tensor<int, 3>{{2, 2, 2}, 0, 1, 2, 3, 4, 5, 6, 7}));
+		assert(
+			(e ==
+			 Tensor<int, 3>{{2, 2, 2}, 0, 1, 2, 3, 4, 5, 6, 7}));
 		e.transpose({1, 2, 0});
 		cout << e << '\n';
-		assert((e == Tensor<int, 3>{{2, 2, 2}, 0, 4, 1, 5, 2, 6, 3, 7}));
+		assert(
+			(e ==
+			 Tensor<int, 3>{{2, 2, 2}, 0, 4, 1, 5, 2, 6, 3, 7}));
 		e.swap({0, 1});
 		cout << e << '\n';
-		assert((e == Tensor<int, 3>{{2, 2, 2}, 2, 6, 3, 7, 0, 4, 1, 5}));
+		assert(
+			(e ==
+			 Tensor<int, 3>{{2, 2, 2}, 2, 6, 3, 7, 0, 4, 1, 5}));
 		e.transpose({1, 0, 2});
 		cout << e << '\n';
-		assert((e == Tensor<int, 3>{{2, 2, 2}, 2, 6, 0, 4, 3, 7, 1, 5}));
+		assert(
+			(e ==
+			 Tensor<int, 3>{{2, 2, 2}, 2, 6, 0, 4, 3, 7, 1, 5}));
 	}
 
 	{
 		// Row echelon.
 		Tensor<double, 2> a{
-			{3, 4}, 1.0, 2.0, 0.0, 0.0, 2.0, 4.0, 1.0, 7.0, 1.0, 4.0, 1.0, 2.0};
+			{3, 4},
+			1.0,
+			2.0,
+			0.0,
+			0.0,
+			2.0,
+			4.0,
+			1.0,
+			7.0,
+			1.0,
+			4.0,
+			1.0,
+			2.0};
 		cout << a << '\n';
 		auto b{a.reduceToRre()};
 		cout << b << '\n' << a << '\n';
@@ -103,40 +127,47 @@ int main() {
 
 	{
 		// Inner/outer.
-		Tensor<int, 1> e{{6}, 1, 2, 3, 4, 5, 6}, f{{6}, 7, 8, 9, 10, 11, 12};
+		Tensor<int, 1> e{{6}, 1, 2, 3, 4, 5, 6},
+			f{{6}, 7, 8, 9, 10, 11, 12};
 		cout << e << '\n' << f << '\n';
 		auto g{e.productOuter(f)};
 		auto h{e.productInner(f)};
 		cout << g << '\n' << h << '\n';
-		assert((g == Tensor<int, 2>{{6, 6}, 7,	8,	9,	10, 11, 12, 14, 16, 18,
-																20,			22, 24, 21, 24, 27, 30, 33, 36, 28,
-																32,			36, 40, 44, 48, 35, 40, 45, 50, 55,
-																60,			42, 48, 54, 60, 66, 72}));
+		assert(
+			(g == Tensor<int, 2>{{6, 6}, 7,	 8,	 9,	 10, 11, 12,
+													 14,		 16, 18, 20, 22, 24, 21,
+													 24,		 27, 30, 33, 36, 28, 32,
+													 36,		 40, 44, 48, 35, 40, 45,
+													 50,		 55, 60, 42, 48, 54, 60,
+													 66,		 72}));
 		assert((h == 217));
 
 		// Product policy.
-		auto i{e.product<1, Tensor<>::MinPlusProductPolicy>(f, {0}, {0})};
+		auto i{e.product<1, Tensor<>::MinPlusProductPolicy>(
+			f, {0}, {0})};
 		cout << i << '\n';
 		assert(i == 8);
 
 		// Normal product, equality.
 		Tensor<int, 2> a{{360, 500}}, b{{500, 420}}, c, d;
-		a.applyOver<0>([&dist](int &value) { value = dist(generator); });
-		b.applyOver<0>([&dist](int &value) { value = dist(generator); });
+		a.applyOver<0>(
+			[&dist](int &value) { value = dist(generator); });
+		b.applyOver<0>(
+			[&dist](int &value) { value = dist(generator); });
 		{
 			auto timeBegin = std::chrono::steady_clock::now();
 			c = a * b;
 			auto timeEnd = std::chrono::steady_clock::now();
-			std::cout << "Time elapsed (naive): " << timeEnd - timeBegin << '.'
-								<< std::endl;
+			std::cout << "Time elapsed (naive): "
+								<< timeEnd - timeBegin << '.' << std::endl;
 			assert(timeEnd - timeBegin <= 20s);
 		}
 		{
 			auto timeBegin = std::chrono::steady_clock::now();
 			d = a.productStrassen(b);
 			auto timeEnd = std::chrono::steady_clock::now();
-			std::cout << "Time elapsed (Strassen): " << timeEnd - timeBegin << '.'
-								<< std::endl;
+			std::cout << "Time elapsed (Strassen): "
+								<< timeEnd - timeBegin << '.' << std::endl;
 			assert(timeEnd - timeBegin <= 20s);
 		}
 		assert(c == d);

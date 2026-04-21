@@ -1,13 +1,15 @@
 // Includes all rain libraries.
 #pragma once
 
-// Disable secure warnings; the caller should be aware of out-of-bounds errors
-// when calling any not-bound-checked function.
+// Disable secure warnings; the caller should be aware of
+// out-of-bounds errors when calling any not-bound-checked
+// function.
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-// Versioning information is included but does not trigger a rebuild.
+// Versioning information is included but does not trigger a
+// rebuild.
 #include "../build/version.hpp"
 
 #include "rain/algorithm.hpp"
