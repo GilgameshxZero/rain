@@ -277,6 +277,15 @@ namespace Rain::Algorithm::Geometry {
 				static_cast<OtherPrecisionType>(this->right),
 				static_cast<OtherPrecisionType>(this->bottom)};
 		}
+
+		// Free function overloads.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Algorithm::Geometry::Rectangle<
+				PrecisionType> const &rectangle) {
+			return stream << "(" << rectangle.topLeft() << ", "
+										<< rectangle.bottomRight() << ')';
+		}
 	};
 
 	using RectangleS = Rectangle<short>;
@@ -307,12 +316,3 @@ struct std::hash<
 				rectangle.bottom));
 	}
 };
-
-template <typename PrecisionType>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Algorithm::Geometry::Rectangle<PrecisionType> const
-		&rectangle) {
-	return stream << "(" << rectangle.topLeft() << ", "
-								<< rectangle.bottomRight() << ')';
-}

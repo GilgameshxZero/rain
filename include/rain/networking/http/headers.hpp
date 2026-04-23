@@ -300,73 +300,73 @@ namespace Rain::Networking::Http {
 			transferEncoding.pop_back();
 			transferEncoding.pop_back();
 		}
+
+		// Stream operators.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Http::Headers const &headers) {
+			for (std::pair<std::string const, std::string> const
+						 &keyValue : headers) {
+				stream << keyValue.first << ": " << keyValue.second
+							 << "\r\n";
+			}
+			return stream;
+		}
+		friend inline std::istream &operator>>(
+			std::istream &stream,
+			Rain::Networking::Http::Headers &headers) {
+			// TODO: Optimize for string copying.
+
+			using namespace Rain::Literal;
+
+			// HTTP header lines can be up to 4K long.
+			// Total size of headers cannot exceed 64K.
+			std::size_t totalHeadersBytes{0};
+			std::string line(1_zu << 12, '\0');
+			while (stream.getline(&line[0], line.length())) {
+				line.resize(
+					static_cast<std::size_t>(std::max(
+						std::streamsize(0), stream.gcount() - 1)));
+
+				// If line is only \r, we are done.
+				if (line == "\r") {
+					break;
+				}
+
+				// Copy header value to another string.
+				std::size_t colonPos{line.find(':')};
+
+				if (colonPos == std::string::npos) {
+					// Failed to find colon, malformed.
+					throw Rain::Networking::Http::Headers::Exception(
+						Rain::Networking::Http::Headers::Error::
+							NO_COLON_DELIMITER);
+				}
+
+				std::string value(line.substr(colonPos + 1));
+
+				// Resize line to only include the header name.
+				line.resize(colonPos);
+
+				// Alias with name and trim whitespace.
+				std::string &name = line;
+				Rain::String::trimWhitespace(name);
+				Rain::String::trimWhitespace(value);
+
+				// Add to headers.
+				headers.insert({name, value});
+				totalHeadersBytes += name.length() + value.length();
+				if (totalHeadersBytes > (1_zu << 16)) {
+					throw Rain::Networking::Http::Headers::Exception(
+						Rain::Networking::Http::Headers::Error::
+							HEADERS_BLOCK_OVERFLOW);
+				}
+
+				// Prepare for next line.
+				line.resize(1_zu << 12);
+			}
+
+			return stream;
+		}
 	};
-}
-
-// Stream operators.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Http::Headers const &headers) {
-	for (std::pair<std::string const, std::string> const
-				 &keyValue : headers) {
-		stream << keyValue.first << ": " << keyValue.second
-					 << "\r\n";
-	}
-	return stream;
-}
-inline std::istream &operator>>(
-	std::istream &stream,
-	Rain::Networking::Http::Headers &headers) {
-	// TODO: Optimize for string copying.
-
-	using namespace Rain::Literal;
-
-	// HTTP header lines can be up to 4K long.
-	// Total size of headers cannot exceed 64K.
-	std::size_t totalHeadersBytes{0};
-	std::string line(1_zu << 12, '\0');
-	while (stream.getline(&line[0], line.length())) {
-		line.resize(
-			static_cast<std::size_t>(
-				std::max(std::streamsize(0), stream.gcount() - 1)));
-
-		// If line is only \r, we are done.
-		if (line == "\r") {
-			break;
-		}
-
-		// Copy header value to another string.
-		std::size_t colonPos{line.find(':')};
-
-		if (colonPos == std::string::npos) {
-			// Failed to find colon, malformed.
-			throw Rain::Networking::Http::Headers::Exception(
-				Rain::Networking::Http::Headers::Error::
-					NO_COLON_DELIMITER);
-		}
-
-		std::string value(line.substr(colonPos + 1));
-
-		// Resize line to only include the header name.
-		line.resize(colonPos);
-
-		// Alias with name and trim whitespace.
-		std::string &name = line;
-		Rain::String::trimWhitespace(name);
-		Rain::String::trimWhitespace(value);
-
-		// Add to headers.
-		headers.insert({name, value});
-		totalHeadersBytes += name.length() + value.length();
-		if (totalHeadersBytes > (1_zu << 16)) {
-			throw Rain::Networking::Http::Headers::Exception(
-				Rain::Networking::Http::Headers::Error::
-					HEADERS_BLOCK_OVERFLOW);
-		}
-
-		// Prepare for next line.
-		line.resize(1_zu << 12);
-	}
-
-	return stream;
 }

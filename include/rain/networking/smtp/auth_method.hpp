@@ -47,13 +47,13 @@ namespace Rain::Networking::Smtp {
 					return "CRAM-MD5";
 			}
 		}
-	};
-}
 
-// Stream operators. istream operator>> will take a token in
-// the format HTTP/-.-.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Smtp::AuthMethod authMethod) {
-	return stream << static_cast<std::string>(authMethod);
+		// Stream operators. istream operator>> will take a
+		// token in the format HTTP/-.-.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Smtp::AuthMethod authMethod) {
+			return stream << static_cast<std::string>(authMethod);
+		}
+	};
 }

@@ -191,6 +191,15 @@ namespace Rain::Algorithm::Geometry {
 				static_cast<OtherPrecisionType>(this->x),
 				static_cast<OtherPrecisionType>(this->y)};
 		}
+
+		// Free function overloads.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Algorithm::Geometry::Point<PrecisionType> const
+				&point) {
+			return stream << '(' << point.x << ", " << point.y
+										<< ')';
+		}
 	};
 
 	using PointS = Point<short>;
@@ -212,11 +221,3 @@ struct std::hash<
 			Rain::Random::SplitMixHash<PrecisionType>()(point.y));
 	}
 };
-
-template <typename PrecisionType>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Algorithm::Geometry::Point<PrecisionType> const
-		&point) {
-	return stream << '(' << point.x << ", " << point.y << ')';
-}

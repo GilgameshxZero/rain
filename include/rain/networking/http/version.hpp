@@ -50,13 +50,13 @@ namespace Rain::Networking::Http {
 					return "3.0";
 			}
 		}
-	};
-}
 
-// Stream operators. istream operator>> will take a token in
-// the format HTTP/-.-.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Http::Version version) {
-	return stream << static_cast<std::string>(version);
+		// Stream operators. istream operator>> will take a
+		// token in the format HTTP/-.-.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Http::Version version) {
+			return stream << static_cast<std::string>(version);
+		}
+	};
 }

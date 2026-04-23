@@ -114,29 +114,30 @@ namespace Rain::Networking::Smtp {
 					return "AUTH";
 			}
 		}
-	};
-}
 
-// Stream operators.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Smtp::Command command) {
-	return stream << static_cast<std::string>(command);
-}
-inline std::istream &operator>>(
-	std::istream &stream,
-	Rain::Networking::Smtp::Command &command) {
-	// Any stream-in operations should not be subject to
-	// failure from a long line.
-	//
-	// Reserve +2 characters, one for the terminating nullptr,
-	// one for reading the delimiter. failbit will not be set
-	// if the maximum length is reached.
-	std::string commandStr(6, '\0');
-	stream.getline(&commandStr[0], commandStr.size(), ' ');
-	commandStr.resize(
-		static_cast<std::size_t>(
-			std::max(std::streamsize(0), stream.gcount() - 1)));
-	command = Rain::Networking::Smtp::Command(commandStr);
-	return stream;
+		// Stream operators.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Smtp::Command command) {
+			return stream << static_cast<std::string>(command);
+		}
+		friend inline std::istream &operator>>(
+			std::istream &stream,
+			Rain::Networking::Smtp::Command &command) {
+			// Any stream-in operations should not be subject to
+			// failure from a long line.
+			//
+			// Reserve +2 characters, one for the terminating
+			// nullptr, one for reading the delimiter. failbit
+			// will not be set if the maximum length is reached.
+			std::string commandStr(6, '\0');
+			stream.getline(
+				&commandStr[0], commandStr.size(), ' ');
+			commandStr.resize(
+				static_cast<std::size_t>(std::max(
+					std::streamsize(0), stream.gcount() - 1)));
+			command = Rain::Networking::Smtp::Command(commandStr);
+			return stream;
+		}
+	};
 }

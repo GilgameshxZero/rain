@@ -162,6 +162,15 @@ namespace Rain::Algorithm::Geometry {
 				static_cast<OtherPrecisionType>(this->start),
 				static_cast<OtherPrecisionType>(this->end)};
 		}
+
+		// Free function overloads.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Algorithm::Geometry::LineSegment<
+				PrecisionType> const &lineSegment) {
+			return stream << '(' << lineSegment.start << ", "
+										<< lineSegment.end << ')';
+		}
 	};
 
 	using LineSegmentS = LineSegment<short>;
@@ -186,12 +195,3 @@ struct std::hash<
 				lineSegment.end));
 	}
 };
-
-template <typename PrecisionType>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Algorithm::Geometry::LineSegment<
-		PrecisionType> const &lineSegment) {
-	return stream << '(' << lineSegment.start << ", "
-								<< lineSegment.end << ')';
-}

@@ -344,12 +344,12 @@ namespace Rain::Networking::Smtp {
 					return "Domain does not accept mail";
 			}
 		}
-	};
-}
 
-// Stream operator.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Smtp::StatusCode statusCode) {
-	return stream << static_cast<std::string>(statusCode);
+		// Stream operator.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Smtp::StatusCode statusCode) {
+			return stream << static_cast<std::string>(statusCode);
+		}
+	};
 }

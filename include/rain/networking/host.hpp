@@ -70,15 +70,16 @@ namespace Rain::Networking {
 		bool operator!=(Host const &other) const {
 			return !this->operator==(other);
 		}
+
+		// User-defined operators for outputting hostnames.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Host const &host) {
+			return stream << host.asStr();
+		}
 	};
 }
 
-// User-defined operators for outputting hostnames.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Host const &host) {
-	return stream << host.asStr();
-}
 namespace Rain::Data {
 	template <>
 	struct serialize<Rain::Networking::Host> {

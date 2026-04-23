@@ -80,30 +80,30 @@ namespace Rain::Networking::Http {
 					return "PATCH";
 			}
 		}
-	};
-}
 
-// Stream operators.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Http::Method method) {
-	return stream << static_cast<std::string>(method);
-}
-inline std::istream &operator>>(
-	std::istream &stream,
-	Rain::Networking::Http::Method &method) {
-	// Any stream-in operations should not be subject to
-	// failure from a long line.
-	//
-	// Longest method is 7 characters, CONNECT/OPTIONS.
-	// Reserve +2 characters, one for the terminating nullptr,
-	// one for reading the delimiter. failbit will not be set
-	// if the maximum length is reached.
-	std::string methodStr(9, '\0');
-	stream.getline(&methodStr[0], methodStr.size(), ' ');
-	methodStr.resize(
-		static_cast<std::size_t>(
-			std::max(std::streamsize(0), stream.gcount() - 1)));
-	method = Rain::Networking::Http::Method(methodStr);
-	return stream;
+		// Stream operators.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Http::Method method) {
+			return stream << static_cast<std::string>(method);
+		}
+		friend inline std::istream &operator>>(
+			std::istream &stream,
+			Rain::Networking::Http::Method &method) {
+			// Any stream-in operations should not be subject to
+			// failure from a long line.
+			//
+			// Longest method is 7 characters, CONNECT/OPTIONS.
+			// Reserve +2 characters, one for the terminating
+			// nullptr, one for reading the delimiter. failbit
+			// will not be set if the maximum length is reached.
+			std::string methodStr(9, '\0');
+			stream.getline(&methodStr[0], methodStr.size(), ' ');
+			methodStr.resize(
+				static_cast<std::size_t>(std::max(
+					std::streamsize(0), stream.gcount() - 1)));
+			method = Rain::Networking::Http::Method(methodStr);
+			return stream;
+		}
+	};
 }

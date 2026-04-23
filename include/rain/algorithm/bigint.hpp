@@ -587,105 +587,110 @@ namespace Rain::Algorithm {
 			*this -= 1;
 			return tmp;
 		}
+
+		// Free function operator overloads.
+		template <
+			typename OtherInteger,
+			typename std::enable_if<
+				!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+					OtherInteger>::value>::type * = nullptr>
+		friend inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED>
+		operator+(
+			OtherInteger const &left,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&right) {
+			return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(
+							 left) +
+				right;
+		}
+		template <
+			typename OtherInteger,
+			typename std::enable_if<
+				!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+					OtherInteger>::value>::type * = nullptr>
+		inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED>
+		friend operator-(
+			OtherInteger const &left,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&right) {
+			return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(
+							 left) -
+				right;
+		}
+		template <
+			typename OtherInteger,
+			typename std::enable_if<
+				!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+					OtherInteger>::value>::type * = nullptr>
+		friend inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED>
+		operator*(
+			OtherInteger const &left,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&right) {
+			return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(
+							 left) *
+				right;
+		}
+		template <
+			typename OtherInteger,
+			typename std::enable_if<
+				!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+					OtherInteger>::value>::type * = nullptr>
+		friend inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED>
+		operator/(
+			OtherInteger const &left,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&right) {
+			return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(
+							 left) /
+				right;
+		}
+		template <
+			typename OtherInteger,
+			typename std::enable_if<
+				!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
+					OtherInteger>::value>::type * = nullptr>
+		friend inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED>
+		operator%(
+			OtherInteger const &left,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&right) {
+			return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(
+							 left) %
+				right;
+		}
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
+				&right) {
+			// TODO: a trivial optimization is to output 9 digits
+			// at once, but need to care for leading 0s.
+			if (right < 0) {
+				stream.put('-');
+				return stream << -right;
+			}
+			if (right > 9) {
+				stream << (right / 10);
+			}
+			auto first{right % 10};
+			auto second{
+				static_cast<typename Rain::Algorithm::
+											BigIntTypeMap<5, SIGNED>::Type>(
+					first)};
+			return stream.put(second + '0');
+		}
+		friend inline std::istream &operator>>(
+			std::istream &stream,
+			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> &right) {
+			std::string s;
+			stream >> s;
+			right = 0;
+			for (char const &i : s) {
+				right = right * 10 + (i - '0');
+			}
+			return stream;
+		}
 	};
-}
-
-template <
-	typename OtherInteger,
-	std::size_t LOG_BITS,
-	bool SIGNED,
-	typename std::enable_if<
-		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-			OtherInteger>::value>::type * = nullptr>
-inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator+(
-	OtherInteger const &left,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) +
-		right;
-}
-template <
-	typename OtherInteger,
-	std::size_t LOG_BITS,
-	bool SIGNED,
-	typename std::enable_if<
-		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-			OtherInteger>::value>::type * = nullptr>
-inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator-(
-	OtherInteger const &left,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) -
-		right;
-}
-template <
-	typename OtherInteger,
-	std::size_t LOG_BITS,
-	bool SIGNED,
-	typename std::enable_if<
-		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-			OtherInteger>::value>::type * = nullptr>
-inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator*(
-	OtherInteger const &left,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) *
-		right;
-}
-template <
-	typename OtherInteger,
-	std::size_t LOG_BITS,
-	bool SIGNED,
-	typename std::enable_if<
-		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-			OtherInteger>::value>::type * = nullptr>
-inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator/(
-	OtherInteger const &left,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) /
-		right;
-}
-template <
-	typename OtherInteger,
-	std::size_t LOG_BITS,
-	bool SIGNED,
-	typename std::enable_if<
-		!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
-			OtherInteger>::value>::type * = nullptr>
-inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> operator%(
-	OtherInteger const &left,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	return Rain::Algorithm::BigInt<LOG_BITS, SIGNED>(left) %
-		right;
-}
-
-template <std::size_t LOG_BITS, bool SIGNED>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const &right) {
-	// TODO: a trivial optimization is to output 9 digits at
-	// once, but need to care for leading 0s.
-	if (right < 0) {
-		stream.put('-');
-		return stream << -right;
-	}
-	if (right > 9) {
-		stream << (right / 10);
-	}
-	auto first{right % 10};
-	auto second{
-		static_cast<typename Rain::Algorithm::
-									BigIntTypeMap<5, SIGNED>::Type>(first)};
-	return stream.put(second + '0');
-}
-template <std::size_t LOG_BITS, bool SIGNED>
-inline std::istream &operator>>(
-	std::istream &stream,
-	Rain::Algorithm::BigInt<LOG_BITS, SIGNED> &right) {
-	std::string s;
-	stream >> s;
-	right = 0;
-	for (char const &i : s) {
-		right = right * 10 + (i - '0');
-	}
-	return stream;
 }
 
 // Hash operator for this user-defined type, which combines

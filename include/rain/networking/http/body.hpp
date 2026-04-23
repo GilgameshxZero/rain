@@ -89,17 +89,17 @@ namespace Rain::Networking::Http {
 			}
 			return this->rdbuf()->in_avail();
 		}
-	};
-}
 
-// Stream operator. Cannot stream in >> directly, since need
-// to know Content-Length/Transfer-Encoding.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Http::Body &body) {
-	// Will set failbit on stream if rdbuf is empty. So, only
-	// execute if rdbuf is not empty.
-	stream << body.rdbuf();
-	stream.clear();
-	return stream;
+		// Stream operator. Cannot stream in >> directly, since
+		// need to know Content-Length/Transfer-Encoding.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Http::Body &body) {
+			// Will set failbit on stream if rdbuf is empty. So,
+			// only execute if rdbuf is not empty.
+			stream << body.rdbuf();
+			stream.clear();
+			return stream;
+		}
+	};
 }

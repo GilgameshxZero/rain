@@ -374,12 +374,12 @@ namespace Rain::Networking::Http {
 					return "HTTP Version Not Supported";
 			}
 		}
-	};
-}
 
-// Stream operator.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Http::StatusCode statusCode) {
-	return stream << static_cast<std::string>(statusCode);
+		// Stream operator.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Http::StatusCode statusCode) {
+			return stream << static_cast<std::string>(statusCode);
+		}
+	};
 }

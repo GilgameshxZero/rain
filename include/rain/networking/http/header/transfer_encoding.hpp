@@ -57,14 +57,14 @@ namespace Rain::Networking::Http::Header {
 					return "compress";
 			}
 		}
-	};
-}
 
-// Stream operator.
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Http::Header::TransferEncoding
-		transferEncoding) {
-	return stream << static_cast<std::string>(
-					 transferEncoding);
+		// Stream operator.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Http::Header::TransferEncoding
+				transferEncoding) {
+			return stream << static_cast<std::string>(
+							 transferEncoding);
+		}
+	};
 }

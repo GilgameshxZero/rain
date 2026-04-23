@@ -46,14 +46,6 @@ namespace Rain::Networking::Smtp {
 			return stream << static_cast<std::string>(mailbox);
 		}
 	};
-
-	// Hash Mailbox for unordered_set and unordered_map.
-	struct HashMailbox {
-		std::size_t operator()(Mailbox const &mailbox) const {
-			return std::hash<std::string>()(
-				mailbox.operator std::string());
-		}
-	};
 }
 
 namespace Rain::Data {
@@ -71,6 +63,17 @@ namespace Rain::Data {
 			Rain::Data::Deserializer &deserializer,
 			Rain::Networking::Smtp::Mailbox &data) {
 			deserializer >> data.name >> data.host;
+		}
+	};
+}
+
+namespace std {
+	template <>
+	struct hash<Rain::Networking::Smtp::Mailbox> {
+		size_t operator()(Rain::Networking::Smtp::Mailbox const
+												&mailbox) const {
+			return std::hash<std::string>()(
+				mailbox.operator std::string());
 		}
 	};
 }

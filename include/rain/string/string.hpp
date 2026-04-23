@@ -29,10 +29,18 @@
 #include <string>
 #include <unordered_set>
 
-template <typename Value, std::size_t SIZE>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	std::array<Value, SIZE> const &values) {
+// Single operator overload for all iterable classes. Must
+// use `basic_ostream` so that selectivity requirements are
+// satisfied when compared to the standard library
+// `operator<<` for `std::string`.
+template <
+	typename CharT,
+	typename Traits,
+	typename Value,
+	typename = decltype(std::begin(std::declval<Value>()))>
+inline std::basic_ostream<CharT, Traits> &operator<<(
+	std::basic_ostream<CharT, Traits> &stream,
+	Value const &values) {
 	if (values.empty()) {
 		return stream << "[]";
 	}
@@ -42,26 +50,6 @@ inline std::ostream &operator<<(
 		separator = ' ';
 	}
 	return stream << ']';
-}
-
-template <
-	typename Key,
-	typename Hash,
-	typename KeyEqual,
-	typename Allocator>
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	std::unordered_set<Key, Hash, KeyEqual, Allocator> const
-		&values) {
-	if (values.empty()) {
-		return stream << "{}";
-	}
-	char separator{'{'};
-	for (auto &i : values) {
-		stream << separator << i;
-		separator = ' ';
-	}
-	return stream << '}';
 }
 
 namespace Rain {

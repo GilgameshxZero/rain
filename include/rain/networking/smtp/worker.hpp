@@ -169,7 +169,7 @@ namespace Rain::Networking::Smtp {
 
 		// Internal state.
 		std::optional<Mailbox> mailFrom;
-		std::unordered_set<Mailbox, HashMailbox> rcptTo;
+		std::unordered_set<Mailbox> rcptTo;
 
 		// Protected to allow for overrides to call if
 		// necessary.

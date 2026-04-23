@@ -509,6 +509,26 @@ namespace Rain::Algorithm {
 				OTHER_MODULUS_OUTER> const &exponent) const {
 			return this->power(exponent.value);
 		}
+
+		// Ease-of-use streaming operators.
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Algorithm::ModulusRingBase<
+				Derived,
+				Underlying,
+				MODULUS_OUTER> const &right) {
+			return stream << right.value;
+		}
+		friend inline std::istream &operator>>(
+			std::istream &stream,
+			Rain::Algorithm::
+				ModulusRingBase<Derived, Underlying, MODULUS_OUTER>
+					&right) {
+			stream >> right.value;
+			right.value =
+				(right.MODULUS + right.value) % right.MODULUS;
+			return stream;
+		}
 	};
 
 	// Any reasonable modulus will suffice, since we do not
@@ -727,34 +747,6 @@ namespace Rain::Algorithm {
 			Underlying,
 			MODULUS_OUTER> const &right) {
 		return right.build(left) / right;
-	}
-
-	// Ease-of-use streaming operators.
-	template <
-		typename Derived,
-		typename Underlying,
-		std::size_t MODULUS_OUTER>
-	inline std::ostream &operator<<(
-		std::ostream &stream,
-		Rain::Algorithm::ModulusRingBase<
-			Derived,
-			Underlying,
-			MODULUS_OUTER> const &right) {
-		return stream << right.value;
-	}
-	template <
-		typename Derived,
-		typename Underlying,
-		std::size_t MODULUS_OUTER>
-	inline std::istream &operator>>(
-		std::istream &stream,
-		Rain::Algorithm::
-			ModulusRingBase<Derived, Underlying, MODULUS_OUTER>
-				&right) {
-		stream >> right.value;
-		right.value =
-			(right.MODULUS + right.value) % right.MODULUS;
-		return stream;
 	}
 }
 
