@@ -27,6 +27,7 @@
 #include <locale>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 
 template <typename Value, std::size_t SIZE>
 inline std::ostream &operator<<(
@@ -35,11 +36,30 @@ inline std::ostream &operator<<(
 	if (values.empty()) {
 		return stream << "[]";
 	}
-	stream << '[' << std::setw(4) << values[0];
+	stream << '[' << values[0];
 	for (std::size_t i{1}; i < SIZE; i++) {
-		stream << ' ' << std::setw(4) << values[i];
+		stream << ' ' << values[i];
 	}
 	return stream << ']';
+}
+
+template <
+	typename Key,
+	typename Hash,
+	typename KeyEqual,
+	typename Allocator>
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	std::unordered_set<Key, Hash, KeyEqual, Allocator> const
+		&values) {
+	if (values.empty()) {
+		return stream << "{}";
+	}
+	stream << '{' << values[0];
+	for (std::size_t i{1}; i < values.size(); i++) {
+		stream << ' ' << values[i];
+	}
+	return stream << '}';
 }
 
 namespace Rain {
