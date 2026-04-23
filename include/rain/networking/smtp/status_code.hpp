@@ -68,56 +68,13 @@ namespace Rain::Networking::Smtp {
 		Value value;
 
 		public:
-		// Maps std::size_t to Value.
-		static inline std::
-			unordered_map<std::size_t, Value> const fromSz{
-				{211, SYSTEM_STATUS},
-				{214, HELP_MESSAGE},
-				{220, SERVICE_READY},
-				{221, SERVICE_CLOSING},
-				{235, AUTHENTICATION_SUCCEEDED},
-				{250, REQUEST_COMPLETED},
-				{251, USER_NOT_LOCAL},
-				{252, CANNOT_VERIFY},
-
-				{334, SERVER_CHALLENGE},
-				{354, START_MAIL_INPUT},
-
-				{421, SERVICE_NOT_AVAILABLE},
-				{432, PASSWORD_TRANSITION_NEEDED},
-				{450, REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE},
-				{451, REQUEST_ABORTED_LOCAL_ERROR},
-				{452, REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE},
-				{454, TEMPORARY_AUTHENTICATION_FAILURE},
-				{455, CANNOT_ACCOMODATE_PARAMETER},
-
-				{500, SYNTAX_ERROR_COMMAND},
-				{501, SYNTAX_ERROR_PARAMETER_ARGUMENT},
-				{502, COMMAND_NOT_IMPLEMENTED},
-				{503, BAD_SEQUENCE_COMMAND},
-				{504, COMMAND_PARAMETER_NOT_IMPLEMENTED},
-				{521, SERVER_NO_MAIL},
-				{523, ENCRYPTION_NEEDED},
-				{530, AUTHENTICATION_REQUIRED},
-				{534, AUTHENTICATION_TOO_WEAK},
-				{535, AUTHENTICATION_INVALID},
-				{538, AUTHENTICATION_REQUIRES_ENCRYPTION},
-				{550,
-				 REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT},
-				{551, USER_NOT_LOCAL_PERMANENT},
-				{552,
-				 REQUEST_ABORTED_INSUFFICIENT_STORAGE_PERMANENT},
-				{553, REQUEST_NOT_TAKEN_MAILBOX_NAME},
-				{554, TRANSACTION_FAILED},
-				{556, DOMAIN_NO_MAIL}};
-
 		// Direct constructors. Directly casts to Value from
 		// std::size_t or parses std::string. May throw.
 		constexpr StatusCode(
 			Value value = REQUEST_COMPLETED) noexcept
 				: value(value) {}
 		StatusCode(std::size_t value)
-				: value(StatusCode::fromSz.at(value)) {}
+				: value(static_cast<Value>(value)) {}
 		StatusCode(std::string const &value)
 				: StatusCode(
 						static_cast<std::size_t>(
@@ -127,82 +84,8 @@ namespace Rain::Networking::Smtp {
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }
 		explicit operator bool() = delete;
-		operator std::string() const noexcept {
-			switch (this->value) {
-				case SYSTEM_STATUS:
-					return "211";
-				case HELP_MESSAGE:
-					return "214";
-				case SERVICE_READY:
-					return "220";
-				case SERVICE_CLOSING:
-					return "221";
-				case AUTHENTICATION_SUCCEEDED:
-					return "235";
-				case REQUEST_COMPLETED:
-					return "250";
-				case USER_NOT_LOCAL:
-					return "251";
-				case CANNOT_VERIFY:
-					return "252";
-
-				case SERVER_CHALLENGE:
-					return "334";
-				case START_MAIL_INPUT:
-					return "354";
-
-				case SERVICE_NOT_AVAILABLE:
-					return "421";
-				case PASSWORD_TRANSITION_NEEDED:
-					return "432";
-				case REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE:
-					return "450";
-				case REQUEST_ABORTED_LOCAL_ERROR:
-					return "451";
-				case REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE:
-					return "452";
-				case TEMPORARY_AUTHENTICATION_FAILURE:
-					return "454";
-				case CANNOT_ACCOMODATE_PARAMETER:
-					return "455";
-
-				case SYNTAX_ERROR_COMMAND:
-					return "500";
-				case SYNTAX_ERROR_PARAMETER_ARGUMENT:
-					return "501";
-				case COMMAND_NOT_IMPLEMENTED:
-					return "502";
-				case BAD_SEQUENCE_COMMAND:
-					return "503";
-				case COMMAND_PARAMETER_NOT_IMPLEMENTED:
-					return "504";
-				case SERVER_NO_MAIL:
-					return "521";
-				case ENCRYPTION_NEEDED:
-					return "523";
-				case AUTHENTICATION_REQUIRED:
-					return "530";
-				case AUTHENTICATION_TOO_WEAK:
-					return "534";
-				case AUTHENTICATION_INVALID:
-					return "535";
-				case AUTHENTICATION_REQUIRES_ENCRYPTION:
-					return "538";
-				case REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT:
-					return "550";
-				case USER_NOT_LOCAL_PERMANENT:
-					return "551";
-				case REQUEST_ABORTED_INSUFFICIENT_STORAGE_PERMANENT:
-					return "552";
-				case REQUEST_NOT_TAKEN_MAILBOX_NAME:
-					return "553";
-				case TRANSACTION_FAILED:
-					return "554";
-				// Default never occurs.
-				case DOMAIN_NO_MAIL:
-				default:
-					return "556";
-			}
+		operator std::string() const {
+			return std::to_string(this->value);
 		}
 
 		// Special getters.
