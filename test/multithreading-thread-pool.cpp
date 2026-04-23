@@ -1,6 +1,8 @@
 // Test for Multithreading::ThreadPool.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 
@@ -44,8 +46,8 @@ int main() {
 									 .count()
 							<< "ms." << std::endl
 							<< std::endl;
-		assert(counter == 25);
-		assert(threadPool.getCThreads() == 8);
+		releaseAssert(counter == 25);
+		releaseAssert(threadPool.getCThreads() == 8);
 	}
 
 	// Unlimited threads, 25 tasks.Test spawning additional
@@ -76,8 +78,8 @@ int main() {
 									 .count()
 							<< "ms." << std::endl
 							<< std::endl;
-		assert(counter == 50);
-		assert(unlimitedThreadPool.getCThreads() == 25);
+		releaseAssert(counter == 50);
+		releaseAssert(unlimitedThreadPool.getCThreads() == 25);
 	}
 
 	// Very large number of tasks (4000), with a limit of 2048
@@ -116,7 +118,7 @@ int main() {
 									 .count()
 							<< "ms." << std::endl
 							<< std::endl;
-		assert(counter == 4050);
+		releaseAssert(counter == 4050);
 	}
 
 	// Tasks which throw exceptions should be reported but not

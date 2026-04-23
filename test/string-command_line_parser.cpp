@@ -1,6 +1,8 @@
 // Tests for String::CommandLineParser.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	Rain::String::CommandLineParser parser;
 
@@ -44,13 +46,14 @@ int main() {
 		std::cout << "Include: " << includes[i] << std::endl;
 	}
 
-	assert(port == 80);
-	assert(live);
-	assert(reload);
-	assert(name == "rain");
-	assert(includes.size() == 4);
-	assert(nonKeyedArguments.size() == 1);
-	assert(nonKeyedArguments.front() == "filename.txt");
+	releaseAssert(port == 80);
+	releaseAssert(live);
+	releaseAssert(reload);
+	releaseAssert(name == "rain");
+	releaseAssert(includes.size() == 4);
+	releaseAssert(nonKeyedArguments.size() == 1);
+	releaseAssert(
+		nonKeyedArguments.front() == "filename.txt");
 
 	return 0;
 }

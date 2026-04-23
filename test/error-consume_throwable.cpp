@@ -1,6 +1,8 @@
 // Tests for Rain::Error::consumeThrowable.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 auto foo() {
 	static int count{0};
 	return count++;
@@ -21,7 +23,7 @@ int main() {
 				std::cout << "This function should not throw."
 									<< std::endl;
 			},
-			RAIN_ERROR_LOCATION)();
+			std::source_location::current())();
 	}
 
 	// Wrap a throwing callable and execute it.
@@ -32,14 +34,14 @@ int main() {
 									<< std::endl;
 				throw std::exception();
 			},
-			RAIN_ERROR_LOCATION)();
+			std::source_location::current())();
 	}
 
 	// Consume a throwable with captures and parameters.
 	{
 		int left{3};
 		left++;
-		assert(
+		releaseAssert(
 			Rain::Error::consumeThrowable(
 				[left](int right) {
 					std::cout << "This function computes the sum "
@@ -47,7 +49,7 @@ int main() {
 
 					return left + right;
 				},
-				RAIN_ERROR_LOCATION)(5) == 9);
+				std::source_location::current())(5) == 9);
 	}
 
 	// Throw and ensure that managed type is
@@ -70,13 +72,13 @@ int main() {
 			return "a string"s;
 		};
 		auto consumedCallable = Rain::Error::consumeThrowable(
-			callable, RAIN_ERROR_LOCATION);
+			callable, std::source_location::current());
 		std::string noThrowStatus(consumedCallable(false)),
 			throwStatus(consumedCallable(true));
 		std::cout << noThrowStatus << ", " << throwStatus
 							<< std::endl;
-		assert(noThrowStatus == "a string");
-		assert(throwStatus.empty());
+		releaseAssert(noThrowStatus == "a string");
+		releaseAssert(throwStatus.empty());
 	}
 
 	// References should be forwarded through
@@ -86,8 +88,8 @@ int main() {
 
 		Rain::Error::consumeThrowable(
 			[](int &value) { value++; },
-			RAIN_ERROR_LOCATION)(value);
-		assert(value == 1);
+			std::source_location::current())(value);
+		releaseAssert(value == 1);
 	}
 
 	// Mutable lambdas must be handled as well.
@@ -100,25 +102,25 @@ int main() {
 			value += 1;
 			return value;
 		};
-		assert(throwable() == 1);
-		assert(throwable() == 2);
+		releaseAssert(throwable() == 1);
+		releaseAssert(throwable() == 2);
 		auto consumed =
 			Rain::Error::consumeThrowable(throwable);
-		assert(consumed() == 3);
-		assert(consumed() == 4);
+		releaseAssert(consumed() == 3);
+		releaseAssert(consumed() == 4);
 
 		// std::move on lambda copies it.
-		assert(throwable() == 3);
+		releaseAssert(throwable() == 3);
 	}
 
 	// Function pointers should behave normally (i.e. copied
 	// during move).
 	{
 		auto consumed = Rain::Error::consumeThrowable(foo);
-		assert(foo() == 0);
-		assert(consumed() == 1);
-		assert(foo() == 2);
-		assert(consumed() == 3);
+		releaseAssert(foo() == 0);
+		releaseAssert(consumed() == 1);
+		releaseAssert(foo() == 2);
+		releaseAssert(consumed() == 3);
 	}
 
 	// std::function MAY OR MAY NOT be moved depending on
@@ -129,11 +131,11 @@ int main() {
 			return value++;
 		});
 
-		assert(f() == 0);
+		releaseAssert(f() == 0);
 		auto consumed =
 			Rain::Error::consumeThrowable(std::move(f));
 		try {
-			assert(f() == 1);
+			releaseAssert(f() == 1);
 		} catch (std::exception const &exception) {
 			std::cout << exception.what();
 		}
@@ -144,10 +146,10 @@ int main() {
 	{
 		auto consumed = Rain::Error::consumeThrowable(
 			RAIN_FUNCTIONAL_RESOLVE_OVERLOAD(bar));
-		assert(consumed() == "hi!");
-		assert(consumed(3) == 3);
-		assert(consumed(19) == 19);
-		assert(consumed() == "hi!");
+		releaseAssert(consumed() == "hi!");
+		releaseAssert(consumed(3) == 3);
+		releaseAssert(consumed(19) == 19);
+		releaseAssert(consumed() == "hi!");
 	}
 
 	return 0;

@@ -1,6 +1,8 @@
 // Tests Networking::Http::Header::TransferEncoding.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Networking::Http::Header;
 
@@ -9,7 +11,7 @@ int main() {
 		TransferEncoding t;
 		std::stringstream stream;
 		stream << t;
-		assert(stream.str() == "identity");
+		releaseAssert(stream.str() == "identity");
 
 		switch (t) {
 			case TransferEncoding::IDENTITY:
@@ -19,7 +21,7 @@ int main() {
 				throw std::runtime_error("Switch failed.\n");
 		}
 
-		assert(t == TransferEncoding::IDENTITY);
+		releaseAssert(t == TransferEncoding::IDENTITY);
 		if (t != TransferEncoding::IDENTITY) {
 			throw std::runtime_error(
 				"Inequality operator failed.\n");
@@ -30,10 +32,10 @@ int main() {
 			throw std::runtime_error(
 				"Inequality operator failed.\n");
 		}
-		assert(t == t2);
+		releaseAssert(t == t2);
 
 		std::string s{t.operator std::string()};
-		assert(s == "identity");
+		releaseAssert(s == "identity");
 
 		try {
 			TransferEncoding t3("invalid");

@@ -1,6 +1,8 @@
 // Tests for pickle serialization/deserialization.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 
@@ -23,10 +25,10 @@ int main() {
 		"data-serializer.txt");
 	deserializer >> dData >> dStr >> dVrLL >> dVrStr;
 
-	assert(memcmp(sData, dData, sizeof(sData)) == 0);
-	assert(sStr == dStr);
-	assert(sVrLL == dVrLL);
-	assert(sVrStr == dVrStr);
+	releaseAssert(memcmp(sData, dData, sizeof(sData)) == 0);
+	releaseAssert(sStr == dStr);
+	releaseAssert(sVrLL == dVrLL);
+	releaseAssert(sVrStr == dVrStr);
 
 	return 0;
 }

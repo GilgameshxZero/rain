@@ -1,28 +1,34 @@
 #include <rain.hpp>
 
-using namespace Rain;
-using namespace Functional;
-using namespace std;
+using Rain::Error::releaseAssert;
 
 int main() {
 	// Must include <array>.
-	assert(
+	releaseAssert(
 		(Rain::Functional::isStdHashable<long long>()).value);
-	assert(
+	releaseAssert(
 		!(Rain::Functional::isStdHashable<std::array<int, 8>>())
 			 .value);
-	assert(
+	releaseAssert(
 		!(Rain::Functional::
 				isBaseOfTemplate<std::pair, std::array<int, 8>>())
 			 .value);
-	assert((Rain::Functional::isConstIterable<
-						std::array<int, 8>>())
-					 .value);
+	releaseAssert((Rain::Functional::isConstIterable<
+									 std::array<int, 8>>())
+									.value);
 
 	// Cannot use std::is_base_of with template base types.
-	assert((isBaseOfTemplate<pair, pair<int, char>>()).value);
-	assert(
-		!(isBaseOfTemplate<vector, pair<int, char>>()).value);
-	assert((isBaseOfTemplate<vector, vector<int>>()).value);
+	releaseAssert(
+		(Rain::Functional::
+			 isBaseOfTemplate<std::pair, std::pair<int, char>>())
+			.value);
+	releaseAssert(!(Rain::Functional::isBaseOfTemplate<
+										std::vector,
+										std::pair<int, char>>())
+									 .value);
+	releaseAssert(
+		(Rain::Functional::
+			 isBaseOfTemplate<std::vector, std::vector<int>>())
+			.value);
 	return 0;
 }

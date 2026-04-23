@@ -4,12 +4,11 @@
 
 #include "../functional.hpp"
 #include "../string/string.hpp"
-#include "../string/stringify.hpp"
+#include "assert.hpp"
 
 #include <iostream>
-
-// Retrieves caller site for debugging.
-#define RAIN_ERROR_LOCATION __FILE__ ":" STRINGIFY(__LINE__)
+#include <optional>
+#include <source_location>
 
 namespace Rain::Error {
 	// Wraps any generic callable in try/catch, consuming all
@@ -32,10 +31,10 @@ namespace Rain::Error {
 		// Perfect forwarding rvalue-reference to allow for
 		// inline construction and later move-capture.
 		Callable &&callable,
-		// RAIN_ERROR_LOCATION will identify caller site
-		// on-throw. Otherwise, an empty location will silently
-		// consume.
-		std::string const &location = "") {
+		// Pass an empty optional to silently consume.
+		// Otherwise, identifies call site when given
+		// `std::source_location::current()`.
+		std::optional<std::source_location> location = {}) {
 		// Perfect-forward the callable in. Preserves
 		// mutability, copies lambdas & function pointers, but
 		// moves std::functions if requested.
@@ -47,16 +46,19 @@ namespace Rain::Error {
 						std::forward<decltype(args)>(args)...);
 				} catch (std::exception const &exception) {
 					// Output exception if possible.
-					if (!location.empty()) {
+					if (location.has_value()) {
 						std::cerr << exception.what();
 					}
 				} catch (...) {
 					// Consume generic exception, do nothing.
 				}
 
-				if (!location.empty()) {
-					std::cerr << "Consumed exception at " << location
-										<< "." << std::endl;
+				if (location.has_value()) {
+					std::cerr << "Consumed exception: "
+										<< location.value().file_name() << ':'
+										<< location.value().line() << " in "
+										<< location.value().function_name()
+										<< '.' << std::endl;
 				}
 
 				// Gets the return type of the callable at

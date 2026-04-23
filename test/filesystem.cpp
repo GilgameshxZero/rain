@@ -1,6 +1,8 @@
 // Tests for Rain::Filesystem.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	std::filesystem::path workingDir{
 		std::filesystem::current_path()};
@@ -11,7 +13,7 @@ int main() {
 		workingDir / "../../../"};
 	std::cout << "Ancestor directory: " << ancestorDir
 						<< std::endl;
-	assert(
+	releaseAssert(
 		Rain::Filesystem::isSubpath(workingDir, ancestorDir));
 
 	// Ensure hash operator works.

@@ -1,5 +1,7 @@
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	// Implements the example in the Wikipedia article:
 	// <https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm>.
@@ -18,14 +20,14 @@ int main() {
 	G[5][6] = 9;
 	auto [flow, R]{
 		Rain::Algorithm::maxFlowEdmondsKarp(G, 0, 6)};
-	assert(flow == 5);
-	assert(R[0][3] == 0);
-	assert(R[0][1] == 1);
-	assert(R[1][2] == 2);
-	assert(R[2][3] == 0);
-	assert(R[2][4] == 1);
-	assert(R[3][5] == 2);
-	assert(R[4][6] == 0);
-	assert(R[5][6] == 5);
+	releaseAssert(flow == 5);
+	releaseAssert(R[0][3] == 0);
+	releaseAssert(R[0][1] == 1);
+	releaseAssert(R[1][2] == 2);
+	releaseAssert(R[2][3] == 0);
+	releaseAssert(R[2][4] == 1);
+	releaseAssert(R[3][5] == 2);
+	releaseAssert(R[4][6] == 0);
+	releaseAssert(R[5][6] == 5);
 	return 0;
 }

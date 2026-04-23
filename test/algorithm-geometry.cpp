@@ -1,10 +1,12 @@
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Algorithm::Geometry;
 
 	PointLl a{1, 2}, b{3, 4};
-	assert(a.cross(b) == -2);
+	releaseAssert(a.cross(b) == -2);
 
 	LineSegmentLl l1{{0, 0}, {100, 100}},
 		l2{{100, 0}, {0, 100}}, l3{{-1, -1}, {100, -1}},
@@ -16,17 +18,17 @@ int main() {
 	s2.insert(l1);
 	s2.insert(l2);
 
-	assert(l1.intersects(l2));
-	assert(l2.intersects(l1));
-	assert(!l1.intersects(l3));
-	assert(!l3.intersects(l1));
-	assert(!l2.intersects(l3));
-	assert(!l3.intersects(l2));
+	releaseAssert(l1.intersects(l2));
+	releaseAssert(l2.intersects(l1));
+	releaseAssert(!l1.intersects(l3));
+	releaseAssert(!l3.intersects(l1));
+	releaseAssert(!l2.intersects(l3));
+	releaseAssert(!l3.intersects(l2));
 
 	// These lines technically intersect, but our code
 	// guarantees that parallel lines never intersect.
-	assert(!l1.intersects(l4));
-	assert(!l4.intersects(l1));
+	releaseAssert(!l1.intersects(l4));
+	releaseAssert(!l4.intersects(l1));
 
 	return 0;
 }

@@ -3,6 +3,8 @@
 // including the Socket options.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -25,19 +27,19 @@ int main() {
 		// as desired.
 		std::cout << socket.family() << ' ' << socket.type()
 							<< ' ' << socket.protocol() << std::endl;
-		assert(socket.family() == Family::INET6);
-		assert(socket.type() == Type::STREAM);
-		assert(socket.protocol() == Protocol::TCP);
+		releaseAssert(socket.family() == Family::INET6);
+		releaseAssert(socket.type() == Type::STREAM);
+		releaseAssert(socket.protocol() == Protocol::TCP);
 
 		// Make sure subtypes are inherited correctly.
 		// std::string *str = &socket;
-		assert(
+		releaseAssert(
 			static_cast<SocketFamilyInterface &>(socket)
 				.family() == Family::INET6);
-		assert(
+		releaseAssert(
 			static_cast<SocketTypeInterface &>(socket).type() ==
 			Type::STREAM);
-		assert(
+		releaseAssert(
 			static_cast<SocketProtocolInterface &>(socket)
 				.protocol() == Protocol::TCP);
 		// DGramSocketInterface *dgramSocket = &socket;

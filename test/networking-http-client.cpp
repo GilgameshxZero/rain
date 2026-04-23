@@ -1,6 +1,8 @@
 // Very simple tests for Networking::Http::Client.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -26,8 +28,8 @@ int main() {
 							<< res.statusCode << " " << res.reasonPhrase
 							<< "\r\n"
 							<< res.headers << std::endl;
-		assert(res.version == Http::Version::_1_1);
-		assert(
+		releaseAssert(res.version == Http::Version::_1_1);
+		releaseAssert(
 			res.statusCode ==
 			Http::StatusCode::MOVED_PERMANENTLY);
 	}

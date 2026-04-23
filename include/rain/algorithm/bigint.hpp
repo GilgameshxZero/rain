@@ -40,6 +40,14 @@ namespace std {
 					typename ThisInt::SmallerInt>::max()};
 		};
 	};
+
+	// Signed-ness.
+	template <std::size_t LOG_BITS>
+	struct is_signed<Rain::Algorithm::BigInt<LOG_BITS, false>>
+			: std::false_type {};
+	template <std::size_t LOG_BITS>
+	struct is_signed<Rain::Algorithm::BigInt<LOG_BITS, true>>
+			: std::true_type {};
 }
 
 namespace Rain::Algorithm {
@@ -88,9 +96,13 @@ namespace Rain::Algorithm {
 		using Type = std::uint32_t;
 	};
 
-	// Overflow multiplication and division. Multiplication
-	// returns {low, high} of the result. Division returns
-	// {low, high} of the result.
+	// Overflow multiplication. Multiplication returns {low,
+	// high} of the result.
+	//
+	// Multiplication can be improved with FFT by serializing
+	// all BigIn<5>s beforehand, without incurring additional
+	// computational complexity (besides constant factor for
+	// serialization).
 	template <std::size_t LOG_BITS, bool SIGNED>
 	inline std::pair<
 		typename BigIntTypeMap<LOG_BITS, false>::Type,
@@ -202,7 +214,11 @@ namespace Rain::Algorithm {
 			static_cast<ThisIntUnsigned>(result),
 			static_cast<ThisInt>(result >> 32)};
 	}
-
+	// Division should return {quotient, modulus} of the
+	// result, but currently only returns the quotient.
+	//
+	// TODO: This can be improved to a recursive divion
+	// algorithm instead of binary search.
 	template <std::size_t LOG_BITS, bool SIGNED>
 	inline typename BigIntTypeMap<LOG_BITS, SIGNED>::Type
 	bigIntDivide(
@@ -326,6 +342,8 @@ namespace Rain::Algorithm {
 		}
 
 		// Comparison.
+		//
+		// TODO: always convert to bigger, signed int.
 		template <
 			typename OtherInteger,
 			typename std::enable_if<
@@ -608,8 +626,8 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!Rain::Algorithm::BigInt<>::isDerivedFromBigInt<
 					OtherInteger>::value>::type * = nullptr>
-		inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED>
-		friend operator-(
+		inline Rain::Algorithm::BigInt<LOG_BITS, SIGNED> friend
+		operator-(
 			OtherInteger const &left,
 			Rain::Algorithm::BigInt<LOG_BITS, SIGNED> const
 				&right) {

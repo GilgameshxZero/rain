@@ -1,6 +1,8 @@
 // Tests for Time::Timeout.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 using namespace Rain::Literal;
 
 // Sleep for some time since the time of execution using
@@ -27,8 +29,8 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		assert(timeElapsed > 0.9s && timeElapsed < 1.1s);
-		assert(timeout.isPassed());
+		releaseAssert(timeElapsed > 0.9s && timeElapsed < 1.1s);
+		releaseAssert(timeout.isPassed());
 	}
 
 	// Sleep for 1s using sleep_until directly.
@@ -41,8 +43,8 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		assert(timeElapsed > 0.9s && timeElapsed < 1.1s);
-		assert(timeout.isPassed());
+		releaseAssert(timeElapsed > 0.9s && timeElapsed < 1.1s);
+		releaseAssert(timeout.isPassed());
 	}
 
 	// Default timeout arguments declared as const references
@@ -55,7 +57,7 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		assert(timeElapsed > 2.9s && timeElapsed < 3.1s);
+		releaseAssert(timeElapsed > 2.9s && timeElapsed < 3.1s);
 	}
 
 	// Timeout should be able to be constructed inline using
@@ -68,7 +70,7 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		assert(timeElapsed > 1.9s && timeElapsed < 2.1s);
+		releaseAssert(timeElapsed > 1.9s && timeElapsed < 2.1s);
 	}
 
 	// Default-constructed timeouts expire immediately.
@@ -80,7 +82,7 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		assert(timeElapsed < 0.1s);
+		releaseAssert(timeElapsed < 0.1s);
 	}
 
 	return 0;

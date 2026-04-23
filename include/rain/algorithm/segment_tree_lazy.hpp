@@ -7,7 +7,6 @@
 #include "bit_manipulators.hpp"
 #include "fenwick.hpp"
 
-#include <cassert>
 #include <map>
 #include <type_traits>
 #include <vector>

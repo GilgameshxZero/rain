@@ -1,18 +1,20 @@
 // Tests string utilities from String.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	std::string str{"WhAT? iS? thIs?"};
 	std::cout << "Original string: " << str << "\n"
 						<< "toLowerStr:      "
 						<< Rain::String::toLower(str) << "\n";
-	assert(str == "what? is? this?");
+	releaseAssert(str == "what? is? this?");
 
 	char cStr[] = "Hello world!! This is Yang :)";
 	std::cout << "Original string: " << cStr << "\n"
 						<< "toLowerCStr:     "
 						<< Rain::String::toLower(cStr, 29) << "\n";
-	assert(
+	releaseAssert(
 		strcmp(cStr, "hello world!! this is yang :)") == 0);
 
 	std::string whiteStr{
@@ -21,7 +23,7 @@ int main() {
 						<< "trimWhitespaceStr: "
 						<< Rain::String::trimWhitespace(whiteStr)
 						<< "\n";
-	assert(whiteStr == "Some string with whitespace");
+	releaseAssert(whiteStr == "Some string with whitespace");
 
 	char whiteCStr[]{
 		"   	\t	\nSome string with whitespace\t\t\n   	"};
@@ -31,7 +33,7 @@ int main() {
 						<< "\n";
 	std::cout << "findFirstNonWhitespaceCStrN: "
 						<< firstNonWhitespace << "\n";
-	assert(
+	releaseAssert(
 		strcmp(
 			firstNonWhitespace,
 			"Some string with whitespace\t\t\n   	") == 0);
@@ -43,15 +45,15 @@ int main() {
 	std::cout << "String:          " << numCStr << "\n"
 						<< "anyToAny int:    " << i << "\n"
 						<< "anyToAny long double: " << d << "\n";
-	assert(i == -455);
-	assert(d == -455.3l);
+	releaseAssert(i == -455);
+	releaseAssert(d == -455.3l);
 
 	long double dblNum{-38.1415};
 	std::string s{
 		Rain::String::anyToAny<std::string>(dblNum)};
 	std::cout << "long double:          " << dblNum << "\n"
 						<< "anyToAny string: " << s << "\n";
-	assert(s == "-38.1415");
+	releaseAssert(s == "-38.1415");
 
 	{
 		std::unordered_set<
@@ -61,7 +63,7 @@ int main() {
 			S;
 		S.insert("hello world");
 		S.insert("Hello World");
-		assert(S.size() == 1);
+		releaseAssert(S.size() == 1);
 	}
 
 	return 0;

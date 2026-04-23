@@ -1,6 +1,8 @@
 // Tests for segment tree.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Algorithm;
@@ -11,27 +13,27 @@ int main() {
 		sumTree.update(0, 3, 1);
 		sumTree.update(1, 2, 5);
 		sumTree.update(2, 2, -20);
-		assert(sumTree.query(0, 3) == -6);
-		assert(sumTree.query(0, 2) == -7);
-		assert(sumTree.query(0, 1) == 7);
+		releaseAssert(sumTree.query(0, 3) == -6);
+		releaseAssert(sumTree.query(0, 2) == -7);
+		releaseAssert(sumTree.query(0, 1) == 7);
 
 		SegmentTreeLazy<SegmentTreeLazy<>::PolicyMin<int>>
 			minTree(4);
 		minTree.update(0, 3, 1);
 		minTree.update(1, 2, 5);
 		minTree.update(2, 2, -20);
-		assert(minTree.query(0, 3) == -14);
-		assert(minTree.query(0, 2) == -14);
-		assert(minTree.query(0, 1) == 1);
+		releaseAssert(minTree.query(0, 3) == -14);
+		releaseAssert(minTree.query(0, 2) == -14);
+		releaseAssert(minTree.query(0, 1) == 1);
 
 		SegmentTreeLazy<SegmentTreeLazy<>::PolicyMax<int>>
 			maxTree(4);
 		maxTree.update(0, 3, 1);
 		maxTree.update(1, 2, 5);
 		maxTree.update(2, 2, -20);
-		assert(maxTree.query(0, 3) == 6);
-		assert(maxTree.query(0, 2) == 6);
-		assert(maxTree.query(0, 1) == 6);
+		releaseAssert(maxTree.query(0, 3) == 6);
+		releaseAssert(maxTree.query(0, 2) == 6);
+		releaseAssert(maxTree.query(0, 1) == 6);
 	}
 
 	{
@@ -51,52 +53,52 @@ int main() {
 		// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].
 		sumTree.update(0, 5, 7);
 		// [7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0].
-		assert(sumTree.query(1, 3) == 21);
-		assert(sumTree.query(0, 10) == 42);
-		assert(sumTree.query(1, 1) == 7);
-		assert(sumTree.query(5, 9) == 7);
+		releaseAssert(sumTree.query(1, 3) == 21);
+		releaseAssert(sumTree.query(0, 10) == 42);
+		releaseAssert(sumTree.query(1, 1) == 7);
+		releaseAssert(sumTree.query(5, 9) == 7);
 		sumTree.update(5, 9, -5);
 		// [7, 7, 7, 7, 7, 2, -5, -5, -5, -5, 0].
-		assert(sumTree.query(5, 5) == 2);
-		assert(sumTree.query(4, 6) == 4);
-		assert(sumTree.query(0, 10) == 17);
+		releaseAssert(sumTree.query(5, 5) == 2);
+		releaseAssert(sumTree.query(4, 6) == 4);
+		releaseAssert(sumTree.query(0, 10) == 17);
 		sumTree.update(0, 10, -1);
 		// [6, 6, 6, 6, 6, 1, -6, -6, -6, -6, -1].
 		sumTree.update(1, 3, 13);
 		// [6, 19, 19, 19, 6, 1, -6, -6, -6, -6, -1].
 		sumTree.update(3, 6, -10);
 		// [6, 19, 19, 9, -4, -9, -16, -6, -6, -6, -1].
-		assert(sumTree.query(0, 7) == 18);
-		assert(sumTree.query(8, 10) == -13);
-		assert(sumTree.query(0, 10) == 5);
+		releaseAssert(sumTree.query(0, 7) == 18);
+		releaseAssert(sumTree.query(8, 10) == -13);
+		releaseAssert(sumTree.query(0, 10) == 5);
 		sumTree.update(0, 3, -5);
 		// [1, 14, 14, 4, -4, -9, -16, -6, -6, -6, -1].
 		sumTree.update(4, 7, 3);
 		// [1, 14, 14, 4, -1, -6, -13, -3, -6, -6, -1].
-		assert(sumTree.query(0, 7) == 10);
+		releaseAssert(sumTree.query(0, 7) == 10);
 
 		std::vector<int> underlying{
 			{1, 14, 14, 4, -1, -6, -13, -3, -6, -6, -1}};
 		auto it{sumTree.frontUnderlying()};
 		for (std::size_t i{0}; i < underlying.size(); i++) {
-			assert(underlying[i] == *it);
+			releaseAssert(underlying[i] == *it);
 			if (!it.isBackUnderlying()) {
 				it = it.nextUnderlying();
 			}
 		}
 		it = sumTree.root();
-		assert(*it == -3);
+		releaseAssert(*it == -3);
 		it = it.left();
-		assert(*it == 1 + -6 + -13 + -3 + -6 + -6 + -1);
+		releaseAssert(*it == 1 + -6 + -13 + -3 + -6 + -6 + -1);
 		it = it.right();
-		assert(*it == 1 + -6 + -1);
+		releaseAssert(*it == 1 + -6 + -1);
 		it = it.left();
-		assert(!it.isLeaf());
-		assert(*it == -6 + -1);
+		releaseAssert(!it.isLeaf());
+		releaseAssert(*it == -6 + -1);
 		it = it.right();
-		assert(it.isLeaf());
-		assert(it.isBackUnderlying());
-		assert(*it == -1);
+		releaseAssert(it.isLeaf());
+		releaseAssert(it.isBackUnderlying());
+		releaseAssert(*it == -1);
 
 		sumTree.update(10, 10, 1);
 		// [1, 14, 14, 4, -1, -6, -13, -3, -6, -6, 0].
@@ -130,10 +132,10 @@ int main() {
 		// 6B +13.
 		tree.update(2, 2, {1, 13});
 		// Query entire board.
-		assert(tree.query(0, 7, 7) == 13);
+		releaseAssert(tree.query(0, 7, 7) == 13);
 		// Just the top-left 2x2.
-		assert(tree.query(0, 1, 1) == 0);
-		assert(tree.query(0, 2, 1) == 13);
+		releaseAssert(tree.query(0, 1, 1) == 0);
+		releaseAssert(tree.query(0, 2, 1) == 13);
 		// Place point values of white pieces.
 		for (size_t i{0}; i < 8; i++) {
 			tree.update(6, 6, {i, 1});
@@ -147,12 +149,13 @@ int main() {
 		tree.update(7, 7, {6, 3});
 		tree.update(7, 7, {7, 5});
 		// All pawns.
-		assert(tree.query(0, 6, 7) - tree.query(0, 5, 7) == 8);
+		releaseAssert(
+			tree.query(0, 6, 7) - tree.query(0, 5, 7) == 8);
 		// All non-pawn white pieces.
-		assert(
+		releaseAssert(
 			tree.query(0, 7, 7) - tree.query(0, 6, 7) == 131);
 		// Entire board.
-		assert(tree.query(0, 7, 7) == 13 + 8 + 131);
+		releaseAssert(tree.query(0, 7, 7) == 13 + 8 + 131);
 	}
 
 	return 0;

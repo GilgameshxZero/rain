@@ -232,7 +232,7 @@ namespace Rain::Networking {
 			Rain::Error::consumeThrowable(
 				RAIN_FUNCTIONAL_RESOLVE_OVERLOAD(
 					validateSystemCall),
-				RAIN_ERROR_LOCATION)(
+				std::source_location::current())(
 #ifdef RAIN_PLATFORM_WINDOWS
 				::closesocket(this->_nativeSocket));
 #else

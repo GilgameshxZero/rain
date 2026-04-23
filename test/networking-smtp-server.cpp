@@ -1,6 +1,8 @@
 // Tests for Networking::Smtp::Server.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -88,7 +90,7 @@ int main() {
 
 			{
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::SERVICE_READY);
 			}
@@ -96,7 +98,7 @@ int main() {
 			{
 				client.send({Smtp::Command::NOOP, ""});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::REQUEST_COMPLETED);
 			}
@@ -104,7 +106,7 @@ int main() {
 			{
 				client.send({Smtp::Command::HELO, "domain.name"});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::REQUEST_COMPLETED);
 			}
@@ -113,7 +115,7 @@ int main() {
 				client.send(
 					{Smtp::Command::MAIL, "FROM:<from@domain.name>"});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::REQUEST_COMPLETED);
 			}
@@ -123,7 +125,7 @@ int main() {
 					{Smtp::Command::MAIL,
 					 "FROM:<from-2@domain.name>"});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::REQUEST_COMPLETED);
 			}
@@ -132,7 +134,7 @@ int main() {
 				client.send(
 					{Smtp::Command::RCPT, "TO:<to@domain.name>"});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::REQUEST_COMPLETED);
 			}
@@ -141,7 +143,7 @@ int main() {
 				client.send(
 					{Smtp::Command::RCPT, "TO:<to-2@domain.name>"});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::REQUEST_COMPLETED);
 			}
@@ -149,7 +151,7 @@ int main() {
 			{
 				client.send({Smtp::Command::DATA, ""});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::START_MAIL_INPUT);
 
@@ -162,7 +164,7 @@ int main() {
 				std::cout << data;
 				client << data << std::flush;
 				auto dataRes = client.recv();
-				assert(
+				releaseAssert(
 					dataRes.statusCode ==
 					Smtp::StatusCode::TRANSACTION_FAILED);
 			}
@@ -171,7 +173,7 @@ int main() {
 				client.send(
 					{Smtp::Command::VRFY, "TO:<to-2@domain.name>"});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::CANNOT_VERIFY);
 			}
@@ -179,14 +181,14 @@ int main() {
 			{
 				client.send({Smtp::Command::HELP, ""});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode == Smtp::StatusCode::HELP_MESSAGE);
 			}
 
 			{
 				client.send({Smtp::Command::TURN, ""});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::COMMAND_NOT_IMPLEMENTED);
 			}
@@ -194,7 +196,7 @@ int main() {
 			{
 				client.send({Smtp::Command::QUIT, ""});
 				auto res = client.recv();
-				assert(
+				releaseAssert(
 					res.statusCode ==
 					Smtp::StatusCode::SERVICE_CLOSING);
 			}

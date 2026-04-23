@@ -2,6 +2,8 @@
 // Rain::Networking.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -30,7 +32,7 @@ int main() {
 					} while (
 						(recvStatus = this->recv(buffer, timeout)));
 				},
-				RAIN_ERROR_LOCATION)();
+				std::source_location::current())();
 
 			if (timeout.isPassed()) {
 				std::cout << "MyWorker timed out." << std::endl;
@@ -263,7 +265,7 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
-		assert(timeElapsed < 1s);
+		releaseAssert(timeElapsed < 1s);
 	}
 
 	// Client times out in 3 seconds and takes 3 more seconds
@@ -277,13 +279,13 @@ int main() {
 		std::cout << "Server workers: " << server.workers()
 							<< ", threads: " << server.threads()
 							<< std::endl;
-		assert(server.workers() == 0);
-		assert(server.threads() == 2);
+		releaseAssert(server.workers() == 0);
+		releaseAssert(server.threads() == 2);
 		auto timeElapsed =
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
-		assert(timeElapsed < 8s);
+		releaseAssert(timeElapsed < 8s);
 	}
 
 	// Workers destructed counter is incremented correctly.
@@ -302,7 +304,7 @@ int main() {
 		}
 		// Wait a bit so that workers can destruct.
 		std::this_thread::sleep_for(1s);
-		assert(server.workersDestructed() == 3);
+		releaseAssert(server.workersDestructed() == 3);
 	}
 
 	return 0;

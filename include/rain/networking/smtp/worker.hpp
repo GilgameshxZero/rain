@@ -400,7 +400,7 @@ namespace Rain::Networking::Smtp {
 					this->shutdown();
 					throw;
 				},
-				RAIN_ERROR_LOCATION)();
+				std::source_location::current())();
 			return true;
 		}
 

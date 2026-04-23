@@ -1,6 +1,8 @@
 // Tests for segment tree.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 class MaxTreePolicy {
 	public:
 	using Value = long long;
@@ -54,13 +56,13 @@ int main() {
 
 	{
 		MaxTree tree(10);
-		assert(tree.query(0, 9) == -1);
-		assert(tree.query(1, 1) == -1);
-		assert(tree.query(5, 5) == -1);
+		releaseAssert(tree.query(0, 9) == -1);
+		releaseAssert(tree.query(1, 1) == -1);
+		releaseAssert(tree.query(5, 5) == -1);
 		tree.update(5, 0);
-		assert(tree.query(5, 5) == 0);
-		assert(tree.query(4, 6) == 0);
-		assert(tree.query(1, 1) == -1);
+		releaseAssert(tree.query(5, 5) == 0);
+		releaseAssert(tree.query(4, 6) == 0);
+		releaseAssert(tree.query(1, 1) == -1);
 	}
 
 	{
@@ -69,24 +71,24 @@ int main() {
 		tree.update(0, 100);
 		tree.update(1, 5);
 		tree.update(2, 10);
-		assert(tree.query(0, 2) == 115);
+		releaseAssert(tree.query(0, 2) == 115);
 		tree.update(1, -26);
-		assert(tree.query(0, 9) == 89);
+		releaseAssert(tree.query(0, 9) == 89);
 		// 100, -21, 10.
 
 		tree.update(9, 7);
 		// 100, -21, 10, 0, 0, 0, 0, 0, 0, 7.
-		assert(tree.query(0, 8) == 89);
+		releaseAssert(tree.query(0, 8) == 89);
 		tree.update(2, 5);
 		// 100, -21, 15, 0, 0, 0, 0, 0, 0, 7.
 		tree.update(5, 8);
 		// 100, -21, 15, 0, 0, 8, 0, 0, 0, 7.
 		tree.update(4, -90);
 		// 100, -21, 15, 0, -90, 8, 0, 0, 0, 7.
-		assert(tree.query(4, 5) == -82);
-		assert(tree.query(6, 9) == 7);
-		assert(tree.query(0, 7) == 12);
-		assert(tree.query(0, 100000) == 19);
+		releaseAssert(tree.query(4, 5) == -82);
+		releaseAssert(tree.query(6, 9) == 7);
+		releaseAssert(tree.query(0, 7) == 12);
+		releaseAssert(tree.query(0, 100000) == 19);
 	}
 
 	return 0;

@@ -2,6 +2,8 @@
 // rain/networking/resolve.hpp.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -16,11 +18,11 @@ int main() {
 		}
 
 		// At least 1 IPv4.
-		assert(hosts.size() >= 1);
+		releaseAssert(hosts.size() >= 1);
 
 		// Port was left unspecified.
 		for (Host const &host : hosts) {
-			assert(host.service == "0");
+			releaseAssert(host.service == "0");
 		}
 	}
 
@@ -34,7 +36,7 @@ int main() {
 		}
 
 		for (Host const &host : hosts) {
-			assert(host.service == "80");
+			releaseAssert(host.service == "80");
 		}
 	}
 
@@ -57,7 +59,7 @@ int main() {
 		}
 
 		// Dual stack IPv4 & IPv6.
-		assert(hosts.size() >= 2);
+		releaseAssert(hosts.size() >= 2);
 	}
 
 	// Addresses for connecting to localhost.
@@ -69,7 +71,7 @@ int main() {
 				addressInfo.address, addressInfo.addressLen));
 		}
 
-		assert(!hosts.empty());
+		releaseAssert(!hosts.empty());
 	}
 
 	// Error domain name.
@@ -77,14 +79,14 @@ int main() {
 		auto timeBegin = std::chrono::steady_clock::now();
 		auto addressInfos =
 			getAddressInfos({"not-a-real-domain-name"});
-		assert(addressInfos.size() == 0);
+		releaseAssert(addressInfos.size() == 0);
 		auto timeElapsed =
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
 
 		// Failed DNS lookups can take a while.
-		assert(timeElapsed < 10s);
+		releaseAssert(timeElapsed < 10s);
 	}
 
 	// MX record lookup.
@@ -95,12 +97,12 @@ int main() {
 			std::cout << mxRecord.first << " " << mxRecord.second
 								<< std::endl;
 		}
-		assert(mxRecords.size() == 2);
+		releaseAssert(mxRecords.size() == 2);
 		auto timeElapsed =
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
-		assert(timeElapsed < 5s);
+		releaseAssert(timeElapsed < 5s);
 	}
 
 	// MX record lookup.
@@ -111,12 +113,12 @@ int main() {
 			std::cout << mxRecord.first << " " << mxRecord.second
 								<< std::endl;
 		}
-		assert(mxRecords.size() == 5);
+		releaseAssert(mxRecords.size() == 5);
 		auto timeElapsed =
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
-		assert(timeElapsed < 2s);
+		releaseAssert(timeElapsed < 2s);
 	}
 
 	// MX record error.
@@ -125,7 +127,7 @@ int main() {
 		try {
 			auto mxRecords =
 				getMxRecords({"not-a-real-domain-name"});
-			assert(mxRecords.size() == 0);
+			releaseAssert(mxRecords.size() == 0);
 		} catch (std::exception const &exception) {
 			std::cout << exception.what();
 		}
@@ -135,7 +137,7 @@ int main() {
 							<< std::endl;
 
 		// Failed DNS lookups can take a while.
-		assert(timeElapsed < 2s);
+		releaseAssert(timeElapsed < 2s);
 	}
 
 	// Sleep for resolve threads to cleanup, so that temporal

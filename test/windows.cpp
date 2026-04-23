@@ -14,6 +14,8 @@
 // inconsistent with build.bat.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 #ifdef RAIN_PLATFORM_WINDOWS
 // WinMain can only be used on SUBSYSTEM:WINDOWS.
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")

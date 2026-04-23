@@ -1,6 +1,8 @@
 // Tests Networking::Http::Request.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking::Http;
@@ -30,7 +32,7 @@ int main() {
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl
 							<< std::endl;
-		assert(timeElapsed < 0.1s);
+		releaseAssert(timeElapsed < 0.1s);
 	}
 
 	// Receiving a request.
@@ -43,30 +45,31 @@ int main() {
 		Request req;
 		stream >> req;
 
-		assert(req.method == Method::POST);
-		assert(req.target == "/not-a-real-uri");
-		assert(req.version == Version::_1_1);
+		releaseAssert(req.method == Method::POST);
+		releaseAssert(req.target == "/not-a-real-uri");
+		releaseAssert(req.version == Version::_1_1);
 
-		assert(req.headers.size() == 3);
-		assert(req.headers.host().node == "google.com");
-		assert(req.headers.transferEncoding().size() == 1);
-		assert(
+		releaseAssert(req.headers.size() == 3);
+		releaseAssert(req.headers.host().node == "google.com");
+		releaseAssert(
+			req.headers.transferEncoding().size() == 1);
+		releaseAssert(
 			req.headers.transferEncoding()[0] ==
 			Header::TransferEncoding::IDENTITY);
-		assert(req.headers.contentLength() == 11);
+		releaseAssert(req.headers.contentLength() == 11);
 
 		std::string buffer(1_zu << 2, '\0'), body;
 		while (std::getline(req.body, buffer)) {
 			body += buffer;
 		}
-		assert(body == "a few bytes");
+		releaseAssert(body == "a few bytes");
 
 		auto timeElapsed =
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl
 							<< std::endl;
-		assert(timeElapsed < 0.1s);
+		releaseAssert(timeElapsed < 0.1s);
 	}
 
 	return 0;

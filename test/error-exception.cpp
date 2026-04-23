@@ -1,6 +1,8 @@
 // Tests for Rain::Error::Exception.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 // Defines platform-independent codes.
 enum class Error {
 	NONE = 0,
@@ -50,7 +52,7 @@ int main() {
 				"Did not throw an error where expected.");
 		} catch (Exception const &exception) {
 			std::cout << exception.what();
-			assert(
+			releaseAssert(
 				strcmp(
 					exception.what(),
 					"Error Category, 1: Error message for error "

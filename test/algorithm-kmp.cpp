@@ -2,6 +2,8 @@
 // from `rain/algorithm/kmp.hpp`.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 
@@ -15,7 +17,7 @@ int main() {
 	for (size_t i{0}; i < partialMatch.size(); i++) {
 		std::cout << partialMatch[i] << " ";
 	}
-	assert(
+	releaseAssert(
 		partialMatch ==
 		std::vector<std::size_t>(
 			{SIZE_MAX, 0, 0, 0, 0, 0, 0,				SIZE_MAX, 0,
@@ -31,7 +33,7 @@ int main() {
 	for (size_t i{0}; i < partialMatch.size(); i++) {
 		std::cout << partialMatch[i] << " ";
 	}
-	assert(
+	releaseAssert(
 		partialMatch ==
 		std::vector<std::size_t>({SIZE_MAX, 0, 0}));
 
@@ -44,7 +46,7 @@ int main() {
 	for (size_t i{0}; i < partialMatch.size(); i++) {
 		std::cout << partialMatch[i] << " ";
 	}
-	assert(
+	releaseAssert(
 		partialMatch ==
 		std::vector<std::size_t>(
 			{SIZE_MAX, 0, SIZE_MAX, 0, 2}));
@@ -58,16 +60,16 @@ int main() {
 	std::cout << std::endl
 						<< "String: " << s << std::endl
 						<< "Search result: " << match << std::endl;
-	assert(w == match);
+	releaseAssert(w == match);
 
 	// String search with multiple matches.
 	auto m = Rain::Algorithm::kmpSearch(s, "BC");
-	assert(m.first == 1_zu);
-	assert(m.second == 2_zu);
+	releaseAssert(m.first == 1_zu);
+	releaseAssert(m.second == 2_zu);
 
 	// String search with no match.
 	m = Rain::Algorithm::kmpSearch(s, "CBAD");
-	assert(m.first >= s.length());
-	assert(m.second == 0_zu);
+	releaseAssert(m.first >= s.length());
+	releaseAssert(m.second == 0_zu);
 	return 0;
 }

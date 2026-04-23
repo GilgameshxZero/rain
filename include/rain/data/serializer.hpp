@@ -77,6 +77,18 @@ namespace Rain::Data {
 		}
 		template <
 			typename Key,
+			typename Compare,
+			typename Allocator>
+		inline Rain::Data::Serializer &operator<<(
+			std::set<Key, Compare, Allocator> const &data) {
+			*this << data.size();
+			for (auto &i : data) {
+				*this << i;
+			}
+			return *this;
+		}
+		template <
+			typename Key,
 			typename Hash,
 			typename KeyEqual,
 			typename Allocator>
@@ -138,6 +150,21 @@ namespace Rain::Data {
 			data.resize(size);
 			for (auto &i : data) {
 				*this >> i;
+			}
+			return *this;
+		}
+		template <
+			typename Key,
+			typename Compare,
+			typename Allocator>
+		inline Rain::Data::Deserializer &operator>>(
+			std::set<Key, Compare, Allocator> &data) {
+			std::size_t size;
+			*this >> size;
+			Key key;
+			for (std::size_t i{0}; i < size; i++) {
+				*this >> key;
+				data.insert(key);
 			}
 			return *this;
 		}

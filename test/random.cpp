@@ -1,5 +1,7 @@
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	{
 		using Type = std::array<long long, 8>;
@@ -31,7 +33,7 @@ int main() {
 			unordered_set<Type, Rain::Random::SplitMixHash<Type>>
 				X;
 		X.insert({{1, "hello"}, {2, "world"}});
-		assert(X.size() == 1);
+		releaseAssert(X.size() == 1);
 	}
 	{
 		using Type = std::pair<int, bool>;

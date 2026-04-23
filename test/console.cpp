@@ -1,5 +1,7 @@
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain;
 	using Color = Console::Color;

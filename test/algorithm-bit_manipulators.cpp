@@ -1,12 +1,15 @@
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
-	assert(
+	releaseAssert(
 		Rain::Algorithm::mostSignificant1BitIdx(0x080c3948) ==
 		27);
-	assert(
+	releaseAssert(
 		Rain::Algorithm::leastSignificant1BitIdx(0x080c3948) ==
 		3);
-	assert(Rain::Algorithm::bitPopcount(0xf80c3948) == 13);
+	releaseAssert(
+		Rain::Algorithm::bitPopcount(0xf80c3948) == 13);
 	return 0;
 }

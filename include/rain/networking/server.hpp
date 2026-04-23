@@ -223,7 +223,7 @@ namespace Rain::Networking {
 													worker)
 													.onWork();
 											},
-											RAIN_ERROR_LOCATION)();
+											std::source_location::current())();
 									}
 								}));
 					} catch (std::exception const &exception) {

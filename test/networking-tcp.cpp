@@ -2,6 +2,8 @@
 // capability.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -27,7 +29,7 @@ int main() {
 	std::stringstream ss;
 	ss << client.rdbuf();
 	std::cout << ss.str().substr(0, 1_zu << 10) << std::endl;
-	assert(
+	releaseAssert(
 		ss.str().substr(0, 30) ==
 		"HTTP/1.1 301 Moved Permanently");
 	std::cout << "EOFBIT: " << client.eof() << std::endl
@@ -35,7 +37,7 @@ int main() {
 						<< "BADBIT: " << client.bad() << std::endl
 						<< "GOODBIT: " << client.good() << std::endl
 						<< std::endl;
-	assert(client.good());
+	releaseAssert(client.good());
 
 	// Another read-in will error.
 	std::string tmp;
@@ -45,7 +47,7 @@ int main() {
 						<< "BADBIT: " << client.bad() << std::endl
 						<< "GOODBIT: " << client.good() << std::endl
 						<< std::endl;
-	assert(!client.good());
+	releaseAssert(!client.good());
 
 	// And further reads will not even take the entire
 	// timeout.
@@ -55,11 +57,11 @@ int main() {
 						<< "FAILBIT: " << client.fail() << std::endl
 						<< "BADBIT: " << client.bad() << std::endl
 						<< "GOODBIT: " << client.good() << std::endl;
-	assert(!client.good());
+	releaseAssert(!client.good());
 	auto timeElapsed =
 		std::chrono::steady_clock::now() - timeBegin;
 	std::cout << "Time elapsed: " << timeElapsed << std::endl;
-	assert(timeElapsed < 1s);
+	releaseAssert(timeElapsed < 1s);
 
 	return 0;
 }

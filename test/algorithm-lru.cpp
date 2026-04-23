@@ -2,6 +2,8 @@
 // `rain/algorithm/lru.hpp`.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 
@@ -14,7 +16,7 @@ int main() {
 		cache.insertOrAssign(2, 2);
 		int res{cache.at(1)};
 		std::cout << "cache.at(1): " << res << "." << std::endl;
-		assert(res == 1);
+		releaseAssert(res == 1);
 
 		// Eviction.
 		cache.insertOrAssign(3, 3);
@@ -22,7 +24,7 @@ int main() {
 			res = cache.at(2);
 			std::cout << "cache.at(2): " << res << "."
 								<< std::endl;
-			assert(0);
+			releaseAssert(0);
 		} catch (std::out_of_range const &exception) {
 			std::cout << exception.what() << std::endl;
 		}
@@ -33,25 +35,25 @@ int main() {
 			res = cache.at(1);
 			std::cout << "cache.at(1): " << res << "."
 								<< std::endl;
-			assert(0);
+			releaseAssert(0);
 		} catch (std::out_of_range const &exception) {
 			std::cout << exception.what() << std::endl;
 		}
 
 		res = cache.at(3);
 		std::cout << "cache.at(3): " << res << "." << std::endl;
-		assert(res == 3);
+		releaseAssert(res == 3);
 
 		res = cache.at(4);
 		std::cout << "cache.at(4): " << res << "." << std::endl;
-		assert(res == 4);
+		releaseAssert(res == 4);
 
 		// Assign.
 		cache.insertOrAssign(4, 5);
 		res = cache.at(4);
 		std::cout << "cache.at(4): " << cache.at(4) << "."
 							<< std::endl;
-		assert(res == 5);
+		releaseAssert(res == 5);
 	}
 
 	// Copy/move construct test.
@@ -66,25 +68,25 @@ int main() {
 		// Move-construct a person/color pair.
 		cache.insertOrAssign(
 			std::move(person[0]), std::move(color[0]));
-		assert(person[0].length() == 0);
-		assert(color[0].length() == 0);
+		releaseAssert(person[0].length() == 0);
+		releaseAssert(color[0].length() == 0);
 
 		// Move-construct only value argument.
 		cache.insertOrAssign(person[1], std::move(color[1]));
-		assert(!person[1].empty());
-		assert(color[1].length() == 0);
+		releaseAssert(!person[1].empty());
+		releaseAssert(color[1].length() == 0);
 
 		// Check things are valid.
-		assert(cache.at("Ben") == "red");
-		assert(cache.at("Jerry") == "green");
+		releaseAssert(cache.at("Ben") == "red");
+		releaseAssert(cache.at("Jerry") == "green");
 
 		// Ben is now LRU.
-		assert(cache.find("Ben") != cache.end());
+		releaseAssert(cache.find("Ben") != cache.end());
 
 		// Adding a third value makes find return end.
 		cache.insertOrAssign(
 			std::move(person[2]), std::move(color[2]));
-		assert(cache.find("Jerry") == cache.end());
+		releaseAssert(cache.find("Jerry") == cache.end());
 
 		// Iteration works as expected.
 		for (auto const &it : cache) {

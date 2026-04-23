@@ -97,7 +97,7 @@ namespace Rain::Networking::ReqRes {
 				} catch (...) {
 					Rain::Error::consumeThrowable(
 						[this]() { this->onRequestException(); },
-						RAIN_ERROR_LOCATION)();
+						std::source_location::current())();
 					break;
 				}
 			}

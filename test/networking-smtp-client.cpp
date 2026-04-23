@@ -2,6 +2,8 @@
 // outgoing IPv4 port 25 to be unblocked by firewall.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -52,7 +54,7 @@ int main() {
 								<< "." << std::endl;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode == Smtp::StatusCode::SERVICE_READY);
 		}
 		{
@@ -63,7 +65,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
@@ -75,7 +77,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
@@ -89,7 +91,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
@@ -101,7 +103,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::
 					REQUEST_NOT_TAKEN_MAILBOX_UNAVAILABLE_PERMANENT);
@@ -113,7 +115,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode == Smtp::StatusCode::CANNOT_VERIFY);
 		}
 		{
@@ -122,7 +124,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::REQUEST_COMPLETED);
 		}
@@ -132,7 +134,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode == Smtp::StatusCode::HELP_MESSAGE);
 		}
 		{
@@ -141,7 +143,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::SERVICE_CLOSING);
 		}
@@ -169,7 +171,7 @@ int main() {
 								<< "." << std::endl;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode == Smtp::StatusCode::SERVICE_READY);
 		}
 
@@ -181,7 +183,7 @@ int main() {
 			client << req;
 			auto res = client.recv();
 			std::cout << res;
-			assert(
+			releaseAssert(
 				res.statusCode ==
 				Smtp::StatusCode::REQUEST_COMPLETED);
 		}

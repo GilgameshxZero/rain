@@ -1,6 +1,8 @@
 // Test for Networking::Http::Headers.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking::Http;
@@ -10,22 +12,22 @@ int main() {
 		Headers headers;
 
 		headers.host({"google.com"});
-		assert(headers["Host"] == "google.com");
-		assert(headers["host"] == "google.com");
-		assert(headers["hOsT"] == "google.com");
-		assert(
+		releaseAssert(headers["Host"] == "google.com");
+		releaseAssert(headers["host"] == "google.com");
+		releaseAssert(headers["hOsT"] == "google.com");
+		releaseAssert(
 			static_cast<std::string>(headers.host()) ==
 			"google.com");
 
 		headers.host({"google.com:"});
-		assert(headers["Host"] == "google.com");
+		releaseAssert(headers["Host"] == "google.com");
 
 		headers.host({"google.com:80"});
-		assert(headers["Host"] == "google.com:80");
+		releaseAssert(headers["Host"] == "google.com:80");
 
 		headers.host({":80"});
-		assert(headers.host().node == "");
-		assert(headers.host().service == "80");
+		releaseAssert(headers.host().node == "");
+		releaseAssert(headers.host().service == "80");
 	}
 
 	// Content-Length wrap/unwrap and list initialization.
@@ -34,23 +36,24 @@ int main() {
 			{{"Content-Length", "150"},
 			 {"some-random-ass-header", "bleh"},
 			 {"Host", "google.com"}}};
-		assert(headers.contentLength() == 150);
+		releaseAssert(headers.contentLength() == 150);
 		headers.contentLength(0);
-		assert(headers.contentLength() == 0);
-		assert(headers.host().node == "google.com");
-		assert(headers.host().service == "");
-		assert(headers["some-random-ass-header"] == "bleh");
+		releaseAssert(headers.contentLength() == 0);
+		releaseAssert(headers.host().node == "google.com");
+		releaseAssert(headers.host().service == "");
+		releaseAssert(
+			headers["some-random-ass-header"] == "bleh");
 	}
 
 	// Transfer-Encoding wrap/unwrap.
 	{
 		Headers headers{
 			{{"Transfer-Encoding", "gzip, chunked"}}};
-		assert(headers.transferEncoding().size() == 2);
-		assert(
+		releaseAssert(headers.transferEncoding().size() == 2);
+		releaseAssert(
 			headers.transferEncoding()[0] ==
 			Header::TransferEncoding::GZIP);
-		assert(
+		releaseAssert(
 			headers.transferEncoding()[1] ==
 			Header::TransferEncoding::CHUNKED);
 	}

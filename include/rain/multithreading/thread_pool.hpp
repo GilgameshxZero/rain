@@ -15,6 +15,7 @@
 #include <list>
 #include <mutex>
 #include <queue>
+#include <source_location>
 #include <system_error>
 #include <thread>
 
@@ -222,7 +223,7 @@ namespace Rain::Multithreading {
 				// Execute the task. Task pointer is automatically
 				// freed afterwards.
 				Rain::Error::consumeThrowable(
-					*task, RAIN_ERROR_LOCATION)();
+					*task, std::source_location::current())();
 			}
 		}
 

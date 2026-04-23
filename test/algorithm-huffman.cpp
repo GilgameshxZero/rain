@@ -1,6 +1,8 @@
 // Tests for Huffman en/de-coding.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 void assertEncodeDecode(std::string const &text) {
 	std::ostringstream encodedStream;
 	Rain::Algorithm::HuffmanStreamBuf encodeStreamBuf(
@@ -21,7 +23,7 @@ void assertEncodeDecode(std::string const &text) {
 
 	std::cout << "Text: " << text.substr(0, 16) << "..."
 						<< std::endl;
-	assert(text == decodedText);
+	releaseAssert(text == decodedText);
 	std::cout << "Compression ratio: "
 						<< static_cast<long double>(
 								 encodedText.length()) /
@@ -96,7 +98,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 				.count()
 						<< "MB/s." << std::endl;
 
-	assert(
+	releaseAssert(
 		Rain::Filesystem::compareFiles(filePath, decodedPath));
 	std::cout << "Compression ratio: "
 						<< static_cast<long double>(encodedSize) /

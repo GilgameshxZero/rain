@@ -1,5 +1,7 @@
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 #ifdef RAIN_PLATFORM_WINDOWS
 
 class Window : public Rain::Windows::Window {

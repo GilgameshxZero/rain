@@ -1,6 +1,8 @@
 // Tests for Networking::Host.
 #include <rain.hpp>
 
+using Rain::Error::releaseAssert;
+
 int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
@@ -10,45 +12,47 @@ int main() {
 	{
 		Host host;
 
-		assert(host.node == "");
-		assert(host.node == ""s);
+		releaseAssert(host.node == "");
+		releaseAssert(host.node == ""s);
 
-		assert(host.service == "");
-		assert(host.service == ""s);
+		releaseAssert(host.service == "");
+		releaseAssert(host.service == ""s);
 
-		assert(static_cast<std::string>(host) == ":");
+		releaseAssert(static_cast<std::string>(host) == ":");
 	}
 
 	// Host:Service constructor.
 	{
 		Host host("google.com:80");
 
-		assert(host.node == "google.com");
-		assert(host.service == "80");
+		releaseAssert(host.node == "google.com");
+		releaseAssert(host.service == "80");
 
-		assert(
+		releaseAssert(
 			static_cast<std::string>(host) == "google.com:80");
 	}
 	{
 		Host host("google.com:");
 
-		assert(host.node == "google.com");
-		assert(host.service == "");
-		assert(static_cast<std::string>(host) == "google.com");
+		releaseAssert(host.node == "google.com");
+		releaseAssert(host.service == "");
+		releaseAssert(
+			static_cast<std::string>(host) == "google.com");
 	}
 	{
 		Host host("google.com");
 
-		assert(host.node == "google.com");
-		assert(host.service == "");
-		assert(static_cast<std::string>(host) == "google.com");
+		releaseAssert(host.node == "google.com");
+		releaseAssert(host.service == "");
+		releaseAssert(
+			static_cast<std::string>(host) == "google.com");
 	}
 	{
 		Host host(":80");
 
-		assert(host.node == "");
-		assert(host.service == "80");
-		assert(static_cast<std::string>(host) == ":80");
+		releaseAssert(host.node == "");
+		releaseAssert(host.service == "80");
+		releaseAssert(static_cast<std::string>(host) == ":80");
 	}
 
 	// std::stringstream output.
@@ -57,7 +61,7 @@ int main() {
 		std::stringstream stream;
 		stream << host;
 
-		assert(stream.str() == "google.com:80");
+		releaseAssert(stream.str() == "google.com:80");
 	}
 
 	// Copy/move semantics.
@@ -67,13 +71,13 @@ int main() {
 		// Copy.
 		Host host2(host1);
 
-		assert(host1 == host2);
+		releaseAssert(host1 == host2);
 
 		// Move.
 		Host host3(std::move(host1));
 
-		assert(host1 != host2);
-		assert(host3 == host2);
+		releaseAssert(host1 != host2);
+		releaseAssert(host3 == host2);
 	}
 
 	return 0;
