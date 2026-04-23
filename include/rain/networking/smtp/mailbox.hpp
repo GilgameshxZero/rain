@@ -39,6 +39,12 @@ namespace Rain::Networking::Smtp {
 			return this->name == other.name &&
 				this->host == other.host;
 		}
+
+		friend inline std::ostream &operator<<(
+			std::ostream &stream,
+			Rain::Networking::Smtp::Mailbox const &mailbox) {
+			return stream << static_cast<std::string>(mailbox);
+		}
 	};
 
 	// Hash Mailbox for unordered_set and unordered_map.
@@ -48,12 +54,6 @@ namespace Rain::Networking::Smtp {
 				mailbox.operator std::string());
 		}
 	};
-}
-
-inline std::ostream &operator<<(
-	std::ostream &stream,
-	Rain::Networking::Smtp::Mailbox const &mailbox) {
-	return stream << static_cast<std::string>(mailbox);
 }
 
 namespace Rain::Data {

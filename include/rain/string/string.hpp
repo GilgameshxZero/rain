@@ -36,9 +36,10 @@ inline std::ostream &operator<<(
 	if (values.empty()) {
 		return stream << "[]";
 	}
-	stream << '[' << values[0];
-	for (std::size_t i{1}; i < SIZE; i++) {
-		stream << ' ' << values[i];
+	char separator{'['};
+	for (auto &i : values) {
+		stream << separator << i;
+		separator = ' ';
 	}
 	return stream << ']';
 }
@@ -55,9 +56,10 @@ inline std::ostream &operator<<(
 	if (values.empty()) {
 		return stream << "{}";
 	}
-	stream << '{' << values[0];
-	for (std::size_t i{1}; i < values.size(); i++) {
-		stream << ' ' << values[i];
+	char separator{'{'};
+	for (auto &i : values) {
+		stream << separator << i;
+		separator = ' ';
 	}
 	return stream << '}';
 }
