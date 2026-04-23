@@ -39,8 +39,8 @@ int main() {
 										 Http::Response,
 										 1_zu << 10,
 										 1_zu << 10,
-										 5000,
-										 5000,
+										 300,
+										 300,
 										 Ipv6FamilyInterface,
 										 StreamTypeInterface,
 										 TcpProtocolInterface,
@@ -130,8 +130,8 @@ int main() {
 										 MyResponse,
 										 1_zu << 10,
 										 1_zu << 10,
-										 15000,
-										 15000,
+										 300,
+										 300,
 										 Ipv4FamilyInterface,
 										 StreamTypeInterface,
 										 TcpProtocolInterface,
@@ -244,7 +244,7 @@ int main() {
 			}
 		}
 
-		// Idling over 5s will close connection.
+		// Idling over 300ms will close connection.
 		{
 			MyClient client(
 				Host{"localhost", server.host().service});
@@ -252,7 +252,7 @@ int main() {
 								<< client.peerHost() << std::endl
 								<< std::endl;
 
-			std::this_thread::sleep_for(6s);
+			std::this_thread::sleep_for(310ms);
 			client.send({Http::Method::GET, "/"s});
 			auto res = client.recv();
 			releaseAssert(!client.good());

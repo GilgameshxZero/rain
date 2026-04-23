@@ -702,9 +702,8 @@ endif
 	@./version.sh $(shell \
 		echo $(REPO_NAME) | tr '[:lower:]' '[:upper:]')
 endif
-# TODO: Why is version.hpp required here?
 $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/pch.pch:\
-	$(INCL_PCH_HPP) pch.cpp version.hpp
+	$(INCL_PCH_HPP) pch.cpp
 	@echo Building $@...
 	@mkdir -p $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)
 	@$(COMPILER) $(COMPILER_FLAGS) -xc++-header pch.cpp -o $@

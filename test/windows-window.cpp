@@ -87,7 +87,7 @@ int main() {
 				"test/windows-window.cpp window name"});
 	DWORD mainThreadId{GetCurrentThreadId()};
 	std::thread([&]() {
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(100ms);
 		auto rect{window.getBoundingRect()};
 		INPUT input;
 		input.type = INPUT_MOUSE;
@@ -106,18 +106,18 @@ int main() {
 		std::cout << "Moved mouse to " << rect.left + 100
 							<< ", " << rect.top + 100 << ".\n";
 
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(100ms);
 		input.mi.dwFlags = MOUSEEVENTF_VIRTUALDESK |
 			MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTDOWN;
 		SendInput(1, &input, sizeof(INPUT));
 
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(100ms);
 		input.mi.dwFlags = MOUSEEVENTF_VIRTUALDESK |
 			MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTUP;
 		SendInput(1, &input, sizeof(INPUT));
 		std::cout << "Clicked mouse.\n";
 
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(100ms);
 		PostThreadMessage(mainThreadId, WM_QUIT, NULL, NULL);
 	}).detach();
 	Rain::Windows::runMessageLoop();

@@ -11,8 +11,8 @@ int main() {
 	Tcp::Client<
 		1_zu << 10,
 		1_zu << 10,
-		3000,
-		3000,
+		300,
+		300,
 		Ipv4FamilyInterface,
 		StreamTypeInterface,
 		TcpProtocolInterface,

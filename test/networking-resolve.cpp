@@ -142,7 +142,7 @@ int main() {
 
 	// Sleep for resolve threads to cleanup, so that temporal
 	// memory leaks don't show on valgrind.
-	std::this_thread::sleep_for(1s);
+	std::this_thread::sleep_for(100ms);
 
 	return 0;
 }

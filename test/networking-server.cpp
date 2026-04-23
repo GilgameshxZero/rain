@@ -28,7 +28,7 @@ int main() {
 							std::cout << "MyWorker received: " << buffer
 												<< std::endl;
 						}
-						timeout = Rain::Time::Timeout(3s);
+						timeout = Rain::Time::Timeout(100ms);
 					} while (
 						(recvStatus = this->recv(buffer, timeout)));
 				},
@@ -43,7 +43,7 @@ int main() {
 
 			// Graceful shutdown.
 			Rain::Error::consumeThrowable([this]() {
-				this->shutdown(ShutdownOpt::GRACEFUL, 3s);
+				this->shutdown(ShutdownOpt::GRACEFUL, 100ms);
 			})();
 		}
 
@@ -265,17 +265,17 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
-		releaseAssert(timeElapsed < 1s);
+		releaseAssert(timeElapsed < 100ms);
 	}
 
-	// Client times out in 3 seconds and takes 3 more seconds
-	// to shutdown.
+	// Client times out in 0.1 seconds and takes 0.1 more
+	// seconds to shutdown.
 	{
 		auto timeBegin = std::chrono::steady_clock::now();
 		std::cout << std::endl;
 		MyServer server(":0");
 		MyClient client(Host{"", server.host().service}, {});
-		std::this_thread::sleep_for(7s);
+		std::this_thread::sleep_for(240ms);
 		std::cout << "Server workers: " << server.workers()
 							<< ", threads: " << server.threads()
 							<< std::endl;
@@ -285,7 +285,7 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time elapsed: " << timeElapsed
 							<< std::endl;
-		releaseAssert(timeElapsed < 8s);
+		releaseAssert(timeElapsed < 260ms);
 	}
 
 	// Workers destructed counter is incremented correctly.
@@ -300,10 +300,10 @@ int main() {
 			// Wait a bit so that worker construction can finish
 			// (so that setting no linger will not error if the
 			// socket is already disconnected).
-			std::this_thread::sleep_for(1s);
+			std::this_thread::sleep_for(100ms);
 		}
 		// Wait a bit so that workers can destruct.
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(100ms);
 		releaseAssert(server.workersDestructed() == 3);
 	}
 

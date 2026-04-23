@@ -1,6 +1,8 @@
 // Tests for Rain::Platform.
 #include <rain.hpp>
 
+#include "../build/version.hpp"
+
 int main() {
 	std::cout << "Debug: "
 						<< (Rain::Platform::isDebug() ? "Yes." : "No.")

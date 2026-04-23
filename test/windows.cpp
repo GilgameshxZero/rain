@@ -25,13 +25,13 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char const CAPTION[]{"rain/test/windows"};
 
 	std::thread([&]() {
-		std::this_thread::sleep_for(3s);
+		std::this_thread::sleep_for(100ms);
 		PostMessage(
 			FindWindow(NULL, CAPTION), WM_COMMAND, IDOK, 0);
 	}).detach();
 	return !MessageBox(
 		NULL,
-		"Hello world! Waiting for 3s...",
+		"Hello world! Waiting for 100ms...",
 		CAPTION,
 		MB_OKCANCEL);
 }

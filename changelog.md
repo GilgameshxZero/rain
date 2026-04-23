@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.3.25
+
+1. Deprecate `RAIN_ERROR_LOCATION` for `consumeThrowable` in favor of C++20’s `std::source_location::current()`.
+2. `Serializer` overloading for custom types now works.
+  1. Custom types now define their `iostream` operator overloads inline as `friend` functions.
+3. `releaseAssert` provides function-based assert which runs even in release builds.
+4. HTTP/SMTP `StatusCode` code is now more precise.
+5. Moved `Mailbox` hash into standard location.
+6. Decreased overall wait time for time-based tests.
+7. Remove versioning information from `rain.hpp` include, it must be used manually now. This prevents rebuilds of the PCH when only the version number has changed.
+
 ## 7.3.24
 
 1. Format all files with new `.clangd` guidelines (mainly, 60 line length).

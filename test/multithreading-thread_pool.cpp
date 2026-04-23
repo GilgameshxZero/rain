@@ -2,17 +2,16 @@
 #include <rain.hpp>
 
 using Rain::Error::releaseAssert;
+using namespace Rain::Literal;
 
 int main() {
-	using namespace Rain::Literal;
-
 	// A counter for work.
 	std::atomic_size_t counter{0};
 
 	// Two types of tasks which both increment the counter,
 	// one which prints the counter as well.
 	auto task = [&counter]() noexcept {
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(100ms);
 		counter++;
 	};
 	auto printTask = [&counter, task]() noexcept {
@@ -124,7 +123,7 @@ int main() {
 	// Tasks which throw exceptions should be reported but not
 	// crash.
 	Rain::Multithreading::ThreadPool::Task throwingTask([]() {
-		std::this_thread::sleep_for(500ms);
+		std::this_thread::sleep_for(50ms);
 		throw std::runtime_error(
 			"*fanfare* You've been pranked!\n");
 	});

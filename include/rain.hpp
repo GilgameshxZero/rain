@@ -8,9 +8,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-// Versioning information is included but does not trigger a
-// rebuild.
-#include "../build/version.hpp"
+// Versioning information is omitted to ease rebuild
+// timeliness and must be included by the caller if needed.
 
 #include "rain/algorithm.hpp"
 #include "rain/console.hpp"
