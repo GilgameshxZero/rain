@@ -317,7 +317,7 @@ int main() {
 		releaseAssert(x == 130);
 
 		BigIntegerUnsigned<7> const Z(18446744073709551557ULL);
-		releaseAssert(leastSignificant1BitIdx(Z - 1) == 2);
+		releaseAssert(leastSignificant1BitIdx(Z - 1u) == 2);
 		releaseAssert(bitPopcount(Z) == 60);
 
 		x = 18446744073709551557ULL;

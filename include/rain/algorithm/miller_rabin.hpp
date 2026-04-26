@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../functional/trait.hpp"
 #include "../random.hpp"
 #include "bit_manipulators.hpp"
 #include "modulus_field.hpp"
@@ -9,8 +10,9 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			std::is_integral<Integer>::value &&
-			std::is_unsigned<Integer>::value>::type * = nullptr>
+			Functional::TraitType<Integer>::IsIntegral::VALUE &&
+			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			type * = nullptr>
 	inline bool isMaybePrimeMillerRabinInner(
 		Integer const &N,
 		Integer const &A,
@@ -40,8 +42,9 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			std::is_integral<Integer>::value &&
-			std::is_unsigned<Integer>::value>::type * = nullptr>
+			Functional::TraitType<Integer>::IsIntegral::VALUE &&
+			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			type * = nullptr>
 	inline bool isPrimeMillerRabin(
 		Integer const &N,
 		std::size_t const K,
@@ -74,8 +77,9 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			std::is_integral<Integer>::value &&
-			std::is_unsigned<Integer>::value>::type * = nullptr>
+			Functional::TraitType<Integer>::IsIntegral::VALUE &&
+			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			type * = nullptr>
 	inline bool isPrimeMillerRabinDeterministic(
 		Integer const &N) {
 		if (N < 2) {

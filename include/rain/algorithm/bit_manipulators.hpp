@@ -1,7 +1,8 @@
 #pragma once
 
+#include "../functional/trait.hpp"
+
 #include <limits>
-#include <type_traits>
 
 namespace Rain::Algorithm {
 	// Most significant 1-bit for unsigned integral types of
@@ -9,8 +10,9 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			std::is_integral<Integer>::value &&
-			std::is_unsigned<Integer>::value>::type * = nullptr>
+			Functional::TraitType<Integer>::IsIntegral::VALUE &&
+			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			type * = nullptr>
 	inline std::size_t mostSignificant1BitIdx(
 		Integer const &x) {
 #ifdef __has_builtin
@@ -50,8 +52,9 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			std::is_integral<Integer>::value &&
-			std::is_unsigned<Integer>::value>::type * = nullptr>
+			Functional::TraitType<Integer>::IsIntegral::VALUE &&
+			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			type * = nullptr>
 	inline std::size_t leastSignificant1BitIdx(
 		Integer const &x) {
 #ifdef __has_builtin
@@ -77,8 +80,9 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			std::is_integral<Integer>::value &&
-			std::is_unsigned<Integer>::value>::type * = nullptr>
+			Functional::TraitType<Integer>::IsIntegral::VALUE &&
+			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			type * = nullptr>
 	inline std::size_t bitPopcount(Integer const &x) {
 #ifdef __has_builtin
 	#if __has_builtin(__builtin_popcountll)
@@ -96,4 +100,4 @@ namespace Rain::Algorithm {
 		}
 		return count;
 	}
-}
+} // namespace Rain::Algorithm

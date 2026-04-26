@@ -4,10 +4,9 @@
 
 #include "../error/consume_throwable.hpp"
 #include "../error/incrementer.hpp"
-#include "../functional.hpp"
+#include "../functional/type.hpp"
 #include "../platform.hpp"
 #include "../time/timeout.hpp"
-#include "../type.hpp"
 
 #include <atomic>
 #include <condition_variable>

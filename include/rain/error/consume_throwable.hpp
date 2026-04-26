@@ -2,7 +2,6 @@
 // by consuming its exceptions.
 #pragma once
 
-#include "../functional.hpp"
 #include "../string/string.hpp"
 #include "assert.hpp"
 

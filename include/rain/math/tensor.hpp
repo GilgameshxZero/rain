@@ -2,7 +2,7 @@
 
 #include "../algorithm/bit_manipulators.hpp"
 #include "../error/exception.hpp"
-#include "../functional.hpp"
+#include "../functional/trait.hpp"
 #include "../literal.hpp"
 #include "../platform.hpp"
 
@@ -118,32 +118,27 @@ namespace Rain::Math {
 		// SFINAE to check an arbitrary type with a tensor of a
 		// given order.
 		template<
-			std::size_t TARGET_ORDER,
-			template<std::size_t, std::size_t> class Comparator,
+			template<std::size_t> class Comparator,
 			typename Value,
 			std::size_t ORDER,
 			typename std::enable_if<
-				Comparator<TARGET_ORDER, ORDER>::value>::type * =
-				nullptr>
+				Comparator<ORDER>::VALUE>::type * = nullptr>
 		static std::true_type isTensorOfComparativeOrderImpl(
 			Tensor<Value, ORDER> *);
 		template<
-			std::size_t = 0,
-			template<std::size_t, std::size_t> class =
-				Functional::isEqualTo,
+			template<std::size_t> class =
+				Functional::TraitSizeT<0>::IsEqualTo,
 			typename = std::nullptr_t,
 			std::size_t = 0,
 			typename = std::nullptr_t>
 		static std::false_type isTensorOfComparativeOrderImpl(
 			...);
 		template<
-			std::size_t TARGET_ORDER,
-			template<std::size_t, std::size_t> class Comparator,
+			template<std::size_t> class Comparator,
 			typename TypeDerived>
 		using isTensorOfComparativeOrder =
-			decltype(isTensorOfComparativeOrderImpl<
-				TARGET_ORDER,
-				Comparator>(std::declval<typename std::remove_const<
+			decltype(isTensorOfComparativeOrderImpl<Comparator>(
+				std::declval<typename std::remove_const<
 					TypeDerived>::type *>()));
 
 		// Perform an operation over all indices, or over the
@@ -157,8 +152,8 @@ namespace Rain::Math {
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
 			typename std::enable_if<isTensorOfComparativeOrder<
-				REMAINING_ORDER,
-				Functional::isLessThan,
+				Functional::TraitSizeT<
+					REMAINING_ORDER>::template IsLessThan,
 				ResultType>::value>::type * = nullptr>
 		static inline void applyOver(
 			auto &&callable,
@@ -181,8 +176,8 @@ namespace Rain::Math {
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
 			typename std::enable_if<isTensorOfComparativeOrder<
-				REMAINING_ORDER,
-				Functional::isEqualTo,
+				Functional::TraitSizeT<
+					REMAINING_ORDER>::template IsEqualTo,
 				ResultType>::value>::type * = nullptr>
 		static inline void applyOver(
 			auto &&callable,

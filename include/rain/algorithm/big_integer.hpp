@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../algorithm/bit_manipulators.hpp"
+#include "../functional/trait.hpp"
 #include "../literal.hpp"
 #include "../random.hpp"
 
@@ -21,23 +22,6 @@ namespace Rain::Algorithm {
 	using BigIntegerSigned = BigInteger<LOG_BITS, true>;
 	template<std::size_t LOG_BITS>
 	using BigIntegerUnsigned = BigInteger<LOG_BITS, false>;
-
-	// Common utilities for all BigIntegers.
-	template<>
-	class BigInteger<0, false> {
-		public:
-		// We must use our own templated SFINAE base class
-		// checker, like in `ModulusRingBase`.
-		template<std::size_t LOG_BITS, bool SIGNED>
-		static std::true_type isDerivedFromBigIntImpl(
-			BigInteger<LOG_BITS, SIGNED> const *);
-		template<std::size_t = 0, bool = true>
-		static std::false_type isDerivedFromBigIntImpl(...);
-		template<typename TypeDerived>
-		using isDerivedFromBigInt =
-			decltype(isDerivedFromBigIntImpl(
-				std::declval<TypeDerived *>()));
-	};
 }
 
 namespace std {
@@ -49,14 +33,14 @@ namespace std {
 		using ThisInteger =
 			Rain::Algorithm::BigInteger<LOG_BITS, SIGNED>;
 
-		static constexpr ThisInteger min() {
+		static ThisInteger constexpr min() {
 			return ThisInteger(
 				numeric_limits<
 					typename ThisInteger::SmallerInteger>::min(),
 				numeric_limits<typename ThisInteger::
 						SmallerIntegerUnsigned>::min());
 		};
-		static constexpr ThisInteger max() {
+		static ThisInteger constexpr max() {
 			return ThisInteger(
 				numeric_limits<
 					typename ThisInteger::SmallerInteger>::max(),
@@ -75,45 +59,28 @@ namespace std {
 		using UnderlyingInteger =
 			typename ThisInteger::UnderlyingInteger;
 
-		static constexpr ThisInteger min() {
+		static ThisInteger constexpr min() {
 			return ThisInteger{
 				numeric_limits<UnderlyingInteger>::min()};
 		};
-		static constexpr ThisInteger max() {
+		static ThisInteger constexpr max() {
 			return ThisInteger{
 				numeric_limits<UnderlyingInteger>::max()};
 		};
 	};
-
-	// `std::is_integral`. May be undefined behavior. TODO
-	template<std::size_t LOG_BITS, bool SIGNED>
-	struct is_integral<
-		Rain::Algorithm::BigInteger<LOG_BITS, SIGNED>> :
-		std::true_type {};
-
-	// `std::is_signed`. May be undefined behavior. TODO
-	template<std::size_t LOG_BITS>
-	struct is_signed<
-		Rain::Algorithm::BigInteger<LOG_BITS, false>> :
-		std::false_type {};
-	template<std::size_t LOG_BITS>
-	struct is_signed<
-		Rain::Algorithm::BigInteger<LOG_BITS, true>> :
-		std::true_type {};
 }
 
 namespace Rain::Algorithm {
-	// Determines the smallest BigInteger type which can
-	// represent all values from either integer.
 	template<
 		typename IntegerFirst,
 		// Selecting a single type will give the corresponding
 		// BigInteger type.
 		typename IntegerSecond = IntegerFirst,
-		// Using `enable_if_t` avoids errors in MSVC.
-		typename std::enable_if_t<
-			std::is_integral<IntegerFirst>::value &&
-			std::is_integral<IntegerSecond>::value> * = nullptr>
+		typename std::enable_if<
+			Functional::TraitType<
+				IntegerFirst>::IsIntegral::VALUE &&
+			Functional::TraitType<
+				IntegerSecond>::IsIntegral::VALUE>::type * = nullptr>
 	struct BigIntegerCommon :
 		std::conditional<
 			(sizeof(IntegerFirst) >= sizeof(IntegerSecond)),
@@ -121,18 +88,26 @@ namespace Rain::Algorithm {
 				Algorithm::MostSignificant1BitIdx<
 					sizeof(IntegerFirst) * 8 - 1>::value +
 					1 +
-					(!std::is_signed<IntegerFirst>::value &&
-						std::is_signed<IntegerSecond>::value),
-				std::is_signed<IntegerFirst>::value ||
-					std::is_signed<IntegerSecond>::value>,
+					(!Functional::TraitType<
+						 IntegerFirst>::IsSigned::VALUE &&
+						Functional::TraitType<
+							IntegerSecond>::IsSigned::VALUE),
+				Functional::TraitType<
+					IntegerFirst>::IsSigned::VALUE ||
+					Functional::TraitType<
+						IntegerSecond>::IsSigned::VALUE>,
 			BigInteger<
 				Algorithm::MostSignificant1BitIdx<
 					sizeof(IntegerSecond) * 8 - 1>::value +
 					1 +
-					(!std::is_signed<IntegerSecond>::value &&
-						std::is_signed<IntegerFirst>::value),
-				std::is_signed<IntegerFirst>::value ||
-					std::is_signed<IntegerSecond>::value>> {};
+					(!Functional::TraitType<
+						 IntegerSecond>::IsSigned::VALUE &&
+						Functional::TraitType<
+							IntegerFirst>::IsSigned::VALUE),
+				Functional::TraitType<
+					IntegerFirst>::IsSigned::VALUE ||
+					Functional::TraitType<
+						IntegerSecond>::IsSigned::VALUE>> {};
 
 	// Template recursion base case 2**5 = 32. Requires 64-bit
 	// integer to be available to support the overflow
@@ -182,18 +157,18 @@ namespace Rain::Algorithm {
 		UnderlyingInteger value;
 
 		// Base case for basic helpers.
-		inline bool isNegative() const {
+		inline bool constexpr isNegative() const {
 			return SIGNED && this->value < UnderlyingInteger{};
 		}
 
 		// Copy constructor can be skipped as it is trivial.
 		//
 		// Exact underlying construction.
-		explicit inline BigInteger(
+		explicit inline constexpr BigInteger(
 			UnderlyingInteger other = UnderlyingInteger{0}) :
 			value{other} {}
 		// Bool constructor.
-		explicit inline BigInteger(bool const value) :
+		explicit inline constexpr BigInteger(bool const value) :
 			value{static_cast<UnderlyingInteger>(value)} {}
 		// Cast constructors.
 		//
@@ -204,16 +179,18 @@ namespace Rain::Algorithm {
 				!std::is_same<ThisInteger, OtherInteger>::value &&
 				!std::is_same<UnderlyingInteger, OtherInteger>::
 					value>::type * = nullptr,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr,
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
 			std::enable_if<
 				((sizeof(OtherInteger) == 4) &&
-					std::is_signed<OtherInteger>::value == SIGNED) ||
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE == SIGNED) ||
 				((sizeof(OtherInteger) < 4) &&
 					(SIGNED ||
-						std::is_signed<OtherInteger>::value ==
-							SIGNED))>::type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+						Functional::TraitType<OtherInteger>::IsSigned::
+								VALUE == SIGNED))>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// This constructor is well-defined since `value` is
 			// always in-range.
 			value{static_cast<UnderlyingInteger>(other)} {}
@@ -222,37 +199,45 @@ namespace Rain::Algorithm {
 		// 1. Construct signed to larger unsigned.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr,
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) < 4) &&
-				(!SIGNED && std::is_signed<OtherInteger>::value)>::
-				type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+				(!SIGNED &&
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE)>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// Casting to unsigned is well-defined.
 			value{static_cast<UnderlyingInteger>(other)} {}
 		// 2. Construct signed to same unsigned.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr,
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) == 4) &&
-				(SIGNED != std::is_signed<OtherInteger>::value) &&
+				(SIGNED !=
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE) &&
 				!SIGNED>::type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// Cast to unsigned is well-defined.
 			value{static_cast<UnderlyingInteger>(other)} {}
 		// 3. Construct unsigned to same signed.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr,
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) == 4) &&
-				(SIGNED != std::is_signed<OtherInteger>::value) &&
+				(SIGNED !=
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE) &&
 				SIGNED>::type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// Cast to unsigned, unset most significant bit, and
 			// cast again now that it is in-range.
 			value{static_cast<UnderlyingInteger>(
@@ -261,31 +246,32 @@ namespace Rain::Algorithm {
 		// 4. Construct to smaller unsigned.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr,
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) > 4) && !SIGNED>::type * =
 				nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// Casting to unsigned is well-defined.
 			value{static_cast<UnderlyingInteger>(other)} {}
 		// 5. Construct to smaller signed.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr,
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
 			std::enable_if<(sizeof(OtherInteger) > 4) && SIGNED>::
 				type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) {
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) {
 			// Cast to smaller unsigned int.
 			auto smallerUnsigned{
 				static_cast<std::uint32_t>(other)};
 			// Cast smaller unsigned to smaller signed by
 			// unsetting the sign bit and casting now that it is
 			// in-range.
-			static std::uint32_t const MASK{0x7fffffff};
-			auto smallerSigned{
-				static_cast<std::int32_t>(smallerUnsigned & MASK)};
+			auto smallerSigned{static_cast<std::int32_t>(
+				smallerUnsigned & std::uint32_t{0x7fffffff})};
 			// Restore sign if necessary.
 			this->value = other < OtherInteger() ? smallerSigned ^
 					std::numeric_limits<std::int32_t>::min()
@@ -309,12 +295,14 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(UnderlyingInteger) <
 					sizeof(OtherInteger)>::type * = nullptr>
-		explicit inline operator OtherInteger() const {
+		explicit inline constexpr
+			operator OtherInteger() const {
 			return static_cast<OtherInteger>(
 				typename BigIntegerCommon<OtherInteger>::type(
 					*this));
@@ -323,14 +311,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(UnderlyingInteger) == sizeof(OtherInteger) &&
-				SIGNED != std::is_signed<OtherInteger>::value &&
-				!std::is_signed<OtherInteger>::value>::type * =
-				nullptr>
-		explicit inline operator OtherInteger() const {
+				SIGNED !=
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE &&
+				!Functional::TraitType<
+					OtherInteger>::IsSigned::VALUE>::type * = nullptr>
+		explicit inline constexpr
+			operator OtherInteger() const {
 			return static_cast<OtherInteger>(this->value);
 		}
 		// 4. Casting to same size, signed native (from
@@ -338,14 +330,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(UnderlyingInteger) == sizeof(OtherInteger) &&
-				SIGNED != std::is_signed<OtherInteger>::value &&
-				std::is_signed<OtherInteger>::value>::type * =
-				nullptr>
-		explicit inline operator OtherInteger() const {
+				SIGNED !=
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE &&
+				Functional::TraitType<
+					OtherInteger>::IsSigned::VALUE>::type * = nullptr>
+		explicit inline constexpr
+			operator OtherInteger() const {
 			return static_cast<OtherInteger>(
 				this->value &
 				~(UnderlyingInteger{1}
@@ -356,35 +352,40 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
-				!std::is_signed<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TraitType<
+					OtherInteger>::IsSigned::VALUE &&
 				(sizeof(UnderlyingInteger) >
 					sizeof(OtherInteger))>::type * = nullptr>
-		explicit inline operator OtherInteger() const {
+		explicit inline constexpr
+			operator OtherInteger() const {
 			return static_cast<OtherInteger>(this->value);
 		}
 		// 6. Casting to a smaller signed native integer.
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
-				std::is_signed<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				Functional::TraitType<
+					OtherInteger>::IsSigned::VALUE &&
 				(sizeof(UnderlyingInteger) >
 					sizeof(OtherInteger))>::type * = nullptr>
-		explicit inline operator OtherInteger() const {
+		explicit inline constexpr
+			operator OtherInteger() const {
 			using OtherIntegerUnsigned =
 				typename std::make_unsigned<OtherInteger>::type;
 			auto smallerUnsigned{
 				static_cast<OtherIntegerUnsigned>(this->value)};
-			static auto const MASK{
+			auto smallerSigned{static_cast<OtherInteger>(
+				smallerUnsigned &
 				~(OtherIntegerUnsigned{1}
-					<< (sizeof(OtherIntegerUnsigned) * 8 - 1))};
-			auto smallerSigned{
-				static_cast<OtherInteger>(smallerUnsigned & MASK)};
+					<< (sizeof(OtherIntegerUnsigned) * 8 - 1)))};
 			// Restore sign if necessary.
 			return this->value < UnderlyingInteger{}
 				? smallerSigned ^
@@ -392,13 +393,13 @@ namespace Rain::Algorithm {
 				: smallerSigned;
 		}
 		// Cast to bool is standard.
-		explicit inline operator bool() const {
+		explicit inline constexpr operator bool() const {
 			return static_cast<bool>(this->value);
 		}
 
 		// Assignment operators just piggyback constructors.
 		template<typename OtherInteger>
-		inline ThisInteger &operator=(
+		inline ThisInteger constexpr &operator=(
 			OtherInteger const &other) {
 			return *this = ThisInteger(other);
 		}
@@ -407,10 +408,11 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator==(
+		inline bool constexpr operator==(
 			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
@@ -418,31 +420,36 @@ namespace Rain::Algorithm {
 			return CommonInteger(this->value) ==
 				CommonInteger(other);
 		}
-		inline bool operator==(ThisInteger const &other) const {
+		inline bool constexpr operator==(
+			ThisInteger const &other) const {
 			return this->value == other.value;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator<(OtherInteger const &other) const {
+		inline bool constexpr operator<(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) < CommonInteger(other);
 		}
-		inline bool operator<(ThisInteger const &other) const {
+		inline bool constexpr operator<(
+			ThisInteger const &other) const {
 			return this->value < other.value;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator<=(
+		inline bool constexpr operator<=(
 			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
@@ -450,32 +457,37 @@ namespace Rain::Algorithm {
 			return CommonInteger(this->value) <=
 				CommonInteger(other);
 		}
-		inline bool operator<=(ThisInteger const &other) const {
+		inline bool constexpr operator<=(
+			ThisInteger const &other) const {
 			return this->value <= other.value;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator>(OtherInteger const &other) const {
+		inline bool constexpr operator>(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(this->value) >
 				CommonInteger(other);
 		}
-		inline bool operator>(ThisInteger const &other) const {
+		inline bool constexpr operator>(
+			ThisInteger const &other) const {
 			return this->value > other.value;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator>=(
+		inline bool constexpr operator>=(
 			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
@@ -483,67 +495,80 @@ namespace Rain::Algorithm {
 			return CommonInteger(this->value) >=
 				CommonInteger(other);
 		}
-		inline bool operator>=(ThisInteger const &other) const {
+		inline bool constexpr operator>=(
+			ThisInteger const &other) const {
 			return this->value >= other.value;
 		}
 
 		// Bitwise operators auto-cast to common BigInteger
 		// type.
-		inline auto operator~() const {
+		inline auto constexpr operator~() const {
 			return ThisInteger(~this->value);
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline auto operator&(OtherInteger const &other) const {
+		inline auto constexpr operator&(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) & CommonInteger(other);
 		}
-		inline auto operator&(ThisInteger const &other) const {
+		inline auto constexpr operator&(
+			ThisInteger const &other) const {
 			return ThisInteger(this->value & other.value);
 		}
-		inline auto operator&=(ThisInteger const &other) {
+		inline auto constexpr operator&=(
+			ThisInteger const &other) {
 			return *this = *this & other;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline auto operator|(OtherInteger const &other) const {
+		inline auto constexpr operator|(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) | CommonInteger(other);
 		}
-		inline auto operator|(ThisInteger const &other) const {
+		inline auto constexpr operator|(
+			ThisInteger const &other) const {
 			return ThisInteger(this->value | other.value);
 		}
-		inline auto operator|=(ThisInteger const &other) {
+		inline auto constexpr operator|=(
+			ThisInteger const &other) {
 			return *this = *this | other;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline auto operator^(OtherInteger const &other) const {
+		inline auto constexpr operator^(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) ^ CommonInteger(other);
 		}
-		inline auto operator^(ThisInteger const &other) const {
+		inline auto constexpr operator^(
+			ThisInteger const &other) const {
 			return ThisInteger(this->value ^ other.value);
 		}
-		inline auto operator^=(ThisInteger const &other) {
+		inline auto constexpr operator^=(
+			ThisInteger const &other) {
 			return *this = *this ^ other;
 		}
 
@@ -558,17 +583,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, std::size_t>::value>::
 				type * = nullptr>
-		inline ThisInteger operator>>(
+		inline ThisInteger constexpr operator>>(
 			OtherInteger const &other) const {
 			if (other < OtherInteger()) {
 				return *this << -other;
 			}
 			return *this >> static_cast<std::size_t>(other);
 		}
-		inline ThisInteger operator>>(
+		inline ThisInteger constexpr operator>>(
 			std::size_t const &shift) const {
 			if (shift == 0_zu) {
 				return *this;
@@ -602,23 +628,25 @@ namespace Rain::Algorithm {
 				std::numeric_limits<UnderlyingInteger>::min());
 		}
 		template<typename Other>
-		inline ThisInteger &operator>>=(Other const &other) {
+		inline ThisInteger constexpr &operator>>=(
+			Other const &other) {
 			return *this = *this >> other;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, std::size_t>::value>::
 				type * = nullptr>
-		inline ThisInteger operator<<(
+		inline ThisInteger constexpr operator<<(
 			OtherInteger const &other) const {
 			if (other < OtherInteger()) {
 				return *this >> -other;
 			}
 			return *this << static_cast<std::size_t>(other);
 		}
-		inline ThisInteger operator<<(
+		inline ThisInteger constexpr operator<<(
 			std::size_t const &shift) const {
 			if (shift == 0_zu) {
 				return *this;
@@ -649,7 +677,8 @@ namespace Rain::Algorithm {
 				std::numeric_limits<UnderlyingInteger>::min());
 		}
 		template<typename Other>
-		inline ThisInteger &operator<<=(Other const &other) {
+		inline ThisInteger constexpr &operator<<=(
+			Other const &other) {
 			return *this = *this << other;
 		}
 
@@ -680,7 +709,7 @@ namespace Rain::Algorithm {
 		// integers and N the minimum signed, {N, 7} - {X,
 		// M} = {-1, X, 0, 8}).
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			BigInteger<5, SIGNED || RIGHT_SIGNED>,
 			BigInteger<5, false>>
 			addWithOverflow(
@@ -720,13 +749,15 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator+(OtherInteger const &other) const {
+		inline auto constexpr operator+(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) + CommonInteger(other);
 		}
-		inline auto operator+(ThisInteger const &other) const {
+		inline auto constexpr operator+(
+			ThisInteger const &other) const {
 			// Unset msb, cast to possible signed, set msb if it
 			// was set before, and convert to target type.
 			auto underlyingLow{
@@ -743,12 +774,13 @@ namespace Rain::Algorithm {
 			return ThisInteger(targetLow);
 		}
 		template<typename OtherInteger>
-		inline auto operator+=(OtherInteger const &other) {
+		inline auto constexpr operator+=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this + other);
 		}
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			BigInteger<5, SIGNED || RIGHT_SIGNED>,
 			BigInteger<5, false>>
 			subtractWithOverflow(
@@ -782,13 +814,15 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator-(OtherInteger const &other) const {
+		inline auto constexpr operator-(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) - CommonInteger(other);
 		}
-		inline auto operator-(ThisInteger const &other) const {
+		inline auto constexpr operator-(
+			ThisInteger const &other) const {
 			auto underlyingLow{
 				ThisInteger::subtractWithOverflow(*this, other)
 					.second.value};
@@ -803,12 +837,13 @@ namespace Rain::Algorithm {
 			return ThisInteger(targetLow);
 		}
 		template<typename OtherInteger>
-		inline auto operator-=(OtherInteger const &other) {
+		inline auto constexpr operator-=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this - other);
 		}
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			BigInteger<5, SIGNED || RIGHT_SIGNED>,
 			BigInteger<5, false>>
 			multiplyWithOverflow(
@@ -845,13 +880,15 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator*(OtherInteger const &other) const {
+		inline auto constexpr operator*(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) * CommonInteger(other);
 		}
-		inline auto operator*(ThisInteger const &other) const {
+		inline auto constexpr operator*(
+			ThisInteger const &other) const {
 			auto underlyingLow{
 				ThisInteger::multiplyWithOverflow(*this, other)
 					.second.value};
@@ -866,7 +903,8 @@ namespace Rain::Algorithm {
 			return ThisInteger(targetLow);
 		}
 		template<typename OtherInteger>
-		inline auto operator*=(OtherInteger const &other) {
+		inline auto constexpr operator*=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this * other);
 		}
@@ -876,7 +914,7 @@ namespace Rain::Algorithm {
 		// Returns {remainder, quotient}. Dividing by 0 returns
 		// 0.
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			ThisInteger,
 			BigInteger<5, SIGNED || RIGHT_SIGNED>>
 			divideWithRemainder(
@@ -918,18 +956,21 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator/(OtherInteger const &other) const {
+		inline auto constexpr operator/(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) / CommonInteger(other);
 		}
-		inline auto operator/(ThisInteger const &other) const {
+		inline auto constexpr operator/(
+			ThisInteger const &other) const {
 			return ThisInteger::divideWithRemainder(*this, other)
 				.second;
 		}
 		template<typename OtherInteger>
-		inline auto operator/=(OtherInteger const &other) {
+		inline auto constexpr operator/=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this / other);
 		}
@@ -938,34 +979,41 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator%(OtherInteger const &other) const {
+		inline auto constexpr operator%(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) % CommonInteger(other);
 		}
-		inline auto operator%(ThisInteger const &other) const {
+		inline auto constexpr operator%(
+			ThisInteger const &other) const {
 			return ThisInteger::divideWithRemainder(*this, other)
 				.first;
 		}
 		template<typename OtherInteger>
-		inline auto operator%=(OtherInteger const &other) {
+		inline auto constexpr operator%=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this % other);
 		}
 
 		// Unary.
-		inline ThisInteger operator-() const {
+		inline ThisInteger constexpr operator-() const {
 			return ThisInteger() - *this;
 		}
-		inline ThisInteger operator++() { return *this += 1; }
-		inline ThisInteger operator++(int) {
+		inline ThisInteger constexpr operator++() {
+			return *this += 1;
+		}
+		inline ThisInteger constexpr operator++(int) {
 			auto tmp(*this);
 			*this += 1;
 			return tmp;
 		}
-		inline ThisInteger operator--() { return *this -= 1; }
-		inline ThisInteger operator--(int) {
+		inline ThisInteger constexpr operator--() {
+			return *this -= 1;
+		}
+		inline ThisInteger constexpr operator--(int) {
 			auto tmp(*this);
 			*this -= 1;
 			return tmp;
@@ -975,9 +1023,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator==(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator==(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -988,9 +1037,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator<(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator<(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1001,9 +1051,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator<=(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator<=(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1014,9 +1065,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator>(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator>(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1027,9 +1079,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator>=(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator>=(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1040,9 +1093,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator+(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator+(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1053,9 +1107,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator-(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator-(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1066,9 +1121,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator*(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator*(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1079,9 +1135,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator/(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator/(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1092,9 +1149,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator%(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator%(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -1104,16 +1162,23 @@ namespace Rain::Algorithm {
 		}
 
 		// Stream operators.
-		friend inline std::ostream &operator<<(
+		friend inline constexpr std::ostream &operator<<(
 			std::ostream &stream,
 			ThisInteger const &right) {
 			return stream << right.value;
 		}
-		friend inline std::istream &operator>>(
+		friend inline constexpr std::istream &operator>>(
 			std::istream &stream,
 			ThisInteger &right) {
 			return stream >> right.value;
 		}
+
+		// Type traits.
+		struct Trait {
+			static inline bool constexpr IS_INTEGRAL{true};
+			static inline bool constexpr IS_SIGNED{SIGNED};
+			static inline bool constexpr IS_UNSIGNED{!SIGNED};
+		};
 	};
 
 	// Two ints of half the size form a larger int. Implements
@@ -1140,14 +1205,14 @@ namespace Rain::Algorithm {
 		// Helpers.
 		// Tests if this integer is negative without invoking
 		// more complex functions.
-		inline bool isNegative() const {
+		inline bool constexpr isNegative() const {
 			return SIGNED && this->high.isNegative();
 		}
 
 		// Copy constructor can be skipped as it is trivial.
 		//
 		// Underlying constructor.
-		explicit inline BigInteger(
+		explicit inline constexpr BigInteger(
 			SmallerInteger const &high,
 			SmallerIntegerUnsigned const &low) :
 			high(high),
@@ -1155,9 +1220,11 @@ namespace Rain::Algorithm {
 		// Default constructor, since we can't enforce
 		// all-or-none default arguments in the underlying
 		// constructor.
-		explicit inline BigInteger() : high(), low() {}
+		explicit inline constexpr BigInteger() :
+			high(),
+			low() {}
 		// Bool constructor.
-		explicit inline BigInteger(bool const value) :
+		explicit inline constexpr BigInteger(bool const value) :
 			high(),
 			low(value) {}
 		// Cast constructors. 2 constructors handle native ints,
@@ -1173,16 +1240,20 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				LOG_BITS == 6 &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
-				SIGNED == std::is_signed<OtherInteger>::value &&
+				SIGNED ==
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE &&
 				!SIGNED>::type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// Right shift is well-defined for unsigned ints.
 			high(static_cast<SmallerInteger>(other >> 32)),
 			// Casting to unsigned smaller is well-defined.
@@ -1191,16 +1262,20 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				LOG_BITS == 6 &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
-				SIGNED == std::is_signed<OtherInteger>::value &&
+				SIGNED ==
+					Functional::TraitType<
+						OtherInteger>::IsSigned::VALUE &&
 				SIGNED>::type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// Casting to unsigned smaller is well-defined.
 			low(static_cast<SmallerIntegerUnsigned>(other)) {
 			auto unsignedOther{static_cast<std::uint64_t>(other)};
@@ -1221,15 +1296,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				(sizeof(SmallerIntegerUnsigned) +
 							sizeof(SmallerInteger) !=
 						sizeof(OtherInteger) ||
-					SIGNED != std::is_signed<OtherInteger>::value)>::
-				type * = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+					SIGNED !=
+						Functional::TraitType<OtherInteger>::IsSigned::
+							VALUE)>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			BigInteger(
 				typename BigIntegerCommon<OtherInteger>::type(
 					other)) {}
@@ -1238,15 +1316,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
-				SIGNED != std::is_signed<OtherInteger>::value>::type
-				* = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+				SIGNED !=
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			high(other.high),
 			low(other.low) {}
 		// 5. Constructing to a larger `BigInteger` of the same
@@ -1254,15 +1335,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				(sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) >
 					sizeof(OtherInteger)) &&
-				SIGNED == std::is_signed<OtherInteger>::value>::type
-				* = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+				SIGNED ==
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			// If `other.isNegative()`, casting to an unsigned
 			// int will wrap it back around to positive. But
 			// since `high` will be `-1`, the joint value is
@@ -1277,15 +1361,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				(sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) <
 					sizeof(OtherInteger)) &&
-				SIGNED == std::is_signed<OtherInteger>::value>::type
-				* = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+				SIGNED ==
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			BigInteger(other.low) {}
 		// 7. Constructing to a different BigInteger of a
 		// different sign will first cast to the resized
@@ -1293,15 +1380,18 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) !=
 					sizeof(OtherInteger) &&
-				SIGNED != std::is_signed<OtherInteger>::value>::type
-				* = nullptr>
-		explicit inline BigInteger(OtherInteger const &other) :
+				SIGNED !=
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE>::type * = nullptr>
+		explicit inline constexpr BigInteger(
+			OtherInteger const &other) :
 			BigInteger(
 				typename BigInteger::OppositeSignInteger(other)) {}
 
@@ -1317,16 +1407,19 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				LOG_BITS == 6 &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				sizeof(SmallerInteger) +
 						sizeof(SmallerIntegerUnsigned) ==
 					sizeof(OtherInteger) &&
-				SIGNED == std::is_signed<OtherInteger>::value>::type
-				* = nullptr>
-		explicit inline operator OtherInteger() const {
+				SIGNED ==
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE>::type * = nullptr>
+		explicit inline constexpr
+			operator OtherInteger() const {
 			// Unwrap high/low.
 			auto nativeHigh{static_cast<
 				typename SmallerInteger::UnderlyingInteger>(
@@ -1347,9 +1440,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) <
 						sizeof(OtherInteger) ||
@@ -1357,9 +1451,10 @@ namespace Rain::Algorithm {
 								sizeof(SmallerIntegerUnsigned) ==
 							sizeof(OtherInteger) &&
 						SIGNED !=
-							std::is_signed<OtherInteger>::value))>::type
-				* = nullptr>
-		explicit inline operator OtherInteger() const {
+							Functional::TraitType<OtherInteger>::
+								IsSigned::VALUE))>::type * = nullptr>
+		explicit inline constexpr
+			operator OtherInteger() const {
 			return static_cast<OtherInteger>(
 				typename BigIntegerCommon<OtherInteger>::type(
 					*this));
@@ -1368,39 +1463,42 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) >
 						sizeof(OtherInteger) &&
-					!std::is_signed<OtherInteger>::value)>::type * =
-				nullptr>
-		explicit inline operator OtherInteger() const {
+					!Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE)>::type * = nullptr>
+		explicit inline constexpr
+			operator OtherInteger() const {
 			return static_cast<OtherInteger>(this->low);
 		}
 		// 4. Casting to smaller signed native int.
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) >
 						sizeof(OtherInteger) &&
-					std::is_signed<OtherInteger>::value)>::type * =
-				nullptr>
-		explicit inline operator OtherInteger() const {
+					Functional::TraitType<OtherInteger>::IsSigned::
+						VALUE)>::type * = nullptr>
+		explicit inline constexpr
+			operator OtherInteger() const {
 			using OtherIntegerUnsigned =
 				typename std::make_unsigned<OtherInteger>::type;
 			auto smallerUnsigned{
 				static_cast<OtherIntegerUnsigned>(this->low)};
-			static auto const MASK{
+			auto smallerSigned{static_cast<OtherInteger>(
+				smallerUnsigned &
 				~(OtherIntegerUnsigned{1}
-					<< (sizeof(OtherIntegerUnsigned) * 8 - 1))};
-			auto smallerSigned{
-				static_cast<OtherInteger>(smallerUnsigned & MASK)};
+					<< (sizeof(OtherIntegerUnsigned) * 8 - 1)))};
 			// Restore sign if necessary.
 			return this->high < SmallerInteger{} ? smallerSigned ^
 					std::numeric_limits<OtherInteger>::min()
@@ -1408,14 +1506,14 @@ namespace Rain::Algorithm {
 		}
 		// Recursively casting to bool avoids comparators, which
 		// we conceptually define after the casters.
-		explicit inline operator bool() const {
+		explicit inline constexpr operator bool() const {
 			return static_cast<bool>(this->high) ||
 				static_cast<bool>(this->low);
 		}
 
 		// Assignment operators just piggyback constructors.
 		template<typename OtherInteger>
-		inline ThisInteger &operator=(
+		inline ThisInteger constexpr &operator=(
 			OtherInteger const &other) {
 			return *this = ThisInteger(other);
 		}
@@ -1424,50 +1522,57 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator==(
+		inline bool constexpr operator==(
 			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) == CommonInteger(other);
 		}
-		inline bool operator==(ThisInteger const &other) const {
+		inline bool constexpr operator==(
+			ThisInteger const &other) const {
 			return this->high == other.high &&
 				this->low == other.low;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator<(OtherInteger const &other) const {
+		inline bool constexpr operator<(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) < CommonInteger(other);
 		}
-		inline bool operator<(ThisInteger const &other) const {
+		inline bool constexpr operator<(
+			ThisInteger const &other) const {
 			return this->high < other.high ||
 				(this->high == other.high && this->low < other.low);
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator<=(
+		inline bool constexpr operator<=(
 			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) <= CommonInteger(other);
 		}
-		inline bool operator<=(ThisInteger const &other) const {
+		inline bool constexpr operator<=(
+			ThisInteger const &other) const {
 			return this->high < other.high ||
 				(this->high == other.high &&
 					this->low <= other.low);
@@ -1475,97 +1580,114 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator>(OtherInteger const &other) const {
+		inline bool constexpr operator>(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) > CommonInteger(other);
 		}
-		inline bool operator>(ThisInteger const &other) const {
+		inline bool constexpr operator>(
+			ThisInteger const &other) const {
 			return this->high > other.high ||
 				(this->high == other.high && this->low > other.low);
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline bool operator>=(
+		inline bool constexpr operator>=(
 			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) >= CommonInteger(other);
 		}
-		inline bool operator>=(ThisInteger const &other) const {
+		inline bool constexpr operator>=(
+			ThisInteger const &other) const {
 			return this->high > other.high ||
 				(this->high == other.high &&
 					this->low >= other.low);
 		}
 
 		// Bitwise.
-		inline auto operator~() const {
+		inline auto constexpr operator~() const {
 			return ThisInteger(~this->high, ~this->low);
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline auto operator&(OtherInteger const &other) const {
+		inline auto constexpr operator&(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) & CommonInteger(other);
 		}
-		inline auto operator&(ThisInteger const &other) const {
+		inline auto constexpr operator&(
+			ThisInteger const &other) const {
 			return ThisInteger(
 				this->high & other.high, this->low & other.low);
 		}
-		inline auto operator&=(ThisInteger const &other) {
+		inline auto constexpr operator&=(
+			ThisInteger const &other) {
 			return *this = *this & other;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline auto operator|(OtherInteger const &other) const {
+		inline auto constexpr operator|(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) | CommonInteger(other);
 		}
-		inline auto operator|(ThisInteger const &other) const {
+		inline auto constexpr operator|(
+			ThisInteger const &other) const {
 			return ThisInteger(
 				this->high | other.high, this->low | other.low);
 		}
-		inline auto operator|=(ThisInteger const &other) {
+		inline auto constexpr operator|=(
+			ThisInteger const &other) {
 			return *this = *this | other;
 		}
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				std::is_integral<OtherInteger>::value &&
+				Functional::TraitType<
+					OtherInteger>::IsIntegral::VALUE &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
-		inline auto operator^(OtherInteger const &other) const {
+		inline auto constexpr operator^(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) ^ CommonInteger(other);
 		}
-		inline auto operator^(ThisInteger const &other) const {
+		inline auto constexpr operator^(
+			ThisInteger const &other) const {
 			return ThisInteger(
 				this->high ^ other.high, this->low ^ other.low);
 		}
-		inline auto operator^=(ThisInteger const &other) {
+		inline auto constexpr operator^=(
+			ThisInteger const &other) {
 			return *this = *this ^ other;
 		}
 
@@ -1575,15 +1697,16 @@ namespace Rain::Algorithm {
 		// of the current BigInteger.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr>
-		inline ThisInteger operator>>(
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr>
+		inline ThisInteger constexpr operator>>(
 			OtherInteger const &other) const {
 			if (other == OtherInteger()) {
 				return *this;
 			}
 			if (other < OtherInteger()) {
-				return *this << -other;
+				// Write like this to avoid MSVC C4146.
+				return *this << (OtherInteger() - other);
 			}
 			// "Zero" out if more than bit-width of ThisInteger.
 			if (
@@ -1621,22 +1744,23 @@ namespace Rain::Algorithm {
 			return result;
 		}
 		template<typename Other>
-		inline ThisInteger &operator>>=(Other const &other) {
+		inline ThisInteger constexpr &operator>>=(
+			Other const &other) {
 			return *this = *this >> other;
 		}
 		// OtherInteger must be capable of storing the bit-size
 		// of the current BigInteger.
 		template<
 			typename OtherInteger,
-			std::enable_if<std::is_integral<
-				OtherInteger>::value>::type * = nullptr>
-		inline ThisInteger operator<<(
+			std::enable_if<Functional::TraitType<
+				OtherInteger>::IsIntegral::VALUE>::type * = nullptr>
+		inline ThisInteger constexpr operator<<(
 			OtherInteger const &other) const {
 			if (other == OtherInteger()) {
 				return *this;
 			}
 			if (other < OtherInteger()) {
-				return *this >> -other;
+				return *this >> (OtherInteger() - other);
 			}
 			// "Zero" out if more than bit-width of ThisInteger.
 			if (
@@ -1674,13 +1798,14 @@ namespace Rain::Algorithm {
 			return result;
 		}
 		template<typename Other>
-		inline ThisInteger &operator<<=(Other const &other) {
+		inline ThisInteger constexpr &operator<<=(
+			Other const &other) {
 			return *this = *this << other;
 		}
 
 		// Arithmetic.
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>,
 			BigInteger<LOG_BITS, false>>
 			addWithOverflow(
@@ -1708,13 +1833,15 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator+(OtherInteger const &other) const {
+		inline auto constexpr operator+(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) + CommonInteger(other);
 		}
-		inline auto operator+(ThisInteger const &other) const {
+		inline auto constexpr operator+(
+			ThisInteger const &other) const {
 			// If unsigned, return immediately.
 			auto unsignedLow{
 				ThisInteger::addWithOverflow(*this, other).second};
@@ -1738,12 +1865,13 @@ namespace Rain::Algorithm {
 			return ThisInteger(targetLow);
 		}
 		template<typename OtherInteger>
-		inline auto operator+=(OtherInteger const &other) {
+		inline auto constexpr operator+=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this + other);
 		}
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>,
 			BigInteger<LOG_BITS, false>>
 			subtractWithOverflow(
@@ -1795,11 +1923,11 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline ThisInteger operator-(
+		inline ThisInteger constexpr operator-(
 			OtherInteger const &other) const {
 			return *this - ThisInteger(other);
 		}
-		inline ThisInteger operator-(
+		inline ThisInteger constexpr operator-(
 			ThisInteger const &other) const {
 			// If unsigned, return immediately.
 			auto unsignedLow{
@@ -1825,12 +1953,12 @@ namespace Rain::Algorithm {
 			return ThisInteger(targetLow);
 		}
 		template<typename OtherInteger>
-		inline ThisInteger &operator-=(
+		inline ThisInteger constexpr &operator-=(
 			OtherInteger const &other) {
 			return *this = *this - other;
 		}
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>,
 			BigInteger<LOG_BITS, false>>
 			multiplyWithOverflow(
@@ -1881,13 +2009,15 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator*(OtherInteger const &other) const {
+		inline auto constexpr operator*(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) * CommonInteger(other);
 		}
-		inline auto operator*(ThisInteger const &other) const {
+		inline auto constexpr operator*(
+			ThisInteger const &other) const {
 			// If unsigned, return immediately.
 			auto unsignedLow{
 				ThisInteger::multiplyWithOverflow(*this, other)
@@ -1912,12 +2042,13 @@ namespace Rain::Algorithm {
 			return ThisInteger(targetLow);
 		}
 		template<typename OtherInteger>
-		inline auto operator*=(OtherInteger const &other) {
+		inline auto constexpr operator*=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this * other);
 		}
 		template<bool RIGHT_SIGNED>
-		static inline std::pair<
+		static inline constexpr std::pair<
 			ThisInteger,
 			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>>
 			divideWithRemainder(
@@ -1980,18 +2111,21 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator/(OtherInteger const &other) const {
+		inline auto constexpr operator/(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) / CommonInteger(other);
 		}
-		inline auto operator/(ThisInteger const &other) const {
+		inline auto constexpr operator/(
+			ThisInteger const &other) const {
 			return ThisInteger::divideWithRemainder(*this, other)
 				.second;
 		}
 		template<typename OtherInteger>
-		inline auto operator/=(OtherInteger const &other) {
+		inline auto constexpr operator/=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this / other);
 		}
@@ -2000,34 +2134,41 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				!std::is_same<ThisInteger, OtherInteger>::value>::
 				type * = nullptr>
-		inline auto operator%(OtherInteger const &other) const {
+		inline auto constexpr operator%(
+			OtherInteger const &other) const {
 			using CommonInteger = typename BigIntegerCommon<
 				ThisInteger,
 				OtherInteger>::type;
 			return CommonInteger(*this) % CommonInteger(other);
 		}
-		inline auto operator%(ThisInteger const &other) const {
+		inline auto constexpr operator%(
+			ThisInteger const &other) const {
 			return ThisInteger::divideWithRemainder(*this, other)
 				.first;
 		}
 		template<typename OtherInteger>
-		inline auto operator%=(OtherInteger const &other) {
+		inline auto constexpr operator%=(
+			OtherInteger const &other) {
 			return *this =
 							 static_cast<ThisInteger>(*this % other);
 		}
 
 		// Unary.
-		inline ThisInteger operator-() const {
+		inline ThisInteger constexpr operator-() const {
 			return ThisInteger() - *this;
 		}
-		inline ThisInteger operator++() { return *this += 1; }
-		inline ThisInteger operator++(int) {
+		inline ThisInteger constexpr operator++() {
+			return *this += 1;
+		}
+		inline ThisInteger constexpr operator++(int) {
 			auto tmp(*this);
 			*this += 1;
 			return tmp;
 		}
-		inline ThisInteger operator--() { return *this -= 1; }
-		inline ThisInteger operator--(int) {
+		inline ThisInteger constexpr operator--() {
+			return *this -= 1;
+		}
+		inline ThisInteger constexpr operator--(int) {
 			auto tmp(*this);
 			*this -= 1;
 			return tmp;
@@ -2037,9 +2178,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator==(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator==(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2050,9 +2192,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator<(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator<(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2063,9 +2206,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator<=(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator<=(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2076,9 +2220,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator>(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator>(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2089,9 +2234,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator>=(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator>=(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2102,9 +2248,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator+(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator+(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2115,9 +2262,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator-(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator-(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2128,9 +2276,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator*(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator*(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2141,9 +2290,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator/(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr &operator/(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2154,9 +2304,10 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			typename std::enable_if<
-				!BigInteger<>::isDerivedFromBigInt<
-					OtherInteger>::value>::type * = nullptr>
-		friend inline ThisInteger operator%(
+				!Functional::TraitTypeTemplateAuto<BigInteger>::
+					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+				nullptr>
+		friend inline ThisInteger constexpr operator%(
 			OtherInteger const &left,
 			ThisInteger const &right) {
 			using CommonInteger = typename BigIntegerCommon<
@@ -2166,7 +2317,7 @@ namespace Rain::Algorithm {
 		}
 
 		// Stream operators.
-		friend inline std::ostream &operator<<(
+		friend inline std::ostream constexpr &operator<<(
 			std::ostream &stream,
 			ThisInteger const &right) {
 			if (right < ThisInteger()) {
@@ -2194,7 +2345,7 @@ namespace Rain::Algorithm {
 			}
 			return stream;
 		}
-		friend inline std::istream &operator>>(
+		friend inline std::istream constexpr &operator>>(
 			std::istream &stream,
 			ThisInteger &right) {
 			std::string s;
@@ -2205,6 +2356,13 @@ namespace Rain::Algorithm {
 			}
 			return stream;
 		}
+
+		// Type traits.
+		struct Trait {
+			static inline bool constexpr IS_INTEGRAL{true};
+			static inline bool constexpr IS_SIGNED{SIGNED};
+			static inline bool constexpr IS_UNSIGNED{!SIGNED};
+		};
 	};
 }
 

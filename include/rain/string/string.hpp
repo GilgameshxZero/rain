@@ -17,8 +17,8 @@
 #pragma once
 
 #include "../algorithm/algorithm.hpp"
+#include "../functional/type.hpp"
 #include "../platform.hpp"
-#include "../type.hpp"
 
 #include <cinttypes>
 #include <cstring>

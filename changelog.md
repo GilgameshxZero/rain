@@ -1,5 +1,24 @@
 # Changelog
 
+## 7.4.0
+
+1. `BigInt` rewritten into `BigInteger` with more standardized implementation and behavior.
+  1. `BigInteger` now implements well-defined behavior for standard UB such as right shift on negative integer, out-of-range casts into a signed integer, etc.
+    1. Casts are always lossless if in-range, and otherwise always select the minimal, same-signed value in-range of the target integer, modulo the signed-range of the target integer.
+  2. Constructors and casts are all explicit, except for the default constructor/copy constructor/copy assignment.
+  3. Division is faster using a digit-based approach, avoiding multiplication. Addition and subtraction both optionally compute the overflow.
+  4. Arithmetic operations now pre-cast both operands to a common BigInteger type which can store both operands. Notably, this is different from standard behavior, which favors unsigned types.
+  5. Base case `BigInteger<5>` now implements base-case functions to enforce well-defined behavior.
+  6. Two-part constructor now orders parameters `high, low`.
+2. Refactor function/type utilities largely into `Rain::Type::Trait*`.
+  1. Type traits default to std type traits, but can be overridden by defining flags on the type.
+  2. Remove all extensions to std type traits, which are UB, and replace them with Rain type traits.
+3. Use `constexpr` where possible in `BigInteger`, `Modulus*` to allow for various compile-time checks and optimizations.
+4. Add trait checks to bit manipulators and Miller-Rabin functions.
+5. Reconfigure `clang-format` with new options, remove `BasedOnStyle`.
+  1. Pragmas are now indented.
+  2. Use `ContinuationIndentWidth` where possible for line continuations, except wehre `clang-format` has a bug/has not implemented yet.
+
 ## 7.3.25
 
 1. Deprecate `RAIN_ERROR_LOCATION` for `consumeThrowable` in favor of C++20’s `std::source_location::current()`.

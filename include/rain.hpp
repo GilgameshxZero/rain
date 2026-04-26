@@ -5,7 +5,7 @@
 // out-of-bounds errors when calling any not-bound-checked
 // function.
 #ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
+	#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 // Versioning information is omitted to ease rebuild
@@ -16,6 +16,7 @@
 #include "rain/data.hpp"
 #include "rain/error.hpp"
 #include "rain/filesystem.hpp"
+#include "rain/functional.hpp"
 #include "rain/literal.hpp"
 #include "rain/math.hpp"
 #include "rain/multithreading.hpp"
@@ -23,5 +24,4 @@
 #include "rain/platform.hpp"
 #include "rain/string.hpp"
 #include "rain/time.hpp"
-#include "rain/type.hpp"
 #include "rain/windows.hpp"

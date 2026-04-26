@@ -15,6 +15,7 @@
 	ColumnLimit: 60,
 
 	IncludeBlocks: Preserve,
+	SortUsingDeclarations: Never,
 	
 	PointerAlignment: Right,
 	AccessModifierOffset: 0,

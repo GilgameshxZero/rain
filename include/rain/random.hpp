@@ -1,6 +1,6 @@
 #pragma once
 
-#include "functional.hpp"
+#include "functional/trait.hpp"
 
 #include <chrono>
 #include <random>
@@ -58,8 +58,8 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-			typename std::enable_if<Functional::isStdHashable<
-				TypeInner>::value>::type * = nullptr,
+			typename std::enable_if<Functional::TraitType<
+				TypeInner>::IsStdHashable::VALUE>::type * = nullptr,
 			typename std::enable_if<SIZE_T_SIZE == 8>::type * =
 				nullptr>
 		std::size_t operator()(Type const &value) const {
@@ -81,8 +81,8 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-			typename std::enable_if<Functional::isStdHashable<
-				TypeInner>::value>::type * = nullptr,
+			typename std::enable_if<Functional::TraitType<
+				TypeInner>::IsStdHashable::VALUE>::type * = nullptr,
 			typename std::enable_if<SIZE_T_SIZE == 4>::type * =
 				nullptr>
 		std::size_t operator()(Type const &value) const {
@@ -103,9 +103,11 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			typename std::enable_if<
-				!Functional::isStdHashable<TypeInner>::value &&
-				Functional::isBaseOfTemplate<std::pair, TypeInner>::
-					value>::type * = nullptr>
+				!Functional::TraitType<
+					TypeInner>::IsStdHashable::VALUE &&
+				Functional::TraitTypeTemplate<std::pair>::
+					IsBaseOfTemplate<TypeInner>::VALUE>::type * =
+				nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
 			combineHash(
@@ -122,11 +124,12 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			typename std::enable_if<
-				!Functional::isStdHashable<TypeInner>::value &&
-				!Functional::
-					isBaseOfTemplate<std::pair, TypeInner>::value &&
-				Functional::isConstIterable<TypeInner>::value>::type
-				* = nullptr>
+				!Functional::TraitType<
+					TypeInner>::IsStdHashable::VALUE &&
+				!Functional::TraitTypeTemplate<
+					std::pair>::IsBaseOfTemplate<TypeInner>::VALUE &&
+				Functional::TraitType<TypeInner>::IsConstIterable::
+					VALUE>::type * = nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
 			for (auto const &i : value) {

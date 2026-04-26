@@ -109,10 +109,10 @@ namespace Rain::Algorithm::Geometry {
 		// Cross-cast integral/non-integral operator.
 		template<
 			typename OtherPrecisionType,
-			bool isCurrentIntegral =
-				std::is_integral<PrecisionType>::value,
-			bool isOtherIntegral =
-				std::is_integral<PrecisionType>::value,
+			bool isCurrentIntegral = Functional::TraitType<
+				PrecisionType>::IsIntegral::VALUE,
+			bool isOtherIntegral = Functional::TraitType<
+				PrecisionType>::IsIntegral::VALUE,
 			bool isDifferent = (isCurrentIntegral &&
 													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
@@ -128,10 +128,10 @@ namespace Rain::Algorithm::Geometry {
 		// Down-cast is explicit, up-cast is not.
 		template<
 			typename OtherPrecisionType,
-			bool isCurrentIntegral =
-				std::is_integral<PrecisionType>::value,
-			bool isOtherIntegral =
-				std::is_integral<PrecisionType>::value,
+			bool isCurrentIntegral = Functional::TraitType<
+				PrecisionType>::IsIntegral::VALUE,
+			bool isOtherIntegral = Functional::TraitType<
+				PrecisionType>::IsIntegral::VALUE,
 			bool isDifferent = (isCurrentIntegral &&
 													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
@@ -147,10 +147,10 @@ namespace Rain::Algorithm::Geometry {
 		}
 		template<
 			typename OtherPrecisionType,
-			bool isCurrentIntegral =
-				std::is_integral<PrecisionType>::value,
-			bool isOtherIntegral =
-				std::is_integral<PrecisionType>::value,
+			bool isCurrentIntegral = Functional::TraitType<
+				PrecisionType>::IsIntegral::VALUE,
+			bool isOtherIntegral = Functional::TraitType<
+				PrecisionType>::IsIntegral::VALUE,
 			bool isDifferent = (isCurrentIntegral &&
 													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),

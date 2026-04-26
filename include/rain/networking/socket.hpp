@@ -9,6 +9,7 @@
 
 #include "../algorithm/algorithm.hpp"
 #include "../error/consume_throwable.hpp"
+#include "../functional.hpp"
 #include "../time/time.hpp"
 #include "../time/timeout.hpp"
 #include "exception.hpp"

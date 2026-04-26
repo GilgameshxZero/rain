@@ -189,8 +189,9 @@ namespace Rain::Data {
 	// Use separate serialize/deserialize types instead of
 	// operator overloading. This is because operator
 	// overloading fails to respect definition order when
-	// using a variety of custom types, but type overloading
-	// does, and so supports more flexible overloading.
+	// using a variety of custom types, but type
+	// specialization does, and so supports more flexible
+	// overloading.
 	template<typename Data>
 	struct serialize {
 		void operator()(

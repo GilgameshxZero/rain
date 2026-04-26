@@ -4,15 +4,16 @@ using Rain::Error::releaseAssert;
 
 int main() {
 	{
-		releaseAssert(!(Rain::Algorithm::ModulusRingBase<>::
-											isDerivedFromModulusRing<int>())
-				.value);
-		releaseAssert(
-			(Rain::Algorithm::ModulusRingBase<>::
-					isDerivedFromModulusRing<
-						Rain::Algorithm::ModulusField<long long, 17>>())
-				.value);
-		releaseAssert(
+		static_assert(
+			!Rain::Functional::TraitTypeTemplateTypeTypeAuto<
+				Rain::Algorithm::ModulusRingBase>::
+				IsBaseOfTemplate<int>::VALUE);
+		static_assert(
+			Rain::Functional::TraitTypeTemplateTypeTypeAuto<
+				Rain::Algorithm::ModulusRingBase>::
+				IsBaseOfTemplate<Rain::Algorithm::
+						ModulusField<long long, 17>>::VALUE);
+		static_assert(
 			(2 * Rain::Algorithm::ModulusField<int, 7>{3})
 				.value == 6);
 	}
@@ -25,7 +26,7 @@ int main() {
 
 		PMR1 x, y(100);
 		PMR2 z;
-		releaseAssert(sizeof(long long) >= 8);
+		static_assert(sizeof(long long) >= 8);
 		x += 5;
 		releaseAssert(x == 5);
 		releaseAssert(x != 6);
@@ -218,7 +219,7 @@ int main() {
 	{
 		using MF =
 			Rain::Algorithm::ModulusField<std::size_t, 13>;
-		MF a, b, c, d, e;
+		MF a, b, c, d;
 
 		// Constructing with a large negative integer should
 		// still wrap around correctly.
