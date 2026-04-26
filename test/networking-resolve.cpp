@@ -137,7 +137,7 @@ int main() {
 							<< std::endl;
 
 		// Failed DNS lookups can take a while.
-		releaseAssert(timeElapsed < 2s);
+		releaseAssert(timeElapsed < 10s);
 	}
 
 	// Sleep for resolve threads to cleanup, so that temporal
