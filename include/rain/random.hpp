@@ -16,7 +16,7 @@ namespace Rain::Random {
 				.time_since_epoch())
 			.count());
 
-	template <typename>
+	template<typename>
 	struct SplitMixHash;
 
 	// Simple function to combine two 32 or 64-bit hashes,
@@ -26,7 +26,7 @@ namespace Rain::Random {
 	//
 	// SIZE_T_SIZE is a default argument which forces a
 	// substitution, and thus SFINAE.
-	template <
+	template<
 		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
 		typename std::enable_if<SIZE_T_SIZE == 8>::type * =
 			nullptr>
@@ -36,7 +36,7 @@ namespace Rain::Random {
 		return seed ^=
 			next + 0x517cc1b727220a95 + (seed << 6) + (seed >> 2);
 	}
-	template <
+	template<
 		typename Type,
 		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
 		typename std::enable_if<SIZE_T_SIZE == 4>::type * =
@@ -51,11 +51,11 @@ namespace Rain::Random {
 	// SFINAE enables SplitMixHash for all std::hash-able
 	// types, and defines custom unwrapping hash for
 	// pairs/containers/etc.
-	template <typename Type>
+	template<typename Type>
 	struct SplitMixHash {
 		// 64-bit hash from
 		// <https://codeforces.com/blog/entry/62393>.
-		template <
+		template<
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
 			typename std::enable_if<Functional::isStdHashable<
@@ -78,7 +78,7 @@ namespace Rain::Random {
 
 		// 32-bit hash from
 		// <https://groups.google.com/g/prng/c/VFjdFmbMgZI>.
-		template <
+		template<
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
 			typename std::enable_if<Functional::isStdHashable<
@@ -100,7 +100,7 @@ namespace Rain::Random {
 		}
 
 		// Unwraps a pair.
-		template <
+		template<
 			typename TypeInner = Type,
 			typename std::enable_if<
 				!Functional::isStdHashable<TypeInner>::value &&
@@ -119,7 +119,7 @@ namespace Rain::Random {
 		}
 
 		// Unwraps a container.
-		template <
+		template<
 			typename TypeInner = Type,
 			typename std::enable_if<
 				!Functional::isStdHashable<TypeInner>::value &&
@@ -138,8 +138,8 @@ namespace Rain::Random {
 
 	// Saves the use of std::remove_reference and
 	// std::remove_const.
-	template <typename Type>
+	template<typename Type>
 	struct SplitMixHash<Type &> : SplitMixHash<Type> {};
-	template <typename Type>
+	template<typename Type>
 	struct SplitMixHash<Type const> : SplitMixHash<Type> {};
 }

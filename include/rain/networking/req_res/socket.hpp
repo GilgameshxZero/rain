@@ -13,35 +13,36 @@
 namespace Rain::Networking::ReqRes {
 	// The R/R Socket protocol implements Workers/Clients
 	// where Clients send Requests and Workers send Responses.
-	class SocketSpecInterface
-			: virtual public Tcp::SocketSpecInterface {};
+	class SocketSpecInterface :
+		virtual public Tcp::SocketSpecInterface {};
 
-	template <typename Socket>
-	class SocketSpec : public Socket,
-										 virtual public SocketSpecInterface {
+	template<typename Socket>
+	class SocketSpec :
+		public Socket,
+		virtual public SocketSpecInterface {
 		using Socket::Socket;
 	};
 
-	class NamedSocketSpecInterface
-			: virtual public SocketSpecInterface,
-				virtual public Tcp::NamedSocketSpecInterface {};
+	class NamedSocketSpecInterface :
+		virtual public SocketSpecInterface,
+		virtual public Tcp::NamedSocketSpecInterface {};
 
-	template <typename Socket>
-	class NamedSocketSpec
-			: public Socket,
-				virtual public NamedSocketSpecInterface {
+	template<typename Socket>
+	class NamedSocketSpec :
+		public Socket,
+		virtual public NamedSocketSpecInterface {
 		using Socket::Socket;
 	};
 
 	// Allows for send/recv on R/Rs.
-	class ConnectedSocketSpecInterface
-			: virtual public NamedSocketSpecInterface,
-				virtual public Tcp::ConnectedSocketSpecInterface {};
+	class ConnectedSocketSpecInterface :
+		virtual public NamedSocketSpecInterface,
+		virtual public Tcp::ConnectedSocketSpecInterface {};
 
-	template <typename Socket>
-	class ConnectedSocketSpec
-			: public Socket,
-				virtual public ConnectedSocketSpecInterface {
+	template<typename Socket>
+	class ConnectedSocketSpec :
+		public Socket,
+		virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
 	};
 }

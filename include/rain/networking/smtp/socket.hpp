@@ -9,8 +9,8 @@
 
 namespace Rain::Networking::Smtp {
 	// SMTP Socket subclassing R/R Socket.
-	class SocketSpecInterface
-			: virtual public ReqRes::SocketSpecInterface {
+	class SocketSpecInterface :
+		virtual public ReqRes::SocketSpecInterface {
 		protected:
 		// Import Smtp namespace names for subclasses.
 		using AuthMethod = AuthMethod;
@@ -19,32 +19,32 @@ namespace Rain::Networking::Smtp {
 		using StatusCode = StatusCode;
 	};
 
-	template <typename Socket>
-	class SocketSpec : public Socket,
-										 virtual public SocketSpecInterface {
+	template<typename Socket>
+	class SocketSpec :
+		public Socket,
+		virtual public SocketSpecInterface {
 		using Socket::Socket;
 	};
 
-	class NamedSocketSpecInterface
-			: virtual public SocketSpecInterface,
-				virtual public ReqRes::NamedSocketSpecInterface {};
+	class NamedSocketSpecInterface :
+		virtual public SocketSpecInterface,
+		virtual public ReqRes::NamedSocketSpecInterface {};
 
-	template <typename Socket>
-	class NamedSocketSpec
-			: public Socket,
-				virtual public NamedSocketSpecInterface {
+	template<typename Socket>
+	class NamedSocketSpec :
+		public Socket,
+		virtual public NamedSocketSpecInterface {
 		using Socket::Socket;
 	};
 
-	class ConnectedSocketSpecInterface
-			: virtual public NamedSocketSpecInterface,
-				virtual public ReqRes::
-					ConnectedSocketSpecInterface {};
+	class ConnectedSocketSpecInterface :
+		virtual public NamedSocketSpecInterface,
+		virtual public ReqRes::ConnectedSocketSpecInterface {};
 
-	template <typename Socket>
-	class ConnectedSocketSpec
-			: public Socket,
-				virtual public ConnectedSocketSpecInterface {
+	template<typename Socket>
+	class ConnectedSocketSpec :
+		public Socket,
+		virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
 	};
 }

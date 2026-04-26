@@ -6,9 +6,9 @@
 #include "method.hpp"
 
 namespace Rain::Networking::Http {
-	class RequestMessageSpecInterface
-			: virtual public MessageSpecInterface,
-				virtual public ReqRes::RequestMessageSpecInterface {
+	class RequestMessageSpecInterface :
+		virtual public MessageSpecInterface,
+		virtual public ReqRes::RequestMessageSpecInterface {
 		public:
 		// Exception class required for catching from R/R
 		// onWork.
@@ -47,10 +47,10 @@ namespace Rain::Networking::Http {
 			Rain::Error::Exception<Error, ErrorCategory>;
 	};
 
-	template <typename Message>
-	class RequestMessageSpec
-			: public Message,
-				virtual public RequestMessageSpecInterface {
+	template<typename Message>
+	class RequestMessageSpec :
+		public Message,
+		virtual public RequestMessageSpecInterface {
 		public:
 		// Method/verb of request.
 		Method method;
@@ -64,20 +64,20 @@ namespace Rain::Networking::Http {
 			std::string const &target = "/",
 			Headers &&headers = {},
 			Body &&body = {},
-			Version version = {})
-				: Message(
-						// bind version to rvalue reference to be
-						// perfect forwarded by SuperInterface to
-						// Message.
-						std::move(headers),
-						std::move(body),
-						version),
-					method(method),
-					target(target) {}
-		RequestMessageSpec(RequestMessageSpec &&other)
-				: Message(std::move(other)),
-					method(other.method),
-					target(std::move(other.target)) {}
+			Version version = {}) :
+			Message(
+				// bind version to rvalue reference to be
+				// perfect forwarded by SuperInterface to
+				// Message.
+				std::move(headers),
+				std::move(body),
+				version),
+			method(method),
+			target(target) {}
+		RequestMessageSpec(RequestMessageSpec &&other) :
+			Message(std::move(other)),
+			method(other.method),
+			target(std::move(other.target)) {}
 
 		// Overrides for Super versions implement protocol
 		// behavior.
@@ -182,8 +182,9 @@ namespace Rain::Networking::Http {
 	};
 
 	// Shorthand.
-	class Request : public RequestMessageSpec<
-										MessageSpec<ReqRes::Request>> {
+	class Request :
+		public RequestMessageSpec<
+			MessageSpec<ReqRes::Request>> {
 		using RequestMessageSpec<
 			MessageSpec<ReqRes::Request>>::RequestMessageSpec;
 	};

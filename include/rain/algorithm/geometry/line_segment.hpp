@@ -7,7 +7,7 @@
 
 namespace Rain::Algorithm::Geometry {
 	// Represents a close line segment between two points.
-	template <typename PrecisionType>
+	template<typename PrecisionType>
 	class LineSegment {
 		public:
 		Point<PrecisionType> start, end;
@@ -15,17 +15,19 @@ namespace Rain::Algorithm::Geometry {
 		LineSegment() = default;
 		LineSegment(
 			Point<PrecisionType> const &start,
-			Point<PrecisionType> const &end)
-				: start{start}, end{end} {}
+			Point<PrecisionType> const &end) :
+			start{start},
+			end{end} {}
 		LineSegment(
 			std::pair<
 				Point<PrecisionType>,
-				Point<PrecisionType>> const &line)
-				: start{line.first}, end{line.second} {}
+				Point<PrecisionType>> const &line) :
+			start{line.first},
+			end{line.second} {}
 
 		// Tests whether two non-parallel line segments
 		// intersect.
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline bool intersects(
 			LineSegment<OtherPrecisionType> const &other) const {
 			return (this->end - this->start)
@@ -37,19 +39,19 @@ namespace Rain::Algorithm::Geometry {
 				(other.end - other.start)
 					.crossSign(this->end - other.start);
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline LineSegment<NewPrecisionType> round() const {
 			return {
 				this->start.template round<NewPrecisionType>(),
 				this->end.template round<NewPrecisionType>()};
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline LineSegment<NewPrecisionType> floor() const {
 			return {
 				this->start.template floor<NewPrecisionType>(),
 				this->end.template floor<NewPrecisionType>()};
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline LineSegment<NewPrecisionType> ceil() const {
 			return {
 				this->start.template ceil<NewPrecisionType>(),
@@ -65,99 +67,99 @@ namespace Rain::Algorithm::Geometry {
 				? this->end < other.end
 				: this->start < other.start;
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator+(
 			Point<OtherPrecisionType> const &other) const {
 			return LineSegment<decltype(this->start.x + other.x)>{
 				this->start + other, this->end + other};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator+(ScalarType const &scalar) const {
 			return LineSegment<decltype(this->start.x + scalar)>{
 				this->start + scalar, this->end + scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator-(
 			Point<OtherPrecisionType> const &other) const {
 			return LineSegment<decltype(this->start.x - other.x)>{
 				this->start - other, this->end - other};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator-(ScalarType const &scalar) const {
 			return LineSegment<decltype(this->start.x - scalar)>{
 				this->start - scalar, this->end - scalar};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator*(ScalarType const &scalar) const {
 			return LineSegment<decltype(this->start.x * scalar)>{
 				this->start * scalar, this->end * scalar};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator/(ScalarType const &scalar) const {
 			return LineSegment<decltype(this->start.x / scalar)>{
 				this->start / scalar, this->end / scalar};
 		}
 
 		inline
-		operator std::pair<PrecisionType, PrecisionType>()
-			const {
+			operator std::pair<PrecisionType, PrecisionType>()
+				const {
 			return {this->start, this->end};
 		}
 
 		// Cross-cast integral/non-integral operator.
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			typename std::enable_if<isDifferent>::type * =
 				nullptr>
 		explicit inline
-		operator LineSegment<OtherPrecisionType>() const {
+			operator LineSegment<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->start),
 				static_cast<OtherPrecisionType>(this->end)};
 		}
 
 		// Down-cast is explicit, up-cast is not.
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			bool isSmaller = sizeof(OtherPrecisionType) <
 				sizeof(PrecisionType),
 			typename std::enable_if<
 				!isDifferent && isSmaller>::type * = nullptr>
 		explicit inline
-		operator LineSegment<OtherPrecisionType>() const {
+			operator LineSegment<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->start),
 				static_cast<OtherPrecisionType>(this->end)};
 		}
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			bool isSmaller = sizeof(OtherPrecisionType) <
 				sizeof(PrecisionType),
 			typename std::enable_if<
 				!isDifferent && !isSmaller>::type * = nullptr>
-		inline operator LineSegment<OtherPrecisionType>()
-			const {
+		inline
+			operator LineSegment<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->start),
 				static_cast<OtherPrecisionType>(this->end)};
@@ -179,7 +181,7 @@ namespace Rain::Algorithm::Geometry {
 	using LineSegmentLd = LineSegment<long double>;
 }
 
-template <typename PrecisionType>
+template<typename PrecisionType>
 struct std::hash<
 	Rain::Algorithm::Geometry::LineSegment<PrecisionType>> {
 	std::size_t operator()(

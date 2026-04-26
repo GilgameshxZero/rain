@@ -5,18 +5,18 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::ReqRes {
-	class ClientSocketSpecInterfaceInterface
-			: virtual public ConnectedSocketSpecInterface,
-				virtual public Tcp::ClientSocketSpecInterface {};
+	class ClientSocketSpecInterfaceInterface :
+		virtual public ConnectedSocketSpecInterface,
+		virtual public Tcp::ClientSocketSpecInterface {};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
-	class ClientSocketSpecInterface
-			: virtual public ClientSocketSpecInterfaceInterface {
+	class ClientSocketSpecInterface :
+		virtual public ClientSocketSpecInterfaceInterface {
 		public:
-		using ClientSocketSpecInterfaceInterface::send;
 		using ClientSocketSpecInterfaceInterface::recv;
+		using ClientSocketSpecInterfaceInterface::send;
 		using ClientSocketSpecInterfaceInterface::operator<<;
 		using ClientSocketSpecInterfaceInterface::operator>>;
 
@@ -61,21 +61,21 @@ namespace Rain::Networking::ReqRes {
 		}
 	};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		typename Socket>
-	class ClientSocketSpec
-			: public Socket,
-				virtual public ClientSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec>,
-				virtual public ClientSocketSpecInterfaceInterface {
+	class ClientSocketSpec :
+		public Socket,
+		virtual public ClientSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>,
+		virtual public ClientSocketSpecInterfaceInterface {
 		using Socket::Socket;
 	};
 
 	// Shorthand for R/R Client.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		std::size_t sendBufferLen,
@@ -85,20 +85,21 @@ namespace Rain::Networking::ReqRes {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Client : public ClientSocketSpec<
-									 RequestMessageSpec,
-									 ResponseMessageSpec,
-									 ConnectedSocketSpec<
-										 NamedSocketSpec<SocketSpec<Tcp::Client<
-											 sendBufferLen,
-											 recvBufferLen,
-											 sendTimeoutMs,
-											 recvTimeoutMs,
-											 SocketFamilyInterface,
-											 SocketTypeInterface,
-											 SocketProtocolInterface,
-											 SocketOptions...>>>>> {
+		template<typename> class... SocketOptions>
+	class Client :
+		public ClientSocketSpec<
+			RequestMessageSpec,
+			ResponseMessageSpec,
+			ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<Tcp::Client<
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					SocketFamilyInterface,
+					SocketTypeInterface,
+					SocketProtocolInterface,
+					SocketOptions...>>>>> {
 		using ClientSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,

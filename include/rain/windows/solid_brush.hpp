@@ -12,9 +12,8 @@ namespace Rain::Windows {
 		HBRUSH const hBrush;
 
 		public:
-		SolidBrush(Color color)
-				: hBrush{
-						validateSystemCall(CreateSolidBrush(color))} {}
+		SolidBrush(Color color) :
+			hBrush{validateSystemCall(CreateSolidBrush(color))} {}
 		~SolidBrush() { DeleteObject(this->hBrush); }
 		SolidBrush(SolidBrush const &other) = delete;
 		SolidBrush &operator=(SolidBrush const &other) = delete;

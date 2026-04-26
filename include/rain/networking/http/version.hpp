@@ -26,10 +26,10 @@ namespace Rain::Networking::Http {
 
 		public:
 		// Direct constructors.
-		constexpr Version(Value value = _1_1) noexcept
-				: value(value) {}
-		Version(std::string const &str)
-				: value(Version::fromStr.at(str)) {}
+		constexpr Version(Value value = _1_1) noexcept :
+			value(value) {}
+		Version(std::string const &str) :
+			value(Version::fromStr.at(str)) {}
 
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }

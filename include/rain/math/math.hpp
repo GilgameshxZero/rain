@@ -5,7 +5,7 @@
 #include <cmath>
 
 namespace Rain::Math {
-	template <
+	template<
 		typename OutputType,
 		typename InputType,
 		typename std::enable_if<
@@ -14,7 +14,7 @@ namespace Rain::Math {
 	inline OutputType round(InputType const &input) {
 		return std::lround(input);
 	}
-	template <
+	template<
 		typename OutputType,
 		typename InputType,
 		typename std::enable_if<
@@ -26,11 +26,11 @@ namespace Rain::Math {
 
 	// Some compilers do not have these functions in `std`,
 	// for some reason.
-	template <typename OutputType, typename InputType>
+	template<typename OutputType, typename InputType>
 	inline OutputType floor(InputType const &input) {
 		return round<OutputType>(::floorl(input));
 	}
-	template <typename OutputType, typename InputType>
+	template<typename OutputType, typename InputType>
 	inline OutputType ceil(InputType const &input) {
 		return round<OutputType>(::ceill(input));
 	}

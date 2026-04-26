@@ -6,11 +6,11 @@ int main() {
 	{
 		releaseAssert(!(Rain::Algorithm::ModulusRingBase<>::
 											isDerivedFromModulusRing<int>())
-										 .value);
+				.value);
 		releaseAssert(
 			(Rain::Algorithm::ModulusRingBase<>::
-				 isDerivedFromModulusRing<
-					 Rain::Algorithm::ModulusField<long long, 17>>())
+					isDerivedFromModulusRing<
+						Rain::Algorithm::ModulusField<long long, 17>>())
 				.value);
 		releaseAssert(
 			(2 * Rain::Algorithm::ModulusField<int, 7>{3})
@@ -84,9 +84,10 @@ int main() {
 		releaseAssert(z == 1000000006);
 		x = 31;
 		releaseAssert(y == 100);
-		x *= (2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 *
-					y * 39486758 * y * 3049857272LL)
-					 .value;
+		x *=
+			(2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 * y *
+				39486758 * y * 3049857272LL)
+				.value;
 		y = 2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31;
 		releaseAssert(
 			x / y / 10000 / 3049857272LL / 31 == 39486758);
@@ -142,9 +143,10 @@ int main() {
 		releaseAssert(z == 2000000017);
 		x = 31;
 		releaseAssert(y == 100);
-		x *= (2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 *
-					y * 39486758 * y * 3049857272LL)
-					 .value;
+		x *=
+			(2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31 * y *
+				39486758 * y * 3049857272LL)
+				.value;
 		y = 2LL * 3 * 5 * 7 * 11 * 13 * 17 * 23 * 29 * 31;
 		releaseAssert(
 			x / y / 10000 / 3049857272LL / 31 == 39486758);
@@ -171,8 +173,7 @@ int main() {
 	// Fibonacci tests.
 	{
 		releaseAssert(
-			(Rain::Algorithm::fibonacciNumber<
-				 Rain::Algorithm::
+			(Rain::Algorithm::fibonacciNumber<Rain::Algorithm::
 					 ModulusField<std::size_t, 988244353>>(
 				 1000000000) == 910643820));
 	}

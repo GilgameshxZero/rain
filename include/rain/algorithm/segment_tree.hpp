@@ -30,7 +30,7 @@ namespace Rain::Algorithm {
 	// Value const &right): Aggregate values from two children
 	// while retracing an update. Aggregating with a default
 	// Value should do nothing.
-	template <typename Policy>
+	template<typename Policy>
 	class SegmentTree {
 		public:
 		using Value = typename Policy::Value;
@@ -43,17 +43,18 @@ namespace Rain::Algorithm {
 
 		public:
 		// Segment tree for a segment array of size size.
-		SegmentTree(std::size_t const size)
-				: values(2 * size, Policy::DEFAULT_VALUE) {}
+		SegmentTree(std::size_t const size) :
+			values(2 * size, Policy::DEFAULT_VALUE) {}
 
 		// Queries an inclusive range.
 		Result query(std::size_t left, std::size_t right) {
 			Value resLeft{Policy::DEFAULT_VALUE},
 				resRight{Policy::DEFAULT_VALUE};
-			for (left += this->values.size() / 2,
-					 right += this->values.size() / 2 + 1;
-					 left < right;
-					 left /= 2, right /= 2) {
+			for (
+				left += this->values.size() / 2,
+				right += this->values.size() / 2 + 1;
+				left < right;
+				left /= 2, right /= 2) {
 				// Order of aggregation matters for non-commutative
 				// operations.
 				if (left % 2 == 1) {

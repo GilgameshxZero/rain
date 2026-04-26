@@ -25,17 +25,17 @@ namespace Rain::Time {
 		Timeout(
 			std::chrono::steady_clock::time_point
 				timeoutTimepoint =
-					std::chrono::steady_clock::time_point::max())
-				: timeoutTimepoint(timeoutTimepoint) {}
+					std::chrono::steady_clock::time_point::max()) :
+			timeoutTimepoint(timeoutTimepoint) {}
 
 		// Construct with duration.
-		template <typename Rep, typename Period>
+		template<typename Rep, typename Period>
 		Timeout(
 			std::chrono::duration<Rep, Period>
-				durationUntilTimeout)
-				: Timeout(
-						std::chrono::steady_clock::now() +
-						durationUntilTimeout) {}
+				durationUntilTimeout) :
+			Timeout(
+				std::chrono::steady_clock::now() +
+				durationUntilTimeout) {}
 
 		bool isInfinite() const noexcept {
 			return this->timeoutTimepoint ==
@@ -46,12 +46,12 @@ namespace Rain::Time {
 				std::chrono::steady_clock::now();
 		}
 
-		std::chrono::steady_clock::time_point asTimepoint()
-			const noexcept {
+		std::chrono::steady_clock::time_point
+			asTimepoint() const noexcept {
 			return this->timeoutTimepoint;
 		}
-		std::chrono::steady_clock::duration asDuration()
-			const noexcept {
+		std::chrono::steady_clock::duration
+			asDuration() const noexcept {
 			return this->timeoutTimepoint -
 				std::chrono::steady_clock::now();
 		}
@@ -64,9 +64,8 @@ namespace Rain::Time {
 			} else if (this->isPassed()) {
 				return 0;
 			} else {
-				return static_cast<int>(
-					std::chrono::duration_cast<
-						std::chrono::milliseconds>(this->asDuration())
+				return static_cast<int>(std::chrono::duration_cast<
+					std::chrono::milliseconds>(this->asDuration())
 						.count());
 			}
 		}

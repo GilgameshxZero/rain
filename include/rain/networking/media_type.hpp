@@ -112,20 +112,19 @@ namespace Rain::Networking {
 
 		MediaType(
 			Value value = OCTET_STREAM,
-			std::string const &parameter = "") noexcept
-				: value(value), parameter(parameter) {}
-		MediaType(std::string const &str)
-				: value(
-						MediaType::fromStr(
-							str.substr(0, str.find(';')))),
-					parameter(str.substr(
-						std::min(str.find(';'), str.length() - 1) +
-						1)) {}
+			std::string const &parameter = "") noexcept :
+			value(value),
+			parameter(parameter) {}
+		MediaType(std::string const &str) :
+			value(
+				MediaType::fromStr(str.substr(0, str.find(';')))),
+			parameter(str.substr(
+				std::min(str.find(';'), str.length() - 1) + 1)) {}
 		MediaType(
 			std::string const &value,
-			std::string const &parameter)
-				: value(MediaType::fromStr(value)),
-					parameter(parameter) {}
+			std::string const &parameter) :
+			value(MediaType::fromStr(value)),
+			parameter(parameter) {}
 		operator Value() const noexcept { return this->value; }
 		explicit operator bool() = delete;
 		operator std::string() const noexcept {

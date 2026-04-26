@@ -9,7 +9,7 @@ namespace Rain::Error {
 	// decrements on destruction, used with exception-safe
 	// coding. Wraps an externally-allocated counter, which
 	// must exist for the duration of this object.
-	template <typename Counter>
+	template<typename Counter>
 	class Incrementer {
 		private:
 		// Internal pointer to external counter.
@@ -17,8 +17,8 @@ namespace Rain::Error {
 
 		public:
 		// Incrementing constructor.
-		Incrementer(Counter &counter) noexcept
-				: counter(counter) {
+		Incrementer(Counter &counter) noexcept :
+			counter(counter) {
 			counter++;
 		}
 

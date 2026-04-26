@@ -16,9 +16,9 @@ namespace Rain::Data {
 	class Serializer;
 	class Deserializer;
 
-	template <typename Data>
+	template<typename Data>
 	struct serialize;
-	template <typename Data>
+	template<typename Data>
 	struct deserialize;
 
 	// Serializes and deserializes data to/from std::iostream.
@@ -36,24 +36,24 @@ namespace Rain::Data {
 		std::unique_ptr<std::ostream> streambufManager;
 
 		public:
-		Serializer(std::streambuf *streambuf)
-				: std::ostream(streambuf) {}
-		Serializer(std::string const &filename)
-				: std::ostream(nullptr),
-					streambufManager(
-						new std::ofstream(filename, std::ios::binary)) {
+		Serializer(std::streambuf *streambuf) :
+			std::ostream(streambuf) {}
+		Serializer(std::string const &filename) :
+			std::ostream(nullptr),
+			streambufManager(
+				new std::ofstream(filename, std::ios::binary)) {
 			this->rdbuf(this->streambufManager->rdbuf());
 		}
 
 		// Operators redirect to a template type which can be
 		// overloaded, and provides a default.
-		template <typename Data>
+		template<typename Data>
 		inline Rain::Data::Serializer &operator<<(
 			Data const &data) {
 			serialize<Data>()(*this, data);
 			return *this;
 		}
-		template <
+		template<
 			typename CharT,
 			typename Traits,
 			typename Allocator>
@@ -66,7 +66,7 @@ namespace Rain::Data {
 				sizeof(CharT) * data.size());
 			return *this;
 		}
-		template <typename T, typename Allocator>
+		template<typename T, typename Allocator>
 		inline Rain::Data::Serializer &operator<<(
 			std::vector<T, Allocator> const &data) {
 			*this << data.size();
@@ -75,7 +75,7 @@ namespace Rain::Data {
 			}
 			return *this;
 		}
-		template <
+		template<
 			typename Key,
 			typename Compare,
 			typename Allocator>
@@ -87,13 +87,12 @@ namespace Rain::Data {
 			}
 			return *this;
 		}
-		template <
+		template<
 			typename Key,
 			typename Hash,
 			typename KeyEqual,
 			typename Allocator>
-		inline Rain::Data::Serializer &operator<<(
-			std::
+		inline Rain::Data::Serializer &operator<<(std::
 				unordered_set<Key, Hash, KeyEqual, Allocator> const
 					&data) {
 			*this << data.size();
@@ -111,24 +110,24 @@ namespace Rain::Data {
 		std::unique_ptr<std::istream> streambufManager;
 
 		public:
-		Deserializer(std::streambuf *streambuf)
-				: std::istream(streambuf) {}
-		Deserializer(std::string const &filename)
-				: std::istream(nullptr),
-					streambufManager(
-						new std::ifstream(filename, std::ios::binary)) {
+		Deserializer(std::streambuf *streambuf) :
+			std::istream(streambuf) {}
+		Deserializer(std::string const &filename) :
+			std::istream(nullptr),
+			streambufManager(
+				new std::ifstream(filename, std::ios::binary)) {
 			this->rdbuf(this->streambufManager->rdbuf());
 		}
 
 		// Operators redirect to a template type which can be
 		// overloaded, and provides a default.
-		template <typename Data>
+		template<typename Data>
 		inline Rain::Data::Deserializer &operator>>(
 			Data &data) {
 			deserialize<Data>()(*this, data);
 			return *this;
 		}
-		template <
+		template<
 			typename CharT,
 			typename Traits,
 			typename Allocator>
@@ -142,7 +141,7 @@ namespace Rain::Data {
 				sizeof(CharT) * size);
 			return *this;
 		}
-		template <typename T, typename Allocator>
+		template<typename T, typename Allocator>
 		inline Rain::Data::Deserializer &operator>>(
 			std::vector<T, Allocator> &data) {
 			std::size_t size;
@@ -153,7 +152,7 @@ namespace Rain::Data {
 			}
 			return *this;
 		}
-		template <
+		template<
 			typename Key,
 			typename Compare,
 			typename Allocator>
@@ -168,7 +167,7 @@ namespace Rain::Data {
 			}
 			return *this;
 		}
-		template <
+		template<
 			typename Key,
 			typename Hash,
 			typename KeyEqual,
@@ -192,7 +191,7 @@ namespace Rain::Data {
 	// overloading fails to respect definition order when
 	// using a variety of custom types, but type overloading
 	// does, and so supports more flexible overloading.
-	template <typename Data>
+	template<typename Data>
 	struct serialize {
 		void operator()(
 			Serializer &serializer,
@@ -202,7 +201,7 @@ namespace Rain::Data {
 				sizeof(Data));
 		}
 	};
-	template <typename Data>
+	template<typename Data>
 	struct deserialize {
 		void operator()(
 			Deserializer &deserializer,

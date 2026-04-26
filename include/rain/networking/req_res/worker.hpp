@@ -5,21 +5,21 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::ReqRes {
-	class WorkerSocketSpecInterfaceInterface
-			: virtual public ConnectedSocketSpecInterface,
-				virtual public Tcp::WorkerSocketSpecInterface {};
+	class WorkerSocketSpecInterfaceInterface :
+		virtual public ConnectedSocketSpecInterface,
+		virtual public Tcp::WorkerSocketSpecInterface {};
 	// Worker specialization for TCP protocol Sockets.
 	//
 	// Enables pre/post-processing via overrides on stream
 	// operators.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
-	class WorkerSocketSpecInterface
-			: virtual public WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpecInterface :
+		virtual public WorkerSocketSpecInterfaceInterface {
 		public:
-		using WorkerSocketSpecInterfaceInterface::send;
 		using WorkerSocketSpecInterfaceInterface::recv;
+		using WorkerSocketSpecInterfaceInterface::send;
 		using WorkerSocketSpecInterfaceInterface::operator<<;
 		using WorkerSocketSpecInterfaceInterface::operator>>;
 
@@ -128,21 +128,21 @@ namespace Rain::Networking::ReqRes {
 	};
 
 	// Worker specialization for TCP protocol Sockets.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		typename Socket>
-	class WorkerSocketSpec
-			: public Socket,
-				virtual public WorkerSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec>,
-				virtual public WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpec :
+		public Socket,
+		virtual public WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>,
+		virtual public WorkerSocketSpecInterfaceInterface {
 		using Socket::Socket;
 	};
 
 	// Shorthand for TCP Worker.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		std::size_t sendBufferLen,
@@ -152,20 +152,21 @@ namespace Rain::Networking::ReqRes {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Worker : public WorkerSocketSpec<
-									 RequestMessageSpec,
-									 ResponseMessageSpec,
-									 ConnectedSocketSpec<
-										 NamedSocketSpec<SocketSpec<Tcp::Worker<
-											 sendBufferLen,
-											 recvBufferLen,
-											 sendTimeoutMs,
-											 recvTimeoutMs,
-											 SocketFamilyInterface,
-											 SocketTypeInterface,
-											 SocketProtocolInterface,
-											 SocketOptions...>>>>> {
+		template<typename> class... SocketOptions>
+	class Worker :
+		public WorkerSocketSpec<
+			RequestMessageSpec,
+			ResponseMessageSpec,
+			ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<Tcp::Worker<
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					SocketFamilyInterface,
+					SocketTypeInterface,
+					SocketProtocolInterface,
+					SocketOptions...>>>>> {
 		using WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,

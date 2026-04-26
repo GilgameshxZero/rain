@@ -12,19 +12,19 @@
 
 #ifdef RAIN_PLATFORM_WINDOWS
 
-// Windows DNS utilities.
-#pragma comment(lib, "Dnsapi.lib")
+	// Windows DNS utilities.
+	#pragma comment(lib, "Dnsapi.lib")
 
-#include <WinDNS.h>
+	#include <WinDNS.h>
 
 #else
 
-// POSIX libresolv.
-#include <arpa/nameser.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <resolv.h>
-#include <sys/types.h>
+	// POSIX libresolv.
+	#include <arpa/nameser.h>
+	#include <netdb.h>
+	#include <netinet/in.h>
+	#include <resolv.h>
+	#include <sys/types.h>
 
 #endif
 
@@ -146,15 +146,15 @@ namespace Rain::Networking {
 				addressInfos.push_back(
 					{static_cast<AddressInfo::Flag>(
 						 curAddr->ai_flags),
-					 static_cast<Family>(curAddr->ai_family),
-					 static_cast<Type>(curAddr->ai_socktype),
-					 static_cast<Protocol>(curAddr->ai_protocol),
-					 {curAddr->ai_canonname == nullptr
-							? ""
-							: curAddr->ai_canonname},
-					 // memcpy sockaddr_storage later.
-					 {},
-					 static_cast<socklen_t>(curAddr->ai_addrlen)});
+						static_cast<Family>(curAddr->ai_family),
+						static_cast<Type>(curAddr->ai_socktype),
+						static_cast<Protocol>(curAddr->ai_protocol),
+						{curAddr->ai_canonname == nullptr
+								? ""
+								: curAddr->ai_canonname},
+						// memcpy sockaddr_storage later.
+						{},
+						static_cast<socklen_t>(curAddr->ai_addrlen)});
 				std::memcpy(
 					&addressInfos.back().address,
 					curAddr->ai_addr,
@@ -171,7 +171,7 @@ namespace Rain::Networking {
 	// Gets MX records for a host, and sorts them in order of
 	// priority.
 	inline std::vector<std::pair<std::size_t, std::string>>
-	getMxRecords(Host const &host) {
+		getMxRecords(Host const &host) {
 		std::vector<std::pair<std::size_t, std::string>>
 			mxRecords;
 
@@ -198,8 +198,9 @@ namespace Rain::Networking {
 			NULL);
 		if (dnsQueryStatus == 0) {
 			DNS_RECORDA *curDnsRecord = dnsRecord;
-			while (curDnsRecord != NULL &&
-						 curDnsRecord->wType == DNS_TYPE_MX) {
+			while (
+				curDnsRecord != NULL &&
+				curDnsRecord->wType == DNS_TYPE_MX) {
 				mxRecords.emplace_back(
 					curDnsRecord->Data.MX.wPreference,
 					curDnsRecord->Data.MX.pNameExchange);
@@ -247,8 +248,8 @@ namespace Rain::Networking {
 			// `ns_sprintrr` is rarely used thus deprecated and we
 			// are recommended to use/build our own DNS parsing
 			// library.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 			if (
 				ns_sprintrr(
 					&hMsgs,
@@ -257,7 +258,7 @@ namespace Rain::Networking {
 					NULL,
 					buffer,
 					sizeof(buffer)) < 0) {
-#pragma GCC diagnostic pop
+	#pragma GCC diagnostic pop
 				continue;
 			}
 

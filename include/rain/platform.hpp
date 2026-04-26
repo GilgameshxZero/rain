@@ -7,25 +7,25 @@
 #include <iostream>
 
 #if defined(_WIN32) || defined(_WIN64)
-#define RAIN_PLATFORM_WINDOWS
+	#define RAIN_PLATFORM_WINDOWS
 #endif
 
 #if defined(__APPLE__) || defined(__MACH__)
-#define RAIN_PLATFORM_MACOS
+	#define RAIN_PLATFORM_MACOS
 #endif
 
 #if defined(__linux__) || defined(linux) || defined(__linux)
-#define RAIN_PLATFORM_LINUX
+	#define RAIN_PLATFORM_LINUX
 #endif
 
-#if !defined(RAIN_PLATFORM_WINDOWS) && \
-	!defined(RAIN_PLATFORM_MACOS) &&     \
+#if !defined(RAIN_PLATFORM_WINDOWS) &&                     \
+	!defined(RAIN_PLATFORM_MACOS) &&                         \
 	!defined(RAIN_PLATFORM_LINUX)
-#define RAIN_PLATFORM_OTHER
+	#define RAIN_PLATFORM_OTHER
 #endif
 
 #ifdef NDEBUG
-#define RAIN_PLATFORM_NDEBUG
+	#define RAIN_PLATFORM_NDEBUG
 #endif
 
 namespace Rain::Platform {

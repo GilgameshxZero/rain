@@ -17,9 +17,9 @@ namespace Rain::Algorithm {
 	// sorted in topological order (lower indices have edges
 	// pointing toward higher indices).
 	inline std::pair<std::size_t, std::vector<std::size_t>>
-	sccKosaraju(
-		std::vector<std::unordered_set<std::size_t>> const
-			&edges) {
+		sccKosaraju(
+			std::vector<std::unordered_set<std::size_t>> const
+				&edges) {
 		std::size_t cScc{0}, cPostOrderId{0};
 		std::vector<std::size_t> scc(
 			edges.size(),

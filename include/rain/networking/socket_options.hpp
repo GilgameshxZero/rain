@@ -14,11 +14,11 @@
 #include "socket.hpp"
 
 namespace Rain::Networking {
-	class SocketOptionInterface
-			: virtual public SocketInterface {
+	class SocketOptionInterface :
+		virtual public SocketInterface {
 		protected:
 		// Code sharing.
-		template <typename Value>
+		template<typename Value>
 		static void setOption(
 			NativeSocket nativeSocket,
 			int level,
@@ -37,16 +37,16 @@ namespace Rain::Networking {
 		}
 	};
 
-	class NoLingerSocketOptionInterface
-			: virtual public SocketOptionInterface {};
+	class NoLingerSocketOptionInterface :
+		virtual public SocketOptionInterface {};
 
 	// Don't linger. Thus causes any close on the socket to
 	// abort the connection immediately and doesn't let the
 	// Socket idle areound in the kernel.
-	template <typename Socket>
-	class NoLingerSocketOption
-			: public Socket,
-				virtual public NoLingerSocketOptionInterface {
+	template<typename Socket>
+	class NoLingerSocketOption :
+		public Socket,
+		virtual public NoLingerSocketOptionInterface {
 		using Socket::Socket;
 
 		private:
@@ -67,19 +67,19 @@ namespace Rain::Networking {
 		virtual void alreadyNoLingerSocketOption() final {}
 	};
 
-	class DualStackSocketOptionInterface
-			: virtual public SocketOptionInterface,
-				virtual public Ipv6FamilyInterface {};
+	class DualStackSocketOptionInterface :
+		virtual public SocketOptionInterface,
+		virtual public Ipv6FamilyInterface {};
 
 	// An IPv6-protocol Socket is declared dual-stack by
 	// setting this option.
 	//
 	// Enforces IPv6 family; otherwise, a compile-time error
 	// for ambiguous resolution is generated.
-	template <typename Socket>
-	class DualStackSocketOption
-			: public Socket,
-				virtual public DualStackSocketOptionInterface {
+	template<typename Socket>
+	class DualStackSocketOption :
+		public Socket,
+		virtual public DualStackSocketOptionInterface {
 		using Socket::Socket;
 
 		private:
@@ -103,9 +103,9 @@ namespace Rain::Networking {
 		virtual void alreadyIpv6OnlySocketOption() final {}
 	};
 
-	class Ipv6OnlySocketOptionInterface
-			: virtual public SocketOptionInterface,
-				virtual public Ipv6FamilyInterface {};
+	class Ipv6OnlySocketOptionInterface :
+		virtual public SocketOptionInterface,
+		virtual public Ipv6FamilyInterface {};
 
 	// An IPv6-protocol Socket is declared single-stack. This
 	// is usually, but not guaranteed, to be the default on
@@ -113,10 +113,10 @@ namespace Rain::Networking {
 	//
 	// Enforces IPv6 family; otherwise, a compile-time error
 	// for ambiguous resolution is generated.
-	template <typename Socket>
-	class Ipv6OnlySocketOption
-			: public Socket,
-				virtual public Ipv6OnlySocketOptionInterface {
+	template<typename Socket>
+	class Ipv6OnlySocketOption :
+		public Socket,
+		virtual public Ipv6OnlySocketOptionInterface {
 		using Socket::Socket;
 
 		private:
@@ -141,16 +141,16 @@ namespace Rain::Networking {
 		virtual void alreadyIpv6OnlySocketOption() final {}
 	};
 
-	class ReuseAddressSocketOptionInterface
-			: virtual public SocketOptionInterface {};
+	class ReuseAddressSocketOptionInterface :
+		virtual public SocketOptionInterface {};
 
 	// There are many concerns related to reusing of
 	// addresses:
 	// <https://stackoverflow.com/questions/14388706/how-do-so-reuseaddr-and-so-reuseport-differ>.
-	template <typename Socket>
-	class ReuseAddressSocketOption
-			: public Socket,
-				virtual public ReuseAddressSocketOptionInterface {
+	template<typename Socket>
+	class ReuseAddressSocketOption :
+		public Socket,
+		virtual public ReuseAddressSocketOptionInterface {
 		using Socket::Socket;
 
 		private:

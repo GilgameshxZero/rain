@@ -18,7 +18,7 @@ namespace Rain::Error {
 	//
 	// Default template arguments provided for ease of use in
 	// catch blocks.
-	template <typename Error, typename ErrorCategory>
+	template<typename Error, typename ErrorCategory>
 	class Exception : public std::exception {
 		private:
 		// A unique ErrorCategory instance.
@@ -30,13 +30,13 @@ namespace Rain::Error {
 		public:
 		// Construct an exception with just the error code, in
 		// the format "CATEGORY, ERROR: MESSAGE".
-		Exception(Error const &error = static_cast<Error>(0))
-				: error(error),
-					explanation(
-						std::string(errorCategory.name()) + ", " +
-						std::to_string(static_cast<int>(error)) + ": " +
-						errorCategory.message(static_cast<int>(error)) +
-						"\n") {}
+		Exception(Error const &error = static_cast<Error>(0)) :
+			error(error),
+			explanation(
+				std::string(errorCategory.name()) + ", " +
+				std::to_string(static_cast<int>(error)) + ": " +
+				errorCategory.message(static_cast<int>(error)) +
+				"\n") {}
 
 		// Return the error (code).
 		Error const &getError() const noexcept {
@@ -45,7 +45,7 @@ namespace Rain::Error {
 
 		// Return the ErrorCategory for checking equality.
 		static ErrorCategory const &
-		getErrorCategory() noexcept {
+			getErrorCategory() noexcept {
 			return Exception<Error, ErrorCategory>::errorCategory;
 		}
 

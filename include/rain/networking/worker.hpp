@@ -6,10 +6,10 @@
 #include "socket.hpp"
 
 namespace Rain::Networking {
-	class WorkerSocketSpecInterface
-			: virtual public ConnectedSocketSpecInterface {
+	class WorkerSocketSpecInterface :
+		virtual public ConnectedSocketSpecInterface {
 		// For access to onWork.
-		template <typename, typename>
+		template<typename, typename>
 		friend class ServerSocketSpec;
 
 		private:
@@ -39,10 +39,10 @@ namespace Rain::Networking {
 	// underlying Socket operation timeout, the Worker should
 	// abort without blocking. This guarantees the NBTA
 	// contract on Servers which use the Worker.
-	template <typename Socket>
-	class WorkerSocketSpec
-			: public Socket,
-				virtual public WorkerSocketSpecInterface {
+	template<typename Socket>
+	class WorkerSocketSpec :
+		public Socket,
+		virtual public WorkerSocketSpecInterface {
 		private:
 		// Interrupt socket from the server.
 		SocketInterface *_interrupter;
@@ -57,24 +57,25 @@ namespace Rain::Networking {
 		// Server workerFactory uses.
 		WorkerSocketSpec(
 			NativeSocket nativeSocket,
-			SocketInterface *interrupter)
-				: Socket(nativeSocket), _interrupter(interrupter) {}
+			SocketInterface *interrupter) :
+			Socket(nativeSocket),
+			_interrupter(interrupter) {}
 	};
 
 	// Shorthand which includes ConnectedSocket and
 	// NamedSocket and base Socket templates.
-	template <
+	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Worker
-			: public WorkerSocketSpec<
-					ConnectedSocketSpec<NamedSocketSpec<Socket<
-						SocketFamilyInterface,
-						SocketTypeInterface,
-						SocketProtocolInterface,
-						SocketOptions...>>>> {
+		template<typename> class... SocketOptions>
+	class Worker :
+		public WorkerSocketSpec<
+			ConnectedSocketSpec<NamedSocketSpec<Socket<
+				SocketFamilyInterface,
+				SocketTypeInterface,
+				SocketProtocolInterface,
+				SocketOptions...>>>> {
 		using WorkerSocketSpec<
 			ConnectedSocketSpec<NamedSocketSpec<Socket<
 				SocketFamilyInterface,

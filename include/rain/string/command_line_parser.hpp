@@ -65,9 +65,10 @@ namespace Rain::String {
 					continue;
 				} else if (arg[1] == '-') {
 					// Long key name. Find delimiter.
-					for (value = arg + 2;
-							 *value != '\0' && *value != '=';
-							 value++);
+					for (
+						value = arg + 2;
+						*value != '\0' && *value != '=';
+						value++);
 
 					if (*value == '\0') {
 						// No explicit delimiter, so value must be next

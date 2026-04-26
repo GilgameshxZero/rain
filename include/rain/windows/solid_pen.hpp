@@ -12,9 +12,9 @@ namespace Rain::Windows {
 		HPEN const hPen;
 
 		public:
-		SolidPen(int width, Color color)
-				: hPen{validateSystemCall(
-						CreatePen(PS_SOLID, width, color))} {}
+		SolidPen(int width, Color color) :
+			hPen{validateSystemCall(
+				CreatePen(PS_SOLID, width, color))} {}
 		~SolidPen() { DeleteObject(this->hPen); }
 		SolidPen(SolidPen const &other) = delete;
 		SolidPen &operator=(SolidPen const &other) = delete;

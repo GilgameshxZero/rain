@@ -33,7 +33,7 @@
 // use `basic_ostream` so that selectivity requirements are
 // satisfied when compared to the standard library
 // `operator<<` for `std::string`.
-template <
+template<
 	typename CharT,
 	typename Traits,
 	typename Value,
@@ -116,9 +116,10 @@ namespace Rain::String {
 		// Scanning direction.
 		bool const scanRight = true) {
 		std::size_t index{0};
-		for (; index < cStrLen &&
-				 std::isspace(static_cast<int>(cStr[index]));
-				 index += (scanRight ? 1 : -1));
+		for (
+			; index < cStrLen &&
+			std::isspace(static_cast<int>(cStr[index]));
+			index += (scanRight ? 1 : -1));
 		return const_cast<char *>(cStr) + index;
 	}
 	inline char *scanUntilWhitespace(
@@ -126,9 +127,10 @@ namespace Rain::String {
 		std::size_t const cStrLen,
 		bool const scanRight = true) {
 		std::size_t index{0};
-		for (; index < cStrLen &&
-				 !std::isspace(static_cast<int>(cStr[index]));
-				 index += (scanRight ? 1 : -1));
+		for (
+			; index < cStrLen &&
+			!std::isspace(static_cast<int>(cStr[index]));
+			index += (scanRight ? 1 : -1));
 		return const_cast<char *>(cStr) + index;
 	}
 
@@ -139,7 +141,7 @@ namespace Rain::String {
 	// Internally, rain uses the strto* variants instead of
 	// the sto* variants as the former returns valid results
 	// on error and do not throw.
-	template <typename To, typename From>
+	template<typename To, typename From>
 	inline To anyToAny(From const &from) {
 		To to;
 		std::stringstream ss;
@@ -147,7 +149,7 @@ namespace Rain::String {
 		ss >> to;
 		return to;
 	}
-	template <typename From>
+	template<typename From>
 	inline std::string anyToString(From const &from) {
 		std::stringstream ss;
 		ss << from;
@@ -157,8 +159,9 @@ namespace Rain::String {
 	// Comparison operator for ASCII C-strings for use in
 	// std::maps and the like.
 	struct CStringCompare {
-		bool operator()(char const *left, char const *right)
-			const {
+		bool operator()(
+			char const *left,
+			char const *right) const {
 			return std::strcmp(left, right) < 0;
 		}
 	};

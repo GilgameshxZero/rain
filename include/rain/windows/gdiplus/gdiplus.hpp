@@ -6,10 +6,10 @@
 
 #ifdef RAIN_PLATFORM_WINDOWS
 
-#pragma comment(lib, "Gdiplus.lib")
+	#pragma comment(lib, "Gdiplus.lib")
 
-#include "../../algorithm/algorithm.hpp"
-#include "../windows.hpp"
+	#include "../../algorithm/algorithm.hpp"
+	#include "../windows.hpp"
 
 // min/max are defined within Gdiplus as well, and this
 // avoids double definition errors.
@@ -18,10 +18,11 @@ namespace Gdiplus {
 	using std::min;
 }
 
-// Objidl.h and Windows.h must be included before Gdiplus.h.
-#include <Objidl.h>
+	// Objidl.h and Windows.h must be included before
+	// Gdiplus.h.
+	#include <Objidl.h>
 
-#include <Gdiplus.h>
+	#include <Gdiplus.h>
 
 // Calls GdiplusStartup on construct, GdiplusShutdown on
 // destruct.
@@ -54,7 +55,7 @@ namespace Rain::Windows::Gdiplus {
 }
 
 // Custom hashes and equality.
-template <>
+template<>
 struct std::hash<Gdiplus::Point> {
 	std::size_t operator()(
 		Gdiplus::Point const &point) const {
@@ -63,7 +64,7 @@ struct std::hash<Gdiplus::Point> {
 	}
 };
 
-template <>
+template<>
 struct std::equal_to<Gdiplus::Point> {
 	bool operator()(
 		Gdiplus::Point const &left,

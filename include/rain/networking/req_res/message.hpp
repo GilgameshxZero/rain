@@ -13,11 +13,11 @@ namespace Rain::Networking::ReqRes {
 
 		// No copy, move construct OK.
 		MessageInterface(MessageInterface const &) = delete;
-		MessageInterface &operator=(MessageInterface const &) =
-			delete;
+		MessageInterface &operator=(
+			MessageInterface const &) = delete;
 		MessageInterface(MessageInterface &&) = default;
-		MessageInterface &operator=(MessageInterface &&) =
-			delete;
+		MessageInterface &operator=(
+			MessageInterface &&) = delete;
 
 		// Always succeeds or throws if failure/timeout.
 		// Override & call super for pp-chaining at

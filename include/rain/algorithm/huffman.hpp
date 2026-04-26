@@ -131,7 +131,7 @@ namespace Rain::Algorithm {
 
 		// Compute frequency array from text.
 		std::array<std::size_t, UCHAR_MAX + 1>
-		computeFrequencyFromText(std::string const &text) {
+			computeFrequencyFromText(std::string const &text) {
 			std::array<std::size_t, UCHAR_MAX + 1> frequency{0};
 			for (char const &i : text) {
 				frequency[reinterpret_cast<unsigned char const &>(
@@ -203,7 +203,7 @@ namespace Rain::Algorithm {
 			bool bit{
 				0 !=
 				(this->iBuffer.first &
-				 (1 << (this->iBuffer.second - 1)))};
+					(1 << (this->iBuffer.second - 1)))};
 			this->iBuffer.second--;
 			return bit;
 		}
@@ -233,7 +233,7 @@ namespace Rain::Algorithm {
 		void writeByte(unsigned char byte) {
 			this->oBuffer.first =
 				(this->oBuffer.first
-				 << (8 - this->oBuffer.second)) |
+					<< (8 - this->oBuffer.second)) |
 				(byte >> this->oBuffer.second);
 			if (
 				traits_type::eq_int_type(
@@ -294,8 +294,8 @@ namespace Rain::Algorithm {
 			std::streambuf &underlying,
 			std::array<std::size_t, UCHAR_MAX + 1> const
 				&frequency,
-			bool writeDictionary = true)
-				: underlying(underlying) {
+			bool writeDictionary = true) :
+			underlying(underlying) {
 			this->initialize();
 
 			// Push all leaf nodes to priority queue.
@@ -345,16 +345,16 @@ namespace Rain::Algorithm {
 		HuffmanStreamBuf(
 			std::stringbuf &underlying,
 			std::string const &text,
-			bool writeDictionary = true)
-				: HuffmanStreamBuf(
-						underlying,
-						this->computeFrequencyFromText(text),
-						writeDictionary) {}
+			bool writeDictionary = true) :
+			HuffmanStreamBuf(
+				underlying,
+				this->computeFrequencyFromText(text),
+				writeDictionary) {}
 
 		// Read dictionary from first bytes of underlying.
 		// Throws on invalid underlying bits.
-		HuffmanStreamBuf(std::streambuf &underlying)
-				: underlying(underlying) {
+		HuffmanStreamBuf(std::streambuf &underlying) :
+			underlying(underlying) {
 			this->initialize();
 
 			// Traverse the tree while creating nodes. curNode
@@ -416,8 +416,9 @@ namespace Rain::Algorithm {
 					} else {
 						this->children[curNode].second = idx;
 
-						while (curNode != -1 &&
-									 this->children[curNode].second != -1) {
+						while (
+							curNode != -1 &&
+							this->children[curNode].second != -1) {
 							curNode = this->parent[curNode];
 						}
 						if (curNode == -1) {

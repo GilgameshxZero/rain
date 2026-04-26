@@ -10,12 +10,12 @@ namespace Rain::Algorithm {
 	//
 	// Returns a matrix A, where A[i][j] is the shortest
 	// distance from node `i` to node `j`.
-	template <typename std::size_t, typename WeightType>
+	template<typename std::size_t, typename WeightType>
 	inline std::vector<std::vector<WeightType>>
-	apspFloydWarshall(
-		std::vector<
-			std::unordered_map<std::size_t, WeightType>> const
-			&edges) {
+		apspFloydWarshall(
+			std::vector<
+				std::unordered_map<std::size_t, WeightType>> const
+				&edges) {
 		std::vector<std::vector<WeightType>> distances(
 			edges.size(),
 			std::vector<WeightType>(

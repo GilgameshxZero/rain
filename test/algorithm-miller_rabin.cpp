@@ -23,19 +23,21 @@ int main() {
 	// To test up to 64 bits, need to use 128-bit integer.
 	releaseAssert(
 		Rain::Algorithm::isPrimeMillerRabin(
-			Rain::Algorithm::BigIntSigned<7>(29), 100));
+			Rain::Algorithm::BigIntegerUnsigned<7>(29), 100));
 	releaseAssert(
 		Rain::Algorithm::isPrimeMillerRabin(
-			Rain::Algorithm::BigIntSigned<7>(8589934583), 100));
+			Rain::Algorithm::BigIntegerUnsigned<7>(8589934583),
+			100));
 	releaseAssert(!Rain::Algorithm::isPrimeMillerRabin(
-		Rain::Algorithm::BigIntSigned<7>(8589934581), 100));
+		Rain::Algorithm::BigIntegerUnsigned<7>(8589934581),
+		100));
 	releaseAssert(
 		Rain::Algorithm::isPrimeMillerRabin(
-			Rain::Algorithm::BigIntUnsigned<7>(
+			Rain::Algorithm::BigIntegerUnsigned<7>(
 				18446744073709551557ULL),
 			100));
 	releaseAssert(!Rain::Algorithm::isPrimeMillerRabin(
-		Rain::Algorithm::BigIntUnsigned<7>(
+		Rain::Algorithm::BigIntegerUnsigned<7>(
 			18446744073709551559ULL),
 		100));
 
@@ -56,7 +58,7 @@ int main() {
 			998244351_zu));
 	releaseAssert(
 		Rain::Algorithm::isPrimeMillerRabinDeterministic(
-			Rain::Algorithm::BigIntSigned<8>(
+			Rain::Algorithm::BigIntegerUnsigned<8>(
 				18446744073709551557ULL)));
 	return 0;
 }

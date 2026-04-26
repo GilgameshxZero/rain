@@ -56,8 +56,9 @@ class Window : public Rain::Windows::Window {
 		std::cout << "Window::onPaint.\n";
 		return 0;
 	}
-	LRESULT onPointerUp(WPARAM wParam, LPARAM lParam)
-		override {
+	LRESULT onPointerUp(
+		WPARAM wParam,
+		LPARAM lParam) override {
 		POINTER_INFO pointerInfo;
 		Rain::Windows::validateSystemCall(GetPointerInfo(
 			GET_POINTERID_WPARAM(wParam), &pointerInfo));

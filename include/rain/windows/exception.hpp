@@ -81,7 +81,7 @@ namespace Rain::Windows {
 	// Helper function throws a system exception if return
 	// value is an error value. Most Windows system calls
 	// return NULL or 0 on failure.
-	template <typename Result>
+	template<typename Result>
 	inline auto validateSystemCall(Result &&result) {
 		if (result == NULL) {
 			throw Exception(getSystemError());

@@ -34,8 +34,9 @@ namespace Rain::Algorithm {
 				partialMatch[a] = partialMatch[candidate];
 			} else {
 				partialMatch[a] = candidate;
-				while (candidate != SIZE_MAX &&
-							 cStr[a] != cStr[candidate]) {
+				while (
+					candidate != SIZE_MAX &&
+					cStr[a] != cStr[candidate]) {
 					candidate = partialMatch[candidate];
 				}
 			}

@@ -7,7 +7,7 @@
 namespace Rain::Multithreading {
 	// Like lock_guard, but unlocks on construction and locks
 	// on destruction.
-	template <typename Mutex>
+	template<typename Mutex>
 	class UnlockGuard {
 		private:
 		Mutex &mtx;

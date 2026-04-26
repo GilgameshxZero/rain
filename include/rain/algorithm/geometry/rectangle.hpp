@@ -8,7 +8,7 @@
 #include <utility>
 
 namespace Rain::Algorithm::Geometry {
-	template <typename PrecisionType>
+	template<typename PrecisionType>
 	class Rectangle {
 		public:
 		PrecisionType left, top, right, bottom;
@@ -16,39 +16,39 @@ namespace Rain::Algorithm::Geometry {
 		Rectangle() = default;
 		Rectangle(
 			Point<PrecisionType> const &topLeft,
-			Point<PrecisionType> const &bottomRight)
-				: left{topLeft.x},
-					top{topLeft.y},
-					right{bottomRight.x},
-					bottom{bottomRight.y} {}
+			Point<PrecisionType> const &bottomRight) :
+			left{topLeft.x},
+			top{topLeft.y},
+			right{bottomRight.x},
+			bottom{bottomRight.y} {}
 		Rectangle(
 			PrecisionType const &left,
 			PrecisionType const &top,
 			PrecisionType const &right,
-			PrecisionType const &bottom)
-				: left{left},
-					top{top},
-					right{right},
-					bottom{bottom} {}
+			PrecisionType const &bottom) :
+			left{left},
+			top{top},
+			right{right},
+			bottom{bottom} {}
 		Rectangle(
 			std::pair<
 				std::pair<PrecisionType, PrecisionType>,
 				std::pair<PrecisionType, PrecisionType>> const
-				&rectangle)
-				: left{rectangle.first.first},
-					top{rectangle.first.second},
-					right{rectangle.second.first},
-					bottom{rectangle.second.second} {}
+				&rectangle) :
+			left{rectangle.first.first},
+			top{rectangle.first.second},
+			right{rectangle.second.first},
+			bottom{rectangle.second.second} {}
 #ifdef RAIN_PLATFORM_WINDOWS
-		template <
+		template<
 			bool isSame =
 				std::is_same<PrecisionType, LONG>::value,
 			typename std::enable_if<isSame>::type * = nullptr>
-		Rectangle(RECT const &rect)
-				: left{rect.left},
-					top{rect.top},
-					right{rect.right},
-					bottom{rect.bottom} {}
+		Rectangle(RECT const &rect) :
+			left{rect.left},
+			top{rect.top},
+			right{rect.right},
+			bottom{rect.bottom} {}
 #endif
 
 		inline PrecisionType width() const {
@@ -78,7 +78,7 @@ namespace Rain::Algorithm::Geometry {
 			this->right += scalar;
 			this->bottom += scalar;
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline Rectangle<NewPrecisionType> round() const {
 			return {
 				Math::round<NewPrecisionType>(this->left),
@@ -86,7 +86,7 @@ namespace Rain::Algorithm::Geometry {
 				Math::round<NewPrecisionType>(this->right),
 				Math::round<NewPrecisionType>(this->bottom)};
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline Rectangle<NewPrecisionType> floor() const {
 			return {
 				Math::floor<NewPrecisionType>(this->left),
@@ -94,7 +94,7 @@ namespace Rain::Algorithm::Geometry {
 				Math::floor<NewPrecisionType>(this->right),
 				Math::floor<NewPrecisionType>(this->bottom)};
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline Rectangle<NewPrecisionType> ceil() const {
 			return {
 				Math::ceil<NewPrecisionType>(this->left),
@@ -121,13 +121,13 @@ namespace Rain::Algorithm::Geometry {
 		inline bool operator<(Rectangle const &other) const {
 			return this->left == other.left
 				? (this->top == other.top
-						 ? (this->right == other.right
-									? this->bottom < other.bottom
-									: this->right < other.right)
-						 : this->top < other.top)
+							? (this->right == other.right
+										? this->bottom < other.bottom
+										: this->right < other.right)
+							: this->top < other.top)
 				: this->left < other.left;
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator+(
 			Rectangle<OtherPrecisionType> const &other) const {
 			return Rectangle<decltype(this->left + other.left)>{
@@ -136,7 +136,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right + other.right,
 				this->bottom + other.bottom};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator+(ScalarType const &scalar) const {
 			return Rectangle<decltype(this->left + scalar)>{
 				this->left + scalar,
@@ -144,7 +144,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right + scalar,
 				this->bottom + scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator-(
 			Rectangle<OtherPrecisionType> const &other) const {
 			return Rectangle<decltype(this->left + other.left)>{
@@ -153,7 +153,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right - other.right,
 				this->bottom - other.bottom};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator-(ScalarType const &scalar) const {
 			return Rectangle<decltype(this->left - scalar)>{
 				this->left - scalar,
@@ -161,7 +161,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right - scalar,
 				this->bottom - scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator*(
 			Rectangle<OtherPrecisionType> const &other) const {
 			return Rectangle<decltype(this->left * other.left)>{
@@ -170,7 +170,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right * other.right,
 				this->bottom * other.bottom};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator*(ScalarType const &scalar) const {
 			return Rectangle<decltype(this->left * scalar)>{
 				this->left * scalar,
@@ -178,7 +178,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right * scalar,
 				this->bottom * scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator/(
 			Rectangle<OtherPrecisionType> const &other) const {
 			return Rectangle<decltype(this->left / other.left)>{
@@ -187,7 +187,7 @@ namespace Rain::Algorithm::Geometry {
 				this->right / other.right,
 				this->bottom / other.bottom};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator/(ScalarType const &scalar) const {
 			return Rectangle<decltype(this->left / scalar)>{
 				this->left / scalar,
@@ -204,7 +204,7 @@ namespace Rain::Algorithm::Geometry {
 				{this->right, this->bottom}};
 		}
 #ifdef RAIN_PLATFORM_WINDOWS
-		template <
+		template<
 			bool isSame =
 				std::is_same<PrecisionType, LONG>::value,
 			typename std::enable_if<isSame>::type * = nullptr>
@@ -215,19 +215,19 @@ namespace Rain::Algorithm::Geometry {
 #endif
 
 		// Cross-cast integral/non-integral operator.
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			typename std::enable_if<isDifferent>::type * =
 				nullptr>
-		explicit inline operator Rectangle<OtherPrecisionType>()
-			const {
+		explicit inline
+			operator Rectangle<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->left),
 				static_cast<OtherPrecisionType>(this->top),
@@ -236,35 +236,35 @@ namespace Rain::Algorithm::Geometry {
 		}
 
 		// Down-cast is explicit, up-cast is not.
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			bool isSmaller = sizeof(OtherPrecisionType) <
 				sizeof(PrecisionType),
 			typename std::enable_if<
 				!isDifferent && isSmaller>::type * = nullptr>
-		explicit inline operator Rectangle<OtherPrecisionType>()
-			const {
+		explicit inline
+			operator Rectangle<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->left),
 				static_cast<OtherPrecisionType>(this->top),
 				static_cast<OtherPrecisionType>(this->right),
 				static_cast<OtherPrecisionType>(this->bottom)};
 		}
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			bool isSmaller = sizeof(OtherPrecisionType) <
 				sizeof(PrecisionType),
@@ -294,7 +294,7 @@ namespace Rain::Algorithm::Geometry {
 	using RectangleLd = Rectangle<long double>;
 }
 
-template <typename PrecisionType>
+template<typename PrecisionType>
 struct std::hash<
 	Rain::Algorithm::Geometry::Rectangle<PrecisionType>> {
 	std::size_t operator()(

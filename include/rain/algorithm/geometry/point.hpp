@@ -8,19 +8,22 @@
 #include <utility>
 
 namespace Rain::Algorithm::Geometry {
-	template <typename PrecisionType>
+	template<typename PrecisionType>
 	class Point {
 		public:
 		PrecisionType x, y;
 
 		Point() = default;
-		Point(PrecisionType const &x, PrecisionType const &y)
-				: x{x}, y{y} {}
+		Point(PrecisionType const &x, PrecisionType const &y) :
+			x{x},
+			y{y} {}
 		Point(
-			std::pair<PrecisionType, PrecisionType> const &point)
-				: x{point.first}, y{point.second} {}
+			std::pair<PrecisionType, PrecisionType> const
+				&point) :
+			x{point.first},
+			y{point.second} {}
 #ifdef RAIN_PLATFORM_WINDOWS
-		template <
+		template<
 			bool isSame =
 				std::is_same<PrecisionType, LONG>::value,
 			typename std::enable_if<isSame>::type * = nullptr>
@@ -37,30 +40,30 @@ namespace Rain::Algorithm::Geometry {
 				static_cast<long double>(this->y - other.y) *
 					(this->y - other.y));
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline Point<NewPrecisionType> round() const {
 			return {
 				Math::round<NewPrecisionType>(this->x),
 				Math::round<NewPrecisionType>(this->y)};
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline Point<NewPrecisionType> floor() const {
 			return {
 				Math::floor<NewPrecisionType>(this->x),
 				Math::floor<NewPrecisionType>(this->y)};
 		}
-		template <typename NewPrecisionType>
+		template<typename NewPrecisionType>
 		inline Point<NewPrecisionType> ceil() const {
 			return {
 				Math::ceil<NewPrecisionType>(this->x),
 				Math::ceil<NewPrecisionType>(this->y)};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto cross(
 			Point<OtherPrecisionType> const &other) const {
 			return this->x * other.y - this->y * other.x;
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline long crossSign(
 			Point<OtherPrecisionType> const &other) const {
 			auto cross{this->cross(other)};
@@ -74,58 +77,58 @@ namespace Rain::Algorithm::Geometry {
 			return this->x == other.x ? this->y < other.y
 																: this->x < other.x;
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator+(
 			Point<OtherPrecisionType> const &other) const {
 			return Point<decltype(this->x + other.x)>{
 				this->x + other.x, this->y + other.y};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator+(ScalarType const &scalar) const {
 			return Point<decltype(this->x + scalar)>{
 				this->x + scalar, this->y + scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator-(
 			Point<OtherPrecisionType> const &other) const {
 			return Point<decltype(this->x - other.x)>{
 				this->x - other.x, this->y - other.y};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator-(ScalarType const &scalar) const {
 			return Point<decltype(this->x - scalar)>{
 				this->x - scalar, this->y - scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator*(
 			Point<OtherPrecisionType> const &other) const {
 			return Point<decltype(this->x * other.x)>{
 				this->x * other.x, this->y * other.y};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator*(ScalarType const &scalar) const {
 			return Point<decltype(this->x * scalar)>{
 				this->x * scalar, this->y * scalar};
 		}
-		template <typename OtherPrecisionType>
+		template<typename OtherPrecisionType>
 		inline auto operator/(
 			Point<OtherPrecisionType> const &other) const {
 			return Point<decltype(this->x / other.x)>{
 				this->x / other.x, this->y / other.y};
 		}
-		template <typename ScalarType>
+		template<typename ScalarType>
 		inline auto operator/(ScalarType const &scalar) const {
 			return Point<decltype(this->x / scalar)>{
 				this->x / scalar, this->y / scalar};
 		}
 
 		inline
-		operator std::pair<PrecisionType, PrecisionType>()
-			const {
+			operator std::pair<PrecisionType, PrecisionType>()
+				const {
 			return {this->x, this->y};
 		}
 #ifdef RAIN_PLATFORM_WINDOWS
-		template <
+		template<
 			bool isSame =
 				std::is_same<PrecisionType, LONG>::value,
 			typename std::enable_if<isSame>::type * = nullptr>
@@ -135,52 +138,52 @@ namespace Rain::Algorithm::Geometry {
 #endif
 
 		// Cross-cast integral/non-integral operator.
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			typename std::enable_if<isDifferent>::type * =
 				nullptr>
-		explicit inline operator Point<OtherPrecisionType>()
-			const {
+		explicit inline
+			operator Point<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->x),
 				static_cast<OtherPrecisionType>(this->y)};
 		}
 
 		// Down-cast is explicit, up-cast is not.
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			bool isSmaller = sizeof(OtherPrecisionType) <
 				sizeof(PrecisionType),
 			typename std::enable_if<
 				!isDifferent && isSmaller>::type * = nullptr>
-		explicit inline operator Point<OtherPrecisionType>()
-			const {
+		explicit inline
+			operator Point<OtherPrecisionType>() const {
 			return {
 				static_cast<OtherPrecisionType>(this->x),
 				static_cast<OtherPrecisionType>(this->y)};
 		}
-		template <
+		template<
 			typename OtherPrecisionType,
 			bool isCurrentIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isOtherIntegral =
 				std::is_integral<PrecisionType>::value,
 			bool isDifferent = (isCurrentIntegral &&
-													!isOtherIntegral) ||
+													 !isOtherIntegral) ||
 				(!isCurrentIntegral && isOtherIntegral),
 			bool isSmaller = sizeof(OtherPrecisionType) <
 				sizeof(PrecisionType),
@@ -208,7 +211,7 @@ namespace Rain::Algorithm::Geometry {
 	using PointLd = Point<long double>;
 }
 
-template <typename PrecisionType>
+template<typename PrecisionType>
 struct std::hash<
 	Rain::Algorithm::Geometry::Point<PrecisionType>> {
 	std::size_t operator()(

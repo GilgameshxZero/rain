@@ -20,9 +20,31 @@ int main() {
 	releaseAssert(
 		partialMatch ==
 		std::vector<std::size_t>(
-			{SIZE_MAX, 0, 0, 0, 0, 0, 0,				SIZE_MAX, 0,
-			 2,				 0, 0, 0, 0, 0, SIZE_MAX, 0,				0,
-			 3,				 0, 0, 0, 0, 0, 0}));
+			{SIZE_MAX,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				SIZE_MAX,
+				0,
+				2,
+				0,
+				0,
+				0,
+				0,
+				0,
+				SIZE_MAX,
+				0,
+				0,
+				3,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0}));
 
 	// Partial table computation.
 	s = "\r\n";

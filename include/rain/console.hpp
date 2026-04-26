@@ -9,22 +9,24 @@
 #include <mutex>
 
 #ifdef RAIN_PLATFORM_WINDOWS
-#include <conio.h>
+	#include <conio.h>
 #else
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
+	#include <stdio.h>
+	#include <sys/ioctl.h>
+	#include <termios.h>
+	#include <unistd.h>
 #endif
 
 namespace Rain {
 	class Console {
 		private:
 #ifdef RAIN_PLATFORM_WINDOWS
-		// Ensures that if built with /SUBSYSTEM:CONSOLE, virtual console mode is
-		// enabled, so that escape sequences work as expected.
+		// Ensures that if built with /SUBSYSTEM:CONSOLE,
+		// virtual console mode is enabled, so that escape
+		// sequences work as expected.
 		//
-		// Piping the console causes GetConsoleMode/SetConsoleMode to fail, so we
+		// Piping the console causes
+		// GetConsoleMode/SetConsoleMode to fail, so we
 		// purposely do not check for exceptions here.
 		class Initializer {
 			private:
@@ -32,13 +34,17 @@ namespace Rain {
 			DWORD const origMode;
 
 			static DWORD getConsoleMode(HANDLE hStdOut) {
-				// Invalid handle may occur if /SUBSYSTEM:WINDOWS is set.
-				if (hStdOut == NULL || hStdOut == INVALID_HANDLE_VALUE) {
+				// Invalid handle may occur if /SUBSYSTEM:WINDOWS is
+				// set.
+				if (
+					hStdOut == NULL ||
+					hStdOut == INVALID_HANDLE_VALUE) {
 					return 0;
 				}
 				DWORD mode;
 				try {
-					Windows::validateSystemCall(GetConsoleMode(hStdOut, &mode));
+					Windows::validateSystemCall(
+						GetConsoleMode(hStdOut, &mode));
 				} catch (...) {
 					return NULL;
 				}
@@ -46,20 +52,28 @@ namespace Rain {
 			}
 
 			public:
-			Initializer()
-					: hStdOut{GetStdHandle(STD_OUTPUT_HANDLE)},
-						origMode{Initializer::getConsoleMode(this->hStdOut)} {
-				if (this->hStdOut == NULL || hStdOut == INVALID_HANDLE_VALUE) {
+			Initializer() :
+				hStdOut{GetStdHandle(STD_OUTPUT_HANDLE)},
+				origMode{
+					Initializer::getConsoleMode(this->hStdOut)} {
+				if (
+					this->hStdOut == NULL ||
+					hStdOut == INVALID_HANDLE_VALUE) {
 					return;
 				}
-				DWORD mode{this->origMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING};
+				DWORD mode{
+					this->origMode |
+					ENABLE_VIRTUAL_TERMINAL_PROCESSING};
 				try {
-					Windows::validateSystemCall(SetConsoleMode(this->hStdOut, mode));
+					Windows::validateSystemCall(
+						SetConsoleMode(this->hStdOut, mode));
 				} catch (...) {
 				}
 			}
 			~Initializer() {
-				if (this->hStdOut == NULL || hStdOut == INVALID_HANDLE_VALUE) {
+				if (
+					this->hStdOut == NULL ||
+					hStdOut == INVALID_HANDLE_VALUE) {
 					return;
 				}
 				SetConsoleMode(this->hStdOut, this->origMode);
@@ -115,8 +129,9 @@ namespace Rain {
 			ERR = 0xff,
 		};
 
-		// Returns [0x80, 0x84) for the arrow keys, [0x84, 0x8f) for the f-keys,
-		// 0xff for an error where multiple keys may have been consumed.
+		// Returns [0x80, 0x84) for the arrow keys, [0x84, 0x8f)
+		// for the f-keys, 0xff for an error where multiple keys
+		// may have been consumed.
 		static Code getch() {
 			int i{Console::getchInner()};
 			switch (i) {
@@ -300,7 +315,8 @@ namespace Rain {
 				case Color::CYAN:
 					return FOREGROUND_GREEN | FOREGROUND_BLUE;
 				case Color::WHITE:
-					return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+					return FOREGROUND_RED | FOREGROUND_GREEN |
+						FOREGROUND_BLUE;
 				default:
 					return 9;
 			}
@@ -308,10 +324,11 @@ namespace Rain {
 #endif
 
 		static void coutInner() {}
-		template <typename Value>
+		template<typename Value>
 		static void coutInner(Value &&value, auto &&...values) {
 			std::cout << std::forward<Value>(value);
-			Console::coutInner(std::forward<decltype(values)>(values)...);
+			Console::coutInner(
+				std::forward<decltype(values)>(values)...);
 		}
 
 		static inline std::mutex coutMtx;
@@ -329,9 +346,13 @@ namespace Rain {
 			bool restore{true};
 		};
 
-		// Background colors are inconsistent with newlines, position instead.
-		static void cout(ConsoleParameters const &params, auto &&...values) {
-			std::lock_guard<std::mutex> lckGuard(Console::coutMtx);
+		// Background colors are inconsistent with newlines,
+		// position instead.
+		static void cout(
+			ConsoleParameters const &params,
+			auto &&...values) {
+			std::lock_guard<std::mutex> lckGuard(
+				Console::coutMtx);
 			std::cout << "\x1b[0;"
 								<< 40 + static_cast<int>(params.bgColor) +
 					(params.bgIntense ? 60 : 0)
@@ -341,45 +362,57 @@ namespace Rain {
 								<< "m";
 
 			if (params.row >= 0 && params.col >= 0) {
-				std::cout << "\x1b[" << params.row + 1 << ";" << params.col + 1 << "f";
+				std::cout << "\x1b[" << params.row + 1 << ";"
+									<< params.col + 1 << "f";
 			}
 
-			Console::coutInner(std::forward<decltype(values)>(values)...);
+			Console::coutInner(
+				std::forward<decltype(values)>(values)...);
 
 			if (params.restore) {
 				std::cout << "\x1b[0m";
 			}
 		}
-		// Fills console with spaces, and positions back to 1, 1.
+		// Fills console with spaces, and positions back to
+		// 1, 1.
 		static void clear() {
-			std::lock_guard<std::mutex> lckGuard(Console::coutMtx);
+			std::lock_guard<std::mutex> lckGuard(
+				Console::coutMtx);
 			std::cout << "\x1b[2J\x1b[3J\x1b[1;1H";
 		}
 		static void hideCursor() {
-			std::lock_guard<std::mutex> lckGuard(Console::coutMtx);
+			std::lock_guard<std::mutex> lckGuard(
+				Console::coutMtx);
 			std::cout << "\x1b[?25l";
 		}
 		static void showCursor() {
-			std::lock_guard<std::mutex> lckGuard(Console::coutMtx);
+			std::lock_guard<std::mutex> lckGuard(
+				Console::coutMtx);
 			std::cout << "\x1b[?25h";
 		}
 		static Algorithm::Geometry::PointL getSize() {
 #ifdef RAIN_PLATFORM_WINDOWS
-			static HANDLE hStdOut{
-				Windows::validateSystemCall(GetStdHandle(STD_OUTPUT_HANDLE))};
+			static HANDLE hStdOut{Windows::validateSystemCall(
+				GetStdHandle(STD_OUTPUT_HANDLE))};
 			static CONSOLE_SCREEN_BUFFER_INFO csbi;
-			Windows::validateSystemCall(GetConsoleScreenBufferInfo(hStdOut, &csbi));
+			Windows::validateSystemCall(
+				GetConsoleScreenBufferInfo(hStdOut, &csbi));
 			return {
-				static_cast<long>(csbi.srWindow.Right - csbi.srWindow.Left + 1),
-				static_cast<long>(csbi.srWindow.Bottom - csbi.srWindow.Top + 1)};
+				static_cast<long>(
+					csbi.srWindow.Right - csbi.srWindow.Left + 1),
+				static_cast<long>(
+					csbi.srWindow.Bottom - csbi.srWindow.Top + 1)};
 #else
 			struct winsize w;
 			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-			return {static_cast<long>(w.ws_col), static_cast<long>(w.ws_row)};
+			return {
+				static_cast<long>(w.ws_col),
+				static_cast<long>(w.ws_row)};
 #endif
 		}
 		void flush() {
-			std::lock_guard<std::mutex> lckGuard(Console::coutMtx);
+			std::lock_guard<std::mutex> lckGuard(
+				Console::coutMtx);
 			std::cout.flush();
 		}
 
@@ -387,8 +420,10 @@ namespace Rain {
 			if (!Rain::Platform::isDebug()) {
 				return;
 			}
-			std::lock_guard<std::mutex> lckGuard(Console::coutMtx);
-			Console::coutInner(std::forward<decltype(values)>(values)...);
+			std::lock_guard<std::mutex> lckGuard(
+				Console::coutMtx);
+			Console::coutInner(
+				std::forward<decltype(values)>(values)...);
 			std::cout << std::endl;
 		}
 	};

@@ -12,7 +12,8 @@ namespace Rain::Networking::Http::Header {
 		// Helper to decode a base-64 encoded credentials string
 		// as part of the Basic scheme.
 		static std::pair<std::string, std::string>
-		decodeBasicCredentials(std::string const &credentials) {
+			decodeBasicCredentials(
+				std::string const &credentials) {
 			std::string raw{
 				Rain::String::Base64::decode(credentials)};
 			std::size_t separator{raw.find(':')};
@@ -41,7 +42,8 @@ namespace Rain::Networking::Http::Header {
 				std::string,
 				std::string,
 				String::CaseAgnosticHash,
-				String::CaseAgnosticEqual> const &parameters = {})
-				: scheme(scheme), parameters(parameters) {}
+				String::CaseAgnosticEqual> const &parameters = {}) :
+			scheme(scheme),
+			parameters(parameters) {}
 	};
 }

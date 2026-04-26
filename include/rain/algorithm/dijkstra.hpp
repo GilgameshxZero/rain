@@ -13,7 +13,7 @@ namespace Rain::Algorithm {
 	//
 	// Returns a list of distances to each node, and the
 	// penultimate node on the shortest path to each node.
-	template <typename WeightType>
+	template<typename WeightType>
 	inline std::
 		pair<std::vector<WeightType>, std::vector<std::size_t>>
 		ssspDijkstra(

@@ -31,11 +31,11 @@ namespace Rain::Algorithm {
 		mutable std::vector<std::size_t> distance;
 
 		public:
-		DisjointSetUnion(std::size_t const size)
-				: isRoot(size, true),
-					parent(size, 1),
-					parity(size, false),
-					distance(size, 0) {}
+		DisjointSetUnion(std::size_t const size) :
+			isRoot(size, true),
+			parent(size, 1),
+			parity(size, false),
+			distance(size, 0) {}
 
 		std::size_t find(std::size_t const i) const {
 			if (this->isRoot[i]) {
@@ -112,10 +112,10 @@ namespace Rain::Algorithm {
 		mutable std::stack<std::size_t> actions, actionParams;
 
 		public:
-		DisjointSetUnionPersistent(std::size_t const size)
-				: isRoot(size, true),
-					parent(size, 1),
-					cEdges(size, 0) {}
+		DisjointSetUnionPersistent(std::size_t const size) :
+			isRoot(size, true),
+			parent(size, 1),
+			cEdges(size, 0) {}
 
 		std::size_t find(std::size_t const i) const {
 			if (this->isRoot[i]) {

@@ -25,7 +25,7 @@ namespace Rain::Time {
 }
 
 // All durations are outputted as ms.
-template <typename TickRep, typename TickPeriod>
+template<typename TickRep, typename TickPeriod>
 inline std::ostream &operator<<(
 	std::ostream &stream,
 	std::chrono::duration<TickRep, TickPeriod> duration) {

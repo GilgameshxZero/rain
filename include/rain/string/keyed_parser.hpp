@@ -50,7 +50,7 @@ namespace Rain::String {
 		// Add a key parser by specifying the store location
 		// (and its type). Adding a previously added key will
 		// fail and return true.
-		template <typename Store>
+		template<typename Store>
 		bool addParser(std::string const &key, Store &store) {
 			return !this->parsers
 								.insert(
@@ -143,7 +143,7 @@ namespace Rain::String {
 			});
 		}
 		// std::vector parser.
-		template <typename Inner>
+		template<typename Inner>
 		Parser getParser(
 			std::vector<Inner> &store) const noexcept {
 			return Parser(

@@ -2,9 +2,8 @@
 #include <unordered_map>
 
 namespace Rain::Networking::Http {
-	class QueryParams
-			: public std::
-					unordered_map<std::string, std::string> {
+	class QueryParams :
+		public std::unordered_map<std::string, std::string> {
 		public:
 		// Unwraps from a string (empty, or beginning with ?).
 		QueryParams(std::string const &value) {
@@ -13,7 +12,7 @@ namespace Rain::Networking::Http {
 					k{value.find('&', j + 1)};
 				this->insert(
 					{value.substr(i + 1, j - i - 1),
-					 value.substr(j + 1, k - j - 1)});
+						value.substr(j + 1, k - j - 1)});
 				i = k;
 			}
 		}

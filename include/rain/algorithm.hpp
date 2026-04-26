@@ -2,7 +2,7 @@
 #pragma once
 
 #include "algorithm/algorithm.hpp"
-#include "algorithm/bigint.hpp"
+#include "algorithm/big_integer.hpp"
 #include "algorithm/bit_manipulators.hpp"
 #include "algorithm/dijkstra.hpp"
 #include "algorithm/dsu.hpp"
@@ -21,8 +21,8 @@
 #include "algorithm/modulus_field.hpp"
 #include "algorithm/partitions.hpp"
 #include "algorithm/prim.hpp"
-#include "algorithm/segment_tree_lazy.hpp"
 #include "algorithm/segment_tree.hpp"
+#include "algorithm/segment_tree_lazy.hpp"
 #include "algorithm/sieve.hpp"
 #include "algorithm/spfa.hpp"
 #include "algorithm/tarjan.hpp"

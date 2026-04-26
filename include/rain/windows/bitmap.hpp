@@ -12,9 +12,9 @@ namespace Rain::Windows {
 		HBITMAP const hBitmap;
 
 		public:
-		Bitmap(HDC hDc, int cx, int cy)
-				: hBitmap{validateSystemCall(
-						CreateCompatibleBitmap(hDc, cx, cy))} {}
+		Bitmap(HDC hDc, int cx, int cy) :
+			hBitmap{validateSystemCall(
+				CreateCompatibleBitmap(hDc, cx, cy))} {}
 		~Bitmap() { DeleteObject(this->hBitmap); }
 		Bitmap(Bitmap const &other) = delete;
 		Bitmap &operator=(Bitmap const &other) = delete;
@@ -25,8 +25,8 @@ namespace Rain::Windows {
 			return this->hBitmap;
 		}
 
-		inline Algorithm::Geometry::PointL getDimension()
-			const {
+		inline Algorithm::Geometry::PointL
+			getDimension() const {
 			SIZE size;
 			validateSystemCall(
 				GetBitmapDimensionEx(*this, &size));

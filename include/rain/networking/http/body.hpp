@@ -27,20 +27,18 @@ namespace Rain::Networking::Http {
 
 		// Build with static string.
 		// Default constructor is empty body.
-		Body(std::string const &str = "")
-				: std::istream(
-						str.empty() ? nullptr
-												: new std::stringbuf(str)),
-					toDelete(this->rdbuf()) {}
+		Body(std::string const &str = "") :
+			std::istream(
+				str.empty() ? nullptr : new std::stringbuf(str)),
+			toDelete(this->rdbuf()) {}
 		Body(char const *cStr) : Body(std::string(cStr)) {}
-		Body(std::stringbuf &&stringbuf)
-				: std::istream(
-						new std::stringbuf(std::move(stringbuf))),
-					toDelete(this->rdbuf()) {}
-		Body(std::filebuf &&filebuf)
-				: std::istream(
-						new std::filebuf(std::move(filebuf))),
-					toDelete(this->rdbuf()) {}
+		Body(std::stringbuf &&stringbuf) :
+			std::istream(
+				new std::stringbuf(std::move(stringbuf))),
+			toDelete(this->rdbuf()) {}
+		Body(std::filebuf &&filebuf) :
+			std::istream(new std::filebuf(std::move(filebuf))),
+			toDelete(this->rdbuf()) {}
 
 		// Disable copy constructors.
 		Body(Body const &) = delete;
@@ -48,9 +46,9 @@ namespace Rain::Networking::Http {
 
 		// Move constructor also swaps streambufs and freeing
 		// responsibility.
-		Body(Body &&other) noexcept
-				: std::istream(std::move(other)),
-					toDelete(std::exchange(other.toDelete, nullptr)) {
+		Body(Body &&other) noexcept :
+			std::istream(std::move(other)),
+			toDelete(std::exchange(other.toDelete, nullptr)) {
 			this->rdbuf(other.rdbuf(nullptr));
 		}
 		// Move assignment transfers memory responsibility to
@@ -68,8 +66,9 @@ namespace Rain::Networking::Http {
 
 		// Build with pre-existing streambuf. It must exist past
 		// the lifetime of this Body.
-		Body(std::streambuf *streamBuf)
-				: std::istream(streamBuf), toDelete(nullptr) {}
+		Body(std::streambuf *streamBuf) :
+			std::istream(streamBuf),
+			toDelete(nullptr) {}
 
 		// Hide memory-sensitive setter.
 		private:

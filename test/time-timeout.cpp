@@ -28,7 +28,8 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		releaseAssert(timeElapsed > 80ms && timeElapsed < 120ms);
+		releaseAssert(
+			timeElapsed > 80ms && timeElapsed < 120ms);
 		releaseAssert(timeout.isPassed());
 	}
 
@@ -42,7 +43,8 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		releaseAssert(timeElapsed > 80ms && timeElapsed < 120ms);
+		releaseAssert(
+			timeElapsed > 80ms && timeElapsed < 120ms);
 		releaseAssert(timeout.isPassed());
 	}
 
@@ -56,7 +58,8 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		releaseAssert(timeElapsed > 240ms && timeElapsed < 360ms);
+		releaseAssert(
+			timeElapsed > 240ms && timeElapsed < 360ms);
 	}
 
 	// Timeout should be able to be constructed inline using
@@ -69,7 +72,8 @@ int main() {
 			std::chrono::steady_clock::now() - timeBegin;
 		std::cout << "Time passed: " << timeElapsed << std::endl
 							<< std::endl;
-		releaseAssert(timeElapsed > 160ms && timeElapsed < 240ms);
+		releaseAssert(
+			timeElapsed > 160ms && timeElapsed < 240ms);
 	}
 
 	// Default-constructed timeouts expire immediately.

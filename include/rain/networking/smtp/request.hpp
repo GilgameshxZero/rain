@@ -7,9 +7,9 @@
 #include "message.hpp"
 
 namespace Rain::Networking::Smtp {
-	class RequestMessageSpecInterface
-			: virtual public MessageSpecInterface,
-				virtual public ReqRes::RequestMessageSpecInterface {
+	class RequestMessageSpecInterface :
+		virtual public MessageSpecInterface,
+		virtual public ReqRes::RequestMessageSpecInterface {
 		public:
 		// Exception class required for catching from R/R
 		// onWork.
@@ -32,10 +32,10 @@ namespace Rain::Networking::Smtp {
 			Rain::Error::Exception<Error, ErrorCategory>;
 	};
 
-	template <typename Message>
-	class RequestMessageSpec
-			: public Message,
-				virtual public RequestMessageSpecInterface {
+	template<typename Message>
+	class RequestMessageSpec :
+		public Message,
+		virtual public RequestMessageSpecInterface {
 		public:
 		// Command/verb of Request.
 		Command command;
@@ -46,14 +46,14 @@ namespace Rain::Networking::Smtp {
 		// Carry over constructor which recvs from a Socket.
 		RequestMessageSpec(
 			Command command = Command::HELO,
-			std::string const &parameter = "")
-				: Message(),
-					command(command),
-					parameter(parameter) {}
-		RequestMessageSpec(RequestMessageSpec &&other)
-				: Message(std::move(other)),
-					command(other.command),
-					parameter(std::move(other.parameter)) {}
+			std::string const &parameter = "") :
+			Message(),
+			command(command),
+			parameter(parameter) {}
+		RequestMessageSpec(RequestMessageSpec &&other) :
+			Message(std::move(other)),
+			command(other.command),
+			parameter(std::move(other.parameter)) {}
 
 		// Overrides for Super versions implement protocol
 		// behavior.
@@ -94,8 +94,9 @@ namespace Rain::Networking::Smtp {
 	};
 
 	// Shorthand.
-	class Request : public RequestMessageSpec<
-										MessageSpec<ReqRes::Request>> {
+	class Request :
+		public RequestMessageSpec<
+			MessageSpec<ReqRes::Request>> {
 		using RequestMessageSpec<
 			MessageSpec<ReqRes::Request>>::RequestMessageSpec;
 	};

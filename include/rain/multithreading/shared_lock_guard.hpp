@@ -6,7 +6,7 @@
 namespace Rain::Multithreading {
 	// Like lock_guard, but unlocks on construction and locks
 	// on destruction.
-	template <typename Mutex>
+	template<typename Mutex>
 	class SharedLockGuard {
 		private:
 		Mutex &mtx;
@@ -16,8 +16,8 @@ namespace Rain::Multithreading {
 			mtx.lock_shared();
 		}
 		SharedLockGuard(SharedLockGuard const &other) = delete;
-		SharedLockGuard &operator=(SharedLockGuard const &) =
-			delete;
+		SharedLockGuard &operator=(
+			SharedLockGuard const &) = delete;
 		~SharedLockGuard() { this->mtx.unlock_shared(); }
 
 		// Move constructors are not implicitly defined.

@@ -22,7 +22,7 @@ namespace Rain::Algorithm {
 	// INF. If there exists any negative-weight cycle
 	// reachable from a source, each negative-weight cycle
 	// will contain at least one vertex with distance -INF.
-	template <typename WeightType>
+	template<typename WeightType>
 	inline std::
 		pair<std::vector<WeightType>, std::vector<std::size_t>>
 		ssspSpfa(

@@ -9,10 +9,9 @@
 #include <vector>
 
 namespace Rain::Networking::Smtp {
-	class ResponseMessageSpecInterface
-			: virtual public MessageSpecInterface,
-				virtual public ReqRes::
-					ResponseMessageSpecInterface {
+	class ResponseMessageSpecInterface :
+		virtual public MessageSpecInterface,
+		virtual public ReqRes::ResponseMessageSpecInterface {
 		public:
 		// Exception class carries over most errors from Message
 		// parsing.
@@ -40,10 +39,10 @@ namespace Rain::Networking::Smtp {
 			Rain::Error::Exception<Error, ErrorCategory>;
 	};
 
-	template <typename Message>
-	class ResponseMessageSpec
-			: public Message,
-				virtual public ResponseMessageSpecInterface {
+	template<typename Message>
+	class ResponseMessageSpec :
+		public Message,
+		virtual public ResponseMessageSpecInterface {
 		public:
 		// Three-digit status code from RFC 821.
 		StatusCode statusCode;
@@ -56,14 +55,14 @@ namespace Rain::Networking::Smtp {
 			StatusCode statusCode = StatusCode::REQUEST_COMPLETED,
 			// No lines will simply take the reason phrase from
 			// statusCode on a single line.
-			std::vector<std::string> &&lines = {})
-				: Message(),
-					statusCode(statusCode),
-					lines(std::move(lines)) {}
-		ResponseMessageSpec(ResponseMessageSpec &&other)
-				: Message(std::move(other)),
-					statusCode(other.statusCode),
-					lines(std::move(other.lines)) {}
+			std::vector<std::string> &&lines = {}) :
+			Message(),
+			statusCode(statusCode),
+			lines(std::move(lines)) {}
+		ResponseMessageSpec(ResponseMessageSpec &&other) :
+			Message(std::move(other)),
+			statusCode(other.statusCode),
+			lines(std::move(other.lines)) {}
 
 		// Overrides for Super versions implement protocol
 		// behavior.
@@ -75,9 +74,10 @@ namespace Rain::Networking::Smtp {
 			}
 
 			// For every line but the final, send CODE-line.
-			for (std::size_t index{0};
-					 index + 1 < this->lines.size();
-					 index++) {
+			for (
+				std::size_t index{0};
+				index + 1 < this->lines.size();
+				index++) {
 				stream << this->statusCode << "-"
 							 << this->lines[index] << "\r\n";
 			}
@@ -128,8 +128,9 @@ namespace Rain::Networking::Smtp {
 	};
 
 	// Shorthand.
-	class Response : public ResponseMessageSpec<
-										 MessageSpec<ReqRes::Response>> {
+	class Response :
+		public ResponseMessageSpec<
+			MessageSpec<ReqRes::Response>> {
 		using ResponseMessageSpec<
 			MessageSpec<ReqRes::Response>>::ResponseMessageSpec;
 	};

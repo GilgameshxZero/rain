@@ -28,27 +28,29 @@ int main() {
 		}
 	};
 
-	class MyWorker : public Smtp::Worker<
-										 MyRequest,
-										 Smtp::Response,
-										 1_zu << 10,
-										 1_zu << 10,
-										 5000,
-										 5000,
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption> {
+	class MyWorker :
+		public Smtp::Worker<
+			MyRequest,
+			Smtp::Response,
+			1_zu << 10,
+			1_zu << 10,
+			5000,
+			5000,
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption> {
 		using Worker::Worker;
 	};
 
-	class MyServer : public Smtp::Server<
-										 MyWorker,
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 DualStackSocketOption,
-										 NoLingerSocketOption> {
+	class MyServer :
+		public Smtp::Server<
+			MyWorker,
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			DualStackSocketOption,
+			NoLingerSocketOption> {
 		using Server::Server;
 
 		private:
@@ -62,17 +64,18 @@ int main() {
 		~MyServer() { this->destruct(); }
 	};
 
-	class MyClient : public Smtp::Client<
-										 Smtp::Request,
-										 MyResponse,
-										 1_zu << 10,
-										 1_zu << 10,
-										 15000,
-										 15000,
-										 Ipv4FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption> {
+	class MyClient :
+		public Smtp::Client<
+			Smtp::Request,
+			MyResponse,
+			1_zu << 10,
+			1_zu << 10,
+			15000,
+			15000,
+			Ipv4FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption> {
 		using Client::Client;
 	};
 
@@ -123,7 +126,7 @@ int main() {
 			{
 				client.send(
 					{Smtp::Command::MAIL,
-					 "FROM:<from-2@domain.name>"});
+						"FROM:<from-2@domain.name>"});
 				auto res = client.recv();
 				releaseAssert(
 					res.statusCode ==

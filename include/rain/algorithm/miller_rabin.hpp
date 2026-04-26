@@ -6,7 +6,11 @@
 
 namespace Rain::Algorithm {
 	// Miller-Rabin helper.
-	template <typename Integer>
+	template<
+		typename Integer,
+		std::enable_if<
+			std::is_integral<Integer>::value &&
+			std::is_unsigned<Integer>::value>::type * = nullptr>
 	inline bool isMaybePrimeMillerRabinInner(
 		Integer const &N,
 		Integer const &A,
@@ -33,7 +37,11 @@ namespace Rain::Algorithm {
 	//
 	// Random generator can only support up to unsigned long
 	// long, so it is not truly random if N is large.
-	template <typename Integer>
+	template<
+		typename Integer,
+		std::enable_if<
+			std::is_integral<Integer>::value &&
+			std::is_unsigned<Integer>::value>::type * = nullptr>
 	inline bool isPrimeMillerRabin(
 		Integer const &N,
 		std::size_t const K,
@@ -63,7 +71,11 @@ namespace Rain::Algorithm {
 	// Miller-Rabin primality test, deterministic, for up to
 	// 64-bits, in O(12). Bound by the same conditions on
 	// Integer as the random version.
-	template <typename Integer>
+	template<
+		typename Integer,
+		std::enable_if<
+			std::is_integral<Integer>::value &&
+			std::is_unsigned<Integer>::value>::type * = nullptr>
 	inline bool isPrimeMillerRabinDeterministic(
 		Integer const &N) {
 		if (N < 2) {
@@ -72,8 +84,10 @@ namespace Rain::Algorithm {
 
 		std::size_t lsb{leastSignificant1BitIdx(N - 1)};
 		Integer truncated{(N - 1) >> lsb};
-		for (Integer A :
-				 {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) {
+		for (
+			auto &a :
+			{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) {
+			Integer A(a);
 			if (N == A) {
 				return true;
 			}

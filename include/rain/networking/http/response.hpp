@@ -6,10 +6,9 @@
 #include "status_code.hpp"
 
 namespace Rain::Networking::Http {
-	class ResponseMessageSpecInterface
-			: virtual public MessageSpecInterface,
-				virtual public ReqRes::
-					ResponseMessageSpecInterface {
+	class ResponseMessageSpecInterface :
+		virtual public MessageSpecInterface,
+		virtual public ReqRes::ResponseMessageSpecInterface {
 		public:
 		// Exception class carries over most errors from Message
 		// parsing.
@@ -54,8 +53,8 @@ namespace Rain::Networking::Http {
 		// Custom streambuf for HTTP/0.9 body parsing, which
 		// prioritizes the first gcount bytes in the attempted
 		// version parsing.
-		class Version_0_9BodyIStreamBuf
-				: public std::streambuf {
+		class Version_0_9BodyIStreamBuf :
+			public std::streambuf {
 			private:
 			// The TCP Socket stream from which we will read from
 			// to fill up this streambuf.
@@ -72,9 +71,9 @@ namespace Rain::Networking::Http {
 			Version_0_9BodyIStreamBuf(
 				std::streambuf *sourceStreamBuf,
 				std::string const &versionStr,
-				std::size_t bufferLen = 1_zu << 10)
-					: sourceStreamBuf(sourceStreamBuf),
-						versionStr(versionStr) {
+				std::size_t bufferLen = 1_zu << 10) :
+				sourceStreamBuf(sourceStreamBuf),
+				versionStr(versionStr) {
 				this->buffer.reserve(bufferLen);
 				this->buffer.resize(this->buffer.capacity());
 
@@ -119,10 +118,10 @@ namespace Rain::Networking::Http {
 		};
 	};
 
-	template <typename Message>
-	class ResponseMessageSpec
-			: public Message,
-				virtual public ResponseMessageSpecInterface {
+	template<typename Message>
+	class ResponseMessageSpec :
+		public Message,
+		virtual public ResponseMessageSpecInterface {
 		public:
 		// Three-digit status code from RFC 2616.
 		StatusCode statusCode;
@@ -143,22 +142,22 @@ namespace Rain::Networking::Http {
 			// An empty reason phrase will use the default one for
 			// the statusCode.
 			std::string const &reasonPhrase = {},
-			Version version = {})
-				: Message(
-						// bind version to rvalue reference to be
-						// perfect forwarded by SuperInterface to
-						// Message.
-						std::move(headers),
-						std::move(body),
-						version),
-					statusCode(statusCode),
-					reasonPhrase(reasonPhrase) {}
-		ResponseMessageSpec(ResponseMessageSpec &&other)
-				: Message(std::move(other)),
-					statusCode(other.statusCode),
-					reasonPhrase(std::move(other.reasonPhrase)),
-					version_0_9BodyIStreamBuf(
-						std::move(other.version_0_9BodyIStreamBuf)) {}
+			Version version = {}) :
+			Message(
+				// bind version to rvalue reference to be
+				// perfect forwarded by SuperInterface to
+				// Message.
+				std::move(headers),
+				std::move(body),
+				version),
+			statusCode(statusCode),
+			reasonPhrase(reasonPhrase) {}
+		ResponseMessageSpec(ResponseMessageSpec &&other) :
+			Message(std::move(other)),
+			statusCode(other.statusCode),
+			reasonPhrase(std::move(other.reasonPhrase)),
+			version_0_9BodyIStreamBuf(
+				std::move(other.version_0_9BodyIStreamBuf)) {}
 
 		// Overrides for Super versions implement protocol
 		// behavior.
@@ -174,8 +173,8 @@ namespace Rain::Networking::Http {
 					stream << "HTTP/" << this->version << " "
 								 << this->statusCode << " "
 								 << (this->reasonPhrase.empty()
-											 ? this->statusCode.getReasonPhrase()
-											 : this->reasonPhrase)
+												? this->statusCode.getReasonPhrase()
+												: this->reasonPhrase)
 								 << "\r\n";
 
 					// Send headers.
@@ -298,8 +297,9 @@ namespace Rain::Networking::Http {
 	};
 
 	// Shorthand.
-	class Response : public ResponseMessageSpec<
-										 MessageSpec<ReqRes::Response>> {
+	class Response :
+		public ResponseMessageSpec<
+			MessageSpec<ReqRes::Response>> {
 		using ResponseMessageSpec<
 			MessageSpec<ReqRes::Response>>::ResponseMessageSpec;
 	};

@@ -13,10 +13,10 @@
 
 namespace Rain::Networking::Smtp {
 	// SMTP Worker specialization.
-	class WorkerSocketSpecInterfaceInterface
-			: virtual public ConnectedSocketSpecInterface,
-				virtual public ReqRes::
-					WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpecInterfaceInterface :
+		virtual public ConnectedSocketSpecInterface,
+		virtual public ReqRes::
+			WorkerSocketSpecInterfaceInterface {
 		protected:
 		// Custom streambuf which reads data after DATA.
 		class DataIStreamBuf : public std::streambuf {
@@ -35,10 +35,10 @@ namespace Rain::Networking::Smtp {
 			public:
 			DataIStreamBuf(
 				std::istream *sourceStream,
-				std::size_t bufferLen = 1_zu << 10)
-					: sourceStream(sourceStream),
-						candidate(0),
-						match(nullptr) {
+				std::size_t bufferLen = 1_zu << 10) :
+				sourceStream(sourceStream),
+				candidate(0),
+				match(nullptr) {
 				this->buffer.reserve(bufferLen);
 				this->buffer.resize(this->buffer.capacity());
 
@@ -51,8 +51,8 @@ namespace Rain::Networking::Smtp {
 
 			// Disable copy.
 			DataIStreamBuf(DataIStreamBuf const &) = delete;
-			DataIStreamBuf &operator=(DataIStreamBuf const &) =
-				delete;
+			DataIStreamBuf &operator=(
+				DataIStreamBuf const &) = delete;
 
 			protected:
 			// Re-fill the buffer from the source until \r\n.\r\n.
@@ -100,14 +100,14 @@ namespace Rain::Networking::Smtp {
 		};
 	};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
-	class WorkerSocketSpecInterface
-			: virtual public WorkerSocketSpecInterfaceInterface,
-				virtual public ReqRes::WorkerSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec> {
+	class WorkerSocketSpecInterface :
+		virtual public WorkerSocketSpecInterfaceInterface,
+		virtual public ReqRes::WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec> {
 		protected:
 		class ResponseAction {
 			public:
@@ -123,33 +123,34 @@ namespace Rain::Networking::Smtp {
 			// Send response, optionally close.
 			ResponseAction(
 				ResponseMessageSpec &&response,
-				bool toClose = false)
-					: response(
-							std::forward<ResponseMessageSpec>(response)),
-						toClose(toClose) {}
+				bool toClose = false) :
+				response(
+					std::forward<ResponseMessageSpec>(response)),
+				toClose(toClose) {}
 
 			// Don't send response, optionally close.
-			ResponseAction(std::nullptr_t, bool toClose)
-					: response(), toClose(toClose) {}
+			ResponseAction(std::nullptr_t, bool toClose) :
+				response(),
+				toClose(toClose) {}
 
 			ResponseAction(ResponseAction const &) = delete;
-			ResponseAction &operator=(ResponseAction const &) =
-				delete;
+			ResponseAction &operator=(
+				ResponseAction const &) = delete;
 			ResponseAction(ResponseAction &&other) = delete;
 			ResponseAction &operator=(ResponseAction &&) = delete;
 		};
 	};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		typename Socket>
-	class WorkerSocketSpec
-			: public Socket,
-				virtual public WorkerSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec>,
-				virtual public WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpec :
+		public Socket,
+		virtual public WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>,
+		virtual public WorkerSocketSpecInterfaceInterface {
 		using Socket::Socket;
 
 		protected:
@@ -214,7 +215,7 @@ namespace Rain::Networking::Smtp {
 			Mailbox const &mailbox) {
 			if (this->rcptTo.size() > (1_zu << 10)) {
 				return {{StatusCode::
-									 REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE}};
+						REQUEST_NOT_TAKEN_INSUFFICIENT_STORAGE}};
 			}
 			this->rcptTo.insert(mailbox);
 			return {{StatusCode::REQUEST_COMPLETED}};
@@ -385,7 +386,7 @@ namespace Rain::Networking::Smtp {
 					return this->onAuthCramMd5(req);
 				default:
 					return {{StatusCode::
-										 COMMAND_PARAMETER_NOT_IMPLEMENTED}};
+							COMMAND_PARAMETER_NOT_IMPLEMENTED}};
 			}
 		}
 
@@ -480,7 +481,7 @@ namespace Rain::Networking::Smtp {
 			try {
 				throw;
 			} catch (typename RequestMessageSpec::Exception const
-								 &exception) {
+					&exception) {
 				Rain::Error::consumeThrowable([this, exception]() {
 					switch (exception.getError()) {
 						case RequestMessageSpec::Error::
@@ -508,7 +509,7 @@ namespace Rain::Networking::Smtp {
 	};
 
 	// Shorthand for SMTP Worker.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		std::size_t sendBufferLen,
@@ -518,23 +519,23 @@ namespace Rain::Networking::Smtp {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Worker
-			: public WorkerSocketSpec<
+		template<typename> class... SocketOptions>
+	class Worker :
+		public WorkerSocketSpec<
+			RequestMessageSpec,
+			ResponseMessageSpec,
+			ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<ReqRes::Worker<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					ConnectedSocketSpec<
-						NamedSocketSpec<SocketSpec<ReqRes::Worker<
-							RequestMessageSpec,
-							ResponseMessageSpec,
-							sendBufferLen,
-							recvBufferLen,
-							sendTimeoutMs,
-							recvTimeoutMs,
-							SocketFamilyInterface,
-							SocketTypeInterface,
-							SocketProtocolInterface,
-							SocketOptions...>>>>> {
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					SocketFamilyInterface,
+					SocketTypeInterface,
+					SocketProtocolInterface,
+					SocketOptions...>>>>> {
 		using WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,

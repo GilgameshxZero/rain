@@ -2,7 +2,7 @@
 #pragma once
 
 #ifdef DELETE
-#undef DELETE
+	#undef DELETE
 #endif
 
 #include "../../string/string.hpp"
@@ -68,10 +68,10 @@ namespace Rain::Networking::Smtp {
 			{"AUTH", AUTH}};
 
 		// Direct constructors. Parsing strings may throw.
-		constexpr Command(Value value = HELO) noexcept
-				: value(value) {}
-		Command(std::string const &str)
-				: value(Command::fromStr.at(str)) {}
+		constexpr Command(Value value = HELO) noexcept :
+			value(value) {}
+		Command(std::string const &str) :
+			value(Command::fromStr.at(str)) {}
 
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }

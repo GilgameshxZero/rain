@@ -29,10 +29,10 @@ namespace Rain::Networking {
 	// should be virtually inherited from for anything which
 	// expects a similar interface. The non-Interface manages
 	// the kernel socket resource.
-	class SocketInterface
-			: virtual public SocketFamilyInterface,
-				virtual public SocketTypeInterface,
-				virtual public SocketProtocolInterface {
+	class SocketInterface :
+		virtual public SocketFamilyInterface,
+		virtual public SocketTypeInterface,
+		virtual public SocketProtocolInterface {
 		public:
 		// Import names for external subclass ease-of-use.
 		using NativeSocket = NativeSocket;
@@ -44,8 +44,8 @@ namespace Rain::Networking {
 		SocketInterface() = default;
 		virtual ~SocketInterface() {}
 		SocketInterface(SocketInterface const &) = delete;
-		SocketInterface &operator=(SocketInterface const &) =
-			delete;
+		SocketInterface &operator=(
+			SocketInterface const &) = delete;
 		SocketInterface(SocketInterface &&) = delete;
 		SocketInterface &operator=(SocketInterface &&) = delete;
 
@@ -108,13 +108,13 @@ namespace Rain::Networking {
 			std::vector<PollFlag> const &events,
 			Time::Timeout timeout = 15s) {
 			std::vector<pollfd> fds;
-			for (std::size_t index{0};
-					 index < nativeSockets.size();
-					 index++) {
+			for (
+				std::size_t index{0}; index < nativeSockets.size();
+				index++) {
 				fds.push_back(
 					{nativeSockets[index],
-					 static_cast<short>(events[index]),
-					 0});
+						static_cast<short>(events[index]),
+						0});
 			}
 
 #ifdef RAIN_PLATFORM_WINDOWS
@@ -188,11 +188,11 @@ namespace Rain::Networking {
 			static_cast<short>(left) & static_cast<short>(right));
 	}
 
-	template <
+	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class...>
+		template<typename> class...>
 	class Socket;
 
 	// Implements SocketInterface with concrete resource
@@ -202,28 +202,28 @@ namespace Rain::Networking {
 	// resource-managing Socket class, and should always be
 	// instantiated after F/T/P are set, and before socket
 	// options.
-	template <
+	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface>
 	class Socket<
 		SocketFamilyInterface,
 		SocketTypeInterface,
-		SocketProtocolInterface>
-			: virtual public SocketFamilyInterface,
-				virtual public SocketTypeInterface,
-				virtual public SocketProtocolInterface,
-				virtual public SocketInterface {
+		SocketProtocolInterface> :
+		virtual public SocketFamilyInterface,
+		virtual public SocketTypeInterface,
+		virtual public SocketProtocolInterface,
+		virtual public SocketInterface {
 		private:
 		NativeSocket _nativeSocket;
 
 		public:
-		Socket()
-				: _nativeSocket(validateSystemCall(
-						::socket(
-							static_cast<int>(this->family()),
-							static_cast<int>(this->type()),
-							static_cast<int>(this->protocol())))) {
+		Socket() :
+			_nativeSocket(validateSystemCall(
+				::socket(
+					static_cast<int>(this->family()),
+					static_cast<int>(this->type()),
+					static_cast<int>(this->protocol())))) {
 			this->unblock();
 		}
 		virtual ~Socket() {
@@ -241,22 +241,22 @@ namespace Rain::Networking {
 		}
 
 		protected:
-		virtual NativeSocket nativeSocket()
-			const noexcept final override {
+		virtual NativeSocket
+			nativeSocket() const noexcept final override {
 			return this->_nativeSocket;
 		}
 
 		// Constructor variant takes an open NativeSocket (from
 		// accept).
-		Socket(NativeSocket nativeSocket)
-				: _nativeSocket(nativeSocket) {
+		Socket(NativeSocket nativeSocket) :
+			_nativeSocket(nativeSocket) {
 			// Accepted sockets may need options reset on POSIX
 			// (inherited on Windows).
 			this->unblock();
 		}
 
 		// Friend so ServerSocket can make pairs.
-		template <typename, typename>
+		template<typename, typename>
 		friend class ServerSocketSpec;
 
 		// A resource-managing Socket (this class) provides the
@@ -271,23 +271,23 @@ namespace Rain::Networking {
 	// This is shorthand for defining a base resource-holding
 	// socket with F/T/P and options, minimizing the number of
 	// wrapping templates at definition site.
-	template <
+	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class SocketOption,
-		template <typename> class... SocketOptions>
+		template<typename> class SocketOption,
+		template<typename> class... SocketOptions>
 	class Socket<
 		SocketFamilyInterface,
 		SocketTypeInterface,
 		SocketProtocolInterface,
 		SocketOption,
-		SocketOptions...>
-			: public SocketOption<Socket<
-					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
-					SocketOptions...>> {
+		SocketOptions...> :
+		public SocketOption<Socket<
+			SocketFamilyInterface,
+			SocketTypeInterface,
+			SocketProtocolInterface,
+			SocketOptions...>> {
 		using SocketOption<Socket<
 			SocketFamilyInterface,
 			SocketTypeInterface,
@@ -301,8 +301,8 @@ namespace Rain::Networking {
 	//
 	// A NamedSocket allows for getsockname and lookup of the
 	// peer hostname.
-	class NamedSocketSpecInterface
-			: virtual public SocketInterface {
+	class NamedSocketSpecInterface :
+		virtual public SocketInterface {
 		public:
 		AddressInfo name() const {
 			AddressInfo addressInfo;
@@ -324,10 +324,10 @@ namespace Rain::Networking {
 	};
 
 	// No-op.
-	template <typename Socket>
-	class NamedSocketSpec
-			: public Socket,
-				virtual public NamedSocketSpecInterface {
+	template<typename Socket>
+	class NamedSocketSpec :
+		public Socket,
+		virtual public NamedSocketSpecInterface {
 		using Socket::Socket;
 	};
 
@@ -337,8 +337,8 @@ namespace Rain::Networking {
 	// Socket).
 	//
 	// Since this is a non-blocking Socket,
-	class ConnectedSocketSpecInterface
-			: virtual public NamedSocketSpecInterface {
+	class ConnectedSocketSpecInterface :
+		virtual public NamedSocketSpecInterface {
 		public:
 		// Throws if peer aborts. Returns 0 on timeout. Sends as
 		// many bytes as possible before timeout.
@@ -353,7 +353,7 @@ namespace Rain::Networking {
 				// doesn't block.
 				if (
 					(this->poll(PollFlag::WRITE_NORMAL, timeout) &
-					 PollFlag::WRITE_NORMAL) == PollFlag::NONE) {
+						PollFlag::WRITE_NORMAL) == PollFlag::NONE) {
 					return bytesSent;
 				}
 
@@ -372,7 +372,7 @@ namespace Rain::Networking {
 						MSG_NOSIGNAL));
 #endif
 			}
-			return bytesSent;	 // Should equal bufferLen.
+			return bytesSent; // Should equal bufferLen.
 		}
 		std::size_t send(
 			std::string const &buffer,
@@ -392,7 +392,7 @@ namespace Rain::Networking {
 			// block.
 			if (
 				(this->poll(PollFlag::READ_NORMAL, timeout) &
-				 PollFlag::READ_NORMAL) == PollFlag::NONE) {
+					PollFlag::READ_NORMAL) == PollFlag::NONE) {
 				return 0;
 			}
 
@@ -513,10 +513,10 @@ namespace Rain::Networking {
 	};
 
 	// No-op.
-	template <typename Socket>
-	class ConnectedSocketSpec
-			: public Socket,
-				virtual public ConnectedSocketSpecInterface {
+	template<typename Socket>
+	class ConnectedSocketSpec :
+		public Socket,
+		virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
 	};
 

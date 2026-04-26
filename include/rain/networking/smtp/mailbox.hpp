@@ -19,16 +19,15 @@ namespace Rain::Networking::Smtp {
 
 		// name@domain notation. Default construction leaves
 		// both empty.
-		Mailbox(std::string const &str = "")
-				: name(str.substr(0, str.find_last_of('@'))),
-					host(str.substr(
-						std::min(
-							str.find_last_of('@'),
-							str.length() - 1) +
-						1)) {}
+		Mailbox(std::string const &str = "") :
+			name(str.substr(0, str.find_last_of('@'))),
+			host(str.substr(
+				std::min(str.find_last_of('@'), str.length() - 1) +
+				1)) {}
 
-		Mailbox(std::string const &name, Host const &host)
-				: name(name), host(host) {}
+		Mailbox(std::string const &name, Host const &host) :
+			name(name),
+			host(host) {}
 
 		operator std::string() const noexcept {
 			return this->name + "@" + this->host.node;
@@ -49,7 +48,7 @@ namespace Rain::Networking::Smtp {
 }
 
 namespace Rain::Data {
-	template <>
+	template<>
 	struct serialize<Rain::Networking::Smtp::Mailbox> {
 		void operator()(
 			Rain::Data::Serializer &serializer,
@@ -57,7 +56,7 @@ namespace Rain::Data {
 			serializer << data.name << data.host;
 		}
 	};
-	template <>
+	template<>
 	struct deserialize<Rain::Networking::Smtp::Mailbox> {
 		void operator()(
 			Rain::Data::Deserializer &deserializer,
@@ -68,10 +67,11 @@ namespace Rain::Data {
 }
 
 namespace std {
-	template <>
+	template<>
 	struct hash<Rain::Networking::Smtp::Mailbox> {
-		size_t operator()(Rain::Networking::Smtp::Mailbox const
-												&mailbox) const {
+		size_t operator()(
+			Rain::Networking::Smtp::Mailbox const &mailbox)
+			const {
 			return std::hash<std::string>()(
 				mailbox.operator std::string());
 		}

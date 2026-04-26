@@ -13,8 +13,8 @@
 #include "version.hpp"
 
 namespace Rain::Networking::Http {
-	class MessageSpecInterface
-			: virtual public ReqRes::MessageInterface {
+	class MessageSpecInterface :
+		virtual public ReqRes::MessageInterface {
 		public:
 		enum class Error {
 			MALFORMED_TRANSFER_ENCODING = 1,
@@ -49,8 +49,8 @@ namespace Rain::Networking::Http {
 		protected:
 		// streambufs which interpret a single layer of
 		// Transfer-Encoding, given the right initial settings.
-		class IdentityTransferEncodingIStreamBuf
-				: public std::streambuf {
+		class IdentityTransferEncodingIStreamBuf :
+			public std::streambuf {
 			private:
 			// The TCP Socket stream from which we will read from
 			// to fill up this streambuf.
@@ -67,9 +67,9 @@ namespace Rain::Networking::Http {
 			IdentityTransferEncodingIStreamBuf(
 				std::streambuf *sourceStreamBuf,
 				std::size_t contentLength = SIZE_MAX,
-				std::size_t bufferLen = 1_zu << 10)
-					: sourceStreamBuf(sourceStreamBuf),
-						contentLengthRemaining(contentLength) {
+				std::size_t bufferLen = 1_zu << 10) :
+				sourceStreamBuf(sourceStreamBuf),
+				contentLengthRemaining(contentLength) {
 				this->buffer.reserve(bufferLen);
 				this->buffer.resize(this->buffer.capacity());
 
@@ -120,8 +120,8 @@ namespace Rain::Networking::Http {
 			}
 		};
 
-		class ChunkedTransferEncodingIStreamBuf
-				: public std::streambuf {
+		class ChunkedTransferEncodingIStreamBuf :
+			public std::streambuf {
 			private:
 			// The TCP Socket stream from which we will read from
 			// to fill up this streambuf.
@@ -137,9 +137,9 @@ namespace Rain::Networking::Http {
 			public:
 			ChunkedTransferEncodingIStreamBuf(
 				std::streambuf *sourceStreamBuf,
-				std::size_t bufferLen = 1_zu << 10)
-					: sourceStreamBuf(sourceStreamBuf),
-						chunkLenRemaining(0) {
+				std::size_t bufferLen = 1_zu << 10) :
+				sourceStreamBuf(sourceStreamBuf),
+				chunkLenRemaining(0) {
 				this->buffer.reserve(bufferLen);
 				this->buffer.resize(this->buffer.capacity());
 
@@ -226,9 +226,10 @@ namespace Rain::Networking::Http {
 		virtual void ppDefaultContentType() = 0;
 	};
 
-	template <typename Message>
-	class MessageSpec : public Message,
-											virtual public MessageSpecInterface {
+	template<typename Message>
+	class MessageSpec :
+		public Message,
+		virtual public MessageSpecInterface {
 		public:
 		// Version of the start line is shared b/t R/R.
 		Version version;
@@ -252,20 +253,19 @@ namespace Rain::Networking::Http {
 		MessageSpec(
 			Headers &&headers = {},
 			Body &&body = {},
-			Version version = {})
-				: version(version),
-					headers(std::move(headers)),
-					body(std::move(body)) {}
+			Version version = {}) :
+			version(version),
+			headers(std::move(headers)),
+			body(std::move(body)) {}
 
 		// Must enable move construct for PreResponse.
-		MessageSpec(MessageSpec &&other)
-				: Message(std::move(other)),
-					version(other.version),
-					headers(std::move(other.headers)),
-					body(std::move(other.body)),
-					bodyTransferEncodingStreamBufs(
-						std::move(
-							other.bodyTransferEncodingStreamBufs)) {}
+		MessageSpec(MessageSpec &&other) :
+			Message(std::move(other)),
+			version(other.version),
+			headers(std::move(other.headers)),
+			body(std::move(other.body)),
+			bodyTransferEncodingStreamBufs(
+				std::move(other.bodyTransferEncodingStreamBufs)) {}
 
 		// Pre/post-processors.
 		public:
@@ -282,8 +282,8 @@ namespace Rain::Networking::Http {
 				this->headers.find("Content-Length") ==
 					this->headers.end() &&
 				(transferEncoding.size() == 0 ||
-				 transferEncoding.back() ==
-					 Header::TransferEncoding::IDENTITY)) {
+					transferEncoding.back() ==
+						Header::TransferEncoding::IDENTITY)) {
 				// body.inAvail must return -1 if no characters, 0
 				// if indeterminate, or an accurate number
 				// otherwise.
@@ -328,8 +328,9 @@ namespace Rain::Networking::Http {
 			if (transferEncoding.size() > (1_zu << 8)) {
 				throw Exception(Error::TOO_MANY_TRANSFER_ENCODINGS);
 			}
-			for (Header::TransferEncoding transferEncodingSingle :
-					 transferEncoding) {
+			for (
+				Header::TransferEncoding transferEncodingSingle :
+				transferEncoding) {
 				switch (transferEncodingSingle) {
 					case Header::TransferEncoding::IDENTITY:
 					case Header::TransferEncoding::CHUNKED:
@@ -357,9 +358,10 @@ namespace Rain::Networking::Http {
 
 			// contentLength is 0 if doesn't exist.
 			std::streambuf *curStreamBuf = stream.rdbuf();
-			for (auto it = transferEncoding.rbegin();
-					 it != transferEncoding.rend();
-					 it++) {
+			for (
+				auto it = transferEncoding.rbegin();
+				it != transferEncoding.rend();
+				it++) {
 				switch (*it) {
 					case Header::TransferEncoding::IDENTITY:
 						// No encoding beyond the first has a

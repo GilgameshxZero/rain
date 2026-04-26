@@ -34,17 +34,18 @@ int main() {
 		}
 	};
 
-	class MyWorker : public Http::Worker<
-										 MyRequest,
-										 Http::Response,
-										 1_zu << 10,
-										 1_zu << 10,
-										 300,
-										 300,
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption> {
+	class MyWorker :
+		public Http::Worker<
+			MyRequest,
+			Http::Response,
+			1_zu << 10,
+			1_zu << 10,
+			300,
+			300,
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption> {
 		using Worker::Worker;
 
 		private:
@@ -63,38 +64,38 @@ int main() {
 
 			return {
 				{StatusCode::OK,
-				 {{{"Your-Method", req.method},
-					 {"Response-Test-Header", "test"}}},
-				 stream.str(),
-				 "reason"}};
+					{{{"Your-Method", req.method},
+						{"Response-Test-Header", "test"}}},
+					stream.str(),
+					"reason"}};
 		}
 		ResponseAction reqPlay(
 			Request &req,
 			std::smatch const &) {
 			return {
 				{StatusCode::OK,
-				 {{{"Content-Type", "text/plain; charset=UTF-8"}}},
-				 "Your Method: "s +
-					 static_cast<std::string>(req.method) +
-					 "\nHello world!"s,
-				 "bruh"}};
+					{{{"Content-Type", "text/plain; charset=UTF-8"}}},
+					"Your Method: "s +
+						static_cast<std::string>(req.method) +
+						"\nHello world!"s,
+					"bruh"}};
 		}
 
-		virtual std::vector<RequestFilter> const &filters()
-			override {
+		virtual std::vector<RequestFilter> const &
+			filters() override {
 			static std::vector<RequestFilter> const filters{
 				{".*",
-				 "/simple/?",
-				 {Method::GET},
-				 &MyWorker::reqSimple},
+					"/simple/?",
+					{Method::GET},
+					&MyWorker::reqSimple},
 				{".*",
-				 "/echo/?",
-				 {Method::GET, Method::POST},
-				 &MyWorker::reqEcho},
+					"/echo/?",
+					{Method::GET, Method::POST},
+					&MyWorker::reqEcho},
 				{".*",
-				 "/play.*",
-				 {Method::GET, Method::POST},
-				 &MyWorker::reqPlay}};
+					"/play.*",
+					{Method::GET, Method::POST},
+					&MyWorker::reqPlay}};
 			return filters;
 		}
 
@@ -105,13 +106,14 @@ int main() {
 		}
 	};
 
-	class MyServer : public Http::Server<
-										 MyWorker,
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 DualStackSocketOption,
-										 NoLingerSocketOption> {
+	class MyServer :
+		public Http::Server<
+			MyWorker,
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			DualStackSocketOption,
+			NoLingerSocketOption> {
 		using Server::Server;
 
 		private:
@@ -125,17 +127,18 @@ int main() {
 		~MyServer() { this->destruct(); }
 	};
 
-	class MyClient : public Http::Client<
-										 Http::Request,
-										 MyResponse,
-										 1_zu << 10,
-										 1_zu << 10,
-										 300,
-										 300,
-										 Ipv4FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption> {
+	class MyClient :
+		public Http::Client<
+			Http::Request,
+			MyResponse,
+			1_zu << 10,
+			1_zu << 10,
+			300,
+			300,
+			Ipv4FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption> {
 		using Client::Client;
 	};
 
@@ -187,10 +190,10 @@ int main() {
 								<< std::endl;
 			client.send(
 				{Http::Method::GET,
-				 "/echo/",
-				 {{{"Request-Test-Header", "test"}}},
-				 "some body",
-				 Http::Version::_0_9});
+					"/echo/",
+					{{{"Request-Test-Header", "test"}}},
+					"some body",
+					Http::Version::_0_9});
 			auto res = client.recv();
 			releaseAssert(res.version == Http::Version::_0_9);
 			releaseAssert(res.headers.empty());
@@ -232,10 +235,10 @@ int main() {
 			{
 				client.send(
 					{Http::Method::POST,
-					 "/echo",
-					 {{{"Transfer-Encoding", "chunked"}}},
-					 "5\r\nhello\r\n1\r\n "
-					 "\r\n5\r\nworld\r\n0\r\n\r\n"});
+						"/echo",
+						{{{"Transfer-Encoding", "chunked"}}},
+						"5\r\nhello\r\n1\r\n "
+						"\r\n5\r\nworld\r\n0\r\n\r\n"});
 				auto res = client.recv();
 				std::stringstream stream;
 				stream << res.body;

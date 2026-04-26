@@ -26,20 +26,21 @@ namespace Rain::Networking {
 		std::string node, service;
 
 		// Host:Service notation.
-		Host(std::string const &str = "")
-				: node(str.substr(0, str.find(':'))),
-					service(str.substr(
-						std::min(str.find(':'), str.length() - 1) +
-						1)) {}
+		Host(std::string const &str = "") :
+			node(str.substr(0, str.find(':'))),
+			service(str.substr(
+				std::min(str.find(':'), str.length() - 1) + 1)) {}
 		Host(char const *str) : Host(std::string(str)) {}
 
 		// Constructor variants.
-		Host(std::string const &node, std::size_t service)
-				: node(node), service(std::to_string(service)) {}
+		Host(std::string const &node, std::size_t service) :
+			node(node),
+			service(std::to_string(service)) {}
 		Host(
 			std::string const &node,
-			std::string const &service)
-				: node(node), service(service) {}
+			std::string const &service) :
+			node(node),
+			service(service) {}
 
 		// Default copy & move semantics. Copy semantics must be
 		// explicitly defined if move is also defined.
@@ -81,7 +82,7 @@ namespace Rain::Networking {
 }
 
 namespace Rain::Data {
-	template <>
+	template<>
 	struct serialize<Rain::Networking::Host> {
 		void operator()(
 			Rain::Data::Serializer &serializer,
@@ -89,7 +90,7 @@ namespace Rain::Data {
 			serializer << data.node << data.service;
 		}
 	};
-	template <>
+	template<>
 	struct deserialize<Rain::Networking::Host> {
 		void operator()(
 			Rain::Data::Deserializer &deserializer,

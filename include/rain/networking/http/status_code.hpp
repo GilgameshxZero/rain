@@ -77,14 +77,14 @@ namespace Rain::Networking::Http {
 		public:
 		// Direct constructors. Directly casts to Value from
 		// std::size_t or parses std::string. May throw.
-		constexpr StatusCode(Value value = OK) noexcept
-				: value(value) {}
-		StatusCode(std::size_t value)
-				: value(static_cast<Value>(value)) {}
-		StatusCode(std::string const &value)
-				: StatusCode(
-						static_cast<std::size_t>(
-							std::strtoumax(value.c_str(), NULL, 10))) {}
+		constexpr StatusCode(Value value = OK) noexcept :
+			value(value) {}
+		StatusCode(std::size_t value) :
+			value(static_cast<Value>(value)) {}
+		StatusCode(std::string const &value) :
+			StatusCode(
+				static_cast<std::size_t>(
+					std::strtoumax(value.c_str(), NULL, 10))) {}
 
 		// Enable switch via getValue and getCategory.
 		// Conversions and comparators.

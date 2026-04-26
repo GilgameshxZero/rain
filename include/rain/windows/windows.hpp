@@ -8,43 +8,43 @@
 
 #ifdef RAIN_PLATFORM_WINDOWS
 
-// Rain utilizes ANSI Windows functions internally.
-#ifdef UNICODE
-#undef UNICODE
-#endif
+	// Rain utilizes ANSI Windows functions internally.
+	#ifdef UNICODE
+		#undef UNICODE
+	#endif
 
-#ifdef _UNICODE
-#undef _UNICODE
-#endif
+	#ifdef _UNICODE
+		#undef _UNICODE
+	#endif
 
-// Prevents Windows.h from automatically include
-// Winsock 1.1; Rain uses Winsock 2.
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
+	// Prevents Windows.h from automatically include
+	// Winsock 1.1; Rain uses Winsock 2.
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
 
-// Prevents double declarations of min/max functions.
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+	// Prevents double declarations of min/max functions.
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 
-#pragma comment(lib, "user32.lib")
-#pragma comment(lib, "shell32.lib")
-#pragma comment(lib, "gdi32.lib")
-#pragma comment(lib, "winspool.lib")
-#pragma comment(lib, "comdlg32.lib")
-#pragma comment(lib, "advapi32.lib")
-#pragma comment(lib, "kernel32.lib")
+	#pragma comment(lib, "user32.lib")
+	#pragma comment(lib, "shell32.lib")
+	#pragma comment(lib, "gdi32.lib")
+	#pragma comment(lib, "winspool.lib")
+	#pragma comment(lib, "comdlg32.lib")
+	#pragma comment(lib, "advapi32.lib")
+	#pragma comment(lib, "kernel32.lib")
 
-#include <Windows.h>
-#include <shellapi.h>
+	#include <Windows.h>
+	#include <shellapi.h>
 
-#ifdef min
-#undef min
-#endif
+	#ifdef min
+		#undef min
+	#endif
 
-#ifdef max
-#undef max
-#endif
+	#ifdef max
+		#undef max
+	#endif
 
 #endif

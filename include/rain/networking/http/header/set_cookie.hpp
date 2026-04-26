@@ -22,7 +22,8 @@ namespace Rain::Networking::Http::Header {
 				std::string,
 				std::string,
 				String::CaseAgnosticHash,
-				String::CaseAgnosticEqual> const &attributes = {})
-				: value(value), attributes(attributes) {}
+				String::CaseAgnosticEqual> const &attributes = {}) :
+			value(value),
+			attributes(attributes) {}
 	};
 }

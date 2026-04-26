@@ -58,7 +58,7 @@ namespace Rain::Windows {
 					reinterpret_cast<LONG_PTR>(
 						createStruct->lpCreateParams));
 				return reinterpret_cast<Window *>(
-								 createStruct->lpCreateParams)
+					createStruct->lpCreateParams)
 					->onCreate(wParam, lParam);
 			}
 			Window *that{reinterpret_cast<Window *>(
@@ -264,8 +264,8 @@ namespace Rain::Windows {
 		}
 
 		public:
-		Window(CreateParameters const &createParams)
-				: hWnd{this->createWindow(this, createParams)} {}
+		Window(CreateParameters const &createParams) :
+			hWnd{this->createWindow(this, createParams)} {}
 		// Window can also wrap an existing HWND, to enable
 		// utility functions on it.
 		Window(HWND hWnd) : hWnd{hWnd} {}
@@ -288,8 +288,8 @@ namespace Rain::Windows {
 			validateSystemCall(GetClientRect(*this, &rect));
 			return {rect};
 		}
-		Algorithm::Geometry::RectangleL getBoundingRect()
-			const {
+		Algorithm::Geometry::RectangleL
+			getBoundingRect() const {
 			RECT rect;
 			validateSystemCall(GetWindowRect(*this, &rect));
 			return {rect};

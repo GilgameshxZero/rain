@@ -22,11 +22,12 @@ namespace Rain::Networking::Http {
 	// std::unordered_map with case agnostic keys.
 	//
 	// Some headers are implemented as custom types/enums.
-	class Headers : public std::unordered_multimap<
-										std::string,
-										std::string,
-										String::CaseAgnosticHash,
-										String::CaseAgnosticEqual> {
+	class Headers :
+		public std::unordered_multimap<
+			std::string,
+			std::string,
+			String::CaseAgnosticHash,
+			String::CaseAgnosticEqual> {
 		public:
 		enum class Error {
 			NO_COLON_DELIMITER = 1,
@@ -94,8 +95,8 @@ namespace Rain::Networking::Http {
 				authorization.parameters["credentials"] =
 					authStr.substr(separator + 1);
 			} else {
-				for (std::size_t i;
-						 separator != std::string::npos;) {
+				for (
+					std::size_t i; separator != std::string::npos;) {
 					i = separator + 1;
 					std::size_t const equals{authStr.find('=', i)};
 					separator = authStr.find(',', equals + 1);
@@ -200,23 +201,22 @@ namespace Rain::Networking::Http {
 		}
 
 		std::unordered_map<std::string, Header::SetCookie>
-		setCookie() {
+			setCookie() {
 			std::unordered_map<std::string, Header::SetCookie>
 				result;
 			auto equalRange{this->equal_range("Set-Cookie")};
-			for (auto it = equalRange.first;
-					 it != equalRange.second;
-					 it++) {
+			for (
+				auto it = equalRange.first; it != equalRange.second;
+				it++) {
 				std::size_t offset = 0,
 										equals = it->second.find('=', offset),
 										semicolon =
 											it->second.find(';', equals + 1);
-				auto cookie{
-					result
+				auto cookie{result
 						.insert(
 							{it->second.substr(offset, equals),
-							 {it->second.substr(
-								 equals + 1, semicolon - equals - 1)}})
+								{it->second.substr(
+									equals + 1, semicolon - equals - 1)}})
 						.first};
 				while (semicolon != std::string::npos) {
 					// Whitespace may follow the semicolon.
@@ -262,7 +262,7 @@ namespace Rain::Networking::Http {
 		}
 
 		std::vector<Header::TransferEncoding>
-		transferEncoding() {
+			transferEncoding() {
 			auto it = this->find("Transfer-Encoding");
 			if (it == this->end()) {
 				return {};
@@ -291,8 +291,9 @@ namespace Rain::Networking::Http {
 			std::string &transferEncoding =
 				this->operator[]("Transfer-Encoding");
 
-			for (Header::TransferEncoding const
-						 &transferEncodingSingle : value) {
+			for (
+				Header::TransferEncoding const
+					&transferEncodingSingle : value) {
 				transferEncoding +=
 					static_cast<std::string>(transferEncodingSingle) +
 					", ";
@@ -305,8 +306,9 @@ namespace Rain::Networking::Http {
 		friend inline std::ostream &operator<<(
 			std::ostream &stream,
 			Rain::Networking::Http::Headers const &headers) {
-			for (std::pair<std::string const, std::string> const
-						 &keyValue : headers) {
+			for (
+				std::pair<std::string const, std::string> const
+					&keyValue : headers) {
 				stream << keyValue.first << ": " << keyValue.second
 							 << "\r\n";
 			}

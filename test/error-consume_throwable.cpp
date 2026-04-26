@@ -8,12 +8,8 @@ auto foo() {
 	return count++;
 }
 
-auto bar(int val) {
-	return val;
-}
-std::string bar() {
-	return "hi!";
-}
+auto bar(int val) { return val; }
+std::string bar() { return "hi!"; }
 
 int main() {
 	// Wrap a non-throwing callable and execute it.

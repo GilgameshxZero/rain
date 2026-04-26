@@ -33,10 +33,10 @@ namespace Rain::Networking::Http::Header {
 		public:
 		// Construct directly or from string. May throw.
 		constexpr TransferEncoding(
-			Value value = IDENTITY) noexcept
-				: value(value) {}
-		TransferEncoding(std::string const &str)
-				: value(TransferEncoding::fromStr.at(str)) {}
+			Value value = IDENTITY) noexcept :
+			value(value) {}
+		TransferEncoding(std::string const &str) :
+			value(TransferEncoding::fromStr.at(str)) {}
 
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }

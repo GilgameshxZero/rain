@@ -6,7 +6,7 @@
 
 namespace Rain::Algorithm {
 	// GCD using Euclidean algorithm.
-	template <typename Integer>
+	template<typename Integer>
 	inline Integer greatestCommonDivisor(
 		Integer x,
 		Integer y) {
@@ -19,9 +19,9 @@ namespace Rain::Algorithm {
 	// GCD using extended Euclidean algorithm gives Bezout's
 	// identity coefficients. `Integer` must allow integer
 	// division.
-	template <typename Integer>
+	template<typename Integer>
 	inline std::tuple<Integer, Integer, Integer>
-	greatestCommonDivisorExtended(Integer x, Integer y) {
+		greatestCommonDivisorExtended(Integer x, Integer y) {
 		Integer cX{0}, cY{1}, nX{1}, nY{0}, ratio;
 		while (x != 0) {
 			// Relies on integer division.
@@ -36,7 +36,7 @@ namespace Rain::Algorithm {
 	}
 
 	// LCM.
-	template <typename Integer>
+	template<typename Integer>
 	inline Integer leastCommonMultiple(
 		Integer const &x,
 		Integer const &y) {

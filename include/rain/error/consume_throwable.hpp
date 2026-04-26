@@ -26,7 +26,7 @@ namespace Rain::Error {
 	//
 	// Crashes may still be caused via signal crashes
 	// (dividing by 0, etc.).
-	template <typename Callable>
+	template<typename Callable>
 	inline auto consumeThrowable(
 		// Perfect forwarding rvalue-reference to allow for
 		// inline construction and later move-capture.
@@ -40,7 +40,7 @@ namespace Rain::Error {
 		// moves std::functions if requested.
 		return
 			[capturedCallable = std::forward<Callable>(callable),
-			 location](auto &&...args) mutable {
+				location](auto &&...args) mutable {
 				try {
 					return capturedCallable(
 						std::forward<decltype(args)>(args)...);

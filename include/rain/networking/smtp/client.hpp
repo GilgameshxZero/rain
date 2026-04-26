@@ -5,10 +5,10 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::Smtp {
-	class ClientSocketSpecInterfaceInterface
-			: virtual public ConnectedSocketSpecInterface,
-				virtual public ReqRes::
-					ClientSocketSpecInterfaceInterface {
+	class ClientSocketSpecInterfaceInterface :
+		virtual public ConnectedSocketSpecInterface,
+		virtual public ReqRes::
+			ClientSocketSpecInterfaceInterface {
 		protected:
 		// Resolve MX records into addresses.
 		static std::vector<Host> mxRecordsToHostGroups(
@@ -23,25 +23,25 @@ namespace Rain::Networking::Smtp {
 		}
 	};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
-	class ClientSocketSpecInterface
-			: virtual public ClientSocketSpecInterfaceInterface,
-				virtual public ReqRes::ClientSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec> {};
+	class ClientSocketSpecInterface :
+		virtual public ClientSocketSpecInterfaceInterface,
+		virtual public ReqRes::ClientSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec> {};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		typename Socket>
-	class ClientSocketSpec
-			: public Socket,
-				virtual public ClientSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec>,
-				virtual public ClientSocketSpecInterfaceInterface {
+	class ClientSocketSpec :
+		public Socket,
+		virtual public ClientSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>,
+		virtual public ClientSocketSpecInterfaceInterface {
 		using Socket::Socket;
 
 		public:
@@ -58,16 +58,16 @@ namespace Rain::Networking::Smtp {
 			AddressInfo::Flag flags =
 				AddressInfo::Flag::V4MAPPED |
 				AddressInfo::Flag::ADDRCONFIG |
-				AddressInfo::Flag::ALL)
-				: Socket(
-						ClientSocketSpecInterfaceInterface::
-							mxRecordsToHostGroups(mxRecords, port),
-						timeout,
-						flags) {}
+				AddressInfo::Flag::ALL) :
+			Socket(
+				ClientSocketSpecInterfaceInterface::
+					mxRecordsToHostGroups(mxRecords, port),
+				timeout,
+				flags) {}
 	};
 
 	// Shorthand.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		std::size_t sendBufferLen,
@@ -77,23 +77,23 @@ namespace Rain::Networking::Smtp {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Client
-			: public ClientSocketSpec<
+		template<typename> class... SocketOptions>
+	class Client :
+		public ClientSocketSpec<
+			RequestMessageSpec,
+			ResponseMessageSpec,
+			ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<ReqRes::Client<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					ConnectedSocketSpec<
-						NamedSocketSpec<SocketSpec<ReqRes::Client<
-							RequestMessageSpec,
-							ResponseMessageSpec,
-							sendBufferLen,
-							recvBufferLen,
-							sendTimeoutMs,
-							recvTimeoutMs,
-							SocketFamilyInterface,
-							SocketTypeInterface,
-							SocketProtocolInterface,
-							SocketOptions...>>>>> {
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					SocketFamilyInterface,
+					SocketTypeInterface,
+					SocketProtocolInterface,
+					SocketOptions...>>>>> {
 		using ClientSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,

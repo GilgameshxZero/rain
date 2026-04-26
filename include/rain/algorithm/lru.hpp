@@ -17,7 +17,7 @@ namespace Rain::Algorithm {
 	// rvalue-reference. Same with key. Otherwise, they will
 	// be copy-constructed. Ensure the relevant constructors
 	// are defined.
-	template <
+	template<
 		typename Key,
 		typename Value,
 		typename Hash = std::hash<Key>,
@@ -42,8 +42,8 @@ namespace Rain::Algorithm {
 		// Key/value pair capacity of the cache. Cannot be 0.
 		std::size_t const capacity;
 
-		LruCache(std::size_t const capacity)
-				: capacity(capacity) {}
+		LruCache(std::size_t const capacity) :
+			capacity(capacity) {}
 
 		// Simple getters.
 		std::size_t size() const noexcept {
@@ -96,9 +96,9 @@ namespace Rain::Algorithm {
 		// Arguments are forwarded to relevant constructors with
 		// universal forwarding. std::move them in to move
 		// construct; otherwise, they will be copy-constructed.
-		template <typename KeyType, typename ValueType>
+		template<typename KeyType, typename ValueType>
 		std::pair<typename InternalList::iterator, bool>
-		insertOrAssign(KeyType &&key, ValueType &&value) {
+			insertOrAssign(KeyType &&key, ValueType &&value) {
 			typename InternalHashMap::iterator const findIt{
 				this->hashMap.find(key)};
 

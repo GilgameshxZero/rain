@@ -8,11 +8,12 @@ int main() {
 	using namespace Rain::Literal;
 	using namespace Rain::Networking;
 
-	class MyWorker : public Worker<
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption> {
+	class MyWorker :
+		public Worker<
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption> {
 		virtual void onWork() override {
 			// Worker always echos client message.
 			std::string buffer(1_zu << 2, '\0');
@@ -53,9 +54,9 @@ int main() {
 		MyWorker(
 			NativeSocket nativeSocket,
 			SocketInterface *interrupter,
-			std::size_t &workersDestructed)
-				: Worker(nativeSocket, interrupter),
-					workersDestructed(workersDestructed) {
+			std::size_t &workersDestructed) :
+			Worker(nativeSocket, interrupter),
+			workersDestructed(workersDestructed) {
 			std::cout << __func__ << std::endl;
 		}
 		virtual ~MyWorker() {
@@ -64,13 +65,14 @@ int main() {
 		}
 	};
 
-	class MyServer : public Server<
-										 MyWorker,
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption,
-										 Ipv6OnlySocketOption> {
+	class MyServer :
+		public Server<
+			MyWorker,
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption,
+			Ipv6OnlySocketOption> {
 		using Server::Server;
 
 		class _MyServer {
@@ -102,11 +104,12 @@ int main() {
 		}
 	};
 
-	class MyClient : public Client<
-										 Ipv6FamilyInterface,
-										 StreamTypeInterface,
-										 TcpProtocolInterface,
-										 NoLingerSocketOption> {
+	class MyClient :
+		public Client<
+			Ipv6FamilyInterface,
+			StreamTypeInterface,
+			TcpProtocolInterface,
+			NoLingerSocketOption> {
 		using Client::Client;
 
 		class _MyClient {
@@ -142,11 +145,12 @@ int main() {
 	// without waiting for entire timeout.
 	{
 		std::cout << std::endl;
-		class MyClient : public Client<
-											 Ipv4FamilyInterface,
-											 StreamTypeInterface,
-											 TcpProtocolInterface,
-											 NoLingerSocketOption> {
+		class MyClient :
+			public Client<
+				Ipv4FamilyInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface,
+				NoLingerSocketOption> {
 			using Client::Client;
 
 			class _MyClient {
@@ -177,13 +181,14 @@ int main() {
 	// Dual-Stack works.
 	{
 		std::cout << std::endl;
-		class MyServer : public Server<
-											 MyWorker,
-											 Ipv6FamilyInterface,
-											 StreamTypeInterface,
-											 TcpProtocolInterface,
-											 NoLingerSocketOption,
-											 DualStackSocketOption> {
+		class MyServer :
+			public Server<
+				MyWorker,
+				Ipv6FamilyInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface,
+				NoLingerSocketOption,
+				DualStackSocketOption> {
 			using Server::Server;
 
 			class _MyServer {
@@ -212,11 +217,12 @@ int main() {
 			}
 		};
 
-		class MyClient : public Client<
-											 Ipv4FamilyInterface,
-											 StreamTypeInterface,
-											 TcpProtocolInterface,
-											 NoLingerSocketOption> {
+		class MyClient :
+			public Client<
+				Ipv4FamilyInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface,
+				NoLingerSocketOption> {
 			using Client::Client;
 
 			class _MyClient {

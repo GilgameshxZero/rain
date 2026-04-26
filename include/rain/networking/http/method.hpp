@@ -2,7 +2,7 @@
 #pragma once
 
 #ifdef DELETE
-#undef DELETE
+	#undef DELETE
 #endif
 
 #include "../../string/string.hpp"
@@ -48,10 +48,10 @@ namespace Rain::Networking::Http {
 				{"PATCH", PATCH}};
 
 		// Direct constructors. Parsing strings may throw.
-		constexpr Method(Value value = GET) noexcept
-				: value(value) {}
-		Method(std::string const &str)
-				: value(Method::fromStr.at(str)) {}
+		constexpr Method(Value value = GET) noexcept :
+			value(value) {}
+		Method(std::string const &str) :
+			value(Method::fromStr.at(str)) {}
 
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }

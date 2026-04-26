@@ -70,10 +70,10 @@ namespace Rain::Multithreading {
 		std::atomic_bool destructing;
 
 		public:
-		ThreadPool(std::size_t maxThreads = 0) noexcept
-				: maxThreads(maxThreads),
-					cIdleThreads(0),
-					destructing(false) {}
+		ThreadPool(std::size_t maxThreads = 0) noexcept :
+			maxThreads(maxThreads),
+			cIdleThreads(0),
+			destructing(false) {}
 
 		// Forbid copy/move.
 		ThreadPool(ThreadPool const &) = delete;
@@ -141,7 +141,7 @@ namespace Rain::Multithreading {
 			if (
 				this->cIdleThreads == 0 &&
 				(this->maxThreads == 0 ||
-				 this->threads.size() < this->maxThreads)) {
+					this->threads.size() < this->maxThreads)) {
 				// May cause exception to try again if system
 				// resources are not available. In that case, it is
 				// good to set the max thread limit.
@@ -278,9 +278,10 @@ namespace Rain::Multithreading {
 			// completed. Do not need to lock mutexes, since only
 			// ThreadFnc may be executing here, and that does not
 			// modify this->threads.
-			for (auto it{this->threads.begin()};
-					 it != this->threads.end();
-					 it++) {
+			for (
+				auto it{this->threads.begin()};
+				it != this->threads.end();
+				it++) {
 				it->join();
 			}
 		}

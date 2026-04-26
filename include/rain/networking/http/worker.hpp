@@ -10,13 +10,13 @@
 
 namespace Rain::Networking::Http {
 	// HTTP Worker specialization.
-	class WorkerSocketSpecInterfaceInterface
-			: virtual public ConnectedSocketSpecInterface,
-				virtual public ReqRes::
-					WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpecInterfaceInterface :
+		virtual public ConnectedSocketSpecInterface,
+		virtual public ReqRes::
+			WorkerSocketSpecInterfaceInterface {
 		protected:
 		// For easy binding to request handlers.
-		template <typename Handler, typename... Args>
+		template<typename Handler, typename... Args>
 		auto bind(Handler &&handler, Args &&...args) {
 			return std::bind(
 				std::forward<Handler>(handler),
@@ -26,14 +26,14 @@ namespace Rain::Networking::Http {
 		}
 	};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
-	class WorkerSocketSpecInterface
-			: virtual public WorkerSocketSpecInterfaceInterface,
-				virtual public ReqRes::WorkerSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec> {
+	class WorkerSocketSpecInterface :
+		virtual public WorkerSocketSpecInterfaceInterface,
+		virtual public ReqRes::WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec> {
 		protected:
 		// Requests are delegated to handlers which return a
 		// ResponseAction consisting of an optional response and
@@ -59,23 +59,24 @@ namespace Rain::Networking::Http {
 			// Send response, optionally close.
 			ResponseAction(
 				ResponseMessageSpec &&response,
-				bool toClose = false)
-					: response(
-							std::forward<ResponseMessageSpec>(response)),
-						toClose(toClose) {}
+				bool toClose = false) :
+				response(
+					std::forward<ResponseMessageSpec>(response)),
+				toClose(toClose) {}
 
 			// Don't send response, optionally close.
-			ResponseAction(std::nullptr_t, bool toClose)
-					: response(), toClose(toClose) {}
+			ResponseAction(std::nullptr_t, bool toClose) :
+				response(),
+				toClose(toClose) {}
 
 			ResponseAction(ResponseAction const &) = delete;
-			ResponseAction &operator=(ResponseAction const &) =
-				delete;
+			ResponseAction &operator=(
+				ResponseAction const &) = delete;
 
 			// Allow move since ResponseMessageSpec allows move.
 			ResponseAction(ResponseAction &&other) = default;
-			ResponseAction &operator=(ResponseAction &&) =
-				default;
+			ResponseAction &operator=(
+				ResponseAction &&) = default;
 		};
 
 		// Subclasses specify behavior by defining filters for
@@ -99,7 +100,7 @@ namespace Rain::Networking::Http {
 				handler;
 
 			// Handlers are bound inside this function.
-			template <
+			template<
 				typename Host,
 				typename Target,
 				typename Derived>
@@ -111,34 +112,32 @@ namespace Rain::Networking::Http {
 				// type, or else static_cast will crash.
 				ResponseAction (Derived::*memFn)(
 					RequestMessageSpec &,
-					std::smatch const &))
-					: host(std::forward<Host>(host)),
-						target(std::forward<Target>(target)),
-						methods(
-							std::forward<std::set<Method>>(methods)),
-						handler([memFn](
-											void *instance,
-											RequestMessageSpec &req,
-											std::smatch const &match) {
-							// This lambda essentially stores the type
-							// Derived.
-							return (
-								*static_cast<Derived *>(instance).*memFn)(
-								req, match);
-						}) {}
+					std::smatch const &)) :
+				host(std::forward<Host>(host)),
+				target(std::forward<Target>(target)),
+				methods(std::forward<std::set<Method>>(methods)),
+				handler([memFn](
+									void *instance,
+									RequestMessageSpec &req,
+									std::smatch const &match) {
+					// This lambda essentially stores the type
+					// Derived.
+					return (*static_cast<Derived *>(instance).*memFn)(
+						req, match);
+				}) {}
 		};
 	};
 
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		typename Socket>
-	class WorkerSocketSpec
-			: public Socket,
-				virtual public WorkerSocketSpecInterface<
-					RequestMessageSpec,
-					ResponseMessageSpec>,
-				virtual public WorkerSocketSpecInterfaceInterface {
+	class WorkerSocketSpec :
+		public Socket,
+		virtual public WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>,
+		virtual public WorkerSocketSpecInterfaceInterface {
 		using Socket::Socket;
 
 		protected:
@@ -268,7 +267,7 @@ namespace Rain::Networking::Http {
 			try {
 				throw;
 			} catch (typename RequestMessageSpecInterface::
-								 Exception const &exception) {
+					Exception const &exception) {
 				// Send back a helpful error code if possible. We
 				// may be here because other end has aborted the
 				// connection; so care for send exceptions.
@@ -315,7 +314,7 @@ namespace Rain::Networking::Http {
 	};
 
 	// Shorthand for HTTP Worker.
-	template <
+	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
 		std::size_t sendBufferLen,
@@ -325,23 +324,23 @@ namespace Rain::Networking::Http {
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Worker
-			: public WorkerSocketSpec<
+		template<typename> class... SocketOptions>
+	class Worker :
+		public WorkerSocketSpec<
+			RequestMessageSpec,
+			ResponseMessageSpec,
+			ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<ReqRes::Worker<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					ConnectedSocketSpec<
-						NamedSocketSpec<SocketSpec<ReqRes::Worker<
-							RequestMessageSpec,
-							ResponseMessageSpec,
-							sendBufferLen,
-							recvBufferLen,
-							sendTimeoutMs,
-							recvTimeoutMs,
-							SocketFamilyInterface,
-							SocketTypeInterface,
-							SocketProtocolInterface,
-							SocketOptions...>>>>> {
+					sendBufferLen,
+					recvBufferLen,
+					sendTimeoutMs,
+					recvTimeoutMs,
+					SocketFamilyInterface,
+					SocketTypeInterface,
+					SocketProtocolInterface,
+					SocketOptions...>>>>> {
 		using WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,

@@ -26,15 +26,15 @@ namespace Rain::Windows {
 			}
 		}
 		DeviceContext(DeviceContext const &other) = delete;
-		DeviceContext &operator=(DeviceContext const &other) =
-			delete;
+		DeviceContext &operator=(
+			DeviceContext const &other) = delete;
 		DeviceContext(DeviceContext &&other) = delete;
-		DeviceContext &operator=(DeviceContext &&other) =
-			delete;
+		DeviceContext &operator=(
+			DeviceContext &&other) = delete;
 
 		inline operator HDC() const { return this->hDc; }
 
-		template <typename ObjectType>
+		template<typename ObjectType>
 		void select(ObjectType const &object) {
 			this->selectedObjs.push(SelectObject(
 				this->hDc, static_cast<HGDIOBJ>(object)));
@@ -71,9 +71,9 @@ namespace Rain::Windows {
 	// Creates a memory DC, and deletes it upon destruction.
 	class DeviceContextMemory : public DeviceContext {
 		public:
-		DeviceContextMemory(HDC hDc)
-				: DeviceContext(
-						validateSystemCall(CreateCompatibleDC(hDc))) {}
+		DeviceContextMemory(HDC hDc) :
+			DeviceContext(
+				validateSystemCall(CreateCompatibleDC(hDc))) {}
 		~DeviceContextMemory() { DeleteDC(*this); }
 	};
 }

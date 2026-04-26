@@ -14,14 +14,14 @@ namespace Rain::Algorithm {
 	// Returns a subgraph without weights, along with the
 	// total cost of all the weights, which is INF if a MST is
 	// not possible.
-	template <typename WeightType>
+	template<typename WeightType>
 	inline std::pair<
 		std::vector<std::unordered_set<std::size_t>>,
 		WeightType>
-	mstPrim(
-		std::vector<
-			std::unordered_map<std::size_t, WeightType>> const
-			&edges) {
+		mstPrim(
+			std::vector<
+				std::unordered_map<std::size_t, WeightType>> const
+				&edges) {
 		std::vector<std::unordered_set<std::size_t>> mst(
 			edges.size());
 		std::vector<bool> visited(edges.size(), false);

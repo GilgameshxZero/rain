@@ -8,8 +8,8 @@
 #include <future>
 
 namespace Rain::Networking {
-	class ClientSocketSpecInterface
-			: virtual public ConnectedSocketSpecInterface {
+	class ClientSocketSpecInterface :
+		virtual public ConnectedSocketSpecInterface {
 		protected:
 		// Code-sharing: connect any opened NativeSocket to a
 		// single AddressInfo. Returns false on success, true on
@@ -74,10 +74,10 @@ namespace Rain::Networking {
 	// This is not a resource-managing class, and should be
 	// used after socket options are set on a
 	// resource-managing Socket.
-	template <typename Socket>
-	class ClientSocketSpec
-			: public Socket,
-				virtual public ClientSocketSpecInterface {
+	template<typename Socket>
+	class ClientSocketSpec :
+		public Socket,
+		virtual public ClientSocketSpecInterface {
 		private:
 		// Multi-address version of connect. Spawns multiple
 		// identical Sockets, each a duplicate of the
@@ -108,8 +108,9 @@ namespace Rain::Networking {
 			bool connected{false};
 			std::atomic_size_t attemptsCompleted{0};
 
-			for (std::size_t idx{0}; idx < addressInfos.size();
-					 idx++) {
+			for (
+				std::size_t idx{0}; idx < addressInfos.size();
+				idx++) {
 				// Each thread spawns an identical client and
 				// attempts to connect with that client. On success,
 				// locks the mutex and swaps.
@@ -117,20 +118,20 @@ namespace Rain::Networking {
 					std::async(
 						std::launch::async,
 						[this,
-						 &mtx,
-						 &ev,
-						 &connected,
-						 &attemptsCompleted,
-						 &addressInfo = addressInfos[idx],
-						 timeout]() {
+							&mtx,
+							&ev,
+							&connected,
+							&attemptsCompleted,
+							&addressInfo = addressInfos[idx],
+							timeout]() {
 							// Ignore any connect exceptions; any
 							// exceptions reported during tests probably
 							// originates from here.
 							Rain::Error::consumeThrowable([this,
-																						 &mtx,
-																						 &connected,
-																						 &addressInfo,
-																						 timeout]() {
+																							&mtx,
+																							&connected,
+																							&addressInfo,
+																							timeout]() {
 								// Calls the single-address constructor.
 								ClientSocketSpec<Socket> attemptSocket(
 									addressInfo, timeout);
@@ -151,8 +152,8 @@ namespace Rain::Networking {
 			// Wait until notified or timeout, or notified that
 			// all attempts have failed early.
 			auto pred = [&connected,
-									 &attemptsCompleted,
-									 attemptsTotal = futures.size()]() {
+										&attemptsCompleted,
+										attemptsTotal = futures.size()]() {
 				return connected ||
 					attemptsCompleted == attemptsTotal;
 			};
@@ -251,18 +252,18 @@ namespace Rain::Networking {
 
 	// Shorthand which includes ConnectedSocket and
 	// NamedSocket and base Socket templates.
-	template <
+	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Client
-			: public ClientSocketSpec<
-					ConnectedSocketSpec<NamedSocketSpec<Socket<
-						SocketFamilyInterface,
-						SocketTypeInterface,
-						SocketProtocolInterface,
-						SocketOptions...>>>> {
+		template<typename> class... SocketOptions>
+	class Client :
+		public ClientSocketSpec<
+			ConnectedSocketSpec<NamedSocketSpec<Socket<
+				SocketFamilyInterface,
+				SocketTypeInterface,
+				SocketProtocolInterface,
+				SocketOptions...>>>> {
 		using ClientSocketSpec<
 			ConnectedSocketSpec<NamedSocketSpec<Socket<
 				SocketFamilyInterface,

@@ -14,41 +14,41 @@
 namespace Rain::Networking::Tcp {
 	// TCP Sockets have the additional requirement that they
 	// can only be applied to Type Stream and Protocol TCP.
-	class SocketSpecInterface
-			: virtual public Networking::SocketInterface,
-				virtual public StreamTypeInterface,
-				virtual public TcpProtocolInterface {};
+	class SocketSpecInterface :
+		virtual public Networking::SocketInterface,
+		virtual public StreamTypeInterface,
+		virtual public TcpProtocolInterface {};
 
-	template <typename Socket>
-	class SocketSpec : public Socket,
-										 virtual public SocketSpecInterface {
+	template<typename Socket>
+	class SocketSpec :
+		public Socket,
+		virtual public SocketSpecInterface {
 		using Socket::Socket;
 	};
 
-	class NamedSocketSpecInterface
-			: virtual public SocketSpecInterface,
-				virtual public Networking::
-					NamedSocketSpecInterface {};
+	class NamedSocketSpecInterface :
+		virtual public SocketSpecInterface,
+		virtual public Networking::NamedSocketSpecInterface {};
 
-	template <typename Socket>
-	class NamedSocketSpec
-			: public Socket,
-				virtual public NamedSocketSpecInterface {
+	template<typename Socket>
+	class NamedSocketSpec :
+		public Socket,
+		virtual public NamedSocketSpecInterface {
 		using Socket::Socket;
 	};
 
 	// ConnectedSocket(Interface) in TCP protocol layer must
 	// provide subclassing for std::iostream.
-	class ConnectedSocketSpecInterface
-			: public std::iostream,
-				virtual public NamedSocketSpecInterface,
-				virtual public Networking::
-					ConnectedSocketSpecInterface {
+	class ConnectedSocketSpecInterface :
+		public std::iostream,
+		virtual public NamedSocketSpecInterface,
+		virtual public Networking::
+			ConnectedSocketSpecInterface {
 		public:
 		// All interfaces must have default constructors to
 		// allow for easy virtual inheritance.
-		ConnectedSocketSpecInterface()
-				: std::iostream(nullptr) {}
+		ConnectedSocketSpecInterface() :
+			std::iostream(nullptr) {}
 	};
 
 	// Must instantiate a valid std::iostream and underlying
@@ -61,15 +61,15 @@ namespace Rain::Networking::Tcp {
 	// per timeout period, send is not considered to have
 	// timed out. Thus, flush may consume upwards of (send
 	// timeout) * (sendBufferLen) time.
-	template <
+	template<
 		std::size_t sendBufferLen,
 		std::size_t recvBufferLen,
 		long long sendTimeoutMs,
 		long long recvTimeoutMs,
 		typename Socket>
-	class ConnectedSocketSpec
-			: public Socket,
-				virtual public ConnectedSocketSpecInterface {
+	class ConnectedSocketSpec :
+		public Socket,
+		virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
 
 		private:
@@ -87,8 +87,8 @@ namespace Rain::Networking::Tcp {
 				recvBuffer[recvBufferLen];
 
 			public:
-			IoStreamBuf(ConnectedSocketSpecInterface *socket)
-					: socket(socket) {
+			IoStreamBuf(ConnectedSocketSpecInterface *socket) :
+				socket(socket) {
 				// Set internal pointers corresponding to empty
 				// buffers.
 				this->setg(

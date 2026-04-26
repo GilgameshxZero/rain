@@ -7,27 +7,27 @@
 
 #ifdef RAIN_PLATFORM_WINDOWS
 
-// Links ws2_32.dll which includes implementation for
-// Winsock 2. Not necessarily x86 as the name suggests.
-#pragma comment(lib, "Ws2_32.lib")
+	// Links ws2_32.dll which includes implementation for
+	// Winsock 2. Not necessarily x86 as the name suggests.
+	#pragma comment(lib, "Ws2_32.lib")
 
-#include "../windows/windows.hpp"
+	#include "../windows/windows.hpp"
 
-#include <iphlpapi.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+	#include <iphlpapi.h>
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
 
 #else
 
-// Non-Windows networking is supported via POSIX-style
-// sockets.
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <poll.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+	// Non-Windows networking is supported via POSIX-style
+	// sockets.
+	#include <arpa/inet.h>
+	#include <netdb.h>
+	#include <poll.h>
+	#include <sys/ioctl.h>
+	#include <sys/socket.h>
+	#include <sys/types.h>
+	#include <unistd.h>
 
 #endif
 

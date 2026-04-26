@@ -14,8 +14,8 @@ namespace Rain::Networking {
 	// InterfaceInterfaces hold commonalities behind templated
 	// Interfaces as well as introduce otherwise dependent
 	// names.
-	class ServerSocketSpecInterfaceInterface
-			: virtual public NamedSocketSpecInterface {
+	class ServerSocketSpecInterfaceInterface :
+		virtual public NamedSocketSpecInterface {
 		protected:
 		// Code-sharing: bind.
 		static void bind(
@@ -71,9 +71,9 @@ namespace Rain::Networking {
 		virtual std::size_t threads() = 0;
 	};
 
-	template <typename WorkerSocketSpec>
-	class ServerSocketSpecInterface
-			: virtual public ServerSocketSpecInterfaceInterface {
+	template<typename WorkerSocketSpec>
+	class ServerSocketSpecInterface :
+		virtual public ServerSocketSpecInterfaceInterface {
 		protected:
 		// Override to build WorkerSockets.
 		virtual WorkerSocketSpec makeWorker(
@@ -90,12 +90,12 @@ namespace Rain::Networking {
 	//
 	// The template Socket should be a Networking::Socket with
 	// a default constructor.
-	template <typename WorkerSocketSpec, typename Socket>
-	class ServerSocketSpec
-			: public Socket,
-				virtual public ServerSocketSpecInterface<
-					WorkerSocketSpec>,
-				virtual public ServerSocketSpecInterfaceInterface {
+	template<typename WorkerSocketSpec, typename Socket>
+	class ServerSocketSpec :
+		public Socket,
+		virtual public ServerSocketSpecInterface<
+			WorkerSocketSpec>,
+		virtual public ServerSocketSpecInterfaceInterface {
 		private:
 		static std::size_t const LISTEN_BACKLOG_DEFAULT{65535};
 
@@ -155,10 +155,9 @@ namespace Rain::Networking {
 						// Discard the accepted address.
 					});
 				this->interrupter.first.reset(new Client<
-																			Ipv4FamilyInterface,
-																			StreamTypeInterface,
-																			TcpProtocolInterface>(
-					interrupterServer.name()));
+					Ipv4FamilyInterface,
+					StreamTypeInterface,
+					TcpProtocolInterface>(interrupterServer.name()));
 			}
 
 			// If no exception, the socket pair is connected. The
@@ -268,9 +267,10 @@ namespace Rain::Networking {
 			std::lock_guard peerConnectionLck(
 				peerConnection.first);
 			auto const now = std::chrono::steady_clock::now();
-			while (!peerConnection.second.empty() &&
-						 peerConnection.second.front() <=
-							 now - RATE_LIMIT_WINDOW_SIZE) {
+			while (
+				!peerConnection.second.empty() &&
+				peerConnection.second.front() <=
+					now - RATE_LIMIT_WINDOW_SIZE) {
 				peerConnection.second.pop();
 			}
 
@@ -347,19 +347,20 @@ namespace Rain::Networking {
 
 	// Shorthand which includes NamedSocket and base Socket
 	// templates.
-	template <
+	template<
 		typename WorkerSocketSpec,
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
 		typename SocketProtocolInterface,
-		template <typename> class... SocketOptions>
-	class Server : public ServerSocketSpec<
-									 WorkerSocketSpec,
-									 NamedSocketSpec<Socket<
-										 SocketFamilyInterface,
-										 SocketTypeInterface,
-										 SocketProtocolInterface,
-										 SocketOptions...>>> {
+		template<typename> class... SocketOptions>
+	class Server :
+		public ServerSocketSpec<
+			WorkerSocketSpec,
+			NamedSocketSpec<Socket<
+				SocketFamilyInterface,
+				SocketTypeInterface,
+				SocketProtocolInterface,
+				SocketOptions...>>> {
 		using ServerSocketSpec<
 			WorkerSocketSpec,
 			NamedSocketSpec<Socket<

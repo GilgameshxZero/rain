@@ -27,10 +27,10 @@ namespace Rain::Networking::Smtp {
 
 		public:
 		// Direct constructors.
-		constexpr AuthMethod(Value value = LOGIN) noexcept
-				: value(value) {}
-		AuthMethod(std::string const &str)
-				: value(AuthMethod::fromStr.at(str)) {}
+		constexpr AuthMethod(Value value = LOGIN) noexcept :
+			value(value) {}
+		AuthMethod(std::string const &str) :
+			value(AuthMethod::fromStr.at(str)) {}
 
 		// Conversions and comparators.
 		operator Value() const noexcept { return this->value; }

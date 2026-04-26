@@ -12,10 +12,10 @@
 #include <vector>
 
 namespace Rain::Algorithm {
-	template <typename = std::nullptr_t>
+	template<typename = std::nullptr_t>
 	class SegmentTreeLazy;
 
-	template <>
+	template<>
 	class SegmentTreeLazy<std::nullptr_t> {
 		public:
 		// Exceptions are defined on the default template.
@@ -49,13 +49,13 @@ namespace Rain::Algorithm {
 		private:
 		// SFINAE base class which conditionally defines
 		// defaultValue() and defaultResult().
-		template <
+		template<
 			typename Value,
 			typename Result,
 			typename = void>
 		class PolicyBaseDefaultValueResult {};
 
-		template <typename Value, typename Result>
+		template<typename Value, typename Result>
 		class PolicyBaseDefaultValueResult<
 			Value,
 			Result,
@@ -64,7 +64,7 @@ namespace Rain::Algorithm {
 			public:
 			static inline Value defaultValue() { return {}; }
 
-			template <
+			template<
 				bool isConstructible =
 					std::is_constructible<Result, Value>::value,
 				typename std::enable_if<isConstructible>::type * =
@@ -76,10 +76,10 @@ namespace Rain::Algorithm {
 
 		// SFINAE base class which conditionally defines
 		// defaultUpdate().
-		template <typename Update, typename = void>
+		template<typename Update, typename = void>
 		class PolicyBaseDefaultUpdate {};
 
-		template <typename Update>
+		template<typename Update>
 		class PolicyBaseDefaultUpdate<
 			Update,
 			typename std::enable_if<std::is_default_constructible<
@@ -94,16 +94,16 @@ namespace Rain::Algorithm {
 		// expected operations. In that case, the client should
 		// inherit the enabled parts of this disabled policy and
 		// re-implement the disabled functions.
-		template <
+		template<
 			typename ValueType,
 			typename UpdateType = ValueType,
 			typename ResultType = ValueType,
 			typename QueryType = std::nullptr_t>
-		class PolicyBase
-				: public PolicyBaseDefaultValueResult<
-						ValueType,
-						ResultType>,
-					public PolicyBaseDefaultUpdate<UpdateType> {
+		class PolicyBase :
+			public PolicyBaseDefaultValueResult<
+				ValueType,
+				ResultType>,
+			public PolicyBaseDefaultUpdate<UpdateType> {
 			public:
 			// Expose typenames to subclasses (SegmentTreeLazy).
 			using Value = ValueType;
@@ -113,7 +113,7 @@ namespace Rain::Algorithm {
 
 			// Convert the value at a node to a result. The node
 			// may not be a leaf.
-			template <
+			template<
 				bool isConstructible =
 					std::is_constructible<Result, Value>::value,
 				typename std::enable_if<isConstructible>::type * =
@@ -135,7 +135,7 @@ namespace Rain::Algorithm {
 			// `build` is used iff the segtree is moved from an
 			// array in the constructor.
 			static inline void
-			build(Value &, Value const &, Value const &) {
+				build(Value &, Value const &, Value const &) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 			// `retrace` is used iff the segtree is updated.
@@ -148,7 +148,7 @@ namespace Rain::Algorithm {
 			}
 			// `apply` is used iff the segtree is updated.
 			static inline void
-			apply(Value &, Update const &, std::size_t) {
+				apply(Value &, Update const &, std::size_t) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 		};
@@ -177,7 +177,7 @@ namespace Rain::Algorithm {
 		// Additional speedups can be had by offline re-ordering
 		// of the updates and applying history pruning in
 		// `retrace` and `apply`.
-		template <
+		template<
 			typename Policy,
 			typename TimeType = std::size_t>
 		class PolicyPersistentFatNodeWrapper {
@@ -193,7 +193,7 @@ namespace Rain::Algorithm {
 			static inline Value defaultValue() {
 				return {
 					{std::numeric_limits<TimeType>::min(),
-					 Policy::defaultValue()}};
+						Policy::defaultValue()}};
 			}
 			static inline Update defaultUpdate() {
 				return {
@@ -269,14 +269,14 @@ namespace Rain::Algorithm {
 			}
 		};
 
-		template <typename ValueType>
+		template<typename ValueType>
 		class PolicySum : public PolicyBase<ValueType> {
 			public:
 			using SuperPolicy = PolicyBase<ValueType>;
-			using typename SuperPolicy::Value;
-			using typename SuperPolicy::Update;
-			using typename SuperPolicy::Result;
 			using typename SuperPolicy::Query;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Value;
 
 			static inline void combine(
 				Update &current,
@@ -310,14 +310,14 @@ namespace Rain::Algorithm {
 			}
 		};
 
-		template <typename ValueType>
+		template<typename ValueType>
 		class PolicyMin : public PolicyBase<ValueType> {
 			public:
 			using SuperPolicy = PolicyBase<ValueType>;
-			using typename SuperPolicy::Value;
-			using typename SuperPolicy::Update;
-			using typename SuperPolicy::Result;
 			using typename SuperPolicy::Query;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Value;
 
 			static inline Result defaultResult() {
 				return std::numeric_limits<Result>::max();
@@ -354,14 +354,14 @@ namespace Rain::Algorithm {
 			}
 		};
 
-		template <typename ValueType>
+		template<typename ValueType>
 		class PolicyMax : public PolicyBase<ValueType> {
 			public:
 			using SuperPolicy = PolicyBase<ValueType>;
-			using typename SuperPolicy::Value;
-			using typename SuperPolicy::Update;
-			using typename SuperPolicy::Result;
 			using typename SuperPolicy::Query;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Value;
 
 			static inline Result defaultResult() {
 				return std::numeric_limits<Result>::min();
@@ -399,25 +399,25 @@ namespace Rain::Algorithm {
 		};
 
 		// 2D segtree for point updates and range queries.
-		template <
+		template<
 			typename ValueType,
 			std::size_t INNER_DIMENSION>
-		class PolicySum2DPoint
-				: public PolicyBase<
-						FenwickTree<ValueType>,
-						std::pair<std::size_t, ValueType>,
-						ValueType,
-						std::size_t> {
+		class PolicySum2DPoint :
+			public PolicyBase<
+				FenwickTree<ValueType>,
+				std::pair<std::size_t, ValueType>,
+				ValueType,
+				std::size_t> {
 			public:
 			using SuperPolicy = PolicyBase<
 				FenwickTree<ValueType>,
 				std::pair<std::size_t, ValueType>,
 				ValueType,
 				std::size_t>;
-			using typename SuperPolicy::Value;
-			using typename SuperPolicy::Update;
-			using typename SuperPolicy::Result;
 			using typename SuperPolicy::Query;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Value;
 
 			static inline Value defaultValue() {
 				return {INNER_DIMENSION};
@@ -481,7 +481,7 @@ namespace Rain::Algorithm {
 	// the update that caused it to be called, and may know
 	// which child was updated, but this is not yet
 	// implemented.
-	template <typename Policy>
+	template<typename Policy>
 	class SegmentTreeLazy {
 		public:
 		using Value = typename Policy::Value;
@@ -524,8 +524,9 @@ namespace Rain::Algorithm {
 		// `size` is only valid for non-bridge-ancestors. It is
 		// always the number of leaf nodes contained in this
 		// subtree.
-		inline void propagate(std::size_t idx, std::size_t size)
-			const {
+		inline void propagate(
+			std::size_t idx,
+			std::size_t size) const {
 			if (!this->vertices[idx].lazy) {
 				return;
 			}
@@ -558,10 +559,10 @@ namespace Rain::Algorithm {
 		// Propagate all ancestors of a single vertex,
 		// optionally beginning at a specific ancestor depth.
 		inline void propagateTo(std::size_t idx) const {
-			for (std::size_t level{this->DEPTH},
-					 size{1_zu << level};
-					 level > 0;
-					 level--, size /= 2) {
+			for (
+				std::size_t level{this->DEPTH}, size{1_zu << level};
+				level > 0;
+				level--, size /= 2) {
 				if ((idx >> level) == 0) {
 					continue;
 				}
@@ -595,12 +596,14 @@ namespace Rain::Algorithm {
 			Iterator(
 				SegmentTreeLazy<Policy> const *tree,
 				std::size_t idx,
-				std::size_t size)
-					: TREE{tree}, IDX{idx}, SIZE{size} {}
-			Iterator(Iterator const &other)
-					: TREE{other.TREE},
-						IDX{other.IDX},
-						SIZE{other.SIZE} {}
+				std::size_t size) :
+				TREE{tree},
+				IDX{idx},
+				SIZE{size} {}
+			Iterator(Iterator const &other) :
+				TREE{other.TREE},
+				IDX{other.IDX},
+				SIZE{other.SIZE} {}
 
 			Iterator &operator=(Iterator const &other) {
 				this->TREE = other.TREE;
@@ -679,24 +682,25 @@ namespace Rain::Algorithm {
 		friend Iterator;
 
 		// Segment tree for a segment array of size size.
-		SegmentTreeLazy(std::size_t size)
-				: DEPTH{mostSignificant1BitIdx(size * 2)},
-					SIZE_UNDERLYING{size},
-					vertices(size * 2) {}
+		SegmentTreeLazy(std::size_t size) :
+			DEPTH{mostSignificant1BitIdx(size * 2)},
+			SIZE_UNDERLYING{size},
+			vertices(size * 2) {}
 
 		// Segment tree with all leaf nodes moved in, and the
 		// others constructed in order. This minimizes build
 		// time by a constant factor.
-		SegmentTreeLazy(std::vector<Value> &&values)
-				: SegmentTreeLazy(values.size()) {
-			for (std::size_t i{0}; i < this->SIZE_UNDERLYING;
-					 i++) {
+		SegmentTreeLazy(std::vector<Value> &&values) :
+			SegmentTreeLazy(values.size()) {
+			for (
+				std::size_t i{0}; i < this->SIZE_UNDERLYING; i++) {
 				std::swap(
 					values[i],
 					this->vertices[this->SIZE_UNDERLYING + i].value);
 			}
-			for (std::size_t i{this->SIZE_UNDERLYING - 1}; i > 0;
-					 i--) {
+			for (
+				std::size_t i{this->SIZE_UNDERLYING - 1}; i > 0;
+				i--) {
 				Policy::build(
 					this->vertices[i].value,
 					this->vertices[i * 2].value,
@@ -715,10 +719,11 @@ namespace Rain::Algorithm {
 			Result resLeft{Policy::defaultResult()},
 				resRight{Policy::defaultResult()};
 			std::size_t size{1};
-			for (left += this->SIZE_UNDERLYING,
-					 right += this->SIZE_UNDERLYING + 1;
-					 left < right;
-					 left /= 2, right /= 2, size *= 2) {
+			for (
+				left += this->SIZE_UNDERLYING,
+				right += this->SIZE_UNDERLYING + 1;
+				left < right;
+				left /= 2, right /= 2, size *= 2) {
 				if (left % 2 == 1) {
 					resLeft = Policy::aggregate(
 						resLeft,
@@ -752,10 +757,11 @@ namespace Rain::Algorithm {
 			// been changed.
 			bool changedLeft{false}, changedRight{false};
 			std::size_t size{1};
-			for (left += this->SIZE_UNDERLYING,
-					 right += this->SIZE_UNDERLYING + 1;
-					 left < right;
-					 left /= 2, right /= 2, size *= 2) {
+			for (
+				left += this->SIZE_UNDERLYING,
+				right += this->SIZE_UNDERLYING + 1;
+				left < right;
+				left /= 2, right /= 2, size *= 2) {
 				if (changedLeft) {
 					Policy::retrace(
 						this->vertices[left - 1].value,
@@ -829,8 +835,8 @@ namespace Rain::Algorithm {
 		}
 	};
 
-	template <typename Policy>
-	using SegmentTreeLazyPersistentFatNode = SegmentTreeLazy<
-		SegmentTreeLazy<>::PolicyPersistentFatNodeWrapper<
-			Policy>>;
+	template<typename Policy>
+	using SegmentTreeLazyPersistentFatNode =
+		SegmentTreeLazy<SegmentTreeLazy<>::
+				PolicyPersistentFatNodeWrapper<Policy>>;
 }

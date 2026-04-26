@@ -3,7 +3,7 @@
 namespace Rain::Math {
 	// `constexpr` sqrt by
 	// <https://stackoverflow.com/a/27709195>.
-	template <typename T>
+	template<typename T>
 	constexpr T sqrtImpl(T x, T lo, T hi) {
 		if (lo == hi) {
 			return lo;
@@ -16,7 +16,7 @@ namespace Rain::Math {
 			return sqrtImpl(x, mid, hi);
 		}
 	}
-	template <typename T>
+	template<typename T>
 	constexpr T sqrt(T x) {
 		return sqrtImpl<T>(x, 0, x / 2 + 1);
 	}

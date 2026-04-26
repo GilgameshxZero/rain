@@ -6,15 +6,15 @@
 #include <iostream>
 
 namespace Rain::Networking::ReqRes {
-	class ResponseMessageSpecInterface
-			: virtual public MessageInterface {};
+	class ResponseMessageSpecInterface :
+		virtual public MessageInterface {};
 
 	// Abstract Request for R/R Sockets. See MessageInterface
 	// for details on intended usage.
-	template <typename Message>
-	class ResponseMessageSpec
-			: public Message,
-				virtual public ResponseMessageSpecInterface {
+	template<typename Message>
+	class ResponseMessageSpec :
+		public Message,
+		virtual public ResponseMessageSpecInterface {
 		using Message::Message;
 	};
 
