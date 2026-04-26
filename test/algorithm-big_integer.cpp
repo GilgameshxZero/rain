@@ -146,6 +146,15 @@ int main() {
 		releaseAssert(y == INT_MIN + 3);
 		y = BigIntegerSigned<5>(INT_MAX) * INT_MAX;
 		releaseAssert(y == 1);
+
+		auto w{BigIntegerSigned<5>::divideWithRemainder(
+			BigIntegerSigned<5>(-1000000009),
+			BigIntegerSigned<5>(37))};
+		releaseAssert(w.first == -10);
+		releaseAssert(w.second == -27027027);
+		y = INT_MAX;
+		releaseAssert(y / -9999 == -214769);
+		releaseAssert(y % -9999 == 8416);
 	}
 
 	// Hashable.
@@ -235,6 +244,41 @@ int main() {
 		releaseAssert(y == LLONG_MIN + 3);
 		y = BigIntegerSigned<6>(LLONG_MAX) * INT_MAX;
 		releaseAssert(y == 9223372034707292161LL);
+
+		auto w{BigIntegerSigned<6>::divideWithRemainder(
+			BigIntegerSigned<6>(-1000000009),
+			BigIntegerSigned<6>(37))};
+		releaseAssert(w.first == -10);
+		releaseAssert(w.second == -27027027);
+		y = INT_MAX;
+		releaseAssert(y / -9999 == -214769);
+		releaseAssert(y % -9999 == 8416);
+	}
+
+	// More division.
+	{
+		auto z{BigIntegerSigned<12>(1)};
+		z = z * 2 * 3 * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 29 *
+			31 * 37 * 41 * 43 * 47 * 53 * 59 * 61 * 67 * 71 * 73 *
+			79 * 83 * 89 * 97;
+		cout << z << endl;
+		releaseAssert(z % 101 == 28);
+		z /= 101;
+		{
+			stringstream ss;
+			ss << z;
+			releaseAssert(
+				ss.str() == "22827405583618994304486159874571842");
+		}
+		z *= 101;
+		cout << z << endl;
+		{
+			stringstream ss;
+			ss << z;
+			releaseAssert(
+				ss.str() ==
+				"2305567963945518424753102147331756042");
+		}
 	}
 
 	// Misc.
@@ -308,6 +352,16 @@ int main() {
 		releaseAssert(x.low.high == 4294967282);
 		releaseAssert(x.high.low == 998244352);
 		releaseAssert(x.high.high == 0);
+
+		using BI = BigIntegerSigned<10>;
+		BI a, b, c;
+		a = 15;
+		BI const d(a), e(20);
+		releaseAssert(a == d);
+		b = e;
+		releaseAssert(b == e);
+		c = a + b;
+		releaseAssert(c == d + e);
 	}
 
 	// Integrations.
@@ -336,16 +390,6 @@ int main() {
 		z /= 18446744073709551557ULL;
 		cout << z << endl;
 		releaseAssert(z == 1000000009);
-
-		using BI = BigIntegerSigned<10>;
-		BI a, b, c;
-		a = 15;
-		BI const d(a), e(20);
-		releaseAssert(a == d);
-		b = e;
-		releaseAssert(b == e);
-		c = a + b;
-		releaseAssert(c == d + e);
 	}
 
 	return 0;
