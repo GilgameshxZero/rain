@@ -4,6 +4,15 @@ using Rain::Error::releaseAssert;
 
 int main() {
 	{
+		std::random_device randomDevice;
+		std::mt19937_64 generator(randomDevice());
+		std::cout
+			<< std::uniform_int_distribution<std::uint64_t>()(
+					 generator)
+			<< std::endl;
+	}
+
+	{
 		using Type = std::array<long long, 8>;
 		std::unordered_map<
 			Type,

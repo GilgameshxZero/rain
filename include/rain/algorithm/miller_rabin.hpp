@@ -4,6 +4,7 @@
 #include "../random.hpp"
 #include "bit_manipulators.hpp"
 #include "modulus_field.hpp"
+#include <random>
 
 namespace Rain::Algorithm {
 	// Miller-Rabin helper.
@@ -41,15 +42,18 @@ namespace Rain::Algorithm {
 	// long, so it is not truly random if N is large.
 	template<
 		typename Integer,
+		typename Generator,
 		std::enable_if<
 			Functional::TraitType<Integer>::IsIntegral::VALUE &&
 			!Functional::TraitType<Integer>::IsSigned::VALUE>::
-			type * = nullptr>
+			type * = nullptr,
+		decltype(std::declval<
+			std::uniform_int_distribution<>>()(
+			std::declval<Generator &>())) * = nullptr>
 	inline bool isPrimeMillerRabin(
 		Integer const &N,
 		std::size_t const K,
-		Rain::Random::Generator &generator =
-			Rain::Random::generator) {
+		Generator &generator) {
 		std::uniform_int_distribution<unsigned long long>
 			distribution(
 				2, static_cast<unsigned long long>(N) - 1);
@@ -69,6 +73,14 @@ namespace Rain::Algorithm {
 			}
 		}
 		return true;
+	}
+	template<typename Integer>
+	inline bool isPrimeMillerRabin(
+		Integer const &N,
+		std::size_t const K) {
+		static std::random_device randomDevice;
+		static std::mt19937_64 generator(randomDevice());
+		return isPrimeMillerRabin(N, K, generator);
 	}
 
 	// Miller-Rabin primality test, deterministic, for up to

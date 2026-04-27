@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <random>
 #include <type_traits>
 #include <utility>
 
@@ -79,8 +80,8 @@ namespace Rain::Algorithm {
 		typename std::enable_if<
 			Functional::TraitType<
 				IntegerFirst>::IsIntegral::VALUE &&
-			Functional::TraitType<
-				IntegerSecond>::IsIntegral::VALUE>::type * = nullptr>
+			Functional::TraitType<IntegerSecond>::IsIntegral::
+				VALUE>::type * = nullptr>
 	struct BigIntegerCommon :
 		std::conditional<
 			(sizeof(IntegerFirst) >= sizeof(IntegerSecond)),
@@ -170,6 +171,22 @@ namespace Rain::Algorithm {
 		// Bool constructor.
 		explicit inline constexpr BigInteger(bool const value) :
 			value{static_cast<UnderlyingInteger>(value)} {}
+		// Random constructor. Requires Generator & in the
+		// declval to collapse to an lvalue, which distribution
+		// requires.
+		template<
+			typename Generator,
+			std::enable_if<!Functional::TraitType<
+				Generator>::IsIntegral::VALUE>::type * = nullptr,
+			decltype(std::declval<
+				std::uniform_int_distribution<>>()(
+				std::declval<Generator &>())) * = nullptr>
+		explicit inline BigInteger(Generator &generator) :
+			value{
+				std::uniform_int_distribution<UnderlyingInteger>(
+					std::numeric_limits<UnderlyingInteger>::min(),
+					std::numeric_limits<UnderlyingInteger>::max())(
+					generator)} {}
 		// Cast constructors.
 		//
 		// In-range casts are trivial and lossless.
@@ -1227,6 +1244,19 @@ namespace Rain::Algorithm {
 		explicit inline constexpr BigInteger(bool const value) :
 			high(),
 			low(value) {}
+		// Random constructor. Requires Generator & in the
+		// declval to collapse to an lvalue, which distribution
+		// requires.
+		template<
+			typename Generator,
+			std::enable_if<!Functional::TraitType<
+				Generator>::IsIntegral::VALUE>::type * = nullptr,
+			decltype(std::declval<
+				std::uniform_int_distribution<>>()(
+				std::declval<Generator &>())) * = nullptr>
+		explicit inline BigInteger(Generator &generator) :
+			high(generator),
+			low(generator) {}
 		// Cast constructors. 2 constructors handle native ints,
 		// the others handle BigInteger.
 		//

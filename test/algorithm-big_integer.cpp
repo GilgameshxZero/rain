@@ -1,7 +1,10 @@
+#include "rain/functional/trait.hpp"
 #include <rain.hpp>
+#include <random>
 
 using Rain::Error::releaseAssert;
 using namespace Rain::Algorithm;
+using namespace Rain;
 using namespace std;
 
 int main() {
@@ -279,6 +282,20 @@ int main() {
 				ss.str() ==
 				"2305567963945518424753102147331756042");
 		}
+	}
+
+	// Random constructor.
+	{
+		std::random_device randomDevice;
+		std::mt19937 generator(randomDevice());
+		BigIntegerSigned<10> z;
+		cout << "Generating 16 random " << 8 * sizeof(z)
+				 << "-bit integers..." << endl;
+		for (std::size_t i{0}; i < 16; i++) {
+			z = decltype(z)(generator);
+			cout << z << endl;
+		}
+		cout << "Generation complete." << endl;
 	}
 
 	// Misc.

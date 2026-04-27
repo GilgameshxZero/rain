@@ -188,6 +188,23 @@ namespace Rain::Functional {
 			decltype(isBaseOfTemplate<Type>(
 				std::declval<TypeDerived *>()));
 	};
+	template<template<typename, auto...> typename Type>
+	class TraitTypeTemplateTypeAuto {
+		public:
+		template<template<typename, auto...> typename>
+		static TraitFalse isBaseOfTemplate(...);
+		template<
+			template<typename, auto...> typename TypeInner,
+			typename TypeTemplateFirst,
+			auto... TypeTemplate>
+		static TraitTrue isBaseOfTemplate(
+			TypeInner<TypeTemplateFirst, TypeTemplate...> const
+				*);
+		template<typename TypeDerived>
+		using IsBaseOfTemplate =
+			decltype(isBaseOfTemplate<Type>(
+				std::declval<TypeDerived *>()));
+	};
 	template<
 		template<typename, typename, auto...> typename Type>
 	class TraitTypeTemplateTypeTypeAuto {
