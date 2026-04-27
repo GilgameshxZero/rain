@@ -9,6 +9,8 @@ int main() {
 	using namespace Rain::Literal;
 	using namespace std;
 
+	static std::random_device randomDevice;
+	static std::mt19937 generator(randomDevice());
 	uniform_int_distribution dist(0, 127);
 
 	{

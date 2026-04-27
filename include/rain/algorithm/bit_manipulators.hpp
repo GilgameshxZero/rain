@@ -13,18 +13,8 @@ namespace Rain::Algorithm {
 			Functional::TraitType<Integer>::IsIntegral::VALUE &&
 			!Functional::TraitType<Integer>::IsSigned::VALUE>::
 			type * = nullptr>
-	inline std::size_t mostSignificant1BitIdx(
+	inline std::size_t mostSignificant1BitIdxImpl(
 		Integer const &x) {
-#ifdef __has_builtin
-	#if __has_builtin(__builtin_clzll)
-		if (sizeof(Integer) <= sizeof(unsigned long long)) {
-			return 8 * sizeof(unsigned long long) -
-				__builtin_clzll(
-					static_cast<unsigned long long>(x)) -
-				1;
-		}
-	#endif
-#endif
 		for (
 			std::size_t bit{8 * sizeof(Integer) - 1};
 			bit != std::numeric_limits<std::size_t>::max();
@@ -34,6 +24,29 @@ namespace Rain::Algorithm {
 			}
 		}
 		return std::numeric_limits<std::size_t>::max();
+	}
+	template<
+		typename Integer,
+		std::enable_if<std::is_integral<Integer>::value>::type
+			* = nullptr>
+	inline std::size_t mostSignificant1BitIdx(
+		Integer const &x) {
+#ifdef __has_builtin
+	#if __has_builtin(__builtin_clzll)
+		return 8 * sizeof(unsigned long long) -
+			__builtin_clzll(static_cast<unsigned long long>(x)) -
+			1;
+	#endif
+#endif
+		return mostSignificant1BitIdxImpl(x);
+	}
+	template<
+		typename Integer,
+		std::enable_if<!std::is_integral<Integer>::value>::type
+			* = nullptr>
+	inline std::size_t mostSignificant1BitIdx(
+		Integer const &x) {
+		return mostSignificant1BitIdxImpl(x);
 	}
 
 	// Compile-time `mostSignificant1BitIdx`.
@@ -55,16 +68,8 @@ namespace Rain::Algorithm {
 			Functional::TraitType<Integer>::IsIntegral::VALUE &&
 			!Functional::TraitType<Integer>::IsSigned::VALUE>::
 			type * = nullptr>
-	inline std::size_t leastSignificant1BitIdx(
+	inline std::size_t leastSignificant1BitIdxImpl(
 		Integer const &x) {
-#ifdef __has_builtin
-	#if __has_builtin(__builtin_ctzll)
-		if (sizeof(Integer) <= sizeof(unsigned long long)) {
-			return __builtin_ctzll(
-				static_cast<unsigned long long>(x));
-		}
-	#endif
-#endif
 		for (
 			std::size_t bit{0}; bit < 8 * sizeof(Integer);
 			bit++) {
@@ -73,6 +78,28 @@ namespace Rain::Algorithm {
 			}
 		}
 		return std::numeric_limits<std::size_t>::max();
+	}
+	template<
+		typename Integer,
+		std::enable_if<std::is_integral<Integer>::value>::type
+			* = nullptr>
+	inline std::size_t leastSignificant1BitIdx(
+		Integer const &x) {
+#ifdef __has_builtin
+	#if __has_builtin(__builtin_ctzll)
+		return __builtin_ctzll(
+			static_cast<unsigned long long>(x));
+	#endif
+#endif
+		return leastSignificant1BitIdxImpl(x);
+	}
+	template<
+		typename Integer,
+		std::enable_if<!std::is_integral<Integer>::value>::type
+			* = nullptr>
+	inline std::size_t leastSignificant1BitIdx(
+		Integer const &x) {
+		return leastSignificant1BitIdxImpl(x);
 	}
 
 	// Count of 1-bits in unsigned integral types of at most
@@ -83,15 +110,7 @@ namespace Rain::Algorithm {
 			Functional::TraitType<Integer>::IsIntegral::VALUE &&
 			!Functional::TraitType<Integer>::IsSigned::VALUE>::
 			type * = nullptr>
-	inline std::size_t bitPopcount(Integer const &x) {
-#ifdef __has_builtin
-	#if __has_builtin(__builtin_popcountll)
-		if (sizeof(Integer) <= sizeof(unsigned long long)) {
-			return __builtin_popcountll(
-				static_cast<unsigned long long>(x));
-		}
-	#endif
-#endif
+	inline std::size_t bitPopcountImpl(Integer const &x) {
 		std::size_t count{0};
 		for (
 			std::size_t bit{0}; bit < 8 * sizeof(Integer);
@@ -100,4 +119,24 @@ namespace Rain::Algorithm {
 		}
 		return count;
 	}
-} // namespace Rain::Algorithm
+	template<
+		typename Integer,
+		std::enable_if<std::is_integral<Integer>::value>::type
+			* = nullptr>
+	inline std::size_t bitPopcount(Integer const &x) {
+#ifdef __has_builtin
+	#if __has_builtin(__builtin_popcountll)
+		return __builtin_popcountll(
+			static_cast<unsigned long long>(x));
+	#endif
+#endif
+		return bitPopcountImpl(x);
+	}
+	template<
+		typename Integer,
+		std::enable_if<!std::is_integral<Integer>::value>::type
+			* = nullptr>
+	inline std::size_t bitPopcount(Integer const &x) {
+		return bitPopcountImpl(x);
+	}
+}

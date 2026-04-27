@@ -80,59 +80,55 @@ namespace Rain::Algorithm {
 	}
 
 	// Miller-Rabin primality test in O(K ln^3 N), with
-	// failure probability upper bounded by 4^-K.
+	// failure probability upper bounded by 4^-K. 64
+	// iterations is good enough, for up to 4096 bits.
+	//
+	// It is required that Integer is large enough to store
+	// N*N.
 	//
 	// We do not use ModulusField here as modulus can be an
 	// expensive operation on BigInteger, so we perform it
 	// manually.
+	//
+	// `generateRandom` must return a random Integer, uniform
+	// in modulo N.
 	template<
 		typename Integer,
-		typename Generator,
+		typename Callable,
 		std::enable_if<
 			Functional::TraitType<Integer>::IsIntegral::VALUE &&
 			Functional::TraitType<Integer>::IsUnsigned::VALUE>::
-			type * = nullptr,
-		decltype(std::declval<
-			std::uniform_int_distribution<>>()(
-			std::declval<Generator &>())) * = nullptr>
+			type * = nullptr>
 	inline bool isPrimeMillerRabin(
 		Integer const &N,
 		std::size_t const K,
-		Generator &generator) {
+		Callable &&generateRandom) {
 		if (N < 4) {
 			return N == 2 || N == 3;
 		}
 
-		// Larger integer (by 1) needed to store product before
-		// performing modulus.
-		using LargerInteger = BigInteger<
-			MostSignificant1BitIdx<
-				sizeof(Integer) * 8 - 1>::value +
-				2,
-			false>;
-		LargerInteger largerN(N);
-		std::size_t lsb{leastSignificant1BitIdx(largerN - 1)};
-		LargerInteger truncated((largerN - 1) >> lsb);
+		std::size_t lsb{leastSignificant1BitIdx(N - 1)};
+		Integer truncated((N - 1) >> lsb);
 
 		for (std::size_t i{0}; i < K; i++) {
-			LargerInteger X(1), digit(1), multiple(generator);
+			Integer X(1), digit(1), multiple(generateRandom());
 			// Random number in [2, N - 1].
-			multiple = multiple % (largerN - 2) + 2;
+			multiple = multiple % (N - 2) + 2;
 			// Raise X to the power `truncated` under modulo N.
 			for (; digit <= truncated; digit <<= 1) {
 				if ((truncated & digit) != 0) {
-					X = X * multiple % largerN;
+					X = X * multiple % N;
 				}
-				multiple = multiple * multiple % largerN;
+				multiple = multiple * multiple % N;
 			}
 
-			if (X == 1 || X == largerN - 1) {
+			if (X == 1 || X == N - 1) {
 				continue;
 			}
 			bool canBePrime{false};
 			for (std::size_t j{1}; j < lsb; j++) {
-				X = X * X % largerN;
-				if (X == largerN - 1) {
+				X = X * X % N;
+				if (X == N - 1) {
 					canBePrime = true;
 					break;
 				}
@@ -142,16 +138,5 @@ namespace Rain::Algorithm {
 			}
 		}
 		return true;
-	}
-
-	// Default generator. 64 iterations is generally good for
-	// up to 4096-bit integers.
-	template<typename Integer>
-	inline bool isPrimeMillerRabin(
-		Integer const &N,
-		std::size_t const K = 64) {
-		static std::random_device randomDevice;
-		static std::mt19937 generator(randomDevice());
-		return isPrimeMillerRabin(N, K, generator);
 	}
 }

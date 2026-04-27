@@ -257,6 +257,8 @@ LINKER_FLAGS_PCH=\
 	$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj
 !ENDIF
 
+NMAKE_TMP = .nmake.$(BUILD_NAME).tmp.txt
+
 # Real targets.
 # Default/build target only compiles and links, but does
 # not run.
@@ -395,18 +397,18 @@ $(PROJ_BIN): $(PROJ_SRC) $(NMAKE_INCL_PCH) $(NMAKE_INCL)
 	@REM arguments as it is easy to exceed the 8192 limit.
 	@REM We use manual @ECHOs because the `nmake` syntax
 	@REM is slow (?).
-	@ECHO NMAKE_INCL_PCH="$(NMAKE_INCL_PCH)" >> .nmake.tmp.txt
-	@ECHO NMAKE_INCL="$(NMAKE_INCL)" >> .nmake.tmp.txt
-	@ECHO NMAKE_PROJ_SRC="$(NMAKE_PROJ_SRC)" >> .nmake.tmp.txt
-	@ECHO NMAKE_PCH_YU="$(NMAKE_PCH_YU)" >> .nmake.tmp.txt
-	@ECHO PROJ="$(PROJ)" >> .nmake.tmp.txt
-	@ECHO INCL_PCH="$(INCL_PCH)" >> .nmake.tmp.txt
-	@ECHO INCL="$(INCL)" >> .nmake.tmp.txt
-	@ECHO BIN="$(BIN)" SRC="$(SRC)" >> .nmake.tmp.txt
-	@ECHO BUILD=$(BUILD) ARCH=$(ARCH) >> .nmake.tmp.txt
-	@ECHO PCH=$(PCH) ARGS="$(ARGS)" >> .nmake.tmp.txt
-	@ECHO VERSIONING=$(VERSIONING) >> .nmake.tmp.txt
-	@ECHO SHOW_OUTDATED=$(SHOW_OUTDATED) >> .nmake.tmp.txt
+	@ECHO NMAKE_INCL_PCH="$(NMAKE_INCL_PCH)" >> $(NMAKE_TMP)
+	@ECHO NMAKE_INCL="$(NMAKE_INCL)" >> $(NMAKE_TMP)
+	@ECHO NMAKE_PROJ_SRC="$(NMAKE_PROJ_SRC)" >> $(NMAKE_TMP)
+	@ECHO NMAKE_PCH_YU="$(NMAKE_PCH_YU)" >> $(NMAKE_TMP)
+	@ECHO PROJ="$(PROJ)" >> $(NMAKE_TMP)
+	@ECHO INCL_PCH="$(INCL_PCH)" >> $(NMAKE_TMP)
+	@ECHO INCL="$(INCL)" >> $(NMAKE_TMP)
+	@ECHO BIN="$(BIN)" SRC="$(SRC)" >> $(NMAKE_TMP)
+	@ECHO BUILD=$(BUILD) ARCH=$(ARCH) >> $(NMAKE_TMP)
+	@ECHO PCH=$(PCH) ARGS="$(ARGS)" >> $(NMAKE_TMP)
+	@ECHO VERSIONING=$(VERSIONING) >> $(NMAKE_TMP)
+	@ECHO SHOW_OUTDATED=$(SHOW_OUTDATED) >> $(NMAKE_TMP)
 	@REM Compile all subdirectories (and files) separately so
 	@REM as to place object files in the correct relative
 	@REM subdirectory.
@@ -418,13 +420,13 @@ $(PROJ_BIN): $(PROJ_SRC) $(NMAKE_INCL_PCH) $(NMAKE_INCL)
 		@IF "%%~xI" NEQ ".obj" (\
 			$(MAKE) /C $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\%%~I.sentinel.tmp\
 				NMAKE_COMPILE_TARGET="%%~I"\
-				@.nmake.tmp.txt\
+				@$(NMAKE_TMP)\
 		) ELSE (\
 			$(MAKE) /C $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\%%~I\
 				NMAKE_COMPILE_TARGET="%%~I"\
-				@.nmake.tmp.txt\
+				@$(NMAKE_TMP)\
 		)
-	@DEL .nmake.tmp.txt
+	@DEL $(NMAKE_TMP)
 	@ECHO Linking $(PROJ_BIN)...
 	@$(LINKER) $(LINKER_FLAGS) $(LINKER_FLAGS_PCH)\
 		$(patsubst %.cpp,%.obj,\

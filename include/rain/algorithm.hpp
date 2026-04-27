@@ -3,6 +3,7 @@
 
 #include "algorithm/algorithm.hpp"
 #include "algorithm/big_integer.hpp"
+#include "algorithm/big_integer_flex.hpp"
 #include "algorithm/bit_manipulators.hpp"
 #include "algorithm/dijkstra.hpp"
 #include "algorithm/dsu.hpp"
