@@ -28,7 +28,10 @@ namespace Rain::Networking::Tcp {
 
 	class NamedSocketSpecInterface :
 		virtual public SocketSpecInterface,
-		virtual public Networking::NamedSocketSpecInterface {};
+		virtual public Networking::NamedSocketSpecInterface {
+		public:
+		using SocketSpecInterface = Tcp::SocketSpecInterface;
+	};
 
 	template<typename Socket>
 	class NamedSocketSpec :
@@ -45,6 +48,9 @@ namespace Rain::Networking::Tcp {
 		virtual public Networking::
 			ConnectedSocketSpecInterface {
 		public:
+		using NamedSocketSpecInterface =
+			Tcp::NamedSocketSpecInterface;
+
 		// All interfaces must have default constructors to
 		// allow for easy virtual inheritance.
 		ConnectedSocketSpecInterface() :

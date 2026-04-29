@@ -8,9 +8,20 @@
 #include <future>
 
 namespace Rain::Networking {
-	class ClientSocketSpecInterface :
+	class ClientSocketSpecInterfaceInterface :
 		virtual public ConnectedSocketSpecInterface {
-		protected:
+		public:
+		using ConnectedSocketSpecInterface =
+			ConnectedSocketSpecInterface;
+	};
+
+	class ClientSocketSpecInterface :
+		virtual public ClientSocketSpecInterfaceInterface {
+		public:
+		using ClientSocketSpecInterfaceInterface =
+			ClientSocketSpecInterfaceInterface;
+
+		public:
 		// Code-sharing: connect any opened NativeSocket to a
 		// single AddressInfo. Returns false on success, true on
 		// failure.

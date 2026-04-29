@@ -9,6 +9,10 @@ namespace Rain::Networking::Smtp {
 		virtual public ConnectedSocketSpecInterface,
 		virtual public ReqRes::
 			ClientSocketSpecInterfaceInterface {
+		public:
+		using ConnectedSocketSpecInterface =
+			Smtp::ConnectedSocketSpecInterface;
+
 		protected:
 		// Resolve MX records into addresses.
 		static std::vector<Host> mxRecordsToHostGroups(
@@ -30,7 +34,11 @@ namespace Rain::Networking::Smtp {
 		virtual public ClientSocketSpecInterfaceInterface,
 		virtual public ReqRes::ClientSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec> {};
+			ResponseMessageSpec> {
+		public:
+		using ClientSocketSpecInterfaceInterface =
+			Smtp::ClientSocketSpecInterfaceInterface;
+	};
 
 	template<
 		typename RequestMessageSpec,

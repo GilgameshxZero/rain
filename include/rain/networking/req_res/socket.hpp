@@ -25,7 +25,10 @@ namespace Rain::Networking::ReqRes {
 
 	class NamedSocketSpecInterface :
 		virtual public SocketSpecInterface,
-		virtual public Tcp::NamedSocketSpecInterface {};
+		virtual public Tcp::NamedSocketSpecInterface {
+		public:
+		using SocketSpecInterface = ReqRes::SocketSpecInterface;
+	};
 
 	template<typename Socket>
 	class NamedSocketSpec :
@@ -37,7 +40,11 @@ namespace Rain::Networking::ReqRes {
 	// Allows for send/recv on R/Rs.
 	class ConnectedSocketSpecInterface :
 		virtual public NamedSocketSpecInterface,
-		virtual public Tcp::ConnectedSocketSpecInterface {};
+		virtual public Tcp::ConnectedSocketSpecInterface {
+		public:
+		using NamedSocketSpecInterface =
+			ReqRes::NamedSocketSpecInterface;
+	};
 
 	template<typename Socket>
 	class ConnectedSocketSpec :

@@ -8,7 +8,11 @@ namespace Rain::Networking::Http {
 	class ClientSocketSpecInterfaceInterface :
 		virtual public ConnectedSocketSpecInterface,
 		virtual public ReqRes::
-			ClientSocketSpecInterfaceInterface {};
+			ClientSocketSpecInterfaceInterface {
+		public:
+		using ConnectedSocketSpecInterface =
+			Http::ConnectedSocketSpecInterface;
+	};
 
 	template<
 		typename RequestMessageSpec,
@@ -17,7 +21,11 @@ namespace Rain::Networking::Http {
 		virtual public ClientSocketSpecInterfaceInterface,
 		virtual public ReqRes::ClientSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec> {};
+			ResponseMessageSpec> {
+		public:
+		using ClientSocketSpecInterfaceInterface =
+			Http::ClientSocketSpecInterfaceInterface;
+	};
 
 	// HTTP Client specialization.
 	template<

@@ -29,7 +29,10 @@ namespace Rain::Networking::Http {
 
 	class NamedSocketSpecInterface :
 		virtual public SocketSpecInterface,
-		virtual public ReqRes::NamedSocketSpecInterface {};
+		virtual public ReqRes::NamedSocketSpecInterface {
+		public:
+		using SocketSpecInterface = Http::SocketSpecInterface;
+	};
 
 	template<typename Socket>
 	class NamedSocketSpec :
@@ -40,7 +43,11 @@ namespace Rain::Networking::Http {
 
 	class ConnectedSocketSpecInterface :
 		virtual public NamedSocketSpecInterface,
-		virtual public ReqRes::ConnectedSocketSpecInterface {};
+		virtual public ReqRes::ConnectedSocketSpecInterface {
+		public:
+		using NamedSocketSpecInterface =
+			Http::NamedSocketSpecInterface;
+	};
 
 	template<typename Socket>
 	class ConnectedSocketSpec :

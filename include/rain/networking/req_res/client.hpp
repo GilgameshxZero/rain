@@ -7,14 +7,22 @@
 namespace Rain::Networking::ReqRes {
 	class ClientSocketSpecInterfaceInterface :
 		virtual public ConnectedSocketSpecInterface,
-		virtual public Tcp::ClientSocketSpecInterface {};
+		virtual public Tcp::ClientSocketSpecInterfaceInterface {
+		public:
+		using ConnectedSocketSpecInterface =
+			ReqRes::ConnectedSocketSpecInterface;
+	};
 
 	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
 	class ClientSocketSpecInterface :
-		virtual public ClientSocketSpecInterfaceInterface {
+		virtual public ClientSocketSpecInterfaceInterface,
+		virtual public Tcp::ClientSocketSpecInterface {
 		public:
+		using ClientSocketSpecInterfaceInterface =
+			ReqRes::ClientSocketSpecInterfaceInterface;
+
 		using ClientSocketSpecInterfaceInterface::recv;
 		using ClientSocketSpecInterfaceInterface::send;
 		using ClientSocketSpecInterfaceInterface::operator<<;

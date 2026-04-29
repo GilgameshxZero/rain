@@ -305,6 +305,8 @@ namespace Rain::Networking {
 	class NamedSocketSpecInterface :
 		virtual public SocketInterface {
 		public:
+		using SocketSpecInterface = SocketInterface;
+
 		AddressInfo name() const {
 			AddressInfo addressInfo;
 			addressInfo.addressLen = sizeof(addressInfo.address);
@@ -341,6 +343,9 @@ namespace Rain::Networking {
 	class ConnectedSocketSpecInterface :
 		virtual public NamedSocketSpecInterface {
 		public:
+		using NamedSocketSpecInterface =
+			NamedSocketSpecInterface;
+
 		// Throws if peer aborts. Returns 0 on timeout. Sends as
 		// many bytes as possible before timeout.
 		std::size_t send(

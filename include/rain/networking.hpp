@@ -15,5 +15,6 @@
 #include "networking/socket_options.hpp"
 #include "networking/specification.hpp"
 #include "networking/tcp.hpp"
+#include "networking/tls.hpp"
 #include "networking/worker.hpp"
 #include "networking/wsa.hpp"
