@@ -149,12 +149,16 @@ namespace Rain::Networking::Smtp {
 		public Socket,
 		virtual public WorkerSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec>,
-		virtual public WorkerSocketSpecInterfaceInterface {
+			ResponseMessageSpec> {
 		using Socket::Socket;
 
 		protected:
-		protected:
+		// Type names from a dependent superclass are not
+		// automatically injected.
+		using typename WorkerSocketSpecInterface<
+			RequestMessageSpec,
+			ResponseMessageSpec>::DataIStreamBuf;
+
 		// Import dependent names. Must prefix with Http:: to
 		// specify the templated dependent typename, otherwise
 		// compiler will interpret this as the Tcp::
@@ -508,17 +512,14 @@ namespace Rain::Networking::Smtp {
 		}
 	};
 
-	// Shorthand for SMTP Worker.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
 	template<
-		typename RequestMessageSpec,
-		typename ResponseMessageSpec,
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename RequestMessageSpec = Smtp::Request,
+		typename ResponseMessageSpec = Smtp::Response,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Worker :
 		public WorkerSocketSpec<
@@ -528,28 +529,18 @@ namespace Rain::Networking::Smtp {
 				NamedSocketSpec<SocketSpec<ReqRes::Worker<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
 					SocketOptions...>>>>> {
-		using WorkerSocketSpec<
+		public:
+		using WorkerSocketSpec = WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<ReqRes::Worker<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
-					SocketOptions...>>>>>::WorkerSocketSpec;
+					SocketOptions...>>>>>;
+		using WorkerSocketSpec::WorkerSocketSpec;
 	};
 }

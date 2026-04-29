@@ -2,145 +2,147 @@
 #include <rain.hpp>
 
 using Rain::Error::releaseAssert;
+using namespace Rain::Literal;
+using namespace Rain::Networking;
+
+// Custom Request/Response output to cout when received
+// via pp-chain.
+class MyRequest : public Http::Request {
+	public:
+	using Request::Request;
+
+	virtual void recvWith(std::istream &stream) override {
+		Request::recvWith(stream);
+		std::cout << "Request without body:\n"
+							<< this->method << ' ' << this->target << ' '
+							<< this->version << '\n'
+							<< this->headers << std::endl;
+	}
+};
+class MyResponse : public Http::Response {
+	public:
+	using Response::Response;
+
+	virtual void recvWith(std::istream &stream) override {
+		Response::recvWith(stream);
+		std::cout << "Response without body:\n"
+							<< this->version << ' ' << this->statusCode
+							<< ' ' << this->reasonPhrase << '\n'
+							<< this->headers << std::endl;
+	}
+};
+
+class MyWorker :
+	public Http::Worker<
+		MyRequest,
+		Http::Response,
+		Ipv6FamilyInterface,
+		NoLingerSocketOption> {
+	public:
+	// Custom currying constructor to set send/recv timeout
+	// to 300ms.
+	MyWorker(auto &&...args) :
+		Worker(
+			1_zu << 10_zu,
+			1_zu << 10_zu,
+			300LL,
+			300LL,
+			std::forward<decltype(args)>(args)...) {}
+
+	private:
+	ResponseAction reqSimple(Request &, std::smatch const &) {
+		return {{StatusCode::OK}};
+	}
+	ResponseAction reqEcho(
+		Request &req,
+		std::smatch const &) {
+		// Must read full body into memory, since req.body is
+		// of indeterminate length.
+		std::stringstream stream;
+		stream << req.body;
+
+		return {
+			{StatusCode::OK,
+				{{{"Your-Method", req.method},
+					{"Response-Test-Header", "test"}}},
+				stream.str(),
+				"reason"}};
+	}
+	ResponseAction reqPlay(
+		Request &req,
+		std::smatch const &) {
+		return {
+			{StatusCode::OK,
+				{{{"Content-Type", "text/plain; charset=UTF-8"}}},
+				"Your Method: "s +
+					static_cast<std::string>(req.method) +
+					"\nHello world!"s,
+				"bruh"}};
+	}
+
+	virtual std::vector<RequestFilter> const &
+		filters() override {
+		static std::vector<RequestFilter> const filters{
+			{".*",
+				"/simple/?",
+				{Method::GET},
+				&MyWorker::reqSimple},
+			{".*",
+				"/echo/?",
+				{Method::GET, Method::POST},
+				&MyWorker::reqEcho},
+			{".*",
+				"/play.*",
+				{Method::GET, Method::POST},
+				&MyWorker::reqPlay}};
+		return filters;
+	}
+
+	// Override send pp-chain to add server signature.
+	virtual void send(Http::Response &res) override {
+		res.headers.server("MyServer");
+		Worker::send(res);
+	}
+};
+
+class MyServer :
+	public Http::Server<
+		MyWorker,
+		Ipv6FamilyInterface,
+		DualStackSocketOption,
+		NoLingerSocketOption> {
+	using Server::Server;
+
+	private:
+	virtual MyWorker makeWorker(
+		NativeSocket nativeSocket,
+		SocketInterface *interrupter) override {
+		return {nativeSocket, interrupter};
+	}
+
+	public:
+	~MyServer() { this->destruct(); }
+};
+
+class MyClient :
+	public Http::Client<
+		Http::Request,
+		MyResponse,
+		Ipv4FamilyInterface,
+		NoLingerSocketOption> {
+	public:
+	// Custom currying constructor to set send/recv timeout
+	// to 300ms.
+	MyClient(auto &&...args) :
+		Client(
+			1_zu << 10_zu,
+			1_zu << 10_zu,
+			300LL,
+			300LL,
+			std::forward<decltype(args)>(args)...) {}
+};
 
 int main() {
-	using namespace Rain::Literal;
-	using namespace Rain::Networking;
-
-	// Custom Request/Response output to cout when received
-	// via pp-chain.
-	class MyRequest : public Http::Request {
-		public:
-		using Request::Request;
-
-		virtual void recvWith(std::istream &stream) override {
-			Request::recvWith(stream);
-			std::cout << "Request without body:\n"
-								<< this->method << ' ' << this->target
-								<< ' ' << this->version << '\n'
-								<< this->headers << std::endl;
-		}
-	};
-	class MyResponse : public Http::Response {
-		public:
-		using Response::Response;
-
-		virtual void recvWith(std::istream &stream) override {
-			Response::recvWith(stream);
-			std::cout << "Response without body:\n"
-								<< this->version << ' ' << this->statusCode
-								<< ' ' << this->reasonPhrase << '\n'
-								<< this->headers << std::endl;
-		}
-	};
-
-	class MyWorker :
-		public Http::Worker<
-			MyRequest,
-			Http::Response,
-			1_zu << 10,
-			1_zu << 10,
-			300,
-			300,
-			Ipv6FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
-			NoLingerSocketOption> {
-		using Worker::Worker;
-
-		private:
-		ResponseAction reqSimple(
-			Request &,
-			std::smatch const &) {
-			return {{StatusCode::OK}};
-		}
-		ResponseAction reqEcho(
-			Request &req,
-			std::smatch const &) {
-			// Must read full body into memory, since req.body is
-			// of indeterminate length.
-			std::stringstream stream;
-			stream << req.body;
-
-			return {
-				{StatusCode::OK,
-					{{{"Your-Method", req.method},
-						{"Response-Test-Header", "test"}}},
-					stream.str(),
-					"reason"}};
-		}
-		ResponseAction reqPlay(
-			Request &req,
-			std::smatch const &) {
-			return {
-				{StatusCode::OK,
-					{{{"Content-Type", "text/plain; charset=UTF-8"}}},
-					"Your Method: "s +
-						static_cast<std::string>(req.method) +
-						"\nHello world!"s,
-					"bruh"}};
-		}
-
-		virtual std::vector<RequestFilter> const &
-			filters() override {
-			static std::vector<RequestFilter> const filters{
-				{".*",
-					"/simple/?",
-					{Method::GET},
-					&MyWorker::reqSimple},
-				{".*",
-					"/echo/?",
-					{Method::GET, Method::POST},
-					&MyWorker::reqEcho},
-				{".*",
-					"/play.*",
-					{Method::GET, Method::POST},
-					&MyWorker::reqPlay}};
-			return filters;
-		}
-
-		// Override send pp-chain to add server signature.
-		virtual void send(Http::Response &res) override {
-			res.headers.server("MyServer");
-			Worker::send(res);
-		}
-	};
-
-	class MyServer :
-		public Http::Server<
-			MyWorker,
-			Ipv6FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
-			DualStackSocketOption,
-			NoLingerSocketOption> {
-		using Server::Server;
-
-		private:
-		virtual MyWorker makeWorker(
-			NativeSocket nativeSocket,
-			SocketInterface *interrupter) override {
-			return {nativeSocket, interrupter};
-		}
-
-		public:
-		~MyServer() { this->destruct(); }
-	};
-
-	class MyClient :
-		public Http::Client<
-			Http::Request,
-			MyResponse,
-			1_zu << 10,
-			1_zu << 10,
-			300,
-			300,
-			Ipv4FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
-			NoLingerSocketOption> {
-		using Client::Client;
-	};
 
 	{
 		MyServer server(":0");

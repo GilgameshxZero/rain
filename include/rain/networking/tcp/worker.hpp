@@ -5,8 +5,13 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::Tcp {
-	class WorkerSocketSpecInterface :
+	class WorkerSocketSpecInterfaceInterface :
 		virtual public ConnectedSocketSpecInterface,
+		virtual public Networking::
+			WorkerSocketSpecInterfaceInterface {};
+
+	class WorkerSocketSpecInterface :
+		virtual public WorkerSocketSpecInterfaceInterface,
 		virtual public Networking::WorkerSocketSpecInterface {};
 
 	// Worker specialization for TCP protocol Sockets.
@@ -17,36 +22,31 @@ namespace Rain::Networking::Tcp {
 		using Socket::Socket;
 	};
 
-	// Shorthand for TCP Worker.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
+	//
+	// Type/Protocol do not get template parameters as they
+	// are fixed for TCP layer sockets.
 	template<
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Worker :
 		public WorkerSocketSpec<ConnectedSocketSpec<
-			sendBufferLen,
-			recvBufferLen,
-			sendTimeoutMs,
-			recvTimeoutMs,
 			NamedSocketSpec<SocketSpec<Networking::Worker<
 				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface,
 				SocketOptions...>>>>> {
-		using WorkerSocketSpec<ConnectedSocketSpec<
-			sendBufferLen,
-			recvBufferLen,
-			sendTimeoutMs,
-			recvTimeoutMs,
-			NamedSocketSpec<SocketSpec<Networking::Worker<
-				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
-				SocketOptions...>>>>>::WorkerSocketSpec;
+		public:
+		using WorkerSocketSpec =
+			WorkerSocketSpec<ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<Networking::Worker<
+					SocketFamilyInterface,
+					StreamTypeInterface,
+					TcpProtocolInterface,
+					SocketOptions...>>>>>;
+		using WorkerSocketSpec::WorkerSocketSpec;
 	};
 }

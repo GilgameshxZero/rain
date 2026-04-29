@@ -8,18 +8,8 @@ int main() {
 	using namespace Rain::Networking;
 
 	{
-		Http::Client<
-			Http::Request,
-			Http::Response,
-			1_zu << 10,
-			1_zu << 10,
-			15000,
-			15000,
-			Ipv4FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
-			NoLingerSocketOption>
-			client("facebook.com:80");
+		Http::Client<Http::Request, Http::Response> client(
+			"facebook.com:80");
 		client << Http::Request();
 		Http::Response res;
 		client >> res;

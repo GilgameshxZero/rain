@@ -8,10 +8,15 @@ namespace Rain::Networking::ReqRes {
 	class WorkerSocketSpecInterfaceInterface :
 		virtual public ConnectedSocketSpecInterface,
 		virtual public Tcp::WorkerSocketSpecInterface {};
+
 	// Worker specialization for TCP protocol Sockets.
 	//
 	// Enables pre/post-processing via overrides on stream
 	// operators.
+	//
+	// All R/R *SpecInterfaces accept R/R typename parameters,
+	// since they are meant to be decided by the caller
+	// (likely a protocol layer atop R/R, e.g. HTTP/SMTP).
 	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
@@ -136,22 +141,22 @@ namespace Rain::Networking::ReqRes {
 		public Socket,
 		virtual public WorkerSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec>,
-		virtual public WorkerSocketSpecInterfaceInterface {
+			ResponseMessageSpec> {
 		using Socket::Socket;
 	};
 
-	// Shorthand for TCP Worker.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
+	//
+	// R/R do not get default template arguments (as the only
+	// relevant ones are abstract in R/R), but protocol layers
+	// atop R/R may specify default template arguments.
 	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Worker :
 		public WorkerSocketSpec<
@@ -159,26 +164,16 @@ namespace Rain::Networking::ReqRes {
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<Tcp::Worker<
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
 					SocketOptions...>>>>> {
-		using WorkerSocketSpec<
+		public:
+		using WorkerSocketSpec = WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<Tcp::Worker<
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
-					SocketOptions...>>>>>::WorkerSocketSpec;
+					SocketOptions...>>>>>;
+		using WorkerSocketSpec::WorkerSocketSpec;
 	};
 }

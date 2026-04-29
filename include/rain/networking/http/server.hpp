@@ -22,17 +22,17 @@ namespace Rain::Networking::Http {
 	class ServerSocketSpec :
 		public Socket,
 		virtual public ServerSocketSpecInterface<
-			WorkerSocketSpec>,
-		virtual public ServerSocketSpecInterfaceInterface {
+			WorkerSocketSpec> {
 		using Socket::Socket;
 	};
 
-	// Shorthand for HTTP Server.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
 	template<
 		typename WorkerSocketSpec,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Server :
 		public ServerSocketSpec<
@@ -40,16 +40,14 @@ namespace Rain::Networking::Http {
 			NamedSocketSpec<SocketSpec<ReqRes::Server<
 				WorkerSocketSpec,
 				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
 				SocketOptions...>>>> {
-		using ServerSocketSpec<
+		public:
+		using ServerSocketSpec = ServerSocketSpec<
 			WorkerSocketSpec,
 			NamedSocketSpec<SocketSpec<ReqRes::Server<
 				WorkerSocketSpec,
 				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
-				SocketOptions...>>>>::ServerSocketSpec;
+				SocketOptions...>>>>;
+		using ServerSocketSpec::ServerSocketSpec;
 	};
 }

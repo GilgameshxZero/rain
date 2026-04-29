@@ -12,13 +12,7 @@ int main() {
 		Smtp::Client<
 			Smtp::Request,
 			Smtp::Response,
-			1_zu << 10,
-			1_zu << 10,
-			15000,
-			15000,
 			Ipv4FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
 			NoLingerSocketOption>
 			client(getMxRecords("gmail.com"));
 	} catch (Rain::Networking::Exception const &exception) {
@@ -39,13 +33,7 @@ int main() {
 		Smtp::Client<
 			Smtp::Request,
 			Smtp::Response,
-			1_zu << 10,
-			1_zu << 10,
-			15000,
-			15000,
 			Ipv4FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
 			NoLingerSocketOption>
 			client(getMxRecords("gmail.com"));
 
@@ -156,13 +144,7 @@ int main() {
 		Smtp::Client<
 			Smtp::Request,
 			Smtp::Response,
-			1_zu << 10,
-			1_zu << 10,
-			15000,
-			15000,
 			Ipv4FamilyInterface,
-			StreamTypeInterface,
-			TcpProtocolInterface,
 			NoLingerSocketOption>
 			client(getMxRecords("gmail.com"));
 

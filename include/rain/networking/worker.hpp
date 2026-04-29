@@ -6,8 +6,11 @@
 #include "socket.hpp"
 
 namespace Rain::Networking {
+	class WorkerSocketSpecInterfaceInterface :
+		virtual public ConnectedSocketSpecInterface {};
+
 	class WorkerSocketSpecInterface :
-		virtual public ConnectedSocketSpecInterface {
+		virtual public WorkerSocketSpecInterfaceInterface {
 		// For access to onWork.
 		template<typename, typename>
 		friend class ServerSocketSpec;
@@ -64,6 +67,11 @@ namespace Rain::Networking {
 
 	// Shorthand which includes ConnectedSocket and
 	// NamedSocket and base Socket templates.
+	//
+	// Importantly names *SocketSpec, which is consistent
+	// across each layer, and overwritten by the next protocol
+	// layer, useful for deducing types on the previous layer
+	// (e.g. for TLS).
 	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
@@ -76,11 +84,13 @@ namespace Rain::Networking {
 				SocketTypeInterface,
 				SocketProtocolInterface,
 				SocketOptions...>>>> {
-		using WorkerSocketSpec<
+		public:
+		using WorkerSocketSpec = WorkerSocketSpec<
 			ConnectedSocketSpec<NamedSocketSpec<Socket<
 				SocketFamilyInterface,
 				SocketTypeInterface,
 				SocketProtocolInterface,
-				SocketOptions...>>>>::WorkerSocketSpec;
+				SocketOptions...>>>>;
+		using WorkerSocketSpec::WorkerSocketSpec;
 	};
 }

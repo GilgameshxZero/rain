@@ -3,21 +3,25 @@
 #include <rain.hpp>
 
 using Rain::Error::releaseAssert;
+using namespace Rain::Literal;
+using namespace Rain::Networking;
+
+class MyClient : public Tcp::Client<> {
+	using Client::Client;
+
+	public:
+	MyClient(auto &&...args) :
+		Client(
+			1_zu << 10_zu,
+			1_zu << 10_zu,
+			300LL,
+			300LL,
+			std::forward<decltype(args)>(args)...) {}
+};
 
 int main() {
-	using namespace Rain::Literal;
-	using namespace Rain::Networking;
 
-	Tcp::Client<
-		1_zu << 10,
-		1_zu << 10,
-		300,
-		300,
-		Ipv4FamilyInterface,
-		StreamTypeInterface,
-		TcpProtocolInterface,
-		NoLingerSocketOption>
-		client("google.com:80");
+	MyClient client("google.com:80");
 	std::cout << "Connected to " << client.peerHost()
 						<< std::endl;
 	client << "GET / HTTP/1.1\r\n"

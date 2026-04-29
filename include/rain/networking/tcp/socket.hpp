@@ -7,6 +7,7 @@
 // selectors.
 #pragma once
 
+#include "../../literal.hpp"
 #include "../socket.hpp"
 
 #include <iostream>
@@ -43,6 +44,11 @@ namespace Rain::Networking::Tcp {
 	// ConnectedSocket(Interface) in TCP protocol layer must
 	// provide subclassing for std::iostream.
 	class ConnectedSocketSpecInterface :
+		// While it seems wrong to inherit from iostream here,
+		// this inheritance actually inherits no state, and
+		// preserves the Interface status of this class. The
+		// inheritance inherits operators and types, while state
+		// is set in ConnectedSocketSpec via `rdbuf`.
 		public std::iostream,
 		virtual public NamedSocketSpecInterface,
 		virtual public Networking::
@@ -65,36 +71,56 @@ namespace Rain::Networking::Tcp {
 	// timeout functions similarly. However, the send timeout
 	// is per-progress: as long as non-zero progress is made
 	// per timeout period, send is not considered to have
-	// timed out. Thus, flush may consume upwards of (send
-	// timeout) * (sendBufferLen) time.
-	template<
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename Socket>
+	// timed out. Thus, flush may consume upwards of
+	// (SEND_TIMEOUT_MS) * (SEND_BUFFER_LEN) time.
+	template<typename Socket>
 	class ConnectedSocketSpec :
 		public Socket,
 		virtual public ConnectedSocketSpecInterface {
 		using Socket::Socket;
+
+		public:
+		// Constants for the internal streambuf.
+		std::size_t const SEND_BUFFER_LEN{1_zu << 10_zu},
+			RECV_BUFFER_LEN{1_zu << 10_zu};
+		long long const SEND_TIMEOUT_MS{15000LL},
+			RECV_TIMEOUT_MS{15000LL};
+
+		// Expose Socket::swap and not iostream::swap.
+		using Socket::swap;
 
 		private:
 		// A custom subclass of std::streambuf as underlying the
 		// std::iostream.
 		class IoStreamBuf : public std::streambuf {
 			private:
+			std::size_t const SEND_BUFFER_LEN, RECV_BUFFER_LEN;
+			long long const SEND_TIMEOUT_MS, RECV_TIMEOUT_MS;
+
 			// A reference to the incomplete "underlying" socket.
 			ConnectedSocketSpecInterface *socket;
 
 			// Internal buffer to prevent delegating to kernel
 			// send/recv too often. sendBuffer is actually 1
 			// larger than specified to allow for easy overflow.
-			char sendBuffer[sendBufferLen + 1],
-				recvBuffer[recvBufferLen];
+			char *sendBuffer, *recvBuffer;
 
 			public:
-			IoStreamBuf(ConnectedSocketSpecInterface *socket) :
+			IoStreamBuf(
+				std::size_t const SEND_BUFFER_LEN,
+				std::size_t const RECV_BUFFER_LEN,
+				long long const SEND_TIMEOUT_MS,
+				long long const RECV_TIMEOUT_MS,
+				ConnectedSocketSpecInterface *socket) :
+				SEND_BUFFER_LEN{SEND_BUFFER_LEN},
+				RECV_BUFFER_LEN{RECV_BUFFER_LEN},
+				SEND_TIMEOUT_MS{SEND_TIMEOUT_MS},
+				RECV_TIMEOUT_MS{RECV_TIMEOUT_MS},
 				socket(socket) {
+				this->sendBuffer =
+					new char[this->SEND_BUFFER_LEN + 1];
+				this->recvBuffer = new char[this->RECV_BUFFER_LEN];
+
 				// Set internal pointers corresponding to empty
 				// buffers.
 				this->setg(
@@ -103,14 +129,21 @@ namespace Rain::Networking::Tcp {
 					this->recvBuffer);
 				this->setp(
 					this->sendBuffer,
-					this->sendBuffer + sendBufferLen);
+					this->sendBuffer + this->SEND_BUFFER_LEN);
 			}
 
-			// Disable copy construct and assignment and move.
+			// Disable copy construct/assignment and move
+			// construct/assignment because we hold state.
 			IoStreamBuf(IoStreamBuf const &) = delete;
 			IoStreamBuf &operator=(IoStreamBuf const &) = delete;
 			IoStreamBuf(IoStreamBuf &&) = delete;
 			IoStreamBuf &operator=(IoStreamBuf &&) = delete;
+
+			// Free stack memory on destruct.
+			~IoStreamBuf() {
+				delete[] this->sendBuffer;
+				delete[] this->recvBuffer;
+			}
 
 			protected:
 			// Ran out of characters while receiving from the
@@ -123,8 +156,9 @@ namespace Rain::Networking::Tcp {
 					try {
 						result = this->socket->recv(
 							this->recvBuffer,
-							recvBufferLen,
-							std::chrono::milliseconds(recvTimeoutMs));
+							this->RECV_BUFFER_LEN,
+							std::chrono::milliseconds(
+								this->RECV_TIMEOUT_MS));
 					} catch (...) {
 						// recv throws (perhaps on peer abort) are
 						// consumed, setting the buffer as invalid
@@ -178,7 +212,8 @@ namespace Rain::Networking::Tcp {
 						auto result = this->socket->send(
 							this->sendBuffer + bytesSent,
 							bytesTotal - bytesSent,
-							std::chrono::milliseconds(sendTimeoutMs));
+							std::chrono::milliseconds(
+								this->SEND_TIMEOUT_MS));
 						if (result == 0) {
 							return -1;
 						}
@@ -193,24 +228,52 @@ namespace Rain::Networking::Tcp {
 				// Mark the send buffer as empty.
 				this->setp(
 					this->sendBuffer,
-					this->sendBuffer + sendBufferLen);
+					this->sendBuffer + this->SEND_BUFFER_LEN);
 
 				return 0;
 			}
 		};
 
 		// Internally holds the stream buffer.
-		IoStreamBuf ioStreamBuf{IoStreamBuf(this)};
+		IoStreamBuf ioStreamBuf{IoStreamBuf(
+			this->SEND_BUFFER_LEN,
+			this->RECV_BUFFER_LEN,
+			this->SEND_TIMEOUT_MS,
+			this->RECV_TIMEOUT_MS,
+			this)};
 
 		private:
 		// Custom defaulted default constructor behavior to add
-		// onto base class constructor behavior.
+		// onto base class constructor behavior, with all
+		// constructors.
 		class _ConnectedSocketSpec {
 			public:
 			_ConnectedSocketSpec(ConnectedSocketSpec *that) {
 				that->rdbuf(&that->ioStreamBuf);
 			}
 		};
+		// Syntax necessary to differentiate from function.
 		_ConnectedSocketSpec _connectedSocketSpec{this};
+
+		public:
+		// Curry constructor to set timeout values.
+		//
+		// Using a curry constructor requires a non-deducing (no
+		// initializer lists) set of other arguments.
+		//
+		// Interfaces get initialize before the main socket, so
+		// the constants must not live in the interface, but
+		// rather in the main socket.
+		ConnectedSocketSpec(
+			std::size_t const SEND_BUFFER_LEN,
+			std::size_t const RECV_BUFFER_LEN,
+			long long const SEND_TIMEOUT_MS,
+			long long const RECV_TIMEOUT_MS,
+			auto &&...args) :
+			Socket(std::forward<decltype(args)>(args)...),
+			SEND_BUFFER_LEN{SEND_BUFFER_LEN},
+			RECV_BUFFER_LEN{RECV_BUFFER_LEN},
+			SEND_TIMEOUT_MS{SEND_TIMEOUT_MS},
+			RECV_TIMEOUT_MS{RECV_TIMEOUT_MS} {}
 	};
 }

@@ -36,22 +36,24 @@ namespace Rain::Networking::Http {
 		public Socket,
 		virtual public ClientSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec>,
-		virtual public ClientSocketSpecInterfaceInterface {
+			ResponseMessageSpec> {
 		using Socket::Socket;
+
+		public:
+		using ClientSocketSpecInterface =
+			Http::ClientSocketSpecInterface<
+				RequestMessageSpec,
+				ResponseMessageSpec>;
 	};
 
-	// Shorthand.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
 	template<
-		typename RequestMessageSpec,
-		typename ResponseMessageSpec,
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename RequestMessageSpec = Http::Request,
+		typename ResponseMessageSpec = Http::Response,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Client :
 		public ClientSocketSpec<
@@ -61,28 +63,18 @@ namespace Rain::Networking::Http {
 				NamedSocketSpec<SocketSpec<ReqRes::Client<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
 					SocketOptions...>>>>> {
-		using ClientSocketSpec<
+		public:
+		using ClientSocketSpec = ClientSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<ReqRes::Client<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
-					SocketOptions...>>>>>::ClientSocketSpec;
+					SocketOptions...>>>>>;
+		using ClientSocketSpec::ClientSocketSpec;
 	};
 }

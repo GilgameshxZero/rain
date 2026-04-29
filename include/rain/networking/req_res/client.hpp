@@ -13,6 +13,9 @@ namespace Rain::Networking::ReqRes {
 			ReqRes::ConnectedSocketSpecInterface;
 	};
 
+	// All R/R *SpecInterfaces accept R/R typename parameters,
+	// since they are meant to be decided by the caller
+	// (likely a protocol layer atop R/R, e.g. HTTP/SMTP).
 	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec>
@@ -77,22 +80,28 @@ namespace Rain::Networking::ReqRes {
 		public Socket,
 		virtual public ClientSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec>,
-		virtual public ClientSocketSpecInterfaceInterface {
+			ResponseMessageSpec> {
 		using Socket::Socket;
+
+		public:
+		using ClientSocketSpecInterface =
+			ReqRes::ClientSocketSpecInterface<
+				RequestMessageSpec,
+				ResponseMessageSpec>;
 	};
 
-	// Shorthand for R/R Client.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
+	//
+	// R/R do not get default template arguments (as the only
+	// relevant ones are abstract in R/R), but protocol layers
+	// atop R/R may specify default template arguments.
 	template<
 		typename RequestMessageSpec,
 		typename ResponseMessageSpec,
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Client :
 		public ClientSocketSpec<
@@ -100,26 +109,16 @@ namespace Rain::Networking::ReqRes {
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<Tcp::Client<
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
 					SocketOptions...>>>>> {
-		using ClientSocketSpec<
+		public:
+		using ClientSocketSpec = ClientSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<Tcp::Client<
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
-					SocketOptions...>>>>>::ClientSocketSpec;
+					SocketOptions...>>>>>;
+		using ClientSocketSpec::ClientSocketSpec;
 	};
 }

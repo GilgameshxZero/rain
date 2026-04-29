@@ -136,8 +136,7 @@ namespace Rain::Networking::Http {
 		public Socket,
 		virtual public WorkerSocketSpecInterface<
 			RequestMessageSpec,
-			ResponseMessageSpec>,
-		virtual public WorkerSocketSpecInterfaceInterface {
+			ResponseMessageSpec> {
 		using Socket::Socket;
 
 		protected:
@@ -313,17 +312,14 @@ namespace Rain::Networking::Http {
 		}
 	};
 
-	// Shorthand for HTTP Worker.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
 	template<
-		typename RequestMessageSpec,
-		typename ResponseMessageSpec,
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename RequestMessageSpec = Http::Request,
+		typename ResponseMessageSpec = Http::Response,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Worker :
 		public WorkerSocketSpec<
@@ -333,28 +329,18 @@ namespace Rain::Networking::Http {
 				NamedSocketSpec<SocketSpec<ReqRes::Worker<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
 					SocketOptions...>>>>> {
-		using WorkerSocketSpec<
+		public:
+		using WorkerSocketSpec = WorkerSocketSpec<
 			RequestMessageSpec,
 			ResponseMessageSpec,
 			ConnectedSocketSpec<
 				NamedSocketSpec<SocketSpec<ReqRes::Worker<
 					RequestMessageSpec,
 					ResponseMessageSpec,
-					sendBufferLen,
-					recvBufferLen,
-					sendTimeoutMs,
-					recvTimeoutMs,
 					SocketFamilyInterface,
-					SocketTypeInterface,
-					SocketProtocolInterface,
-					SocketOptions...>>>>>::WorkerSocketSpec;
+					SocketOptions...>>>>>;
+		using WorkerSocketSpec::WorkerSocketSpec;
 	};
 }

@@ -42,6 +42,25 @@ namespace Rain::Networking {
 		// Sockets implementing this interface cannot be copied
 		// nor moved. In addition, for resource management
 		// polymorphism, their destructor must be virtual.
+		//
+		// TODO: Technically, only copy is impossible (since
+		// only one Socket can hold the resource at a time,
+		// which must be freed by only one destructor), while
+		// move is possible. However, move is very difficult to
+		// implement.
+		//
+		// Move constructors/operators should exist at the level
+		// of any class that holds a resource. However, move
+		// constructors/operators are not inherited with the
+		// `using Super::Super` syntax, which means that all
+		// classes which want to allow for move must write their
+		// own move constructor/operator, and call the Super
+		// one. This is a bit of work, and a lot of code;
+		// instead, we opt out of allowing move.
+		//
+		// The downside is that "upgrading" sockets, as is done
+		// with TLS, must involve a call to `swap`, and thus an
+		// extra kernel socket which is immediately discarded.
 		SocketInterface() = default;
 		virtual ~SocketInterface() {}
 		SocketInterface(SocketInterface const &) = delete;
@@ -528,5 +547,5 @@ namespace Rain::Networking {
 
 	// Further specializations of Socket(Interface) are
 	// Client, Worker, and Server. Additional options may be
-	// set on the Socket in socket_options.hpp.
+	// set on the Socket in socket_option.hpp.
 }

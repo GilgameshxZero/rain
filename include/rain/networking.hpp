@@ -12,7 +12,7 @@
 #include "networking/server.hpp"
 #include "networking/smtp.hpp"
 #include "networking/socket.hpp"
-#include "networking/socket_options.hpp"
+#include "networking/socket_option.hpp"
 #include "networking/specification.hpp"
 #include "networking/tcp.hpp"
 #include "networking/tls.hpp"

@@ -89,6 +89,10 @@ namespace Rain::Networking {
 	class ClientSocketSpec :
 		public Socket,
 		virtual public ClientSocketSpecInterface {
+		public:
+		using ClientSocketSpecInterface =
+			ClientSocketSpecInterface;
+
 		private:
 		// Multi-address version of connect. Spawns multiple
 		// identical Sockets, each a duplicate of the
@@ -183,6 +187,16 @@ namespace Rain::Networking {
 		}
 
 		public:
+		// The default constructor creates a dead socket, which
+		// is mainly useful for being swapped away (e.g. in
+		// TLS).
+		//
+		// TODO: This creates an extra dead socket in kernel
+		// calls. The only way to resolve this is make move
+		// constructors all the way up across all protocol
+		// layers.
+		ClientSocketSpec() {}
+
 		// All constructors either connect successfully or
 		// throw.
 		ClientSocketSpec(
@@ -263,6 +277,11 @@ namespace Rain::Networking {
 
 	// Shorthand which includes ConnectedSocket and
 	// NamedSocket and base Socket templates.
+	//
+	// Importantly names *SocketSpec, which is consistent
+	// across each layer, and overwritten by the next protocol
+	// layer, useful for deducing types on the previous layer
+	// (e.g. for TLS).
 	template<
 		typename SocketFamilyInterface,
 		typename SocketTypeInterface,
@@ -275,11 +294,13 @@ namespace Rain::Networking {
 				SocketTypeInterface,
 				SocketProtocolInterface,
 				SocketOptions...>>>> {
-		using ClientSocketSpec<
+		public:
+		using ClientSocketSpec = ClientSocketSpec<
 			ConnectedSocketSpec<NamedSocketSpec<Socket<
 				SocketFamilyInterface,
 				SocketTypeInterface,
 				SocketProtocolInterface,
-				SocketOptions...>>>>::ClientSocketSpec;
+				SocketOptions...>>>>;
+		using ClientSocketSpec::ClientSocketSpec;
 	};
 }

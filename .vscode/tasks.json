@@ -5,7 +5,9 @@
 			/* Remove the intermediates directory obj/ and the output directory bin/. */
 			"type": "shell",
 			"label": "clean",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": {
 				"clear": true,
 				"reveal": "silent",
@@ -19,7 +21,9 @@
 			/* Build the open file in debug mode. */
 			"type": "shell",
 			"label": "build-debug-x64",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": { "clear": true, "reveal": "never" },
 			"group": { "kind": "build", "isDefault": true },
 
@@ -32,12 +36,44 @@
 			/* Build the open file in release mode. */
 			"type": "shell",
 			"label": "build-release-x64",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": { "clear": true, "reveal": "never" },
 			"group": "build",
 
 			"command": "make",
 			"args": ["BIN=${fileBasenameNoExtension}", "BUILD=1"],
+			"problemMatcher": ["$codelldb-rustc"],
+			"windows": { "problemMatcher": ["$msCompile"] }
+		},
+		{
+			/* Run all tests in debug mode. */
+			"type": "shell",
+			"label": "tests-debug",
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
+			"presentation": { "clear": true, "reveal": "never" },
+			"group": "build",
+
+			"command": "make",
+			"args": ["tests"],
+			"problemMatcher": ["$codelldb-rustc"],
+			"windows": { "problemMatcher": ["$msCompile"] }
+		},
+		{
+			/* Run all tests in release mode. */
+			"type": "shell",
+			"label": "tests-release",
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
+			"presentation": { "clear": true, "reveal": "never" },
+			"group": "build",
+
+			"command": "make",
+			"args": ["tests", "BUILD=1"],
 			"problemMatcher": ["$codelldb-rustc"],
 			"windows": { "problemMatcher": ["$msCompile"] }
 		}

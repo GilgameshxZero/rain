@@ -21,17 +21,20 @@ namespace Rain::Networking::Tcp {
 	class ServerSocketSpec :
 		public Socket,
 		virtual public ServerSocketSpecInterface<
-			WorkerSocketSpec>,
-		virtual public ServerSocketSpecInterfaceInterface {
+			WorkerSocketSpec> {
 		using Socket::Socket;
 	};
 
-	// Shorthand for TCP Server.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
+	//
+	// Type/Protocol do not get template parameters as they
+	// are fixed for TCP layer sockets.
 	template<
 		typename WorkerSocketSpec,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Server :
 		public ServerSocketSpec<
@@ -39,16 +42,18 @@ namespace Rain::Networking::Tcp {
 			NamedSocketSpec<SocketSpec<Networking::Server<
 				WorkerSocketSpec,
 				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface,
 				SocketOptions...>>>> {
-		using ServerSocketSpec<
+		public:
+		using ServerSocketSpec = ServerSocketSpec<
 			WorkerSocketSpec,
 			NamedSocketSpec<SocketSpec<Networking::Server<
 				WorkerSocketSpec,
 				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
-				SocketOptions...>>>>::ServerSocketSpec;
+				StreamTypeInterface,
+				TcpProtocolInterface,
+				SocketOptions...>>>>;
+		using ServerSocketSpec::ServerSocketSpec;
 	};
 }

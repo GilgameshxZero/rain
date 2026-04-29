@@ -27,38 +27,41 @@ namespace Rain::Networking::Tcp {
 		public Socket,
 		virtual public ClientSocketSpecInterface {
 		using Socket::Socket;
+
+		public:
+		using ClientSocketSpecInterface =
+			ClientSocketSpecInterface;
 	};
 
-	// Shorthand for TCP Client.
+	// Shorthand, but importantly names *SocketSpec, which is
+	// consistent across each layer, and overwritten by the
+	// next protocol layer, useful for deducing types on the
+	// previous layer (e.g. for TLS).
+	//
+	// Type/Protocol do not get template parameters as they
+	// are fixed for TCP layer sockets.
+	//
+	// SocketFamilyInterface gets a default parameter.
+	// However, to specify any of the later SocketOptions, the
+	// FamilyInterface must be specified.
 	template<
-		std::size_t sendBufferLen,
-		std::size_t recvBufferLen,
-		long long sendTimeoutMs,
-		long long recvTimeoutMs,
-		typename SocketFamilyInterface,
-		typename SocketTypeInterface,
-		typename SocketProtocolInterface,
+		typename SocketFamilyInterface = Ipv4FamilyInterface,
 		template<typename> class... SocketOptions>
 	class Client :
 		public ClientSocketSpec<ConnectedSocketSpec<
-			sendBufferLen,
-			recvBufferLen,
-			sendTimeoutMs,
-			recvTimeoutMs,
 			NamedSocketSpec<SocketSpec<Networking::Client<
 				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
+				StreamTypeInterface,
+				TcpProtocolInterface,
 				SocketOptions...>>>>> {
-		using ClientSocketSpec<ConnectedSocketSpec<
-			sendBufferLen,
-			recvBufferLen,
-			sendTimeoutMs,
-			recvTimeoutMs,
-			NamedSocketSpec<SocketSpec<Networking::Client<
-				SocketFamilyInterface,
-				SocketTypeInterface,
-				SocketProtocolInterface,
-				SocketOptions...>>>>>::ClientSocketSpec;
+		public:
+		using ClientSocketSpec =
+			ClientSocketSpec<ConnectedSocketSpec<
+				NamedSocketSpec<SocketSpec<Networking::Client<
+					SocketFamilyInterface,
+					StreamTypeInterface,
+					TcpProtocolInterface,
+					SocketOptions...>>>>>;
+		using ClientSocketSpec::ClientSocketSpec;
 	};
 }
