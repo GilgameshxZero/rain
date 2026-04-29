@@ -1,6 +1,7 @@
 Completion:
-	ArgumentLists: None
+  ArgumentLists: None
+  HeaderInsertion: Never
 InlayHints:
-	Enabled: No
+  Enabled: No
 Diagnostics:
-	UnusedIncludes: None
+  UnusedIncludes: None
