@@ -1,7 +1,7 @@
 // Normalizes platform differences in type availability.
 #pragma once
 
-#include <cstdlib>
+#include <cstdint>
 
 namespace Rain {
 	// errno_t is non-standard; however we define it here to

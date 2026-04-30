@@ -2,6 +2,7 @@
 
 using namespace Rain;
 using namespace Networking;
+using namespace Tls;
 using namespace std;
 
 void showHexStr(string &res) {
@@ -15,14 +16,24 @@ void showHexStr(string &res) {
 
 int main() {
 	{
-		Http::Client<> httpClient({"facebook.com", 443});
+		Http::Client<> httpClient({"reddit.com", 443});
 		Tls::Client<Http::Client<>> tlsClient(
 			std::move(httpClient));
-		tlsClient.send("\x16\x03\x01\x00\x00"s);
+
+		auto clientHello{TlsPlaintext<Handshake<ClientHello>>{
+			TlsPlaintextContentType::HANDSHAKE,
+			{3, 1},
+			{{{3, 3},
+				{},
+				0,
+				{CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA},
+				{0},
+				{}}}}};
+		clientHello.sendWith(tlsClient);
+		tlsClient.flush();
 		string res;
 		tlsClient.recv(res);
 		showHexStr(res);
-		tlsClient.shutdown();
 	}
 
 	return 0;

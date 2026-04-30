@@ -61,6 +61,20 @@ namespace Rain::Networking::Tcp {
 		// allow for easy virtual inheritance.
 		ConnectedSocketSpecInterface() :
 			std::iostream(nullptr) {}
+
+		// Helper to reverse endianness of a write.
+		//
+		// TODO: We probably want this on a general extension of
+		// std::iostream instead of here, so that it can be used
+		// in other functions (for debugging).
+		auto &writeReverseEndian(
+			ConnectedSocketSpecInterface::char_type const *s,
+			std::streamsize n) {
+			for (std::streamsize i{0}; i < n; i++) {
+				this->write(s + n - 1 - i, 1);
+			}
+			return *this;
+		}
 	};
 
 	// Must instantiate a valid std::iostream and underlying
