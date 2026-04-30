@@ -24,13 +24,20 @@ namespace Rain::Networking::Tls {
 		// Can construct from unscoped enum underlying, or
 		// directly.
 		ProtocolVersion(Value value) :
-			major{static_cast<std::uint8_t>(value >> 8_zu)},
+			major{static_cast<std::uint8_t>(value >> 8)},
 			minor{static_cast<std::uint8_t>(value)} {}
 		ProtocolVersion(
 			std::uint8_t major,
 			std::uint8_t minor) :
 			major{major},
 			minor{minor} {}
+		ProtocolVersion(std::istream &stream) :
+			major{Algorithm::readBytes<std::uint8_t>(
+				stream,
+				std::endian::big)},
+			minor{Algorithm::readBytes<std::uint8_t>(
+				stream,
+				std::endian::big)} {}
 
 		void sendWith(std::ostream &stream) const {
 			Algorithm::writeBytes(
@@ -38,6 +45,5 @@ namespace Rain::Networking::Tls {
 			Algorithm::writeBytes(
 				stream, this->minor, std::endian::big);
 		}
-		void recvWith(std::istream &) const {}
 	};
 }

@@ -10,6 +10,5 @@ namespace Rain::Networking::Tls {
 		public:
 		// TODO.
 		void sendWith(std::ostream &) const {}
-		void recvWith(std::istream &) const {}
 	};
 }

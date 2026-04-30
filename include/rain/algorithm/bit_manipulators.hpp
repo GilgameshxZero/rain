@@ -208,5 +208,16 @@ namespace Rain::Algorithm {
 			return stream;
 		}
 	}
-
+	// Helper to read bytes as an rvalue.
+	//
+	// C++17 guarantees eliding the move on return.
+	template<typename Data>
+	inline Data readBytes(
+		std::istream &stream,
+		std::endian const endian = std::endian::native,
+		std::size_t length = 0) {
+		Data data;
+		readBytes(stream, data, endian, length);
+		return data;
+	}
 }

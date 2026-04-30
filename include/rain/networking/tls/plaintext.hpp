@@ -2,37 +2,70 @@
 #pragma once
 
 #include "../../algorithm/bit_manipulators.hpp"
+#include "alert.hpp"
 #include "content_type.hpp"
+#include "handshake.hpp"
+#include "plaintext_fragment.hpp"
 #include "protocol_version.hpp"
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
 
 namespace Rain::Networking::Tls {
-	// TODO: This interface needs to be changed. Instead of
-	// templating, we probably need to dynamically allocate a
-	// fragment inside. This is because during `recv`, we
-	// cannot know the ContentType in advance.
-	template<typename Fragment>
 	class Plaintext {
-		public:
+		private:
+		// Not used outside of constructor.
 		ContentType type;
+
+		PlaintextFragment *makePlaintextFragment(
+			ContentType const &type,
+			auto &&...args) {
+			switch (type) {
+				case ContentType::ALERT:
+					return new Alert(
+						std::forward<decltype(args)>(args)...);
+				case ContentType::HANDSHAKE:
+				default:
+					return new Handshake(
+						std::forward<decltype(args)>(args)...);
+			}
+		}
+
+		public:
 		ProtocolVersion version;
-		Fragment fragment;
+		std::unique_ptr<PlaintextFragment> fragment;
 
-		std::uint16_t length() const {
-			return fragment.length();
-		};
+		// The virtual member functions disqualify us as an
+		// aggergate class, so we provide a constructor instead.
+		Plaintext(
+			ProtocolVersion const &version,
+			PlaintextFragment *fragment) :
+			type{fragment->contentType()},
+			version{version},
+			fragment(fragment) {}
+		// We do not provide a recvWith function. Instead, to
+		// guarantee that Plaintext is always in a valid state
+		// (outside of constructors), we provide a constructor
+		// that constructs from an istream.
+		Plaintext(std::istream &stream) :
+			type{Algorithm::readBytes<ContentType::Value>(
+				stream,
+				std::endian::big)},
+			version(stream),
+			fragment(
+				this->makePlaintextFragment(this->type, stream)) {}
 
-		void sendWith(std::ostream &stream) const {
+		virtual void sendWith(std::ostream &stream) const {
 			Algorithm::writeBytes(
-				stream, this->type, std::endian::big);
+				stream,
+				this->fragment->contentType(),
+				std::endian::big);
 			this->version.sendWith(stream);
 			Algorithm::writeBytes(
-				stream, this->length(), std::endian::big);
-			fragment.sendWith(stream);
+				stream, this->fragment->length(), std::endian::big);
+			this->fragment->sendWith(stream);
 			stream.flush();
 		}
-		void recvWith(std::istream &) const {}
 	};
 }

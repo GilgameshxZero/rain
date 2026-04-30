@@ -1,20 +1,28 @@
 #pragma once
 
+#include "../../algorithm/algorithm.hpp"
 #include "../../algorithm/bit_manipulators.hpp"
 
+#include <climits>
 #include <cstdint>
 #include <iostream>
+#include <random>
 
 namespace Rain::Networking::Tls {
 	class Random {
 		public:
-		std::uint8_t randomBytes[32];
+		std::array<std::uint8_t, 32> randomBytes;
+
+		Random(
+			std::array<std::uint8_t, 32> const &randomBytes) :
+			randomBytes{randomBytes} {}
+		Random(std::istream &stream) :
+			randomBytes{
+				Algorithm::readBytes<std::array<std::uint8_t, 32>>(
+					stream)} {}
 
 		void sendWith(std::ostream &stream) const {
-			stream.write(
-				reinterpret_cast<char const *>(this->randomBytes),
-				sizeof(randomBytes));
+			Algorithm::writeBytes(stream, this->randomBytes);
 		}
-		void recvWith(std::istream &) const {}
 	};
 }

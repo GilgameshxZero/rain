@@ -1,34 +1,75 @@
 #pragma once
 
 #include "../../algorithm/bit_manipulators.hpp"
+#include "client_hello.hpp"
+#include "handshake_body.hpp"
 #include "handshake_type.hpp"
+#include "plaintext_fragment.hpp"
+#include "server_hello.hpp"
+#include "server_key_exchange.hpp"
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
 
 namespace Rain::Networking::Tls {
-	template<typename Body>
-	class Handshake {
+	class Handshake : public PlaintextFragment {
+		private:
+		// Not used outside of constructor.
+		HandshakeType type;
+
+		HandshakeBody *makeHandshakeBody(
+			HandshakeType const &type,
+			auto &&...args) {
+			switch (type) {
+				case HandshakeType::CLIENT_HELLO:
+					return new ClientHello(
+						std::forward<decltype(args)>(args)...);
+				case HandshakeType::SERVER_HELLO:
+					return new ServerHello(
+						std::forward<decltype(args)>(args)...);
+				case HandshakeType::SERVER_KEY_EXCHANGE:
+				default:
+					return new ServerKeyExchange(
+						std::forward<decltype(args)>(args)...);
+			}
+		}
+
 		public:
-		Body body;
+		std::unique_ptr<HandshakeBody> body;
 
-		std::uint16_t length() const {
-			return 4 + body.length();
+		// The virtual member functions disqualify Handshake as
+		// an aggregate class, so we provide a constructor
+		// instead.
+		Handshake(HandshakeBody *body) :
+			type{body->handshakeType()},
+			body(body) {}
+		Handshake(std::istream &stream) :
+			// Ignore the length bytes.
+			type{
+				(stream.get(),
+					stream.get(),
+					Algorithm::readBytes<HandshakeType::Value>(
+						stream))},
+			body{this->makeHandshakeBody(this->type, stream)} {}
+
+		virtual ContentType contentType() const override {
+			return ContentType::HANDSHAKE;
+		}
+		virtual std::uint16_t length() const override {
+			return static_cast<std::uint16_t>(
+				4 + this->body->length());
 		};
-
-		void sendWith(std::ostream &stream) const {
+		virtual void sendWith(
+			std::ostream &stream) const override {
 			Algorithm::writeBytes(
 				stream,
-				this->body.handshakeType(),
+				this->body->handshakeType(),
 				std::endian::big);
 			// Length is uint24_t.
 			Algorithm::writeBytes(
-				stream,
-				static_cast<std::uint32_t>(body.length()),
-				std::endian::big,
-				3);
-			body.sendWith(stream);
+				stream, this->body->length(), std::endian::big, 3);
+			this->body->sendWith(stream);
 		}
-		void recvWith(std::istream &) const {}
 	};
 };
