@@ -1,7 +1,7 @@
 // Implements ClientHello from RFC 5246.
 #pragma once
 
-#include "../tcp/socket.hpp"
+#include "../../algorithm/bit_manipulators.hpp"
 #include "cipher_suite.hpp"
 #include "extension.hpp"
 #include "handshake_type.hpp"
@@ -35,47 +35,33 @@ namespace Rain::Networking::Tls {
 				compressionMethods.size() + extensionsLength);
 		}
 
-		void sendWith(
-			Tcp::ConnectedSocketSpecInterface &socket) const {
-			this->clientVersion.sendWith(socket);
-			this->random.sendWith(socket);
-			socket.writeReverseEndian(
-				reinterpret_cast<char const *>(&this->sessionId),
-				sizeof(this->sessionId));
-			std::uint16_t cipherSuitesSize(
+		void sendWith(std::ostream &stream) const {
+			Algorithm::writeBytes(
+				stream, this->clientVersion, std::endian::big);
+			this->random.sendWith(stream);
+			Algorithm::writeBytes(
+				stream, this->sessionId, std::endian::big);
+			Algorithm::writeBytes(
+				stream,
 				static_cast<std::uint16_t>(
-					this->cipherSuites.size() * 2));
-			socket.writeReverseEndian(
-				reinterpret_cast<char const *>(&cipherSuitesSize),
-				sizeof(cipherSuitesSize));
+					this->cipherSuites.size() * 2),
+				std::endian::big);
 			for (auto &i : this->cipherSuites) {
-				socket.writeReverseEndian(
-					reinterpret_cast<char const *>(&i), sizeof(i));
+				Algorithm::writeBytes(stream, i, std::endian::big);
 			}
-			std::uint8_t compressionMethodsSize(
+			Algorithm::writeBytes(
+				stream,
 				static_cast<std::uint8_t>(
-					this->compressionMethods.size()));
-			socket.writeReverseEndian(
-				reinterpret_cast<char const *>(
-					&compressionMethodsSize),
-				sizeof(compressionMethodsSize));
+					this->compressionMethods.size()),
+				std::endian::big);
 			for (auto &i : this->compressionMethods) {
-				socket.writeReverseEndian(
-					reinterpret_cast<char const *>(&i), sizeof(i));
+				Algorithm::writeBytes(stream, i, std::endian::big);
 			}
 			if (!this->extensions.empty()) {
-				std::uint16_t extensionsSize(
-					static_cast<std::uint16_t>(
-						this->extensions.size()));
-				socket.writeReverseEndian(
-					reinterpret_cast<char const *>(&extensionsSize),
-					sizeof(extensionsSize));
-				for (auto &i : this->extensions) {
-					i.sendWith(socket);
-				}
+				// TODO: Compute extensions length and write
+				// extensions.
 			}
 		}
-		void recvWith(
-			Tcp::ConnectedSocketSpecInterface &) const {}
+		void recvWith(std::istream &) const {}
 	};
 }

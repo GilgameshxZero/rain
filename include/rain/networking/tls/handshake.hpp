@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tcp/socket.hpp"
+#include "../../algorithm/bit_manipulators.hpp"
 #include "handshake_type.hpp"
 
 #include <cstdint>
@@ -16,19 +16,19 @@ namespace Rain::Networking::Tls {
 			return 4 + body.length();
 		};
 
-		void sendWith(
-			Tcp::ConnectedSocketSpecInterface &socket) const {
-			auto msgType{this->body.handshakeType()};
-			socket.writeReverseEndian(
-				reinterpret_cast<char const *>(&msgType),
-				sizeof(msgType));
+		void sendWith(std::ostream &stream) const {
+			Algorithm::writeBytes(
+				stream,
+				this->body.handshakeType(),
+				std::endian::big);
 			// Length is uint24_t.
-			std::uint32_t length{body.length()};
-			socket.writeReverseEndian(
-				reinterpret_cast<char const *>(&length), 3);
-			body.sendWith(socket);
+			Algorithm::writeBytes(
+				stream,
+				static_cast<std::uint32_t>(body.length()),
+				std::endian::big,
+				3);
+			body.sendWith(stream);
 		}
-		void recvWith(
-			Tcp::ConnectedSocketSpecInterface &) const {}
+		void recvWith(std::istream &) const {}
 	};
 };

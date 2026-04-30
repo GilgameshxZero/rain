@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tcp/socket.hpp"
+#include "../../algorithm/bit_manipulators.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -10,16 +10,34 @@ namespace Rain::Networking::Tls {
 		public:
 		std::uint8_t major, minor;
 
-		void sendWith(
-			Tcp::ConnectedSocketSpecInterface &socket) const {
-			socket.write(
-				reinterpret_cast<char const *>(&this->major),
-				sizeof(this->major));
-			socket.write(
-				reinterpret_cast<char const *>(&this->minor),
-				sizeof(this->major));
+		// Unscoped enum allows for direct access to constants
+		// from outside.
+		//
+		// TODO: Is there a better way to declare constants of a
+		// class type, scoped to that class? Same issue with
+		// *::StatusCode.
+		enum Value : std::uint16_t {
+			_1_0 = 0x0301,
+			_1_2 = 0x0303
+		};
+
+		// Can construct from unscoped enum underlying, or
+		// directly.
+		ProtocolVersion(Value value) :
+			major{static_cast<std::uint8_t>(value >> 8_zu)},
+			minor{static_cast<std::uint8_t>(value)} {}
+		ProtocolVersion(
+			std::uint8_t major,
+			std::uint8_t minor) :
+			major{major},
+			minor{minor} {}
+
+		void sendWith(std::ostream &stream) const {
+			Algorithm::writeBytes(
+				stream, this->major, std::endian::big);
+			Algorithm::writeBytes(
+				stream, this->minor, std::endian::big);
 		}
-		void recvWith(
-			Tcp::ConnectedSocketSpecInterface &) const {}
+		void recvWith(std::istream &) const {}
 	};
 }

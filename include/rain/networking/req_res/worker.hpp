@@ -23,16 +23,19 @@ namespace Rain::Networking::ReqRes {
 	class WorkerSocketSpecInterface :
 		virtual public WorkerSocketSpecInterfaceInterface {
 		public:
-		using WorkerSocketSpecInterfaceInterface::recv;
 		using WorkerSocketSpecInterfaceInterface::send;
+		using WorkerSocketSpecInterfaceInterface::recv;
 		using WorkerSocketSpecInterfaceInterface::operator<<;
 		using WorkerSocketSpecInterfaceInterface::operator>>;
 
 		// Always completes with success, or throws or sets the
 		// stream into a bad state on failure.
 		//
-		// Override here for pp-chaining, but limited to
-		// send/recv on Sockets.
+		// Override here for pp-chaining only on R/Rs.
+		//
+		// `send` keeps its parameter non-const, since some
+		// requests are changed by the send action (e.g.
+		// ephemeral HTTP bodies).
 		virtual void send(ResponseMessageSpec &res) {
 			res.sendWith(*this);
 		}
@@ -41,7 +44,6 @@ namespace Rain::Networking::ReqRes {
 			req.recvWith(*this);
 			return req;
 		}
-
 		// For inline construction.
 		void send(ResponseMessageSpec &&res) {
 			this->send(res);
@@ -63,7 +65,6 @@ namespace Rain::Networking::ReqRes {
 			this->recv(req);
 			return *this;
 		}
-
 		// For inline construction.
 		ConnectedSocketSpecInterface &operator<<(
 			ResponseMessageSpec &&res) {

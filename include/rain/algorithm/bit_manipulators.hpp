@@ -2,6 +2,8 @@
 
 #include "../functional/trait.hpp"
 
+#include <bit>
+#include <iostream>
 #include <limits>
 
 namespace Rain::Algorithm {
@@ -139,4 +141,72 @@ namespace Rain::Algorithm {
 	inline std::size_t bitPopcount(Integer const &x) {
 		return bitPopcountImpl(x);
 	}
+
+	// Read/write bytes into an iostream, either directly, or
+	// forcing big/small endian. If the endian is reverse of
+	// what it is on the current platform, performance may
+	// suffer. Does not support mixed-endian platforms.
+	//
+	// `length` is always interpreted as a little-endian
+	// length, where a non-full length always truncates the
+	// high bytes.
+	//
+	// We define these as free functions because they may be
+	// applied to any iostream.
+	//
+	// reinterpret_cast is always valid when targeting char
+	// types.
+	template<typename Data>
+	inline std::ostream &writeBytes(
+		std::ostream &stream,
+		Data const &data,
+		std::endian const endian = std::endian::native,
+		std::size_t length = 0) {
+		std::size_t offset{0};
+		if (length == 0) {
+			length = sizeof(data);
+		} else if constexpr (
+			std::endian::native == std::endian::big) {
+			offset = sizeof(data) - length;
+		}
+
+		if (endian == std::endian::native) {
+			return stream.write(
+				reinterpret_cast<char const *>(&data) + offset,
+				length);
+		} else {
+			for (std::size_t i{0}; i < length; i++) {
+				stream.put(
+					*(reinterpret_cast<char const *>(&data) + offset +
+						length - 1 - i));
+			}
+			return stream;
+		}
+	}
+	template<typename Data>
+	inline std::istream &readBytes(
+		std::istream &stream,
+		Data &data,
+		std::endian const endian = std::endian::native,
+		std::size_t length = 0) {
+		std::size_t offset{0};
+		if (length == 0) {
+			length = sizeof(data);
+		} else if constexpr (
+			std::endian::native == std::endian::big) {
+			offset = sizeof(data) - length;
+		}
+
+		if (endian == std::endian::native) {
+			return stream.read(
+				reinterpret_cast<char *>(&data) + offset, length);
+		} else {
+			for (std::size_t i{0}; i < length; i++) {
+				*(reinterpret_cast<char *>(&data) + offset +
+					length - 1 - i) = stream.get();
+			}
+			return stream;
+		}
+	}
+
 }

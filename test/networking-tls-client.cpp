@@ -20,8 +20,8 @@ int main() {
 		Tls::Client<Http::Client<>> tlsClient(
 			std::move(httpClient));
 
-		auto clientHello{TlsPlaintext<Handshake<ClientHello>>{
-			TlsPlaintextContentType::HANDSHAKE,
+		auto clientHello{Plaintext<Handshake<ClientHello>>{
+			ContentType::HANDSHAKE,
 			{3, 1},
 			{{{3, 3},
 				{},

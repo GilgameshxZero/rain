@@ -1,6 +1,7 @@
 // Serializes and deserializes data to/from std::iostream.
 #pragma once
 
+#include "../algorithm/bit_manipulators.hpp"
 #include "../literal.hpp"
 
 #include <fstream>
@@ -197,9 +198,8 @@ namespace Rain::Data {
 		void operator()(
 			Serializer &serializer,
 			Data const &data) {
-			serializer.write(
-				reinterpret_cast<char const *>(&data),
-				sizeof(Data));
+			Algorithm::writeBytes(
+				serializer, data, std::endian::little);
 		}
 	};
 	template<typename Data>
@@ -207,8 +207,8 @@ namespace Rain::Data {
 		void operator()(
 			Deserializer &deserializer,
 			Data &data) {
-			deserializer.read(
-				reinterpret_cast<char *>(&data), sizeof(Data));
+			Algorithm::readBytes(
+				deserializer, data, std::endian::little);
 		}
 	};
 }

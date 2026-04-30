@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tcp/socket.hpp"
+#include "../../algorithm/bit_manipulators.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -9,9 +9,7 @@ namespace Rain::Networking::Tls {
 	class Extension {
 		public:
 		// TODO.
-		void sendWith(
-			Tcp::ConnectedSocketSpecInterface &) const {}
-		void recvWith(
-			Tcp::ConnectedSocketSpecInterface &) const {}
+		void sendWith(std::ostream &) const {}
+		void recvWith(std::istream &) const {}
 	};
 }

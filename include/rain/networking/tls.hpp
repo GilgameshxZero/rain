@@ -9,5 +9,5 @@
 #include "tls/protocol_version.hpp"
 #include "tls/random.hpp"
 #include "tls/socket.hpp"
-#include "tls/tls_plaintext.hpp"
-#include "tls/tls_plaintext_content_type.hpp"
+#include "tls/plaintext.hpp"
+#include "tls/content_type.hpp"

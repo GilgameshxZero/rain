@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tcp/socket.hpp"
+#include "../../algorithm/bit_manipulators.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -10,13 +10,11 @@ namespace Rain::Networking::Tls {
 		public:
 		std::uint8_t randomBytes[32];
 
-		void sendWith(
-			Tcp::ConnectedSocketSpecInterface &socket) const {
-			socket.write(
+		void sendWith(std::ostream &stream) const {
+			stream.write(
 				reinterpret_cast<char const *>(this->randomBytes),
 				sizeof(randomBytes));
 		}
-		void recvWith(
-			Tcp::ConnectedSocketSpecInterface &) const {}
+		void recvWith(std::istream &) const {}
 	};
 }
