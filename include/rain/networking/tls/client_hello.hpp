@@ -28,10 +28,11 @@ namespace Rain::Networking::Tls {
 		std::uint16_t length() const {
 			std::uint16_t extensionsLength{0};
 			// TODO: Compute extensions length.
-			return sizeof(this->clientVersion) +
-				sizeof(this->random) + sizeof(this->sessionId) + 2 +
+			return static_cast<std::uint16_t>(
+				sizeof(this->clientVersion) + sizeof(this->random) +
+				sizeof(this->sessionId) + 2 +
 				cipherSuites.size() * sizeof(CipherSuite) + 1 +
-				compressionMethods.size() + extensionsLength;
+				compressionMethods.size() + extensionsLength);
 		}
 
 		void sendWith(
@@ -42,7 +43,8 @@ namespace Rain::Networking::Tls {
 				reinterpret_cast<char const *>(&this->sessionId),
 				sizeof(this->sessionId));
 			std::uint16_t cipherSuitesSize(
-				this->cipherSuites.size() * 2);
+				static_cast<std::uint16_t>(
+					this->cipherSuites.size() * 2));
 			socket.writeReverseEndian(
 				reinterpret_cast<char const *>(&cipherSuitesSize),
 				sizeof(cipherSuitesSize));
@@ -51,7 +53,8 @@ namespace Rain::Networking::Tls {
 					reinterpret_cast<char const *>(&i), sizeof(i));
 			}
 			std::uint8_t compressionMethodsSize(
-				this->compressionMethods.size());
+				static_cast<std::uint8_t>(
+					this->compressionMethods.size()));
 			socket.writeReverseEndian(
 				reinterpret_cast<char const *>(
 					&compressionMethodsSize),
@@ -62,7 +65,8 @@ namespace Rain::Networking::Tls {
 			}
 			if (!this->extensions.empty()) {
 				std::uint16_t extensionsSize(
-					this->extensions.size());
+					static_cast<std::uint16_t>(
+						this->extensions.size()));
 				socket.writeReverseEndian(
 					reinterpret_cast<char const *>(&extensionsSize),
 					sizeof(extensionsSize));
