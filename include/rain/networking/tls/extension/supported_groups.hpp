@@ -5,18 +5,19 @@
 #include "../extension_type.hpp"
 
 namespace Rain::Networking::Tls::Extension {
+	// TODO: Don't hardcode.
 	class SupportedGroups : public ExtensionData {
 		public:
 		virtual ExtensionType extensionType() const override {
 			return ExtensionType::SUPPORTED_GROUPS;
 		}
 		virtual std::uint16_t length() const override {
-			return 0x000c;
+			return 0x0006;
 		}
 		virtual void sendWith(
 			std::ostream &stream) const override {
-			stream
-				<< "\x00\x0a\x00\x1d\x00\x17\x00\x1e\x00\x18\x00\x19"s;
+			// Minimal set, both important.
+			stream << "\x00\x04\x00\x17\x00\x18"s;
 		}
 	};
 }

@@ -1,3 +1,4 @@
+// <https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml>.
 #pragma once
 
 // Also includes all extension types in subdirectory.

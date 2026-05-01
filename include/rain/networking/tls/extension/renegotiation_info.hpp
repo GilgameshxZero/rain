@@ -5,6 +5,7 @@
 #include "../extension_type.hpp"
 
 namespace Rain::Networking::Tls::Extension {
+	// TODO: Don't hardcode. Not important.
 	class RenegotiationInfo : public ExtensionData {
 		public:
 		virtual ExtensionType extensionType() const override {
