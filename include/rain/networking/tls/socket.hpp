@@ -170,12 +170,12 @@ namespace Rain::Networking::Tls {
 		using ConnectedSocketSpecInterface<
 			UnderlyingConnectedSocketSpecInterface>::operator>>;
 
-		// TODO: Add streambufs for each content type.
-		// streambufs should read from the common TCP streambuf
+		// TODO: Add buffers for each content type.
+		// Buffer should read from the common TCP streambuf
 		// and use common Plaintext/Ciphertext unwrapping
-		// functions. streambufs should write to a
-		// current-configuration Plaintext/Ciphertext before
-		// pushing to the TCP streambuf.
+		// functions. When a buffer detects that it has a
+		// complete Content (Alert/Handshake/*), it will push it
+		// out onto the a content queue.
 		//
 		// TODO: streambuf parameters should probably be put
 		// into a parameter pack.
