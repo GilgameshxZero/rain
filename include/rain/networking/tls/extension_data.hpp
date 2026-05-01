@@ -9,6 +9,7 @@ namespace Rain::Networking::Tls {
 	class ExtensionData {
 		public:
 		virtual ExtensionType extensionType() const = 0;
+		// length: number of bytes that sendWith writes.
 		virtual std::uint16_t length() const = 0;
 		virtual void sendWith(std::ostream &) const = 0;
 

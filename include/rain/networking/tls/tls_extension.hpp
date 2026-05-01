@@ -21,10 +21,18 @@ namespace Rain::Networking::Tls {
 
 		ExtensionData *makeExtensionData(
 			ExtensionType const &type,
-			auto &&...) {
+			auto &&...args) {
 			switch (type) {
+				case ExtensionType::SERVER_NAME:
+					return new Extension::ServerName(
+						std::forward<decltype(args)>(args)...);
+				case ExtensionType::SIGNATURE_ALGORITHMS:
+					return new Extension::SignatureAlgorithms(
+						std::forward<decltype(args)>(args)...);
+				case ExtensionType::SUPPORTED_GROUPS:
 				default:
-					return nullptr;
+					return new Extension::SupportedGroups(
+						std::forward<decltype(args)>(args)...);
 			}
 		};
 
@@ -35,6 +43,13 @@ namespace Rain::Networking::Tls {
 		TlsExtension(ExtensionData *extensionData) :
 			type{extensionData->extensionType()},
 			extensionData(extensionData) {}
+		TlsExtension(std::istream &stream) :
+			type(
+				Algorithm::readBytes<ExtensionType::Value>(
+					stream,
+					std::endian::big)),
+			extensionData{
+				this->makeExtensionData(this->type, stream)} {}
 
 		void sendWith(std::ostream &stream) const {
 			Algorithm::writeBytes(

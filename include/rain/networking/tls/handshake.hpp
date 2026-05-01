@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../algorithm/bit_manipulators.hpp"
+#include "certificate.hpp"
 #include "client_hello.hpp"
 #include "handshake_body.hpp"
 #include "handshake_type.hpp"
@@ -27,6 +28,9 @@ namespace Rain::Networking::Tls {
 						std::forward<decltype(args)>(args)...);
 				case HandshakeType::SERVER_HELLO:
 					return new ServerHello(
+						std::forward<decltype(args)>(args)...);
+				case HandshakeType::CERTIFICATE:
+					return new Certificate(
 						std::forward<decltype(args)>(args)...);
 				case HandshakeType::SERVER_KEY_EXCHANGE:
 				default:

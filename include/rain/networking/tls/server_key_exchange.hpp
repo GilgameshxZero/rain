@@ -1,14 +1,11 @@
 #pragma once
 
 #include "../../algorithm/bit_manipulators.hpp"
-#include "cipher_suite.hpp"
 #include "handshake_body.hpp"
-#include "protocol_version.hpp"
-#include "random.hpp"
+#include "handshake_type.hpp"
 
 #include <cstdint>
 #include <iostream>
-#include <vector>
 
 namespace Rain::Networking::Tls {
 	class ServerKeyExchange : public HandshakeBody {

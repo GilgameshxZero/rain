@@ -13,20 +13,42 @@ namespace Rain::Networking::Tls::Extension {
 		ServerName(
 			std::vector<std::string> const &serverNames) :
 			serverNames{serverNames} {}
+		ServerName(std::istream &stream) {
+			auto serverNamesLength{
+				Algorithm::readBytes<std::uint16_t>(
+					stream, std::endian::big)};
+			while (serverNamesLength > 0) {
+				// Always type 0, DNS hostname.
+				stream.get();
+				auto hostnameLength{
+					Algorithm::readBytes<std::uint16_t>(
+						stream, std::endian::big)};
+				this->serverNames.emplace_back(
+					hostnameLength, '\0');
+				stream.read(
+					this->serverNames.back().data(), hostnameLength);
+				serverNamesLength -= 3 + hostnameLength;
+			}
+		}
 
 		virtual ExtensionType extensionType() const override {
 			return ExtensionType::SERVER_NAME;
 		}
 		virtual std::uint16_t length() const override {
+			if (this->serverNames.empty()) {
+				return 0;
+			}
 			std::size_t namesLength{};
 			for (auto &i : this->serverNames) {
-				namesLength += i.length();
+				namesLength += i.length() + 3;
 			}
-			return static_cast<std::uint16_t>(
-				namesLength + this->serverNames.size() * 3 + 2);
+			return static_cast<std::uint16_t>(namesLength + 2);
 		}
 		virtual void sendWith(
 			std::ostream &stream) const override {
+			if (this->serverNames.empty()) {
+				return;
+			}
 			Algorithm::writeBytes(
 				stream,
 				static_cast<std::uint16_t>(this->length() - 2),

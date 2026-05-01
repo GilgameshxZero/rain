@@ -9,7 +9,8 @@ namespace Rain::Networking::Tls {
 			HELLO_REQUEST = 0,
 			CLIENT_HELLO,
 			SERVER_HELLO,
-			SERVER_KEY_EXCHANGE = 12,
+			CERTIFICATE = 11,
+			SERVER_KEY_EXCHANGE,
 		};
 
 		Value value;

@@ -7,6 +7,7 @@
 #include "handshake_body.hpp"
 #include "protocol_version.hpp"
 #include "random.hpp"
+#include "session_id.hpp"
 #include "tls_extension.hpp"
 
 #include <cstdint>
@@ -16,6 +17,9 @@
 namespace Rain::Networking::Tls {
 	class ClientHello : public HandshakeBody {
 		private:
+		// Only used in constructor.
+		std::uint32_t completeLength;
+
 		std::uint16_t computeExtensionsLength() const {
 			if (this->extensions.empty()) {
 				return 0;
@@ -31,7 +35,7 @@ namespace Rain::Networking::Tls {
 		public:
 		ProtocolVersion clientVersion;
 		Random random;
-		std::uint8_t sessionId;
+		SessionId sessionId;
 		std::vector<CipherSuite> cipherSuites;
 		std::vector<std::uint8_t> compressionMethods;
 		std::vector<TlsExtension> extensions;
@@ -39,10 +43,11 @@ namespace Rain::Networking::Tls {
 		ClientHello(
 			ProtocolVersion const &clientVersion,
 			Random const &random,
-			std::uint8_t sessionId,
+			SessionId const &sessionId,
 			std::vector<CipherSuite> const &cipherSuites,
 			std::vector<std::uint8_t> const &compressionMethods,
 			std::vector<TlsExtension> const &extensions) :
+			completeLength{0},
 			clientVersion{clientVersion},
 			random{random},
 			sessionId{sessionId},
@@ -50,18 +55,13 @@ namespace Rain::Networking::Tls {
 			compressionMethods{compressionMethods},
 			extensions{extensions} {}
 		ClientHello(std::istream &stream) :
-			// Ignore the 3 length bytes.
-			// TODO: This is not right, since we need to read
-			// extensions.
-			clientVersion{
-				(stream.get(),
-					stream.get(),
-					stream.get(),
-					ProtocolVersion(stream))},
-			random(stream),
-			sessionId{Algorithm::readBytes<std::uint8_t>(
+			completeLength{Algorithm::readBytes<std::uint32_t>(
 				stream,
-				std::endian::big)} {
+				std::endian::big,
+				3)},
+			clientVersion{ProtocolVersion(stream)},
+			random(stream),
+			sessionId(stream) {
 			std::uint16_t cipherSuitesLength;
 			Algorithm::readBytes(
 				stream, cipherSuitesLength, std::endian::big);
@@ -78,7 +78,22 @@ namespace Rain::Networking::Tls {
 				Algorithm::readBytes(stream, i, std::endian::big);
 			}
 
-			// TODO: read extensions.
+			if (completeLength == this->length()) {
+				return;
+			}
+
+			auto extensionsLength{
+				Algorithm::readBytes<std::uint16_t>(
+					stream, std::endian::big)};
+			// If extensionsLength wraps around and this loop gets
+			// stuck, that's the fault of the caller and the
+			// socket will eventually time out and error.
+			while (extensionsLength > 0) {
+				this->extensions.emplace_back(stream);
+				// 4 for the extension type and length.
+				extensionsLength -= 4 +
+					this->extensions.back().extensionData->length();
+			}
 		}
 
 		virtual HandshakeType handshakeType() const override {
@@ -90,7 +105,7 @@ namespace Rain::Networking::Tls {
 
 			return static_cast<std::uint32_t>(
 				sizeof(this->clientVersion) + sizeof(this->random) +
-				sizeof(this->sessionId) + 2 +
+				1 + this->sessionId.length() + 2 +
 				cipherSuites.size() * sizeof(CipherSuite) + 1 +
 				compressionMethods.size() +
 				(extensionsLength > 0 ? 2 + extensionsLength : 0));
@@ -100,8 +115,7 @@ namespace Rain::Networking::Tls {
 			Algorithm::writeBytes(
 				stream, this->clientVersion, std::endian::big);
 			this->random.sendWith(stream);
-			Algorithm::writeBytes(
-				stream, this->sessionId, std::endian::big);
+			this->sessionId.sendWith(stream);
 			Algorithm::writeBytes(
 				stream,
 				static_cast<std::uint16_t>(
