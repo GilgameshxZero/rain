@@ -36,7 +36,8 @@ namespace Rain::Networking::Tls {
 		}
 
 		public:
-		std::unique_ptr<HandshakeBody> body;
+		// shared_ptr to support copy constructor.
+		std::shared_ptr<HandshakeBody> body;
 
 		// The virtual member functions disqualify Handshake as
 		// an aggregate class, so we provide a constructor

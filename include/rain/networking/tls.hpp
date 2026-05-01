@@ -8,6 +8,8 @@
 #include "tls/client_hello.hpp"
 #include "tls/content_type.hpp"
 #include "tls/extension.hpp"
+#include "tls/extension_data.hpp"
+#include "tls/extension_type.hpp"
 #include "tls/handshake.hpp"
 #include "tls/handshake_body.hpp"
 #include "tls/handshake_type.hpp"
@@ -18,3 +20,4 @@
 #include "tls/server_hello.hpp"
 #include "tls/server_key_exchange.hpp"
 #include "tls/socket.hpp"
+#include "tls/tls_extension.hpp"

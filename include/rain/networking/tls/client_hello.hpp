@@ -2,11 +2,12 @@
 #pragma once
 
 #include "../../algorithm/bit_manipulators.hpp"
+#include "../../literal.hpp"
 #include "cipher_suite.hpp"
-#include "extension.hpp"
 #include "handshake_body.hpp"
 #include "protocol_version.hpp"
 #include "random.hpp"
+#include "tls_extension.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -14,13 +15,26 @@
 
 namespace Rain::Networking::Tls {
 	class ClientHello : public HandshakeBody {
+		private:
+		std::uint16_t computeExtensionsLength() const {
+			if (this->extensions.empty()) {
+				return 0;
+			}
+			std::uint16_t extensionsLength{};
+			for (auto &i : this->extensions) {
+				// 4 for each extension length and type.
+				extensionsLength += i.extensionData->length() + 4;
+			}
+			return extensionsLength;
+		}
+
 		public:
 		ProtocolVersion clientVersion;
 		Random random;
 		std::uint8_t sessionId;
 		std::vector<CipherSuite> cipherSuites;
 		std::vector<std::uint8_t> compressionMethods;
-		std::vector<Extension> extensions;
+		std::vector<TlsExtension> extensions;
 
 		ClientHello(
 			ProtocolVersion const &clientVersion,
@@ -28,7 +42,7 @@ namespace Rain::Networking::Tls {
 			std::uint8_t sessionId,
 			std::vector<CipherSuite> const &cipherSuites,
 			std::vector<std::uint8_t> const &compressionMethods,
-			std::vector<Extension> const &extensions) :
+			std::vector<TlsExtension> const &extensions) :
 			clientVersion{clientVersion},
 			random{random},
 			sessionId{sessionId},
@@ -37,6 +51,8 @@ namespace Rain::Networking::Tls {
 			extensions{extensions} {}
 		ClientHello(std::istream &stream) :
 			// Ignore the 3 length bytes.
+			// TODO: This is not right, since we need to read
+			// extensions.
 			clientVersion{
 				(stream.get(),
 					stream.get(),
@@ -69,14 +85,15 @@ namespace Rain::Networking::Tls {
 			return HandshakeType::CLIENT_HELLO;
 		}
 		virtual std::uint32_t length() const override {
-			// TODO: Compute extensions length.
-			std::uint16_t extensionsLength{0};
+			std::uint16_t extensionsLength{
+				this->computeExtensionsLength()};
 
 			return static_cast<std::uint32_t>(
 				sizeof(this->clientVersion) + sizeof(this->random) +
 				sizeof(this->sessionId) + 2 +
 				cipherSuites.size() * sizeof(CipherSuite) + 1 +
-				compressionMethods.size() + extensionsLength);
+				compressionMethods.size() +
+				(extensionsLength > 0 ? 2 + extensionsLength : 0));
 		}
 		virtual void sendWith(
 			std::ostream &stream) const override {
@@ -103,8 +120,13 @@ namespace Rain::Networking::Tls {
 			}
 
 			if (!this->extensions.empty()) {
-				// TODO: Compute extensions length and write
-				// extensions.
+				Algorithm::writeBytes(
+					stream,
+					this->computeExtensionsLength(),
+					std::endian::big);
+				for (auto &i : this->extensions) {
+					i.sendWith(stream);
+				}
 			}
 		}
 	};

@@ -3,7 +3,7 @@
 
 #include "../../algorithm/bit_manipulators.hpp"
 #include "cipher_suite.hpp"
-#include "extension.hpp"
+#include "tls_extension.hpp"
 #include "handshake_body.hpp"
 #include "protocol_version.hpp"
 #include "random.hpp"
@@ -20,7 +20,7 @@ namespace Rain::Networking::Tls {
 		std::uint8_t sessionId;
 		CipherSuite cipherSuite;
 		std::uint8_t compressionMethod;
-		std::vector<Extension> extensions;
+		std::vector<TlsExtension> extensions;
 
 		ServerHello(
 			ProtocolVersion const &serverVersion,
@@ -28,7 +28,7 @@ namespace Rain::Networking::Tls {
 			std::uint8_t sessionId,
 			CipherSuite const &cipherSuite,
 			std::uint8_t compressionMethod,
-			std::vector<Extension> const &extensions) :
+			std::vector<TlsExtension> const &extensions) :
 			serverVersion{serverVersion},
 			random{random},
 			sessionId{sessionId},

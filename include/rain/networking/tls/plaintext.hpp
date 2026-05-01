@@ -34,7 +34,8 @@ namespace Rain::Networking::Tls {
 
 		public:
 		ProtocolVersion version;
-		std::unique_ptr<PlaintextFragment> fragment;
+		// shared_ptr to support copy constructor.
+		std::shared_ptr<PlaintextFragment> fragment;
 
 		// The virtual member functions disqualify us as an
 		// aggergate class, so we provide a constructor instead.

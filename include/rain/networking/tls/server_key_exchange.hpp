@@ -2,7 +2,6 @@
 
 #include "../../algorithm/bit_manipulators.hpp"
 #include "cipher_suite.hpp"
-#include "extension.hpp"
 #include "handshake_body.hpp"
 #include "protocol_version.hpp"
 #include "random.hpp"
