@@ -17,6 +17,7 @@ namespace Rain::Networking::Tls {
 	class Handshake : public PlaintextFragment {
 		private:
 		// Not used outside of constructor.
+		std::uint16_t completeLength;
 		HandshakeType type;
 
 		HandshakeBody *makeHandshakeBody(
@@ -47,15 +48,16 @@ namespace Rain::Networking::Tls {
 		// an aggregate class, so we provide a constructor
 		// instead.
 		Handshake(HandshakeBody *body) :
+			completeLength{},
 			type{body->handshakeType()},
 			body(body) {}
 		Handshake(std::istream &stream) :
-			// Ignore the length bytes.
-			type{
-				(stream.get(),
-					stream.get(),
-					Algorithm::readBytes<HandshakeType::Value>(
-						stream))},
+			completeLength{Algorithm::readBytes<std::uint16_t>(
+				stream,
+				std::endian::big)},
+			type{Algorithm::readBytes<HandshakeType::Value>(
+				stream,
+				std::endian::big)},
 			body{this->makeHandshakeBody(this->type, stream)} {}
 
 		virtual ContentType contentType() const override {

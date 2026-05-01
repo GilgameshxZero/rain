@@ -14,10 +14,11 @@ namespace Rain::Networking::Tls::Extension {
 			std::vector<std::string> const &serverNames) :
 			serverNames{serverNames} {}
 		ServerName(std::istream &stream) {
-			auto serverNamesLength{
+			// Unsigned type to prevent wrap-around.
+			std::int32_t serverNamesLength(
 				Algorithm::readBytes<std::uint16_t>(
-					stream, std::endian::big)};
-			while (serverNamesLength > 0) {
+					stream, std::endian::big));
+			while (stream && serverNamesLength > 0) {
 				// Always type 0, DNS hostname.
 				stream.get();
 				auto hostnameLength{

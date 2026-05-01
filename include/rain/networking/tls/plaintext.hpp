@@ -13,6 +13,11 @@
 #include <memory>
 
 namespace Rain::Networking::Tls {
+	// TODO: Record layer data may be fragmented or joined
+	// together within one/multiple
+	// Plaintext/Ciphertext/Compressed, or even interleaved.
+	// So, TLS sockets should maintain a separate streambuf
+	// for each content type.
 	class Plaintext {
 		private:
 		// Not used outside of constructor.

@@ -242,7 +242,6 @@ namespace Rain::Networking::Tcp {
 			this->RECV_TIMEOUT_MS,
 			this)};
 
-		private:
 		// Custom defaulted default constructor behavior to add
 		// onto base class constructor behavior, with all
 		// constructors.

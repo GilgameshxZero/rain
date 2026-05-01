@@ -85,66 +85,69 @@ namespace Rain::Networking::Tls {
 		// Since Plaintext/* are not template parameters (as
 		// opposed to the case of R/R), but rather fixed types,
 		// this makes more sense to do here.
+		//
+		// recvWith functions are largely unused because TLS
+		// record types are usually valid upon construction.
 		template<
-			typename Message,
-			decltype(std::declval<Message>().sendWith(
+			typename Record,
+			decltype(std::declval<Record>().sendWith(
 				std::declval<std::ostream &>())) * = nullptr>
-		void send(Message &message) {
-			message.sendWith(*this);
+		void send(Record &record) {
+			record.sendWith(*this);
 		}
 		template<
-			typename Message,
-			decltype(std::declval<Message>().recvWith(
+			typename Record,
+			decltype(std::declval<Record>().recvWith(
 				std::declval<std::istream &>())) * = nullptr>
-		Message &recv(Message &message) {
-			message.recvWith(*this);
-			return message;
+		Record &recv(Record &record) {
+			record.recvWith(*this);
+			return record;
 		}
 		// For inline construction.
 		template<
-			typename Message,
-			decltype(std::declval<Message>().sendWith(
+			typename Record,
+			decltype(std::declval<Record>().sendWith(
 				std::declval<std::ostream &>())) * = nullptr>
-		void send(Message &&message) {
-			this->send(message);
+		void send(Record &&record) {
+			this->send(record);
 		}
 		template<
-			typename Message,
-			decltype(std::declval<Message>().recvWith(
+			typename Record,
+			decltype(std::declval<Record>().recvWith(
 				std::declval<std::istream &>())) * = nullptr>
-		Message recv() {
-			Message message;
-			this->recv(message);
-			return message;
+		Record recv() {
+			Record record;
+			this->recv(record);
+			return record;
 		}
 
 		// std::iostream overloads.
 		template<
-			typename Message,
-			decltype(std::declval<Message>().sendWith(
+			typename Record,
+			decltype(std::declval<Record>().sendWith(
 				std::declval<std::ostream &>())) * = nullptr>
 		ConnectedSocketSpecInterface &operator<<(
-			Message &message) {
-			this->send(message);
+			Record &record) {
+			this->send(record);
 			return *this;
 		}
 		template<
-			typename Message,
-			decltype(std::declval<Message>().recvWith(
+			typename Record,
+			decltype(std::declval<Record>().recvWith(
 				std::declval<std::istream &>())) * = nullptr>
 		ConnectedSocketSpecInterface &operator>>(
-			Message &message) {
-			this->recv(message);
+			Record &record) {
+			this->recv(record);
 			return *this;
 		}
 		// For inline construction.
 		template<
-			typename Message,
-			decltype(std::declval<Message>().sendWith(
+			typename Record,
+			decltype(std::declval<Record>().sendWith(
 				std::declval<std::ostream &>())) * = nullptr>
 		ConnectedSocketSpecInterface &operator<<(
-			Message &&message) {
-			return *this << message;
+			Record &&record) {
+			return *this << record;
 		}
 	};
 
@@ -166,5 +169,15 @@ namespace Rain::Networking::Tls {
 			UnderlyingConnectedSocketSpecInterface>::operator<<;
 		using ConnectedSocketSpecInterface<
 			UnderlyingConnectedSocketSpecInterface>::operator>>;
+
+		// TODO: Add streambufs for each content type.
+		// streambufs should read from the common TCP streambuf
+		// and use common Plaintext/Ciphertext unwrapping
+		// functions. streambufs should write to a
+		// current-configuration Plaintext/Ciphertext before
+		// pushing to the TCP streambuf.
+		//
+		// TODO: streambuf parameters should probably be put
+		// into a parameter pack.
 	};
 }

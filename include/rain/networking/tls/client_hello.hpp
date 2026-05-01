@@ -82,13 +82,13 @@ namespace Rain::Networking::Tls {
 				return;
 			}
 
-			auto extensionsLength{
+			std::int32_t extensionsLength(
 				Algorithm::readBytes<std::uint16_t>(
-					stream, std::endian::big)};
+					stream, std::endian::big));
 			// If extensionsLength wraps around and this loop gets
 			// stuck, that's the fault of the caller and the
 			// socket will eventually time out and error.
-			while (extensionsLength > 0) {
+			while (stream && extensionsLength > 0) {
 				this->extensions.emplace_back(stream);
 				// 4 for the extension type and length.
 				extensionsLength -= 4 +

@@ -162,7 +162,7 @@ namespace Rain::Algorithm {
 		Data const &data,
 		std::endian const endian = std::endian::native,
 		std::size_t length = 0) {
-		std::size_t offset{0};
+		std::size_t offset{};
 		if (length == 0) {
 			length = sizeof(data);
 		} else if constexpr (
@@ -175,7 +175,7 @@ namespace Rain::Algorithm {
 				reinterpret_cast<char const *>(&data) + offset,
 				length);
 		} else {
-			for (std::size_t i{0}; i < length; i++) {
+			for (std::size_t i{}; i < length && stream; i++) {
 				stream.put(
 					*(reinterpret_cast<char const *>(&data) + offset +
 						length - 1 - i));
@@ -189,7 +189,7 @@ namespace Rain::Algorithm {
 		Data &data,
 		std::endian const endian = std::endian::native,
 		std::size_t length = 0) {
-		std::size_t offset{0};
+		std::size_t offset{};
 		if (length == 0) {
 			length = sizeof(data);
 		} else if constexpr (
@@ -201,9 +201,12 @@ namespace Rain::Algorithm {
 			return stream.read(
 				reinterpret_cast<char *>(&data) + offset, length);
 		} else {
-			for (std::size_t i{0}; i < length; i++) {
-				*(reinterpret_cast<char *>(&data) + offset +
-					length - 1 - i) = stream.get();
+			// Why does using `stream.get()` fail here sometimes?
+			for (std::size_t i{}; i < length && stream; i++) {
+				stream.read(
+					reinterpret_cast<char *>(&data) + offset +
+						length - 1 - i,
+					1);
 			}
 			return stream;
 		}

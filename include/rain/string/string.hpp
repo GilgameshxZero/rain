@@ -29,29 +29,6 @@
 #include <string>
 #include <unordered_set>
 
-// Single operator overload for all iterable classes. Must
-// use `basic_ostream` so that selectivity requirements are
-// satisfied when compared to the standard library
-// `operator<<` for `std::string`.
-template<
-	typename CharT,
-	typename Traits,
-	typename Value,
-	typename = decltype(std::begin(std::declval<Value>()))>
-inline std::basic_ostream<CharT, Traits> &operator<<(
-	std::basic_ostream<CharT, Traits> &stream,
-	Value const &values) {
-	if (values.empty()) {
-		return stream << "[]";
-	}
-	char separator{'['};
-	for (auto &i : values) {
-		stream << separator << i;
-		separator = ' ';
-	}
-	return stream << ']';
-}
-
 namespace Rain {
 	// strcasecmp does not exist on Windows.
 	inline int strcasecmp(
@@ -189,4 +166,43 @@ namespace Rain::String {
 			return strcasecmp(left.c_str(), right.c_str()) == 0;
 		}
 	};
+
+	// Transform string in a series of hex bytes, tab
+	// separated. Useful for debugging.
+	inline std::string asHexStr(std::string const &str) {
+		std::stringstream ss;
+		ss << std::hex << std::setfill('0');
+		for (auto &i : str) {
+			// Cast to uint8_t to wrap around negative values,
+			// then to uint16_t to guarantee an into display.
+			ss << std::setw(2)
+				 << static_cast<std::uint16_t>(
+							static_cast<std::uint8_t>(i))
+				 << "\t";
+		}
+		return ss.str();
+	}
+}
+
+// Single operator overload for all iterable classes. Must
+// use `basic_ostream` so that selectivity requirements are
+// satisfied when compared to the standard library
+// `operator<<` for `std::string`.
+template<
+	typename CharT,
+	typename Traits,
+	typename Value,
+	typename = decltype(std::begin(std::declval<Value>()))>
+inline std::basic_ostream<CharT, Traits> &operator<<(
+	std::basic_ostream<CharT, Traits> &stream,
+	Value const &values) {
+	if (values.empty()) {
+		return stream << "[]";
+	}
+	char separator{'['};
+	for (auto &i : values) {
+		stream << separator << i;
+		separator = ' ';
+	}
+	return stream << ']';
 }

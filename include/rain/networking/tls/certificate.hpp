@@ -19,10 +19,10 @@ namespace Rain::Networking::Tls {
 			stream.get();
 			stream.get();
 			stream.get();
-			auto certificatesLength{
+			std::int32_t certificatesLength(
 				Algorithm::readBytes<std::uint32_t>(
-					stream, std::endian::big, 3)};
-			while (certificatesLength > 0) {
+					stream, std::endian::big, 3));
+			while (stream && certificatesLength > 0) {
 				auto certificateLength{
 					Algorithm::readBytes<std::uint32_t>(
 						stream, std::endian::big, 3)};
