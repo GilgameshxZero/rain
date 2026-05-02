@@ -12,7 +12,9 @@
 // protocol.
 #pragma once
 
-#include "plaintext.hpp"
+#include "content_interface.hpp"
+#include "record.hpp"
+#include "security_parameters.hpp"
 
 namespace Rain::Networking::Tls {
 	template<typename UnderlyingSocketSpecInterface>
@@ -69,6 +71,75 @@ namespace Rain::Networking::Tls {
 			operator<<;
 		using UnderlyingConnectedSocketSpecInterface::operator>>
 			;
+
+		// The security parameters determines the type of Record
+		// which is sent/received. They are also used by the
+		// streambuffer to encode/decode any fragments.
+		SecurityParameters securityParameters;
+
+		// Custom streambuffer has shared static buffers between
+		// all instances. Underflow reads from underlying TCP
+		// stream and puts it into the right buffer, until the
+		// requested buffer is filled.
+		//
+		// Overflow packs the buffer as a Record. The buffer
+		// contents are first...
+		//
+		// TODO.
+		class TlsStreamBuf : public std::streambuf {
+			private:
+			// Return a pair of send/recv buffers associated with
+			// a specific content type. All TlsStreamBuf buffers
+			// are static and accessible from any streambuf
+			// instance.
+			//
+			// Buffer size is up to 4K (+ 2K for ciphertext) as
+			// per RFC 5246. Total buffer size per socket is thus
+			// up to 10K * |ContentType| = 40K.
+			template<ContentType CONTENT_TYPE>
+			std::pair<char *, char *> getBuffers() {
+				char sendBuffer[4096 + 1], recvBuffer[4096 + 2048];
+				return {sendBuffer, recvBuffer};
+			}
+
+			public:
+			ContentType const CONTENT_TYPE;
+
+			// Must be constructed with the content type to
+			// identify the underlying buffer. However, all
+			// buffers are accessible to any streambuf instance,
+			// because one streambuff may fill another's buffer
+			// during underflow.
+			TlsStreamBuf(ContentType const &contentType) :
+				CONTENT_TYPE{contentType} {}
+
+			// Copy/move is implicitly disabed because of const
+			// TYPE.
+
+			protected:
+			// recvBuffer needs to be refilled.
+			virtual int_type underflow() override { return 0; }
+
+			// sendBuffer needs to be sent as a Record and
+			// cleared.
+			virtual int_type overflow(
+				int_type = traits_type::eof()) override {
+				return 0;
+			}
+
+			// Send sendbuffer as a Record.
+			virtual int sync() override { return 0; };
+		};
+
+		// Retrieves a stream associated with a specific content
+		// type.
+		template<ContentType CONTENT_TYPE>
+		std::iostream &getMessageStream() const {
+			static std::unique_ptr<TlsStreamBuf> tlsStreamBuf(
+				new TlsStreamBuf(CONTENT_TYPE));
+			static std::iostream stream(tlsStreamBuf.get());
+			return stream;
+		}
 
 		// Overloads to send TLS types.
 		//

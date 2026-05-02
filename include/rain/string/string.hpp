@@ -167,7 +167,7 @@ namespace Rain::String {
 		}
 	};
 
-	// Transform string in a series of hex bytes, tab
+	// Transform string in a series of hex bytes, space
 	// separated. Useful for debugging.
 	inline std::string asHexStr(std::string const &str) {
 		std::stringstream ss;
@@ -178,7 +178,7 @@ namespace Rain::String {
 			ss << std::setw(2)
 				 << static_cast<std::uint16_t>(
 							static_cast<std::uint8_t>(i))
-				 << "\t";
+				 << " ";
 		}
 		return ss.str();
 	}

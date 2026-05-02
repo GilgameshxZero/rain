@@ -3,7 +3,7 @@
 #include "../../algorithm/bit_manipulators.hpp"
 #include "alert_description.hpp"
 #include "alert_level.hpp"
-#include "plaintext_fragment.hpp"
+#include "content.hpp"
 
 #include <cstdint>
 #include <iostream>

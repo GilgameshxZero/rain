@@ -1,6 +1,6 @@
 #pragma once
 
-#include "content_type.hpp"
+#include "content_interface.hpp"
 
 #include <cstdint>
 #include <iostream>

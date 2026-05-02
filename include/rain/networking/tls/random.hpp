@@ -6,6 +6,7 @@
 #include <climits>
 #include <cstdint>
 #include <iostream>
+#include <utility>
 
 namespace Rain::Networking::Tls {
 	class Random {

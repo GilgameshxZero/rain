@@ -3,9 +3,9 @@
 #include "../../algorithm/bit_manipulators.hpp"
 #include "certificate.hpp"
 #include "client_hello.hpp"
+#include "content.hpp"
 #include "handshake_body.hpp"
 #include "handshake_type.hpp"
-#include "plaintext_fragment.hpp"
 #include "server_hello.hpp"
 #include "server_key_exchange.hpp"
 

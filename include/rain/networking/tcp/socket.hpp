@@ -89,10 +89,10 @@ namespace Rain::Networking::Tcp {
 		// Expose Socket::swap and not iostream::swap.
 		using Socket::swap;
 
-		private:
+		public:
 		// A custom subclass of std::streambuf as underlying the
 		// std::iostream.
-		class IoStreamBuf : public std::streambuf {
+		class TcpStreamBuf : public std::streambuf {
 			private:
 			std::size_t const SEND_BUFFER_LEN, RECV_BUFFER_LEN;
 			long long const SEND_TIMEOUT_MS, RECV_TIMEOUT_MS;
@@ -106,7 +106,7 @@ namespace Rain::Networking::Tcp {
 			char *sendBuffer, *recvBuffer;
 
 			public:
-			IoStreamBuf(
+			TcpStreamBuf(
 				std::size_t const SEND_BUFFER_LEN,
 				std::size_t const RECV_BUFFER_LEN,
 				long long const SEND_TIMEOUT_MS,
@@ -134,21 +134,42 @@ namespace Rain::Networking::Tcp {
 
 			// Disable copy construct/assignment and move
 			// construct/assignment because we hold state.
-			IoStreamBuf(IoStreamBuf const &) = delete;
-			IoStreamBuf &operator=(IoStreamBuf const &) = delete;
-			IoStreamBuf(IoStreamBuf &&) = delete;
-			IoStreamBuf &operator=(IoStreamBuf &&) = delete;
+			TcpStreamBuf(TcpStreamBuf const &) = delete;
+			TcpStreamBuf &operator=(
+				TcpStreamBuf const &) = delete;
+			TcpStreamBuf(TcpStreamBuf &&) = delete;
+			TcpStreamBuf &operator=(TcpStreamBuf &&) = delete;
 
 			// Free stack memory on destruct.
-			~IoStreamBuf() {
+			~TcpStreamBuf() {
 				delete[] this->sendBuffer;
 				delete[] this->recvBuffer;
 			}
 
 			protected:
+			// Ran out of buffer space while sending to the
+			// socket.
+			virtual int_type overflow(
+				int_type ch = traits_type::eof()) override {
+				if (!traits_type::eq_int_type(
+							ch, traits_type::eof())) {
+					// Push ch to the send buffer (final character in
+					// sendBuffer is reserved by us).
+					*this->pptr() = ch;
+					this->pbump(1);
+
+					// Flush and empty the send buffer.
+					if (this->sync() == -1) {
+						return traits_type::eof();
+					}
+				}
+
+				return ch;
+			}
+
 			// Ran out of characters while receiving from the
 			// socket.
-			virtual int_type underflow() noexcept override {
+			virtual int_type underflow() override {
 				// Only refill buffer if it has been exhausted.
 				if (this->gptr() == this->egptr()) {
 					std::size_t result{0};
@@ -180,29 +201,8 @@ namespace Rain::Networking::Tcp {
 				return traits_type::to_int_type(*this->gptr());
 			}
 
-			// Ran out of buffer space while sending to the
-			// socket.
-			virtual int_type overflow(
-				int_type ch =
-					traits_type::eof()) noexcept override {
-				if (!traits_type::eq_int_type(
-							ch, traits_type::eof())) {
-					// Push ch to the send buffer (final character in
-					// sendBuffer is reserved by us).
-					*this->pptr() = ch;
-					this->pbump(1);
-
-					// Flush and empty the send buffer.
-					if (this->sync() == -1) {
-						return traits_type::eof();
-					}
-				}
-
-				return ch;
-			}
-
 			// Write available buffer to the socket.
-			virtual int sync() noexcept override {
+			virtual int sync() override {
 				// Send available buffer.
 				try {
 					std::size_t bytesSent{0},
@@ -234,8 +234,9 @@ namespace Rain::Networking::Tcp {
 			}
 		};
 
+		private:
 		// Internally holds the stream buffer.
-		IoStreamBuf ioStreamBuf{IoStreamBuf(
+		TcpStreamBuf tcpStreamBuf{TcpStreamBuf(
 			this->SEND_BUFFER_LEN,
 			this->RECV_BUFFER_LEN,
 			this->SEND_TIMEOUT_MS,
@@ -248,7 +249,7 @@ namespace Rain::Networking::Tcp {
 		class _ConnectedSocketSpec {
 			public:
 			_ConnectedSocketSpec(ConnectedSocketSpec *that) {
-				that->rdbuf(&that->ioStreamBuf);
+				that->rdbuf(&that->tcpStreamBuf);
 			}
 		};
 		// Syntax necessary to differentiate from function.
