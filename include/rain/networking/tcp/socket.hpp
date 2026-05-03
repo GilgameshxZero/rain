@@ -89,7 +89,7 @@ namespace Rain::Networking::Tcp {
 		// Expose Socket::swap and not iostream::swap.
 		using Socket::swap;
 
-		public:
+		private:
 		// A custom subclass of std::streambuf as underlying the
 		// std::iostream.
 		class TcpStreamBuf : public std::streambuf {
@@ -234,7 +234,6 @@ namespace Rain::Networking::Tcp {
 			}
 		};
 
-		private:
 		// Internally holds the stream buffer.
 		TcpStreamBuf tcpStreamBuf{TcpStreamBuf(
 			this->SEND_BUFFER_LEN,
