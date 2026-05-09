@@ -846,6 +846,9 @@ namespace Rain::Math {
 			}
 			return sizesTransposed;
 		}
+		inline auto sizeProduct() const {
+			return Tensor<>::calcSizesProduct(this->SIZES);
+		}
 		inline bool isEmpty() const {
 			for (auto const &i : this->SIZES) {
 				if (i == 0) {
