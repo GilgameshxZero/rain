@@ -524,22 +524,24 @@ namespace Rain::Math {
 
 		// Public shorthands for `applyOver`.
 		template<std::size_t REMAINING_ORDER>
-		inline void applyOver(
+		inline auto applyOver(
 			auto &&callable,
 			auto &&...others) {
 			Tensor<>::applyOver<REMAINING_ORDER>(
 				std::forward<decltype(callable)>(callable),
 				*this,
 				std::forward<decltype(others)>(others)...);
+			return *this;
 		}
 		template<std::size_t REMAINING_ORDER>
-		inline void applyOver(
+		inline auto applyOver(
 			auto &&callable,
 			auto &&...others) const {
 			Tensor<>::applyOver<REMAINING_ORDER>(
 				std::forward<decltype(callable)>(callable),
 				*this,
 				std::forward<decltype(others)>(others)...);
+			return *this;
 		}
 		// Return new Tensor with function applied over all
 		// indices.
@@ -554,7 +556,9 @@ namespace Rain::Math {
 			return result;
 		}
 
-		// Common element-wise manipulations.
+		// Common manipulations.
+		//
+		// TODO: asContract.
 		//
 		// Accumulate a single value over all indices in order.
 		//
@@ -580,6 +584,9 @@ namespace Rain::Math {
 					accumulator += value;
 				},
 				Value{});
+		}
+		inline auto mean() const {
+			return this->sum() / this->sizeProduct();
 		}
 		inline auto product() const {
 			return this->accumulate(
@@ -1321,7 +1328,16 @@ namespace Rain::Math {
 		}
 		// Element-wise.
 		template<typename OtherValue>
-		inline auto productElementWise(
+		inline auto multiplyElementWise(
+			Tensor<OtherValue, ORDER> const &other) {
+			return this->applyOver<0>(
+				[](Value &left, OtherValue const &right) {
+					left *= right;
+				},
+				other);
+		}
+		template<typename OtherValue>
+		inline auto asMultiplyElementWise(
 			Tensor<OtherValue, ORDER> const &other) const {
 			return this->asApplyOver<0>(
 				[](Value &left, OtherValue const &right) {
@@ -1330,7 +1346,16 @@ namespace Rain::Math {
 				other);
 		}
 		template<typename OtherValue>
-		inline auto quotientElementWise(
+		inline auto divideElementWise(
+			Tensor<OtherValue, ORDER> const &other) {
+			return this->applyOver<0>(
+				[](Value &left, OtherValue const &right) {
+					left /= right;
+				},
+				other);
+		}
+		template<typename OtherValue>
+		inline auto asDivideElementWise(
 			Tensor<OtherValue, ORDER> const &other) const {
 			return this->asApplyOver<0>(
 				[](Value &left, OtherValue const &right) {
