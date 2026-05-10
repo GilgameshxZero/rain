@@ -558,8 +558,40 @@ namespace Rain::Math {
 
 		// Common manipulations.
 		//
-		// TODO: asContract.
-		//
+		// Contract a dimension with a lambda.
+		template<typename OtherValue = Value>
+		inline auto asContract(
+			std::size_t dimension,
+			auto &&callable,
+			auto &&...others) const {
+			// Dimension needs to be transposed to the end, like
+			// in product.
+			std::array<std::size_t, ORDER> thisDimPerm;
+			for (std::size_t i{0}, j{0}; i < ORDER; i++) {
+				if (i == dimension) {
+					continue;
+				}
+				thisDimPerm[j++] = i;
+			}
+			thisDimPerm[ORDER - 1] = dimension;
+			auto thisTransposed{this->asTranspose(thisDimPerm)};
+
+			auto thisTransposedSize{thisTransposed.size()};
+			std::array<std::size_t, ORDER - 1> resultSize;
+			std::copy(
+				thisTransposedSize.begin(),
+				thisTransposedSize.end() - 1,
+				resultSize.begin());
+			Tensor<OtherValue, ORDER - 1> result(resultSize);
+			result.template applyOver<0>(
+				[&callable](OtherValue &left, auto &&...right) {
+					left = callable(
+						std::forward<decltype(right)>(right)...);
+				},
+				thisTransposed,
+				std::forward<decltype(others)>(others)...);
+			return result;
+		}
 		// Accumulate a single value over all indices in order.
 		//
 		// callable must take two arguments; the first is the
