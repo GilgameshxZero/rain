@@ -1319,6 +1319,25 @@ namespace Rain::Math {
 			Tensor<OtherValue, 1> const &other) const {
 			return this->product<0>(other, {}, {});
 		}
+		// Element-wise.
+		template<typename OtherValue>
+		inline auto productElementWise(
+			Tensor<OtherValue, ORDER> const &other) const {
+			return this->asApplyOver<0>(
+				[](Value &left, OtherValue const &right) {
+					left *= right;
+				},
+				other);
+		}
+		template<typename OtherValue>
+		inline auto quotientElementWise(
+			Tensor<OtherValue, ORDER> const &other) const {
+			return this->asApplyOver<0>(
+				[](Value &left, OtherValue const &right) {
+					left /= right;
+				},
+				other);
+		}
 		// Square matrices also allow for log power. If not
 		// square, `*` will throw iff DEBUG.
 		//
