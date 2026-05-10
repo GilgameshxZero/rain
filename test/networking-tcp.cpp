@@ -33,6 +33,8 @@ int main() {
 	std::stringstream ss;
 	ss << client.rdbuf();
 	std::cout << ss.str().substr(0, 1_zu << 10) << std::endl;
+	// TODO: This test needs to be updated, sometimes Google
+	// does not return a 301.
 	releaseAssert(
 		ss.str().substr(0, 30) ==
 		"HTTP/1.1 301 Moved Permanently");

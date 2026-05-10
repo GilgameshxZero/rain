@@ -192,12 +192,12 @@ namespace Rain::Algorithm {
 
 			static inline Value defaultValue() {
 				return {
-					{std::numeric_limits<TimeType>::min(),
+					{std::numeric_limits<TimeType>::lowest(),
 						Policy::defaultValue()}};
 			}
 			static inline Update defaultUpdate() {
 				return {
-					std::numeric_limits<TimeType>::min(),
+					std::numeric_limits<TimeType>::lowest(),
 					Policy::defaultUpdate()};
 			}
 			static inline Result defaultResult() {
@@ -364,7 +364,7 @@ namespace Rain::Algorithm {
 			using typename SuperPolicy::Value;
 
 			static inline Result defaultResult() {
-				return std::numeric_limits<Result>::min();
+				return std::numeric_limits<Result>::lowest();
 			}
 			static inline void combine(
 				Update &current,

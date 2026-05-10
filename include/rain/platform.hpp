@@ -32,7 +32,7 @@ namespace Rain::Platform {
 	enum class Platform { NONE = 0, WINDOWS, MACOS, LINUX };
 
 	// Get the Platform enum Rain is running on.
-	inline Platform getPlatform() noexcept {
+	inline Platform constexpr getPlatform() noexcept {
 #ifdef RAIN_PLATFORM_WINDOWS
 		return Platform::WINDOWS;
 #elif defined(RAIN_PLATFORM_MACOS)
@@ -45,7 +45,7 @@ namespace Rain::Platform {
 	}
 
 	// Returns whether the code was built in debug mode.
-	inline bool isDebug() noexcept {
+	inline bool constexpr isDebug() noexcept {
 #ifdef RAIN_PLATFORM_NDEBUG
 		return false;
 #else

@@ -37,9 +37,12 @@ namespace std {
 		static ThisInteger constexpr min() {
 			return ThisInteger(
 				numeric_limits<
-					typename ThisInteger::SmallerInteger>::min(),
+					typename ThisInteger::SmallerInteger>::lowest(),
 				numeric_limits<typename ThisInteger::
-						SmallerIntegerUnsigned>::min());
+						SmallerIntegerUnsigned>::lowest());
+		};
+		static ThisInteger constexpr lowest() {
+			return numeric_limits::min();
 		};
 		static ThisInteger constexpr max() {
 			return ThisInteger(
@@ -62,7 +65,10 @@ namespace std {
 
 		static ThisInteger constexpr min() {
 			return ThisInteger{
-				numeric_limits<UnderlyingInteger>::min()};
+				numeric_limits<UnderlyingInteger>::lowest()};
+		};
+		static ThisInteger constexpr lowest() {
+			return numeric_limits::min();
 		};
 		static ThisInteger constexpr max() {
 			return ThisInteger{
@@ -184,7 +190,7 @@ namespace Rain::Algorithm {
 		explicit inline BigInteger(Generator &generator) :
 			value{
 				std::uniform_int_distribution<UnderlyingInteger>(
-					std::numeric_limits<UnderlyingInteger>::min(),
+					std::numeric_limits<UnderlyingInteger>::lowest(),
 					std::numeric_limits<UnderlyingInteger>::max())(
 					generator)} {}
 		// Cast constructors.
@@ -291,7 +297,7 @@ namespace Rain::Algorithm {
 				smallerUnsigned & std::uint32_t{0x7fffffff})};
 			// Restore sign if necessary.
 			this->value = other < OtherInteger() ? smallerSigned ^
-					std::numeric_limits<std::int32_t>::min()
+					std::numeric_limits<std::int32_t>::lowest()
 																					 : smallerSigned;
 		}
 
@@ -406,7 +412,7 @@ namespace Rain::Algorithm {
 			// Restore sign if necessary.
 			return this->value < UnderlyingInteger{}
 				? smallerSigned ^
-					std::numeric_limits<OtherInteger>::min()
+					std::numeric_limits<OtherInteger>::lowest()
 				: smallerSigned;
 		}
 		// Cast to bool is standard.
@@ -632,7 +638,7 @@ namespace Rain::Algorithm {
 			// bits with `1`, and then resetting sign bit.
 			UnderlyingInteger unsetValue{
 				this->value ^
-				std::numeric_limits<UnderlyingInteger>::min()};
+				std::numeric_limits<UnderlyingInteger>::lowest()};
 			unsetValue >>= shift;
 			std::size_t maskKeep{
 				sizeof(UnderlyingInteger) * 8 - 1 - shift};
@@ -642,7 +648,7 @@ namespace Rain::Algorithm {
 				<< maskKeep};
 			return ThisInteger(
 				unsetValue ^ mask ^
-				std::numeric_limits<UnderlyingInteger>::min());
+				std::numeric_limits<UnderlyingInteger>::lowest());
 		}
 		template<typename Other>
 		inline ThisInteger constexpr &operator>>=(
@@ -676,7 +682,7 @@ namespace Rain::Algorithm {
 			}
 			if (shift >= sizeof(UnderlyingInteger) * 8 - 1) {
 				return ThisInteger(
-					std::numeric_limits<UnderlyingInteger>::min());
+					std::numeric_limits<UnderlyingInteger>::lowest());
 			}
 			// Shift on negative LHS by unsetting the `shift + 1`
 			// most significant bits (including the sign bit),
@@ -691,7 +697,7 @@ namespace Rain::Algorithm {
 			unsetValue <<= shift;
 			return ThisInteger(
 				unsetValue ^
-				std::numeric_limits<UnderlyingInteger>::min());
+				std::numeric_limits<UnderlyingInteger>::lowest());
 		}
 		template<typename Other>
 		inline ThisInteger constexpr &operator<<=(
@@ -748,11 +754,11 @@ namespace Rain::Algorithm {
 				// sign bit.
 				auto unsetUpResult{
 					upResult ^
-					std::numeric_limits<LargerInteger>::min()};
+					std::numeric_limits<LargerInteger>::lowest()};
 				unsetUpResult >>= (sizeof(UnderlyingInteger) * 8);
 				high = ResultInteger(unsetUpResult) ^
 					(SIGNED || RIGHT_SIGNED
-							? std::numeric_limits<ResultInteger>::min()
+							? std::numeric_limits<ResultInteger>::lowest()
 							: ResultInteger(std::uint32_t{0x80000000}));
 			}
 
@@ -785,7 +791,7 @@ namespace Rain::Algorithm {
 			if (underlyingLow & std::uint32_t{0x80000000}) {
 				targetLow ^=
 					(SIGNED ? std::numeric_limits<
-											UnderlyingInteger>::min()
+											UnderlyingInteger>::lowest()
 									: std::uint32_t{0x80000000});
 			}
 			return ThisInteger(targetLow);
@@ -816,11 +822,11 @@ namespace Rain::Algorithm {
 			} else {
 				auto unsetUpResult{
 					upResult ^
-					std::numeric_limits<LargerInteger>::min()};
+					std::numeric_limits<LargerInteger>::lowest()};
 				unsetUpResult >>= (sizeof(UnderlyingInteger) * 8);
 				high = ResultInteger(unsetUpResult) ^
 					(SIGNED || RIGHT_SIGNED
-							? std::numeric_limits<ResultInteger>::min()
+							? std::numeric_limits<ResultInteger>::lowest()
 							: ResultInteger(std::uint32_t{0x80000000}));
 			}
 			BigInteger<5, false> low(upResult);
@@ -848,7 +854,7 @@ namespace Rain::Algorithm {
 			if (underlyingLow & std::uint32_t{0x80000000}) {
 				targetLow ^=
 					(SIGNED ? std::numeric_limits<
-											UnderlyingInteger>::min()
+											UnderlyingInteger>::lowest()
 									: std::uint32_t{0x80000000});
 			}
 			return ThisInteger(targetLow);
@@ -882,11 +888,11 @@ namespace Rain::Algorithm {
 			} else {
 				auto unsetUpResult{
 					upResult ^
-					std::numeric_limits<LargerInteger>::min()};
+					std::numeric_limits<LargerInteger>::lowest()};
 				unsetUpResult >>= (sizeof(UnderlyingInteger) * 8);
 				high = ResultInteger(unsetUpResult) ^
 					(SIGNED || RIGHT_SIGNED
-							? std::numeric_limits<ResultInteger>::min()
+							? std::numeric_limits<ResultInteger>::lowest()
 							: ResultInteger(std::uint32_t{0x80000000}));
 			}
 			BigInteger<5, false> low(upResult);
@@ -914,7 +920,7 @@ namespace Rain::Algorithm {
 			if (underlyingLow & std::uint32_t{0x80000000}) {
 				targetLow ^=
 					(SIGNED ? std::numeric_limits<
-											UnderlyingInteger>::min()
+											UnderlyingInteger>::lowest()
 									: std::uint32_t{0x80000000});
 			}
 			return ThisInteger(targetLow);
@@ -1316,7 +1322,7 @@ namespace Rain::Algorithm {
 			// Restore sign bit if msb was set.
 			if (downUnsignedOther & std::uint32_t{0x80000000}) {
 				downSignedOther ^=
-					std::numeric_limits<std::int32_t>::min();
+					std::numeric_limits<std::int32_t>::lowest();
 			}
 			this->high = SmallerInteger(downSignedOther);
 		}
@@ -1531,7 +1537,7 @@ namespace Rain::Algorithm {
 					<< (sizeof(OtherIntegerUnsigned) * 8 - 1)))};
 			// Restore sign if necessary.
 			return this->high < SmallerInteger{} ? smallerSigned ^
-					std::numeric_limits<OtherInteger>::min()
+					std::numeric_limits<OtherInteger>::lowest()
 																					 : smallerSigned;
 		}
 		// Recursively casting to bool avoids comparators, which
@@ -1766,7 +1772,7 @@ namespace Rain::Algorithm {
 			// unsigned now that it is in-range.
 			auto carry{static_cast<SmallerIntegerUnsigned>(
 				this->high &
-				~std::numeric_limits<SmallerInteger>::min())};
+				~std::numeric_limits<SmallerInteger>::lowest())};
 			carry <<=
 				static_cast<OtherInteger>(ThisInteger::HALF_BITS) -
 				other;
@@ -1797,7 +1803,7 @@ namespace Rain::Algorithm {
 				static_cast<OtherInteger>(
 					ThisInteger::HALF_BITS * 2 - SIGNED) <= other) {
 				return this->isNegative()
-					? std::numeric_limits<ThisInteger>::min()
+					? std::numeric_limits<ThisInteger>::lowest()
 					: ThisInteger();
 			}
 			// Directly shift low/high if more than half the bit
@@ -1808,7 +1814,7 @@ namespace Rain::Algorithm {
 				auto convertedLow{SmallerInteger(this->low)};
 				if (this->high < SmallerInteger()) {
 					convertedLow ^=
-						std::numeric_limits<SmallerInteger>::min();
+						std::numeric_limits<SmallerInteger>::lowest();
 				}
 				return ThisInteger(
 								 convertedLow, SmallerIntegerUnsigned())
@@ -1890,7 +1896,7 @@ namespace Rain::Algorithm {
 					 BigInteger<LOG_BITS, false>>::max() >>
 					1)) {
 				targetLow ^=
-					std::numeric_limits<ThisInteger>::min();
+					std::numeric_limits<ThisInteger>::lowest();
 			}
 			return ThisInteger(targetLow);
 		}
@@ -1978,7 +1984,7 @@ namespace Rain::Algorithm {
 					 BigInteger<LOG_BITS, false>>::max() >>
 					1)) {
 				targetLow ^=
-					std::numeric_limits<ThisInteger>::min();
+					std::numeric_limits<ThisInteger>::lowest();
 			}
 			return ThisInteger(targetLow);
 		}
@@ -2067,7 +2073,7 @@ namespace Rain::Algorithm {
 					 BigInteger<LOG_BITS, false>>::max() >>
 					1)) {
 				targetLow ^=
-					std::numeric_limits<ThisInteger>::min();
+					std::numeric_limits<ThisInteger>::lowest();
 			}
 			return ThisInteger(targetLow);
 		}

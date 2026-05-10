@@ -33,7 +33,7 @@ namespace Rain::Error {
 	// Must name differently from `assert` macro defined in
 	// <cassert>.
 	inline void debugAssert(bool condition) {
-		if (Rain::Platform::isDebug()) {
+		if constexpr (Rain::Platform::isDebug()) {
 			releaseAssert(condition);
 		}
 	}

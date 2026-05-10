@@ -51,7 +51,7 @@ namespace Rain::Algorithm {
 			}
 			if (j == edges.size()) {
 				distances[i] =
-					std::numeric_limits<WeightType>::min();
+					std::numeric_limits<WeightType>::lowest();
 				continue;
 			}
 			for (auto const &k : edges[i]) {

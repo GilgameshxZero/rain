@@ -343,7 +343,7 @@ namespace Rain::Algorithm {
 		// Build dictionary by scanning a string for
 		// frequencies.
 		HuffmanStreamBuf(
-			std::stringbuf &underlying,
+			std::streambuf &underlying,
 			std::string const &text,
 			bool writeDictionary = true) :
 			HuffmanStreamBuf(

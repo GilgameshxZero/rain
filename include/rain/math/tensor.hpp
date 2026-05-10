@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../algorithm/bit_manipulators.hpp"
+#include "../data/serializer.hpp"
 #include "../error/exception.hpp"
 #include "../functional/trait.hpp"
 #include "../literal.hpp"
@@ -8,6 +9,7 @@
 
 #include <array>
 #include <bitset>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <type_traits>
@@ -23,7 +25,12 @@ namespace Rain::Math {
 		friend class Tensor;
 
 		public:
-		enum Error { NONE, SIZES_MISMATCH };
+		enum Error {
+			NONE,
+			SIZES_MISMATCH,
+			OUT_OF_RANGE,
+			INVALID_PERMUTATION
+		};
 		class ErrorCategory : public std::error_category {
 			public:
 			char const *name() const noexcept {
@@ -36,6 +43,11 @@ namespace Rain::Math {
 					case Error::SIZES_MISMATCH:
 						return "Tensor(s) are not of compatible size "
 									 "for operation.";
+					case Error::OUT_OF_RANGE:
+						return "Requested index was out of range.";
+					case Error::INVALID_PERMUTATION:
+						return "Provided arguments did not form a "
+									 "valid permutation.";
 					default:
 						return "Generic.";
 				}
@@ -103,18 +115,6 @@ namespace Rain::Math {
 		};
 
 		private:
-		// SFINAE to check if a type is a tensor.
-		template<typename Value, std::size_t ORDER>
-		static std::true_type isDerivedFromTensorImpl(
-			Tensor<Value, ORDER> *);
-		template<typename = std::nullptr_t, std::size_t = 0>
-		static std::false_type isDerivedFromTensorImpl(...);
-		template<typename TypeDerived>
-		using isDerivedFromTensor =
-			decltype(isDerivedFromTensorImpl(
-				std::declval<typename std::remove_const<
-					TypeDerived>::type *>()));
-
 		// SFINAE to check an arbitrary type with a tensor of a
 		// given order.
 		template<
@@ -191,8 +191,10 @@ namespace Rain::Math {
 		template<
 			std::size_t,
 			typename ResultType,
-			typename std::enable_if<!isDerivedFromTensor<
-				ResultType>::value>::type * = nullptr>
+			typename std::enable_if<
+				!Functional::TraitTypeTemplateTypeAuto<Tensor>::
+					IsBaseOfTemplate<ResultType>::VALUE>::type * =
+				nullptr>
 		static inline void applyOver(
 			auto &&callable,
 			ResultType &result,
@@ -315,7 +317,7 @@ namespace Rain::Math {
 		template<typename OtherValue>
 		inline void debugAssertEqualSizes(
 			Tensor<OtherValue, ORDER> const &other) const {
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				auto thisSize{this->size()},
 					otherSize{other.size()};
 				for (std::size_t i{0}; i < ORDER; i++) {
@@ -330,7 +332,7 @@ namespace Rain::Math {
 			typename std::enable_if<(TENSOR_ORDER == 2)>::type * =
 				nullptr>
 		inline void debugAssertSquare() const {
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				if (this->SIZES[0] != this->SIZES[1]) {
 					throw Exception(Error::SIZES_MISMATCH);
 				}
@@ -520,7 +522,7 @@ namespace Rain::Math {
 				this->operator Value const &());
 		}
 
-		// Public shorthand for `applyOver`.
+		// Public shorthands for `applyOver`.
 		template<std::size_t REMAINING_ORDER>
 		inline void applyOver(
 			auto &&callable,
@@ -529,6 +531,114 @@ namespace Rain::Math {
 				std::forward<decltype(callable)>(callable),
 				*this,
 				std::forward<decltype(others)>(others)...);
+		}
+		template<std::size_t REMAINING_ORDER>
+		inline void applyOver(
+			auto &&callable,
+			auto &&...others) const {
+			Tensor<>::applyOver<REMAINING_ORDER>(
+				std::forward<decltype(callable)>(callable),
+				*this,
+				std::forward<decltype(others)>(others)...);
+		}
+		// Return new Tensor with function applied over all
+		// indices.
+		template<std::size_t REMAINING_ORDER>
+		inline auto asApplyOver(
+			auto &&callable,
+			auto &&...others) const {
+			auto result{this->copy()};
+			result.template applyOver<REMAINING_ORDER>(
+				std::forward<decltype(callable)>(callable),
+				std::forward<decltype(others)>(others)...);
+			return result;
+		}
+
+		// Common element-wise manipulations.
+		//
+		// Accumulate a single value over all indices in order.
+		//
+		// callable must take two arguments; the first is the
+		// accumulator of ResultType &, and the second is the
+		// current value in the Tensor.
+		//
+		// Optionally supply a starting value for accumulator
+		// `result`.
+		template<typename ResultType>
+		inline auto accumulate(
+			auto &&callable,
+			ResultType accumulator = ResultType{}) const {
+			this->applyOver<0>(
+				[&accumulator, &callable](Value const &value) {
+					callable(accumulator, value);
+				});
+			return accumulator;
+		}
+		inline auto sum() const {
+			return this->accumulate(
+				[](Value &accumulator, Value const &value) {
+					accumulator += value;
+				},
+				Value{});
+		}
+		inline auto product() const {
+			return this->accumulate(
+				[](Value &accumulator, Value const &value) {
+					accumulator *= value;
+				},
+				Value{1});
+		}
+		inline auto min() const {
+			return this->accumulate(
+				[](Value &accumulator, Value const &value) {
+					accumulator = std::min(accumulator, value);
+				},
+				std::numeric_limits<Value>::max());
+		}
+		inline auto max() const {
+			return this->accumulate(
+				[](Value &accumulator, Value const &value) {
+					accumulator = std::max(accumulator, value);
+				},
+				std::numeric_limits<Value>::lowest());
+		}
+		// Clamping is important for floating-point values to
+		// avoid +/- INF.
+		inline auto exp() {
+			this->applyOver<0>(
+				[](Value &left) { left = std::exp(left); });
+			return *this;
+		}
+		inline auto asExp() const {
+			auto result{this->copy()};
+			return result.exp();
+		}
+		inline auto log() {
+			this->applyOver<0>(
+				[](Value &left) { left = std::log(left); });
+			return *this;
+		}
+		inline auto asLog() const {
+			auto result{this->copy()};
+			return result.log();
+		}
+		inline auto clamp(
+			Value const &low =
+				std::numeric_limits<Value>::lowest(),
+			Value const &high =
+				std::numeric_limits<Value>::max()) {
+			this->applyOver<0>([&low, &high](Value &left) {
+				left = std::clamp(left, low, high);
+			});
+			return *this;
+		}
+		inline auto asClamp(
+			Value const &low =
+				std::numeric_limits<Value>::lowest(),
+			Value const &high =
+				std::numeric_limits<Value>::max()) const {
+			auto result{this->copy()};
+			return result.clamp(low, high);
 		}
 
 		// Indexing is the main operation of a tensor, and most
@@ -549,9 +659,9 @@ namespace Rain::Math {
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline Value const &operator[](std::size_t idx) const {
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
-					throw Exception(Error::SIZES_MISMATCH);
+					throw Exception(Error::OUT_OF_RANGE);
 				}
 			}
 			return this->VALUES
@@ -573,9 +683,9 @@ namespace Rain::Math {
 				nullptr>
 		Tensor<Value, ORDER - 1> const operator[](
 			std::size_t idx) const {
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
-					throw Exception(Error::SIZES_MISMATCH);
+					throw Exception(Error::OUT_OF_RANGE);
 				}
 			}
 
@@ -634,7 +744,7 @@ namespace Rain::Math {
 					idx));
 		}
 
-		// Binary operators. Checks dimension equality iff
+		// Arithmetic operators. Checks dimension equality iff
 		// DEBUG.
 		//
 		// Binary assignment operators perform operations
@@ -738,7 +848,7 @@ namespace Rain::Math {
 				[&other](Value &that) { that -= other; }, *this);
 			return *this;
 		}
-		// Binary operators *, *= are defined with another
+		// Arithmetic operators *, *= are defined with another
 		// Tensor operand iff they are of compatible size. This
 		// is a shorthand for `product`.
 		template<typename OtherValue>
@@ -793,6 +903,10 @@ namespace Rain::Math {
 				[&other](Value &that) { that /= other; }, *this);
 			return *this;
 		}
+		// Unary operators.
+		inline auto constexpr operator-() const {
+			return 0 - *this;
+		}
 
 		// Memory functions.
 
@@ -820,7 +934,7 @@ namespace Rain::Math {
 			return true;
 		}
 		inline auto asClean() const {
-			Tensor<Value, ORDER> result{this->size()};
+			TypeThis result(this->size());
 			Tensor<>::applyOver<0>(
 				[](Value &resultValue, Value const &thisValue) {
 					resultValue = thisValue;
@@ -910,14 +1024,14 @@ namespace Rain::Math {
 		// iff DEBUG.
 		TypeThis asTranspose(
 			std::array<std::size_t, ORDER> const &dimPerm) const {
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				std::array<std::size_t, ORDER> dimPermSorted{
 					this->TRANSPOSE};
 				std::sort(
 					dimPermSorted.begin(), dimPermSorted.end());
 				for (std::size_t i{0}; i < ORDER; i++) {
 					if (dimPermSorted[i] != i) {
-						throw Exception(Error::SIZES_MISMATCH);
+						throw Exception(Error::INVALID_PERMUTATION);
 					}
 				}
 			}
@@ -1004,6 +1118,18 @@ namespace Rain::Math {
 			std::array<std::size_t, ORDER> const &sizes) {
 			return *this = this->asReshape(sizes);
 		}
+		// Shorthand for changing underlying type via
+		// static_cast on individual entries.
+		template<typename OtherValue>
+		inline auto asRetype() const {
+			Tensor<OtherValue, ORDER> result(this->size());
+			result.template applyOver<0>(
+				[](OtherValue &left, Value const &right) {
+					left = static_cast<OtherValue>(right);
+				},
+				*this);
+			return result;
+		}
 		// Swaps two top-level indices, considering
 		// transposition. Not a transpose.
 		inline void swap(
@@ -1048,7 +1174,7 @@ namespace Rain::Math {
 				&thisContractDims,
 			std::array<std::size_t, CONTRACT_ORDER> const
 				&otherContractDims) const {
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
 					if (
 						this->SIZES[this
@@ -1274,7 +1400,7 @@ namespace Rain::Math {
 		auto productStrassen(
 			Tensor<OtherValue, 2> const &other) const {
 			auto thisSize{this->size()}, otherSize{other.size()};
-			if (Platform::isDebug()) {
+			if constexpr (Platform::isDebug()) {
 				if (thisSize[1] != otherSize[0]) {
 					throw Exception(Error::SIZES_MISMATCH);
 				}
@@ -1517,4 +1643,90 @@ namespace Rain::Math {
 		Rain::Math::Tensor<Value, OTHER_ORDER> const &right) {
 		return right.streamOutPadded(stream, 0);
 	}
+
+	// Arithmetic operators, called when the left operand is
+	// not a Tensor.
+	template<
+		typename Left,
+		typename std::enable_if<
+			!Functional::TraitTypeTemplateTypeAuto<Tensor>::
+				IsBaseOfTemplate<Left>::VALUE>::type * = nullptr,
+		typename Value,
+		std::size_t ORDER>
+	inline auto constexpr operator+(
+		Left const &left,
+		Rain::Math::Tensor<Value, ORDER> const &right) {
+		// Preserve operation order in case it is important;
+		return right.template asApplyOver<0>(
+			[&left](Value &value) { value = left + value; });
+	}
+	template<
+		typename Left,
+		typename std::enable_if<
+			!Functional::TraitTypeTemplateTypeAuto<Tensor>::
+				IsBaseOfTemplate<Left>::VALUE>::type * = nullptr,
+		typename Value,
+		std::size_t ORDER>
+	inline auto constexpr operator-(
+		Left const &left,
+		Rain::Math::Tensor<Value, ORDER> const &right) {
+		// Preserve operation order in case it is important;
+		return right.template asApplyOver<0>(
+			[&left](Value &value) { value = left - value; });
+	}
+	template<
+		typename Left,
+		typename std::enable_if<
+			!Functional::TraitTypeTemplateTypeAuto<Tensor>::
+				IsBaseOfTemplate<Left>::VALUE>::type * = nullptr,
+		typename Value,
+		std::size_t ORDER>
+	inline auto constexpr operator*(
+		Left const &left,
+		Rain::Math::Tensor<Value, ORDER> const &right) {
+		// Preserve operation order in case it is important;
+		return right.template asApplyOver<0>(
+			[&left](Value &value) { value = left * value; });
+	}
+	template<
+		typename Left,
+		typename std::enable_if<
+			!Functional::TraitTypeTemplateTypeAuto<Tensor>::
+				IsBaseOfTemplate<Left>::VALUE>::type * = nullptr,
+		typename Value,
+		std::size_t ORDER>
+	inline auto constexpr operator/(
+		Left const &left,
+		Rain::Math::Tensor<Value, ORDER> const &right) {
+		// Preserve operation order in case it is important;
+		return right.template asApplyOver<0>(
+			[&left](Value &value) { value = left / value; });
+	}
+}
+
+namespace Rain::Data {
+	template<typename Value, std::size_t ORDER>
+	struct serialize<Rain::Math::Tensor<Value, ORDER>> {
+		void operator()(
+			Rain::Data::Serializer &serializer,
+			Rain::Math::Tensor<Value, ORDER> const &data) {
+			serializer << data.size();
+			serializer.write(
+				reinterpret_cast<char const *>(data.data().get()),
+				sizeof(Value) * data.sizeProduct());
+		}
+	};
+	template<typename Value, std::size_t ORDER>
+	struct deserialize<Rain::Math::Tensor<Value, ORDER>> {
+		void operator()(
+			Rain::Data::Deserializer &deserializer,
+			Rain::Math::Tensor<Value, ORDER> &data) {
+			std::array<std::size_t, ORDER> size;
+			deserializer >> size;
+			data = Rain::Math::Tensor<Value, ORDER>(size);
+			deserializer.read(
+				reinterpret_cast<char *>(data.data().get()),
+				sizeof(Value) * data.sizeProduct());
+		}
+	};
 }
