@@ -424,6 +424,7 @@ namespace Rain::Math {
 			SIZES_UNDERLYING{sizes},
 			OFFSET{0},
 			TRANSPOSE{TypeThis::makeDimPermDefault()} {}
+		// Careful! This reference-copies.
 		Tensor(TypeThis const &other) :
 			VALUES{other.VALUES},
 			RANGES{other.RANGES},
@@ -559,21 +560,21 @@ namespace Rain::Math {
 		// Common manipulations.
 		//
 		// Contract a dimension with a lambda.
-		template<typename OtherValue = Value>
+		template<typename ResultType = Value>
 		inline auto asContract(
-			std::size_t dimension,
+			std::size_t dimensionIdx,
 			auto &&callable,
 			auto &&...others) const {
 			// Dimension needs to be transposed to the end, like
 			// in product.
 			std::array<std::size_t, ORDER> thisDimPerm;
 			for (std::size_t i{0}, j{0}; i < ORDER; i++) {
-				if (i == dimension) {
+				if (i == dimensionIdx) {
 					continue;
 				}
 				thisDimPerm[j++] = i;
 			}
-			thisDimPerm[ORDER - 1] = dimension;
+			thisDimPerm[ORDER - 1] = dimensionIdx;
 			auto thisTransposed{this->asTranspose(thisDimPerm)};
 
 			auto thisTransposedSize{thisTransposed.size()};
@@ -582,15 +583,60 @@ namespace Rain::Math {
 				thisTransposedSize.begin(),
 				thisTransposedSize.end() - 1,
 				resultSize.begin());
-			Tensor<OtherValue, ORDER - 1> result(resultSize);
-			result.template applyOver<0>(
-				[&callable](OtherValue &left, auto &&...right) {
+			Tensor<ResultType, ORDER - 1> result(resultSize);
+			return result.template applyOver<0>(
+				[&callable](ResultType &left, auto &&...right) {
 					left = callable(
 						std::forward<decltype(right)>(right)...);
 				},
 				thisTransposed,
 				std::forward<decltype(others)>(others)...);
-			return result;
+		}
+		// Expand a new dimension at a specific target index.
+		template<
+			std::size_t DIMENSION_IDX,
+			typename ResultType = Value>
+		inline auto asExpand(
+			std::size_t newDimensionSize,
+			auto &&callable,
+			auto &&...others) const {
+			auto thisSize{this->size()};
+			std::array<std::size_t, ORDER + 1> newSize;
+			for (std::size_t i{0}, j{0}; i < ORDER + 1; i++) {
+				if (i == DIMENSION_IDX) {
+					newSize[i] = newDimensionSize;
+					continue;
+				}
+				newSize[i] = thisSize[j++];
+			}
+			Tensor<ResultType, ORDER + 1> result(newSize);
+			return result.template applyOver<
+				ORDER + 1 - DIMENSION_IDX>(
+				[&callable](
+					Tensor<Value, ORDER + 1 - DIMENSION_IDX> &l1,
+					typename std::conditional<
+						ORDER - DIMENSION_IDX == 0,
+						Value,
+						Tensor<Value, ORDER - DIMENSION_IDX>>::
+						type const &that,
+					auto &&...r1) {
+					l1.template applyOver<ORDER - DIMENSION_IDX>(
+						[&callable, &that](
+							typename std::conditional<
+								ORDER - DIMENSION_IDX == 0,
+								Value,
+								Tensor<Value, ORDER - DIMENSION_IDX>>::type
+								&l2,
+							auto &&...r2) {
+							callable(
+								l2,
+								that,
+								std::forward<decltype(r2)>(r2)...);
+						},
+						std::forward<decltype(r1)>(r1)...);
+				},
+				*this,
+				std::forward<decltype(others)>(others)...);
 		}
 		// Accumulate a single value over all indices in order.
 		//
@@ -985,6 +1031,21 @@ namespace Rain::Math {
 		inline auto clean() { return *this = this->asClean(); }
 		// Alias for `asClean`.
 		inline auto copy() const { return this->asClean(); }
+		inline auto deepCopyFrom(TypeThis const &other) {
+			if constexpr (Platform::isDebug()) {
+				this->debugAssertEqualSizes(other);
+			}
+			// Cannot directly memcpy since either tensor may be
+			// views.
+			return this->applyOver<0>(
+				[](Value &left, Value const &right) {
+					left = right;
+				},
+				other);
+		}
+		inline auto deepCopyTo(TypeThis &other) const {
+			return other.deepCopyFrom(*this);
+		}
 
 		// Property functions.
 
@@ -1421,6 +1482,19 @@ namespace Rain::Math {
 			} else {
 				return half * half * *this;
 			}
+		}
+		// Turn a vector into a diagonal square matrix.
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
+				nullptr>
+		inline auto asDiagonal() const {
+			Tensor<Value, 2> result(
+				{this->SIZES[0], this->SIZES[0]});
+			for (std::size_t i{0}; i < this->SIZES[0]; i++) {
+				result[i][i] = (*this)[i];
+			}
+			return result;
 		}
 		// Helper function for various recursive algorithms
 		// which depend on D&C. Extends the matrix with 1s on
