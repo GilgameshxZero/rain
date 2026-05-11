@@ -40,6 +40,23 @@ namespace Rain::Math::Neural::Activation {
 					.clamp();
 			this->bias = (this->bias - gradient).clamp();
 		}
+		virtual void stepWithGradient(
+			Tensor<Value, 2> const &z1,
+			Tensor<Value, 2> const &gradient) override {
+			this->weight =
+				(this->weight -
+					z1.template asMultiply<1>(gradient, {0}, {0}) /
+						z1.size()[0])
+					.clamp();
+			this->bias =
+				(this->bias -
+					gradient.asContract(
+						0,
+						[](Tensor<Value, 1> const &right) {
+							return right.mean();
+						}))
+					.clamp();
+		}
 
 		virtual Data::Serializer &serialize(
 			Data::Serializer &serializer) const override {

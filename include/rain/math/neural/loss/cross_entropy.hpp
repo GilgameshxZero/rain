@@ -9,23 +9,23 @@ namespace Rain::Math::Neural::Loss {
 	template<typename Value>
 	class CrossEntropy : public LossInterface<Value> {
 		public:
-		Tensor<Value, 1> left;
-
-		CrossEntropy(Tensor<Value, 1> const &left) :
-			left{left.copy()} {}
+		using Super = LossInterface<Value>;
+		using Super::asApply;
+		using Super::getGradient;
 
 		virtual Value asApply(
-			Tensor<Value, 1> const &right) const override {
-			return clamp(-static_cast<Value>(
-				this->left * right.asLog().clamp()));
+			Tensor<Value, 1> const &y1,
+			Tensor<Value, 1> const &y2) const override {
+			return clamp(
+				-static_cast<Value>(y1 * y2.asLog().clamp()));
 		}
 		virtual Tensor<Value, 1> getGradient(
-			Tensor<Value, 1> const &right) const override {
+			Tensor<Value, 1> const &y1,
+			Tensor<Value, 1> const &y2) const override {
 			// Offset probability distribution `right` by EPS to
 			// guarantee no NANs.
-			return -this->left
-								.asDivideElementWise(
-									right + std::numeric_limits<Value>::min())
+			return -y1.asDivideElementWise(
+									y2 + std::numeric_limits<Value>::min())
 								.clamp();
 		}
 	};

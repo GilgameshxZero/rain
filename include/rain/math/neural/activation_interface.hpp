@@ -15,9 +15,15 @@ namespace Rain::Math::Neural {
 		virtual Tensor<Value, 1> apply(
 			Tensor<Value, 1> &) const = 0;
 		auto apply(Tensor<Value, 2> &X) const {
-			return X.applyOver<1>([this](Tensor<Value, 1> &left) {
-				this->apply(left);
-			});
+			// TODO: This is sloppy because we don't have vstack.
+			auto firstResult{this->asApply(X[0])};
+			Tensor<Value, 2> result(
+				{X.size()[0], firstResult.size()[0]});
+			result[0].deepCopyFrom(firstResult);
+			for (std::size_t i{1}; i < X.size()[0]; i++) {
+				result[i].deepCopyFrom(this->asApply(X[i]));
+			}
+			return X = result;
 		}
 		// Decay rvalue-reference.
 		auto apply(Tensor<Value, 1> &&tensor) const {
@@ -42,19 +48,21 @@ namespace Rain::Math::Neural {
 		virtual Tensor<Value, 2> getGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &) const = 0;
-		// Since gradient is a linear operator, batch version
-		// will take the mean across the batch and give the same
-		// size as the non-batch version.
 		auto getGradient(
 			Tensor<Value, 2> const &z1,
 			Tensor<Value, 2> const &z2) const {
-			// No easy way to write this since we don't have a
-			// free way to find the size of the non-batch variant.
-			auto result{this->getGradient(z1[0], z2[0])};
-			for (std::size_t i{1}; i < z1.size()[0]; i++) {
-				result += this->getGradient(z1[i], z2[i]);
-			}
-			return result / z1.size()[0];
+			// TODO: This is sloppy because we don't have vstack.
+			return Tensor<Value, 3>(
+				{z1.size()[0], z2.size()[1], z1.size()[1]})
+				.template applyOver<2>(
+					[this](
+						Tensor<Value, 2> &left,
+						Tensor<Value, 1> const &y1,
+						Tensor<Value, 1> const &y2) {
+						left.deepCopyFrom(this->getGradient(y1, y2));
+					},
+					z1,
+					z2);
 		}
 		// Update internal constants based on gradient d(loss) /
 		// d(Z_2) \in R^{N_2}. Thus, for each internal constant
@@ -69,8 +77,9 @@ namespace Rain::Math::Neural {
 		virtual void stepWithGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &) {}
-		// No batch version necessary; artifact and gradient are
-		// both linear and can be averaged.
+		virtual void stepWithGradient(
+			Tensor<Value, 2> const &,
+			Tensor<Value, 2> const &) {}
 
 		virtual Data::Serializer &serialize(
 			Data::Serializer &serializer) const {
