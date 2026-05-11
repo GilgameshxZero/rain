@@ -135,53 +135,53 @@ int main() {
 		Tensor<int, 1> e{{6}, 1, 2, 3, 4, 5, 6},
 			f{{6}, 7, 8, 9, 10, 11, 12};
 		cout << e << '\n' << f << '\n';
-		auto g{e.productOuter(f)};
-		auto h{e.productInner(f)};
+		auto g{e.asMultiplyOuter(f)};
+		auto h{e.asMultiplyInner(f)};
 		cout << g << '\n' << h << '\n';
 		releaseAssert(
-			(g ==
-				Tensor<int, 2>{
-					{6, 6},
-					7,
-					8,
-					9,
-					10,
-					11,
-					12,
-					14,
-					16,
-					18,
-					20,
-					22,
-					24,
-					21,
-					24,
-					27,
-					30,
-					33,
-					36,
-					28,
-					32,
-					36,
-					40,
-					44,
-					48,
-					35,
-					40,
-					45,
-					50,
-					55,
-					60,
-					42,
-					48,
-					54,
-					60,
-					66,
-					72}));
-		releaseAssert((h == 217));
+			g ==
+			Tensor<int, 2>{
+				{6, 6},
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				14,
+				16,
+				18,
+				20,
+				22,
+				24,
+				21,
+				24,
+				27,
+				30,
+				33,
+				36,
+				28,
+				32,
+				36,
+				40,
+				44,
+				48,
+				35,
+				40,
+				45,
+				50,
+				55,
+				60,
+				42,
+				48,
+				54,
+				60,
+				66,
+				72});
+		releaseAssert(h == 217);
 
 		// Product policy.
-		auto i{e.product<1, Tensor<>::MinPlusProductPolicy>(
+		auto i{e.asMultiply<1, Tensor<>::MinPlusProductPolicy>(
 			f, {0}, {0})};
 		cout << i << '\n';
 		releaseAssert(i == 8);
@@ -202,7 +202,7 @@ int main() {
 		}
 		{
 			auto timeBegin = std::chrono::steady_clock::now();
-			d = a.productStrassen(b);
+			d = a.asMultiplyStrassen(b);
 			auto timeEnd = std::chrono::steady_clock::now();
 			std::cout << "Time elapsed (Strassen): "
 								<< timeEnd - timeBegin << '.' << std::endl;
