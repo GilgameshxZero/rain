@@ -21,12 +21,12 @@ namespace Rain::Math::Neural::Loss {
 		}
 		virtual Tensor<Value, 1> getGradient(
 			Tensor<Value, 1> const &right) const override final {
-			// Offset probability distribution `right` by eps to
+			// Offset probability distribution `right` by EPS to
 			// guarantee no NANs.
 			return -this->left
-				.asDivideElementWise(
-					right + std::numeric_limits<Value>::min())
-				.clamp();
+								.asDivideElementWise(
+									right + std::numeric_limits<Value>::min())
+								.clamp();
 		}
 	};
 }

@@ -3,6 +3,7 @@
 #include "../tensor.hpp"
 
 namespace Rain::Math::Neural {
+	// TODO: How to clean up Loss to support batches?
 	template<typename Value>
 	class LossInterface {
 		public:
