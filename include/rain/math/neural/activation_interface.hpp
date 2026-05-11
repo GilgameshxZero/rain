@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../data/serializer.hpp"
 #include "../tensor.hpp"
 
 namespace Rain::Math::Neural {
@@ -67,12 +68,34 @@ namespace Rain::Math::Neural {
 		// accordingly.
 		virtual void stepWithGradient(
 			Tensor<Value, 1> const &,
-			Tensor<Value, 1> const &) = 0;
+			Tensor<Value, 1> const &) {}
 		// No batch version necessary; artifact and gradient are
 		// both linear and can be averaged.
 
+		virtual Data::Serializer &serialize(
+			Data::Serializer &serializer) const {
+			return serializer;
+		}
+		virtual Data::Deserializer &deserialize(
+			Data::Deserializer &deserializer) {
+			return deserializer;
+		}
+
 		virtual ~ActivationInterface() {}
+
+		// Data::Serializer.
+		class Serializer {
+			public:
+			static auto &serialize(
+				Data::Serializer &serializer,
+				ActivationInterface const *data) {
+				return data->serialize(serializer);
+			}
+			static auto &deserialize(
+				Data::Deserializer &deserializer,
+				ActivationInterface *data) {
+				return data->deserialize(deserializer);
+			}
+		};
 	};
 }
-
-// TODO: How to define a serializer?

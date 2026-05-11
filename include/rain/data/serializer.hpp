@@ -14,13 +14,14 @@
 #include <vector>
 
 namespace Rain::Data {
-	class Serializer;
-	class Deserializer;
-
-	template<typename Data>
-	struct serialize;
-	template<typename Data>
-	struct deserialize;
+	template<typename>
+	Functional::TraitFalse isSerializable(...);
+	template<typename DataType>
+	Functional::TraitTrue isSerializable(
+		typename DataType::Serializer *);
+	template<typename DataType>
+	using IsSerializable =
+		decltype(isSerializable<DataType>(nullptr));
 
 	// Serializes and deserializes data to/from std::iostream.
 	//
@@ -46,19 +47,29 @@ namespace Rain::Data {
 			this->rdbuf(this->streambufManager->rdbuf());
 		}
 
-		// Operators redirect to a template type which can be
-		// overloaded, and provides a default.
-		template<typename Data>
-		inline Rain::Data::Serializer &operator<<(
-			Data const &data) {
-			serialize<Data>()(*this, data);
+		// Operators redirect to a nested type, and provides a
+		// default.
+		template<
+			typename DataType,
+			std::enable_if<IsSerializable<DataType>::VALUE>::type
+				* = nullptr>
+		inline Serializer &operator<<(DataType const &data) {
+			return DataType::Serializer::serialize(*this, &data);
+		}
+		template<
+			typename DataType,
+			std::enable_if<!IsSerializable<DataType>::VALUE>::type
+				* = nullptr>
+		inline Serializer &operator<<(DataType const &data) {
+			Algorithm::writeBytes(
+				*this, data, std::endian::little);
 			return *this;
 		}
 		template<
 			typename CharT,
 			typename Traits,
 			typename Allocator>
-		inline Rain::Data::Serializer &operator<<(
+		inline auto &operator<<(
 			std::basic_string<CharT, Traits, Allocator> const
 				&data) {
 			*this << data.size();
@@ -68,12 +79,12 @@ namespace Rain::Data {
 			return *this;
 		}
 		template<typename T>
-		inline Rain::Data::Serializer &operator<<(
+		inline auto &operator<<(
 			std::shared_ptr<T> const &data) {
 			return *this << *data.get();
 		}
 		template<typename T, typename Allocator>
-		inline Rain::Data::Serializer &operator<<(
+		inline auto &operator<<(
 			std::vector<T, Allocator> const &data) {
 			*this << data.size();
 			for (auto &i : data) {
@@ -85,7 +96,7 @@ namespace Rain::Data {
 			typename Key,
 			typename Compare,
 			typename Allocator>
-		inline Rain::Data::Serializer &operator<<(
+		inline auto &operator<<(
 			std::set<Key, Compare, Allocator> const &data) {
 			*this << data.size();
 			for (auto &i : data) {
@@ -98,7 +109,7 @@ namespace Rain::Data {
 			typename Hash,
 			typename KeyEqual,
 			typename Allocator>
-		inline Rain::Data::Serializer &operator<<(std::
+		inline auto &operator<<(std::
 				unordered_set<Key, Hash, KeyEqual, Allocator> const
 					&data) {
 			*this << data.size();
@@ -127,17 +138,28 @@ namespace Rain::Data {
 
 		// Operators redirect to a template type which can be
 		// overloaded, and provides a default.
-		template<typename Data>
-		inline Rain::Data::Deserializer &operator>>(
-			Data &data) {
-			deserialize<Data>()(*this, data);
+		template<
+			typename DataType,
+			std::enable_if<IsSerializable<DataType>::VALUE>::type
+				* = nullptr>
+		inline Deserializer &operator>>(DataType &data) {
+			return DataType::Serializer::deserialize(
+				*this, &data);
+		}
+		template<
+			typename DataType,
+			std::enable_if<!IsSerializable<DataType>::VALUE>::type
+				* = nullptr>
+		inline Deserializer &operator>>(DataType &data) {
+			Algorithm::readBytes(
+				*this, data, std::endian::little);
 			return *this;
 		}
 		template<
 			typename CharT,
 			typename Traits,
 			typename Allocator>
-		inline Rain::Data::Deserializer &operator>>(
+		inline auto &operator>>(
 			std::basic_string<CharT, Traits, Allocator> &data) {
 			std::size_t size;
 			*this >> size;
@@ -147,14 +169,14 @@ namespace Rain::Data {
 				sizeof(CharT) * size);
 			return *this;
 		}
+		// shared_ptr must already be allocated. We do not
+		// allocate since sometimes T is abstract.
 		template<typename T>
-		inline Rain::Data::Deserializer &operator>>(
-			std::shared_ptr<T> &data) {
-			data.reset(new T());
+		inline auto &operator>>(std::shared_ptr<T> &data) {
 			return *this >> *data.get();
 		}
 		template<typename T, typename Allocator>
-		inline Rain::Data::Deserializer &operator>>(
+		inline auto &operator>>(
 			std::vector<T, Allocator> &data) {
 			std::size_t size;
 			*this >> size;
@@ -168,7 +190,7 @@ namespace Rain::Data {
 			typename Key,
 			typename Compare,
 			typename Allocator>
-		inline Rain::Data::Deserializer &operator>>(
+		inline auto &operator>>(
 			std::set<Key, Compare, Allocator> &data) {
 			std::size_t size;
 			*this >> size;
@@ -184,7 +206,7 @@ namespace Rain::Data {
 			typename Hash,
 			typename KeyEqual,
 			typename Allocator>
-		inline Rain::Data::Deserializer &operator>>(
+		inline auto &operator>>(
 			std::unordered_set<Key, Hash, KeyEqual, Allocator>
 				&data) {
 			std::size_t size;
@@ -195,31 +217,6 @@ namespace Rain::Data {
 				data.insert(key);
 			}
 			return *this;
-		}
-	};
-
-	// Use separate serialize/deserialize types instead of
-	// operator overloading. This is because operator
-	// overloading fails to respect definition order when
-	// using a variety of custom types, but type
-	// specialization does, and so supports more flexible
-	// overloading.
-	template<typename Data>
-	struct serialize {
-		void operator()(
-			Serializer &serializer,
-			Data const &data) {
-			Algorithm::writeBytes(
-				serializer, data, std::endian::little);
-		}
-	};
-	template<typename Data>
-	struct deserialize {
-		void operator()(
-			Deserializer &deserializer,
-			Data &data) {
-			Algorithm::readBytes(
-				deserializer, data, std::endian::little);
 		}
 	};
 }

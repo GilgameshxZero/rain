@@ -21,7 +21,7 @@ namespace Rain::Math::Neural::Activation {
 			bias{bias.copy()} {}
 
 		virtual Tensor<Value, 1> apply(
-			Tensor<Value, 1> &z1) const override final {
+			Tensor<Value, 1> &z1) const override {
 			return (
 				z1.template multiply<1>(this->weight, {0}, {0}) +
 				this->bias)
@@ -29,16 +29,25 @@ namespace Rain::Math::Neural::Activation {
 		}
 		virtual Tensor<Value, 2> getGradient(
 			Tensor<Value, 1> const &,
-			Tensor<Value, 1> const &) const override final {
+			Tensor<Value, 1> const &) const override {
 			return this->weight.asTranspose({1, 0});
 		}
 		virtual void stepWithGradient(
 			Tensor<Value, 1> const &z1,
-			Tensor<Value, 1> const &gradient) override final {
+			Tensor<Value, 1> const &gradient) override {
 			this->weight =
 				(this->weight - z1.asMultiplyOuter(gradient))
 					.clamp();
 			this->bias = (this->bias - gradient).clamp();
+		}
+
+		virtual Data::Serializer &serialize(
+			Data::Serializer &serializer) const override {
+			return serializer << this->weight << this->bias;
+		}
+		virtual Data::Deserializer &deserialize(
+			Data::Deserializer &deserializer) override {
+			return deserializer >> this->weight >> this->bias;
 		}
 	};
 }

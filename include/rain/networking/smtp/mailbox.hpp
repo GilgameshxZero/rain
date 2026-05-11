@@ -44,25 +44,21 @@ namespace Rain::Networking::Smtp {
 			Rain::Networking::Smtp::Mailbox const &mailbox) {
 			return stream << static_cast<std::string>(mailbox);
 		}
-	};
-}
 
-namespace Rain::Data {
-	template<>
-	struct serialize<Rain::Networking::Smtp::Mailbox> {
-		void operator()(
-			Rain::Data::Serializer &serializer,
-			Rain::Networking::Smtp::Mailbox const &data) {
-			serializer << data.name << data.host;
-		}
-	};
-	template<>
-	struct deserialize<Rain::Networking::Smtp::Mailbox> {
-		void operator()(
-			Rain::Data::Deserializer &deserializer,
-			Rain::Networking::Smtp::Mailbox &data) {
-			deserializer >> data.name >> data.host;
-		}
+		// Data::Serializer.
+		class Serializer {
+			public:
+			static auto &serialize(
+				Data::Serializer &serializer,
+				Mailbox const *data) {
+				return serializer << data->name << data->host;
+			}
+			static auto &deserialize(
+				Data::Deserializer &deserializer,
+				Mailbox *data) {
+				return deserializer >> data->name >> data->host;
+			}
+		};
 	};
 }
 

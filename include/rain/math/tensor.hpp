@@ -1859,6 +1859,32 @@ namespace Rain::Math {
 		inline auto invert() {
 			return *this = this->inverse();
 		}
+
+		// Data::Serializer.
+		class Serializer {
+			public:
+			static auto &serialize(
+				Data::Serializer &serializer,
+				TypeThis const *data) {
+				serializer << data->size();
+				serializer.write(
+					reinterpret_cast<char const *>(
+						data->data().get()),
+					sizeof(Value) * data->sizeProduct());
+				return serializer;
+			}
+			static auto &deserialize(
+				Data::Deserializer &deserializer,
+				TypeThis *data) {
+				std::array<std::size_t, ORDER> size;
+				deserializer >> size;
+				*data = Rain::Math::Tensor<Value, ORDER>(size);
+				deserializer.read(
+					reinterpret_cast<char *>(data->data().get()),
+					sizeof(Value) * data->sizeProduct());
+				return deserializer;
+			}
+		};
 	};
 
 	// Declare the operators here so they can be friended.
@@ -1933,31 +1959,4 @@ namespace Rain::Math {
 		return right.template asApplyOver<0>(
 			[&left](Value &value) { value = left / value; });
 	}
-}
-
-namespace Rain::Data {
-	template<typename Value, std::size_t ORDER>
-	struct serialize<Rain::Math::Tensor<Value, ORDER>> {
-		void operator()(
-			Rain::Data::Serializer &serializer,
-			Rain::Math::Tensor<Value, ORDER> const &data) {
-			serializer << data.size();
-			serializer.write(
-				reinterpret_cast<char const *>(data.data().get()),
-				sizeof(Value) * data.sizeProduct());
-		}
-	};
-	template<typename Value, std::size_t ORDER>
-	struct deserialize<Rain::Math::Tensor<Value, ORDER>> {
-		void operator()(
-			Rain::Data::Deserializer &deserializer,
-			Rain::Math::Tensor<Value, ORDER> &data) {
-			std::array<std::size_t, ORDER> size;
-			deserializer >> size;
-			data = Rain::Math::Tensor<Value, ORDER>(size);
-			deserializer.read(
-				reinterpret_cast<char *>(data.data().get()),
-				sizeof(Value) * data.sizeProduct());
-		}
-	};
 }

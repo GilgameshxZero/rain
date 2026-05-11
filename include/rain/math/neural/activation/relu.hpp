@@ -8,22 +8,19 @@ namespace Rain::Math::Neural::Activation {
 	class Relu : virtual public ActivationInterface<Value> {
 		public:
 		virtual Tensor<Value, 1> apply(
-			Tensor<Value, 1> &z1) const override final {
+			Tensor<Value, 1> &z1) const override {
 			return z1.template applyOver<0>([](Value &left) {
 				left = std::max(Value{}, left);
 			});
 		}
 		virtual Tensor<Value, 2> getGradient(
 			Tensor<Value, 1> const &,
-			Tensor<Value, 1> const &z2) const override final {
+			Tensor<Value, 1> const &z2) const override {
 			return z2
 				.template asApplyOver<0>([](Value &left) {
 					left = left > Value{} ? Value{1} : Value{};
 				})
 				.asDiagonal();
 		}
-		virtual void stepWithGradient(
-			Tensor<Value, 1> const &,
-			Tensor<Value, 1> const &) override final {}
 	};
 }

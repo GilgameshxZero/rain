@@ -77,28 +77,20 @@ namespace Rain::Math::Neural::Network {
 					{0});
 			}
 		}
-	};
-}
 
-namespace Rain::Data {
-	template<typename Value>
-	struct serialize<
-		Rain::Math::Neural::Network::FeedForward<Value>> {
-		void operator()(
-			Rain::Data::Serializer &serializer,
-			Rain::Math::Neural::Network::FeedForward<Value> const
-				&data) {
-			serializer << data.layer;
+		virtual Data::Serializer &serialize(
+			Data::Serializer &serializer) const override {
+			for (auto const &i : this->layer) {
+				serializer << i;
+			}
+			return serializer;
 		}
-	};
-	template<typename Value>
-	struct deserialize<
-		Rain::Math::Neural::Network::FeedForward<Value>> {
-		void operator()(
-			Rain::Data::Deserializer &deserializer,
-			Rain::Math::Neural::Network::FeedForward<Value>
-				&data) {
-			deserializer >> data.node >> data.service;
+		virtual Data::Deserializer &deserialize(
+			Data::Deserializer &deserializer) override {
+			for (auto &i : this->layer) {
+				deserializer >> i;
+			}
+			return deserializer;
 		}
 	};
 }
