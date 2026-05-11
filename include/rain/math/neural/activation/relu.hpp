@@ -13,7 +13,7 @@ namespace Rain::Math::Neural::Activation {
 				left = std::max(Value{}, left);
 			});
 		}
-		virtual Tensor<Value, 2> getGradient(
+		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &z2) const override {
 			return z2

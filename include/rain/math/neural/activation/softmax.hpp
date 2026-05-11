@@ -13,7 +13,7 @@ namespace Rain::Math::Neural::Activation {
 			z1 = z1.exp().clamp();
 			return z1 = (z1 / z1.sum()).clamp();
 		}
-		virtual Tensor<Value, 2> getGradient(
+		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &z2) const override {
 			return z2.asMultiplyElementWise(1 - z2)

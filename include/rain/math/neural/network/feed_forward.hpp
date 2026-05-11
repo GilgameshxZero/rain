@@ -18,32 +18,20 @@ namespace Rain::Math::Neural::Network {
 				&layer) :
 			layer{layer} {}
 
+		// Returns the layer-by-layer activations.
 		template<
 			std::size_t ORDER,
 			std::enable_if<ORDER == 1 || ORDER == 2>::type * =
 				nullptr>
-		Tensor<Value, ORDER> asApply(
+		std::vector<Tensor<Value, ORDER>> asApply(
 			Tensor<Value, ORDER> const &x) const {
-			auto yHat{x.copy()};
+			std::vector<Tensor<Value, ORDER>> activation;
+			activation.push_back(x.copy());
 			for (auto const &i : this->layer) {
-				i.get()->apply(yHat);
+				activation.push_back(
+					i.get()->asApply(activation.back()));
 			}
-			return yHat;
-		}
-		// Artifacts are the layer-by-layer activations.
-		template<
-			std::size_t ORDER,
-			std::enable_if<ORDER == 1 || ORDER == 2>::type * =
-				nullptr>
-		std::vector<Tensor<Value, ORDER>> asApplyWithArtifact(
-			Tensor<Value, ORDER> const &x) const {
-			std::vector<Tensor<Value, ORDER>> artifact;
-			artifact.push_back(x.copy());
-			for (auto const &i : this->layer) {
-				artifact.push_back(
-					i.get()->asApply(artifact.back()));
-			}
-			return artifact;
+			return activation;
 		}
 
 		// Backprop gradient given loss function (including
@@ -56,30 +44,35 @@ namespace Rain::Math::Neural::Network {
 			std::size_t ORDER,
 			std::enable_if<ORDER == 1 || ORDER == 2>::type * =
 				nullptr>
-		std::vector<Tensor<Value, ORDER>> getGradient(
+		std::vector<Tensor<Value, ORDER>> getActivationGradient(
 			LossInterface<Value> const &l,
 			Tensor<Value, ORDER> const &y,
-			std::vector<Tensor<Value, ORDER>> const &artifact)
+			std::vector<Tensor<Value, ORDER>> const &activation)
 			const {
-			std::vector<Tensor<Value, ORDER>> gradient;
-			gradient.push_back(l.getGradient(y, artifact.back()));
+			std::vector<Tensor<Value, ORDER>> activationGradient;
+			activationGradient.push_back(
+				l.getGradient(y, activation.back()));
 			for (std::size_t i{this->layer.size()}; i > 0; i--) {
 				if constexpr (ORDER == 1) {
-					gradient.push_back(
-						gradient.back().template asMultiply<1>(
-							this->layer[i - 1].get()->getGradient(
-								artifact[i - 1], artifact[i]),
-							{0},
-							{0}));
+					activationGradient.push_back(
+						activationGradient.back()
+							.template asMultiply<1>(
+								this->layer[i - 1]
+									.get()
+									->getIncrementalGradient(
+										activation[i - 1], activation[i]),
+								{0},
+								{0}));
 				} else {
-					auto layerGradient{
-						this->layer[i - 1].get()->getGradient(
-							artifact[i - 1], artifact[i])};
-					gradient.push_back(
+					auto incrementalGradient{this->layer[i - 1]
+							.get()
+							->getIncrementalGradient(
+								activation[i - 1], activation[i])};
+					activationGradient.push_back(
 						Tensor<Value, ORDER>(
-							{gradient.back().size()[0],
-								layerGradient.size()[2]}));
-					gradient.back().template applyOver<1>(
+							{activationGradient.back().size()[0],
+								incrementalGradient.size()[2]}));
+					activationGradient.back().template applyOver<1>(
 						[](
 							Tensor<Value, 1> &left,
 							Tensor<Value, 1> const &r1,
@@ -87,52 +80,30 @@ namespace Rain::Math::Neural::Network {
 							left.deepCopyFrom(
 								r1.template asMultiply<1>(r2, {0}, {0}));
 						},
-						gradient,
-						layerGradient);
+						activationGradient
+							[activationGradient.size() - 2],
+						incrementalGradient);
 				}
 			}
-			std::reverse(gradient.begin(), gradient.end());
-			return gradient;
+			std::reverse(
+				activationGradient.begin(),
+				activationGradient.end());
+			return activationGradient;
 		}
 		// Backprop gradient updates.
 		template<
 			std::size_t ORDER,
 			std::enable_if<ORDER == 1 || ORDER == 2>::type * =
 				nullptr>
-		void stepWithGradient(
-			LossInterface<Value> const &l,
-			Tensor<Value, ORDER> const &y,
-			std::vector<Tensor<Value, ORDER>> const &artifact,
+		void stepWithActivationGradient(
+			std::vector<Tensor<Value, ORDER>> const &activation,
+			std::vector<Tensor<Value, ORDER>> const
+				&activationGradient,
 			Value const &stepSize) const {
-			auto gradient{
-				l.getGradient(y, artifact.back()) * stepSize};
-			for (std::size_t i{this->layer.size()}; i > 0; i--) {
-				this->layer[i - 1].get()->stepWithGradient(
-					artifact[i - 1], gradient);
-				if constexpr (ORDER == 1) {
-					gradient.template multiply<1>(
-						this->layer[i - 1].get()->getGradient(
-							artifact[i - 1], artifact[i]),
-						{0},
-						{0});
-				} else {
-					auto layerGradient{
-						this->layer[i - 1].get()->getGradient(
-							artifact[i - 1], artifact[i])};
-					Tensor<Value, ORDER> nextGradient(
-						{gradient.size()[0], layerGradient.size()[2]});
-					nextGradient.template applyOver<1>(
-						[](
-							Tensor<Value, 1> &left,
-							Tensor<Value, 1> const &r1,
-							Tensor<Value, 2> const &r2) {
-							left.deepCopyFrom(
-								r1.template asMultiply<1>(r2, {0}, {0}));
-						},
-						gradient,
-						layerGradient);
-					gradient = nextGradient;
-				}
+			for (std::size_t i{0}; i < this->layer.size(); i++) {
+				this->layer[i].get()->stepWithGradient(
+					activation[i],
+					activationGradient[i + 1] * stepSize);
 			}
 		}
 

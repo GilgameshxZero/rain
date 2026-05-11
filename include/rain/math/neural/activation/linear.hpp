@@ -27,33 +27,24 @@ namespace Rain::Math::Neural::Activation {
 				this->bias)
 				.clamp();
 		}
-		virtual Tensor<Value, 2> getGradient(
+		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &) const override {
 			return this->weight.asTranspose({1, 0});
-		}
-		virtual void stepWithGradient(
-			Tensor<Value, 1> const &z1,
-			Tensor<Value, 1> const &gradient) override {
-			this->weight =
-				(this->weight - z1.asMultiplyOuter(gradient))
-					.clamp();
-			this->bias = (this->bias - gradient).clamp();
 		}
 		virtual void stepWithGradient(
 			Tensor<Value, 2> const &z1,
 			Tensor<Value, 2> const &gradient) override {
 			this->weight =
 				(this->weight -
-					z1.template asMultiply<1>(gradient, {0}, {0}) /
-						z1.size()[0])
+					z1.template asMultiply<1>(gradient, {0}, {0}))
 					.clamp();
 			this->bias =
 				(this->bias -
 					gradient.asContract(
 						0,
 						[](Tensor<Value, 1> const &right) {
-							return right.mean();
+							return right.sum();
 						}))
 					.clamp();
 		}

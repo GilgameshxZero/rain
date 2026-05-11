@@ -15,7 +15,7 @@ namespace Rain::Math::Neural::Activation {
 				(z1.standardDeviation() +
 					std::numeric_limits<Value>::min());
 		}
-		virtual Tensor<Value, 2> getGradient(
+		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &z1,
 			Tensor<Value, 1> const &z2) const override {
 			// Compute matrix where g[i][j] = d(f(v_i)) / d(v_j).

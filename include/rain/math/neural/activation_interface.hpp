@@ -45,10 +45,10 @@ namespace Rain::Math::Neural {
 		//
 		// The activated values Z_2 must be provided as an
 		// argument to avoid re-computation (in some cases).
-		virtual Tensor<Value, 2> getGradient(
+		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &) const = 0;
-		auto getGradient(
+		auto getIncrementalGradient(
 			Tensor<Value, 2> const &z1,
 			Tensor<Value, 2> const &z2) const {
 			// TODO: This is sloppy because we don't have vstack.
@@ -59,7 +59,7 @@ namespace Rain::Math::Neural {
 						Tensor<Value, 2> &left,
 						Tensor<Value, 1> const &y1,
 						Tensor<Value, 1> const &y2) {
-						left.deepCopyFrom(this->getGradient(y1, y2));
+						left.deepCopyFrom(this->getIncrementalGradient(y1, y2));
 					},
 					z1,
 					z2);
@@ -75,11 +75,17 @@ namespace Rain::Math::Neural {
 		// No step size is provided, gradient should be scaled
 		// accordingly.
 		virtual void stepWithGradient(
-			Tensor<Value, 1> const &,
-			Tensor<Value, 1> const &) {}
-		virtual void stepWithGradient(
 			Tensor<Value, 2> const &,
 			Tensor<Value, 2> const &) {}
+		void stepWithGradient(
+			Tensor<Value, 1> const &z1,
+			Tensor<Value, 1> const &gradient) {
+			Tensor<Value, 2> z1U({1, z1.size()[0]}),
+				gradientU({1, gradient.size()[0]});
+			z1U[0].deepCopyFrom(z1);
+			gradientU[0].deepCopyFrom(gradient);
+			this->stepWithGradient(z1U, gradientU);
+		}
 
 		virtual Data::Serializer &serialize(
 			Data::Serializer &serializer) const {

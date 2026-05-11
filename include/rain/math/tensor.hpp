@@ -739,6 +739,32 @@ namespace Rain::Math {
 				},
 				std::numeric_limits<Value>::lowest());
 		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
+				nullptr>
+		inline auto argMin() const {
+			std::size_t result{};
+			for (std::size_t i{1}; i < this->SIZES[0]; i++) {
+				if ((*this)[i] < (*this)[result]) {
+					result = i;
+				}
+			}
+			return result;
+		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
+				nullptr>
+		inline auto argMax() const {
+			std::size_t result{};
+			for (std::size_t i{1}; i < this->SIZES[0]; i++) {
+				if ((*this)[i] > (*this)[result]) {
+					result = i;
+				}
+			}
+			return result;
+		}
 		// Clamping is important for floating-point values to
 		// avoid +/- INF.
 		inline auto exp() {

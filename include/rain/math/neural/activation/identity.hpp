@@ -11,7 +11,7 @@ namespace Rain::Math::Neural::Activation {
 			Tensor<Value, 1> &z1) const override {
 			return z1;
 		}
-		virtual Tensor<Value, 2> getGradient(
+		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &z2) const override {
 			return Tensor<Value, 2>::identity(z2.size()[0]);
