@@ -155,6 +155,29 @@ namespace Rain::Functional {
 			typename T::const_iterator *);
 		using IsConstIterable =
 			decltype(isConstIterable<Type>(nullptr));
+
+		template<typename, typename...>
+		static TraitFalse isCallableWith(...);
+		template<typename T, typename... Args>
+		static TraitTrue isCallableWith(
+			decltype(std::declval<T>()(
+				std::declval<Args...>())) *);
+		template<typename... Args>
+		using IsCallableWith =
+			decltype(isCallableWith<Type, Args...>(nullptr));
+	};
+
+	// Traits for unpacking variadic templates.
+	template<typename... Types>
+	class TraitTypes;
+	template<typename FirstType, typename... Types>
+	class TraitTypes<FirstType, Types...> {
+		public:
+		using First = FirstType;
+
+		// Get second type via TraitRemaining::First, third type
+		// via TraitRemaining::TraitRemaining::First, and so on.
+		using TraitRemaining = TraitTypes<Types...>;
 	};
 
 	// Type traits for template types.

@@ -6,6 +6,7 @@
 #include "../functional/trait.hpp"
 #include "../literal.hpp"
 #include "../platform.hpp"
+#include "sqrt.hpp"
 
 #include <array>
 #include <bitset>
@@ -171,7 +172,7 @@ namespace Rain::Math {
 		}
 		// An explicit overload for `applyOver` which does
 		// nothing (i.e. base case), which may be called from
-		// `product` if one matrix is completely contracted.
+		// `multiply` if one matrix is completely contracted.
 		template<
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
@@ -414,9 +415,29 @@ namespace Rain::Math {
 			return result;
 		}
 
+		// Default-initialize (since SFINAE failes for empty
+		// Values...) fills with all default-constructed values.
+		Tensor(std::array<std::size_t, ORDER> const &sizes) :
+			VALUES{
+				new Value[Tensor<>::calcSizesProduct(sizes)]{}},
+			RANGES{TypeThis::makeRangesDefault(sizes)},
+			SIZES{sizes},
+			SIZES_UNDERLYING{sizes},
+			OFFSET{0},
+			TRANSPOSE{TypeThis::makeDimPermDefault()} {}
+		// Value-initialize; exclude and specialize generator
+		// random constructor.
+		template<
+			typename... Values,
+			std::enable_if<
+				!Functional::TraitType<typename Functional::
+						TraitTypes<Values...>::TraitRemaining::First>::
+					template IsCallableWith<typename Functional::
+							TraitTypes<Values...>::First &>::VALUE>::type
+				* = nullptr>
 		Tensor(
 			std::array<std::size_t, ORDER> const &sizes,
-			auto &&...values) :
+			Values &&...values) :
 			VALUES{new Value[Tensor<>::calcSizesProduct(sizes)]{
 				std::forward<decltype(values)>(values)...}},
 			RANGES{TypeThis::makeRangesDefault(sizes)},
@@ -424,6 +445,22 @@ namespace Rain::Math {
 			SIZES_UNDERLYING{sizes},
 			OFFSET{0},
 			TRANSPOSE{TypeThis::makeDimPermDefault()} {}
+		// Randomizer.
+		template<
+			typename Generator,
+			typename Distribution,
+			decltype(std::declval<Distribution>()(
+				std::declval<Generator &>())) * = nullptr>
+		Tensor(
+			std::array<std::size_t, ORDER> const &sizes,
+			Generator &generator,
+			Distribution &&distribution) :
+			Tensor(sizes) {
+			this->applyOver<0>(
+				[&generator, &distribution](Value &value) {
+					value = distribution(generator);
+				});
+		}
 		// Careful! This reference-copies.
 		Tensor(TypeThis const &other) :
 			VALUES{other.VALUES},
@@ -432,7 +469,6 @@ namespace Rain::Math {
 			SIZES_UNDERLYING{other.SIZES_UNDERLYING},
 			OFFSET{other.OFFSET},
 			TRANSPOSE{other.TRANSPOSE} {}
-
 		// The default constructor generates a Tensor with only
 		// a single element.
 		Tensor() : Tensor(TypeThis::makeOnesSizes()) {}
@@ -499,7 +535,7 @@ namespace Rain::Math {
 
 		// A 0-order Tensor converts to/from automatically a
 		// scalar. This is necessary for degenerate cases in
-		// `product`.
+		// `multiply`.
 		//
 		// Two versions necessary depending on if *this is const
 		// or not.
@@ -566,7 +602,7 @@ namespace Rain::Math {
 			auto &&callable,
 			auto &&...others) const {
 			// Dimension needs to be transposed to the end, like
-			// in product.
+			// in multiply.
 			std::array<std::size_t, ORDER> thisDimPerm;
 			for (std::size_t i{0}, j{0}; i < ORDER; i++) {
 				if (i == dimensionIdx) {
@@ -663,8 +699,24 @@ namespace Rain::Math {
 				},
 				Value{});
 		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto mean() const {
-			return this->sum() / this->sizeProduct();
+			return this->sum() / this->SIZES[0];
+		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
+		inline auto variance() const {
+			auto x{this->copy() - this->mean()};
+			return x.asMultiplyInner(x) / this->SIZES[0];
+		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
+		inline auto standardDeviation() const {
+			return std::sqrt(this->variance());
 		}
 		inline auto product() const {
 			return this->accumulate(
@@ -935,13 +987,13 @@ namespace Rain::Math {
 		}
 		// Arithmetic operators *, *= are defined with another
 		// Tensor operand iff they are of compatible size. This
-		// is a shorthand for `product`.
+		// is a shorthand for `multiply`.
 		template<typename OtherValue>
 		inline auto operator*(
 			Tensor<OtherValue, ORDER> const &other) const {
-			// No need to check sizes here, since `product` will
+			// No need to check sizes here, since `multiply` will
 			// do it.
-			return this->product<1>(other, {ORDER - 1}, {0});
+			return this->asMultiply<1>(other, {ORDER - 1}, {0});
 		}
 		template<typename OtherValue>
 		inline auto &operator*=(
@@ -1265,15 +1317,16 @@ namespace Rain::Math {
 			typename OtherValue,
 			std::size_t OTHER_ORDER,
 			typename ResultValue =
-				typename Policy<Value, OtherValue>::Result,
-			std::size_t RESULT_ORDER = ORDER + OTHER_ORDER -
-				CONTRACT_ORDER * 2>
-		auto product(
+				typename Policy<Value, OtherValue>::Result>
+		auto asMultiply(
 			Tensor<OtherValue, OTHER_ORDER> const &other,
 			std::array<std::size_t, CONTRACT_ORDER> const
 				&thisContractDims,
 			std::array<std::size_t, CONTRACT_ORDER> const
 				&otherContractDims) const {
+			std::size_t constexpr RESULT_ORDER{
+				ORDER + OTHER_ORDER - CONTRACT_ORDER * 2};
+
 			if constexpr (Platform::isDebug()) {
 				for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
 					if (
@@ -1399,6 +1452,34 @@ namespace Rain::Math {
 				thisTransposed);
 			return result;
 		}
+		// Special case where product is the same order as the
+		// left operand.
+		template<
+			std::size_t CONTRACT_ORDER,
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy,
+			typename OtherValue,
+			std::size_t OTHER_ORDER,
+			typename ResultValue =
+				typename Policy<Value, OtherValue>::Result,
+			std::size_t RESULT_ORDER = ORDER + OTHER_ORDER -
+				CONTRACT_ORDER * 2,
+			std::enable_if<RESULT_ORDER == ORDER>::type * =
+				nullptr>
+		auto multiply(
+			Tensor<OtherValue, OTHER_ORDER> const &other,
+			std::array<std::size_t, CONTRACT_ORDER> const
+				&thisContractDims,
+			std::array<std::size_t, CONTRACT_ORDER> const
+				&otherContractDims) {
+			return *this = this->asMultiply<
+							 CONTRACT_ORDER,
+							 Policy,
+							 OtherValue,
+							 OTHER_ORDER,
+							 ResultValue>(
+							 other, thisContractDims, otherContractDims);
+		}
 		// Inner and outer product are defined iff ORDER == 1
 		// (vectors).
 		template<
@@ -1406,18 +1487,18 @@ namespace Rain::Math {
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
-		inline auto productInner(
+		inline auto asMultiplyInner(
 			Tensor<OtherValue, 1> const &other) const {
-			return this->product<1>(other, {0}, {0});
+			return this->asMultiply<1>(other, {0}, {0});
 		}
 		template<
 			typename OtherValue,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
-		inline auto productOuter(
+		inline auto asMultiplyOuter(
 			Tensor<OtherValue, 1> const &other) const {
-			return this->product<0>(other, {}, {});
+			return this->asMultiply<0>(other, {}, {});
 		}
 		// Element-wise.
 		template<typename OtherValue>
@@ -1547,7 +1628,7 @@ namespace Rain::Math {
 				nullptr,
 			typename ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>())>
-		auto productStrassen(
+		auto asMultiplyStrassen(
 			Tensor<OtherValue, 2> const &other) const {
 			auto thisSize{this->size()}, otherSize{other.size()};
 			if constexpr (Platform::isDebug()) {
@@ -1584,23 +1665,23 @@ namespace Rain::Math {
 						{halfSize, halfSize * 2}}})};
 			std::array<Tensor<ResultValue, 2>, 7> m{
 				{{(a11 + a22)
-						 .template productStrassen<BASE_SIZE_POWER>(
+						 .template asMultiplyStrassen<BASE_SIZE_POWER>(
 							 b11 + b22)},
 					{(a21 + a22)
-							.template productStrassen<BASE_SIZE_POWER>(
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
 								b11)},
-					{a11.template productStrassen<BASE_SIZE_POWER>(
+					{a11.template asMultiplyStrassen<BASE_SIZE_POWER>(
 						b12 - b22)},
-					{a22.template productStrassen<BASE_SIZE_POWER>(
+					{a22.template asMultiplyStrassen<BASE_SIZE_POWER>(
 						b21 - b11)},
 					{(a11 + a12)
-							.template productStrassen<BASE_SIZE_POWER>(
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
 								b22)},
 					{(a21 - a11)
-							.template productStrassen<BASE_SIZE_POWER>(
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
 								b11 + b12)},
 					{(a12 - a22)
-							.template productStrassen<BASE_SIZE_POWER>(
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
 								b21 + b22)}}};
 			Tensor<ResultValue, 2> c{
 				{halfSize * 2, halfSize * 2}};

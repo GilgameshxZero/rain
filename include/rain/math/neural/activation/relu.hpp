@@ -14,6 +14,7 @@ namespace Rain::Math::Neural::Activation {
 			});
 		}
 		virtual Tensor<Value, 2> getGradient(
+			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &z2) const override final {
 			return z2
 				.template asApplyOver<0>([](Value &left) {
@@ -21,5 +22,8 @@ namespace Rain::Math::Neural::Activation {
 				})
 				.asDiagonal();
 		}
+		virtual void stepWithGradient(
+			Tensor<Value, 1> const &,
+			Tensor<Value, 1> const &) override final {}
 	};
 }
