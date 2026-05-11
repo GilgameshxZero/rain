@@ -74,3 +74,5 @@ namespace Rain::Math::Neural {
 		virtual ~ActivationInterface() {}
 	};
 }
+
+// TODO: How to define a serializer?

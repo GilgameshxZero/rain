@@ -67,6 +67,11 @@ namespace Rain::Data {
 				sizeof(CharT) * data.size());
 			return *this;
 		}
+		template<typename T>
+		inline Rain::Data::Serializer &operator<<(
+			std::shared_ptr<T> const &data) {
+			return *this << *data.get();
+		}
 		template<typename T, typename Allocator>
 		inline Rain::Data::Serializer &operator<<(
 			std::vector<T, Allocator> const &data) {
@@ -141,6 +146,12 @@ namespace Rain::Data {
 				reinterpret_cast<char *>(&data[0]),
 				sizeof(CharT) * size);
 			return *this;
+		}
+		template<typename T>
+		inline Rain::Data::Deserializer &operator>>(
+			std::shared_ptr<T> &data) {
+			data.reset(new T());
+			return *this >> *data.get();
 		}
 		template<typename T, typename Allocator>
 		inline Rain::Data::Deserializer &operator>>(

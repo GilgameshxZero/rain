@@ -11,10 +11,12 @@ namespace Rain::Math::Neural::Activation {
 		Tensor<Value, 2> weight;
 		Tensor<Value, 1> bias;
 
-		// Force deep-copy for W/B.
+		// Force deep-copy for W/B. Default constructor is
+		// invalid but helps with late initialization when
+		// required (e.g. serializer).
 		Linear(
-			Tensor<Value, 2> const &weight,
-			Tensor<Value, 1> const &bias) :
+			Tensor<Value, 2> const &weight = Tensor<Value, 2>(),
+			Tensor<Value, 1> const &bias = Tensor<Value, 1>()) :
 			weight{weight.copy()},
 			bias{bias.copy()} {}
 

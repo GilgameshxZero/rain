@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../data/serializer.hpp"
 #include "../activation_interface.hpp"
 #include "../loss_interface.hpp"
 #include "../network_interface.hpp"
@@ -75,6 +76,29 @@ namespace Rain::Math::Neural::Network {
 					{0},
 					{0});
 			}
+		}
+	};
+}
+
+namespace Rain::Data {
+	template<typename Value>
+	struct serialize<
+		Rain::Math::Neural::Network::FeedForward<Value>> {
+		void operator()(
+			Rain::Data::Serializer &serializer,
+			Rain::Math::Neural::Network::FeedForward<Value> const
+				&data) {
+			serializer << data.layer;
+		}
+	};
+	template<typename Value>
+	struct deserialize<
+		Rain::Math::Neural::Network::FeedForward<Value>> {
+		void operator()(
+			Rain::Data::Deserializer &deserializer,
+			Rain::Math::Neural::Network::FeedForward<Value>
+				&data) {
+			deserializer >> data.node >> data.service;
 		}
 	};
 }
