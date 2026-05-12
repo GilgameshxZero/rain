@@ -268,8 +268,8 @@ build: version.build.txt $(PROJ_BIN)
 # Build and run.
 run: build
 	@ECHO ---------------- [Run] $(BIN_NAME) ----------------
-	@CD $(BIN_DIR)$(PROJ_NAME) &&\
-		$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe $(ARGS)
+	@CD $(BIN_DIR) &&\
+		$(PROJ_NAME)\$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe $(ARGS)
 # Clean target removes all intermediates, but remakes the
 # in.txt file.
 clean:
@@ -646,8 +646,8 @@ _default: build
 build: version.build.txt $(PROJ_BIN)
 run: build
 	@echo ---------------- [Run] $(BIN_NAME) ----------------
-	@cd $(PROJ_BIN_DIR) &&\
-		./$(BIN_NAME).$(BUILD_NAME).x$(ARCH) $(ARGS)
+	@cd $(BIN_DIR) &&\
+		./$(PROJ_NAME)/$(BIN_NAME).$(BUILD_NAME).x$(ARCH) $(ARGS)
 clean:
 	@echo Cleaning...
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
