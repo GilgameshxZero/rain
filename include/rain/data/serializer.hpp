@@ -4,6 +4,7 @@
 #include "../algorithm/bit_manipulators.hpp"
 #include "../literal.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -40,7 +41,7 @@ namespace Rain::Data {
 		public:
 		Serializer(std::streambuf *streambuf) :
 			std::ostream(streambuf) {}
-		Serializer(std::string const &filename) :
+		Serializer(std::filesystem::path const &filename) :
 			std::ostream(nullptr),
 			streambufManager(
 				new std::ofstream(filename, std::ios::binary)) {
@@ -129,7 +130,7 @@ namespace Rain::Data {
 		public:
 		Deserializer(std::streambuf *streambuf) :
 			std::istream(streambuf) {}
-		Deserializer(std::string const &filename) :
+		Deserializer(std::filesystem::path const &filename) :
 			std::istream(nullptr),
 			streambufManager(
 				new std::ifstream(filename, std::ios::binary)) {
