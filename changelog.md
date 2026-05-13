@@ -1,5 +1,55 @@
 # Changelog
 
+## 7.5.0
+
+1. Initial TLS support (`Networking::Tls`).
+  1. A TLS socket "upgrades" an existing socket or constructor arguments during construction by automatically initiating a handshake by sending ClientHello.
+  2. TLS sockets send `Content`s, which contain fragments of an undetermined type.
+    1. `Handshake` fragments contain bodies of an undetermined type.
+      1. Currently, `ClientHello`, `ServerHello`, and `Certificate` are weakly implemented.
+      2. A minimal set of `Extension`s and `CipherSuite`s are implemented to support communication with all 60 of the test sites.
+        1. The hardcoded `Extension`s are `ServerName`, `SignatureAlgorithms`, `SupportedGroups`.
+        2. The minimal `CipherSuite`s pending real implementation are `CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA`, `			TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256`, `
+						TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`.
+  3. Current TLS infrastructure does not support multiple or fragmented messages across multiple TLS fragments; this is a mistake and will need to be changed in the future.
+    1. However, for the initial handshake, most server implementations tested do not fragment or coalesce handshake messages anyway.
+  4. Added TLS test.
+    1. The certificate portion of the test is disabled as `visualstudio.com` likes to coalesce the certificate with the `ServerHello` and thus breaks our current implementation.
+2. Initial neural network support (`Math::Neural`).
+  1. An activation function is simply a vector-valued function `f` with a defined gradient `G` where `G[i][j]` is `d(z2[i])/d(z1[j])`, where `f` takes `z1` to `z2`.
+    1. Five activations are implemented: `Identity`, `Linear`, Normalization`, `Relu`, `Softmax`.
+    2. `clamp` is carefully used minimally, but where necessary.
+      1. Failure to clamp may result in propagation NaNs, which may block later computation.
+  2. Feedforward networks implemented as a chain of `Activation` functions.
+    1. `stepWithGradient` uses "incremental" gradient matrices of each activation layer, and the activations from a forward pass of the network, to compute gradients w.r.t. a loss, and step each layer in the direction of those gradients (if the layer is parameterized, e.g. with `Linear`).
+    2. Both batch and single input Tensors are accepted with both activation and network type classes.
+  3. NN test still not in codebase, but planned.
+3. `Math::Tensor` hardening.
+  1. Added many convenience functions to `Math::Tensor`.
+    1. Among them, `asContract` and `asExpand`, which increase or decrease Tensor order over a specific dimension, with a specific lambda.
+    2. `accumulate` reduces a vector element-wise in standard order.
+    3. `mean`, `variance`, `standardDeviation` for ORDER 1 Tensors (vectors).
+    4. `product`, `sum`, `min`, `max`, and `argMin`, `argMax` for vectors.
+    5. `exp`, `log`, `clamp`.
+    6. Free functions where the RHS is a Tensor and the LHS is interpreted as a scalar.
+    7. `deepCopyFrom` and `deepCopyTo` for element-wise copy.
+    8. `asRetype` to make a new Tensor with different underlying type.
+    9. `asDiagonal` to upgrade a vector onto the diagonal of a square matrix.
+    10. Randomized constructor which takes a generator and distribution.
+    11. A public `const` version of `applyOver` is provided.
+  2. Tensor exceptions are a bit more specific, with the introduction of `OUT_OF_RANGE` and `INVALID_PERMUTATION`.
+  3. Hardened Tensor function naming.
+    1. `as*` always returns a new Tensor, leaving original unmodified.
+    2. Other functions which can feasibly return a tensor of the same type/order will modify the caller, and return a reference to the caller for easy call chaining.
+    3. `product` split into `multiply` and `asMultiply`.
+  4. Tensor product for floating point types always clamps after each arithmetic operation.
+    1. This avoids propagation of INFs and NaNs, rather giving (arguably arbitrary, but) valid values for over/underflowing operations instead.
+4. Fix instances where `numeric_limits<T>::min()` was used instead of `numeric_limits<T>::lowest()` as intended.
+5. Serializer is now constructed from `std::filesystem::path` instead of `std::string` for more compliant automatic conversion operator usage during construction.
+  1. Serializer now uses sentinel sub-class `Serializer` within objects which require custom behavior, rather than global-namespace template overloads.
+    1. This allows for proper inheritance and virtualization of serializer behavior, since templates cannot be 
+6. `make run` now uses `.bin`/`$(BIN_DIR)` as the base `cwd` for running programs, which makes relative paths easier to determine via `../` from the filepath of a source file.
+
 ## 7.4.0
 
 1. `BigInt` rewritten into `BigInteger` with more standardized implementation and behavior.

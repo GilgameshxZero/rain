@@ -39,7 +39,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	std::cout << "Filename: " << name << '.' << std::endl;
 
 	std::filesystem::path const filePath{
-		"../../test/" + name};
+		"../test/" + name};
 	std::ifstream fileIn(filePath, std::ios::binary);
 	std::array<std::size_t, UCHAR_MAX + 1> fileFrequency{0};
 	int nextC{fileIn.get()};
