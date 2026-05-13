@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.5.1
+
+1. Add test for `FeedForward` based on MNIST, 4-layer, 2-epoch, subsetted data.
+
 ## 7.5.0
 
 1. Initial TLS support (`Networking::Tls`).

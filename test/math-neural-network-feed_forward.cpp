@@ -1,0 +1,248 @@
+#include <rain.hpp>
+
+using namespace Rain;
+using namespace Algorithm;
+using namespace Data;
+using namespace Math;
+using namespace Neural;
+using namespace Multithreading;
+using namespace Error;
+using namespace std;
+
+using LL = long long;
+using LD = long double;
+
+#define RF(x, from, to)                                    \
+	for (                                                    \
+		LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL};     \
+		x != _to;                                              \
+		x += _delta)
+// 8 may not be optimal for the test environment, but we'll
+// live.
+size_t constexpr C_THREAD{8}, C_CLASS{10}, C_EPOCH{2},
+	BATCH_SIZE{256}, MINI_BATCH_SIZE{BATCH_SIZE / C_THREAD};
+LD constexpr STEP_SIZE{3e-4};
+
+template<typename Value>
+char pixelToChar(Value pixel) {
+	if (pixel < 0x80) {
+		return pixel < 0x40 ? ' ' : '-';
+	} else {
+		return pixel < 0xc0 ? '=' : '#';
+	}
+}
+
+template<typename Value>
+void showImg(
+	Tensor<Value, 2> const &x,
+	ostream &stream = cout) {
+	x.template applyOver<1>([&](Tensor<Value, 1> const &row) {
+		row.template applyOver<0>([&](Value const &pixel) {
+			auto pixelChar{pixelToChar(pixel)};
+			stream << pixelChar << pixelChar;
+		});
+		stream << '\n';
+	});
+}
+
+int main(int, char const *const *const) {
+	filesystem::path assetPath{
+		std::string(__FILE__) + ".asset/"};
+	assetPath.make_preferred();
+	cout << "Asset path: " << assetPath << '.' << endl;
+
+	// random_device rd;
+	mt19937 gen(0);
+	uniform_real_distribution<LD> dist;
+
+	Tensor<uint8_t, 3> trainX, testX;
+	Tensor<uint8_t, 1> trainY, testY;
+	{
+		ifstream fStream(assetPath / "mnist.hfm", ios::binary);
+		HuffmanStreamBuf decoderBuf(*fStream.rdbuf());
+		Deserializer deserializer(&decoderBuf);
+		deserializer >> trainX >> trainY >> testX >> testY;
+	}
+
+	// For this test, slice the trainset to 8K and the
+	// testset to 1K.
+	trainX.slice({{{0, 8192}, {}, {}}});
+	trainY.slice({{{0, 8192}}});
+	testX.slice({{{0, 1024}, {}, {}}});
+	testY.slice({{{0, 1024}}});
+
+	auto trainXDbl{trainX.asReshape<2>({trainX.size()[0], 0})
+			.asRetype<LD>()},
+		testXDbl{testX.asReshape<2>({testX.size()[0], 0})
+				.asRetype<LD>()};
+	Tensor<LD, 2> trainYOneHot({trainY.size()[0], C_CLASS}),
+		testYOneHot({testY.size()[0], C_CLASS});
+	trainYOneHot.applyOver<1>(
+		[&](Tensor<LD, 1> &left, uint8_t const &right) {
+			left[right] = 1;
+		},
+		trainY);
+	testYOneHot.applyOver<1>(
+		[&](Tensor<LD, 1> &left, uint8_t const &right) {
+			left[right] = 1;
+		},
+		testY);
+
+	Network::FeedForward<LD> network(
+		{make_shared<Activation::Linear<LD>>(
+			 Tensor<LD, 2>({784, 256}, gen, dist),
+			 Tensor<LD, 1>({256}, gen, dist)),
+			make_shared<Activation::Relu<LD>>(),
+			make_shared<Activation::Normalization<LD>>(),
+			make_shared<Activation::Linear<LD>>(
+				Tensor<LD, 2>({256, 84}, gen, dist),
+				Tensor<LD, 1>({84}, gen, dist)),
+			make_shared<Activation::Relu<LD>>(),
+			make_shared<Activation::Normalization<LD>>(),
+			make_shared<Activation::Linear<LD>>(
+				Tensor<LD, 2>({84, 32}, gen, dist),
+				Tensor<LD, 1>({32}, gen, dist)),
+			make_shared<Activation::Relu<LD>>(),
+			make_shared<Activation::Normalization<LD>>(),
+			make_shared<Activation::Linear<LD>>(
+				Tensor<LD, 2>({32, 10}, gen, dist),
+				Tensor<LD, 1>({10}, gen, dist)),
+			make_shared<Activation::Normalization<LD>>(),
+			make_shared<Activation::Softmax<LD>>()});
+	Loss::CrossEntropy<LD> L;
+
+	vector<LD> lossV, scoreV;
+	{
+		ThreadPool tp(C_THREAD);
+
+		LD stepSizeScaler{1.0L};
+		RF(k, 0, C_EPOCH) {
+			size_t cBatchTrain{trainXDbl.size()[0] / BATCH_SIZE};
+			// size_t cBatchTrain{8};
+			{
+				vector<vector<Tensor<LD, 2>>> activationV(C_THREAD),
+					activationGradientV(C_THREAD);
+				mutex coutMtx;
+
+				RF(i, 0, cBatchTrain) {
+					atomic_size_t jOuter{};
+					RF(j, 0, C_THREAD) {
+						tp.queueTask([&]() {
+							size_t jInner{jOuter++};
+							auto X{trainXDbl.asSlice(
+								{{{(i * C_THREAD + jInner) *
+											MINI_BATCH_SIZE,
+										(i * C_THREAD + jInner + 1) *
+											MINI_BATCH_SIZE},
+									{}}})},
+								Y{trainYOneHot.asSlice(
+									{{{(i * C_THREAD + jInner) *
+												MINI_BATCH_SIZE,
+											(i * C_THREAD + jInner + 1) *
+												MINI_BATCH_SIZE},
+										{}}})};
+							activationV[jInner] = network.asApply(X);
+							// cout << activation.back() << endl;
+							activationGradientV[jInner] =
+								network.getActivationGradient(
+									L, Y, activationV[jInner]);
+
+							auto loss{
+								L.asApply(Y, activationV[jInner].back())};
+							lock_guard coutLck(coutMtx);
+							cout << "Mini-batch " << i * C_THREAD + jInner
+									 << " / " << cBatchTrain * C_THREAD
+									 << ": loss = " << loss << ".    \r";
+						});
+					}
+					tp.blockForTasks();
+					RF(j, 0, C_THREAD) {
+						network.stepWithActivationGradient(
+							activationV[j],
+							activationGradientV[j],
+							STEP_SIZE * stepSizeScaler);
+					}
+				}
+			}
+
+			LD lossSum{};
+			Tensor<size_t, 1> score({testXDbl.size()[0]});
+			size_t cBatchTest{testXDbl.size()[0] / BATCH_SIZE};
+			{
+				mutex lossSumMtx;
+
+				RF(i, 0, cBatchTest) {
+					atomic_size_t jOuter{};
+					RF(j, 0, C_THREAD) {
+						tp.queueTask([&]() {
+							size_t jInner{jOuter++};
+							auto X{testXDbl.asSlice(
+								{{{(i * C_THREAD + jInner) *
+											MINI_BATCH_SIZE,
+										(i * C_THREAD + jInner + 1) *
+											MINI_BATCH_SIZE},
+									{}}})},
+								Y{testYOneHot.asSlice(
+									{{{(i * C_THREAD + jInner) *
+												MINI_BATCH_SIZE,
+											(i * C_THREAD + jInner + 1) *
+												MINI_BATCH_SIZE},
+										{}}})};
+							auto activationBack{
+								network.asApply(X).back()};
+							auto loss{L.asApply(Y, activationBack)};
+							score
+								.asSlice(
+									{{{(i * C_THREAD + jInner) * MINI_BATCH_SIZE, (i * C_THREAD + jInner + 1) * MINI_BATCH_SIZE}}})
+								.applyOver<0>(
+									[](
+										size_t &left,
+										uint8_t const &r1,
+										Tensor<LD, 1> const &r2) {
+										left = r1 == r2.argMax();
+									},
+									testY.asSlice(
+										{{{(i * C_THREAD + jInner) * MINI_BATCH_SIZE, (i * C_THREAD + jInner + 1) * MINI_BATCH_SIZE}}}),
+									activationBack);
+
+							lock_guard lossSumLck(lossSumMtx);
+							lossSum += loss;
+						});
+					}
+					// Can also place outside i loop.
+					tp.blockForTasks();
+				}
+			}
+
+			// stepSizeScaler *= 0.999;
+			// cout << score.asSlice({{{0, 256}}}) << endl;
+			lossV.push_back(lossSum / cBatchTest / C_THREAD);
+			scoreV.push_back(
+				(LD)score.sum() / cBatchTest / BATCH_SIZE);
+			cout << "Epoch " << k << ": loss = " << lossV.back()
+					 << ", score = " << scoreV.back() << '.' << endl;
+		}
+	}
+
+	// This should work regardless of platform randomization.
+	releaseAssert(scoreV.back() > 0.6);
+
+	{
+		stringstream ss;
+		{
+			Serializer serializer(ss.rdbuf());
+			serializer << network << lossV << scoreV;
+		}
+		Serializer serializer(assetPath / ".network.tmp.hfm");
+		HuffmanStreamBuf encoderBuf(
+			*serializer.rdbuf(), ss.str());
+		ostream encoder(&encoderBuf);
+		encoder << ss.rdbuf();
+		encoder.flush();
+	}
+
+	// Remove the unnecessary model checkpoint for this test.
+	filesystem::remove(assetPath / ".network.tmp.hfm");
+
+	return 0;
+}

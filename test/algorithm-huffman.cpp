@@ -50,7 +50,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	fileIn.close();
 
 	std::filesystem::create_directory(
-		"algorithm-huffman.cpp.assets");
+		"algorithm-huffman.cpp.asset");
 	std::filesystem::path const encodedPath{name + ".huff"};
 	std::ofstream encodedOut(encodedPath, std::ios::binary);
 	Rain::Algorithm::HuffmanStreamBuf encodedStreamBuf(
@@ -145,11 +145,11 @@ int main() {
 		"testing the EOF SUB \x1a and NULL \x00 characters"s);
 
 	assertEncodeDecodeFile(
-		"algorithm-huffman.cpp.assets/text.txt");
+		"algorithm-huffman.cpp.asset/text.txt");
 	assertEncodeDecodeFile(
-		"algorithm-huffman.cpp.assets/blue_orb.png");
+		"algorithm-huffman.cpp.asset/blue_orb.png");
 	assertEncodeDecodeFile(
-		"algorithm-huffman.cpp.assets/1905.02175.pdf");
+		"algorithm-huffman.cpp.asset/1905.02175.pdf");
 
 	return 0;
 }
