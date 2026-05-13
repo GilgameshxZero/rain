@@ -6,6 +6,7 @@
 #include "../functional/trait.hpp"
 #include "../literal.hpp"
 #include "../platform.hpp"
+#include "clamp.hpp"
 #include "sqrt.hpp"
 
 #include <array>
@@ -73,21 +74,32 @@ namespace Rain::Math {
 		template<typename Left, typename Right>
 		class PlusMultProductPolicy {
 			public:
+			using Result =
+				decltype(std::declval<Left>() * std::declval<Right>());
+			static inline Result const DEFAULT_RESULT{};
+
 			static constexpr inline auto contract(
 				Left const &left,
 				Right const &right) {
-				return left * right;
+				if constexpr (
+					Functional::TraitType<
+						Result>::IsFloatingPoint::VALUE) {
+					return Math::clamp(left * right);
+				} else {
+					return left * right;
+				}
 			}
-
-			using Result = decltype(contract(
-				std::declval<Left>(),
-				std::declval<Right>()));
-			static inline Result const DEFAULT_RESULT{0};
 
 			static constexpr inline auto aggregate(
 				Result const &left,
 				Result const &right) {
-				return left + right;
+				if constexpr (
+					Functional::TraitType<
+						Result>::IsFloatingPoint::VALUE) {
+					return Math::clamp(left + right);
+				} else {
+					return left + right;
+				}
 			}
 		};
 
@@ -96,17 +108,16 @@ namespace Rain::Math {
 		template<typename Left, typename Right>
 		class MinPlusProductPolicy {
 			public:
+			using Result =
+				decltype(std::declval<Left>() + std::declval<Right>());
+			static inline Result const DEFAULT_RESULT{
+				std::numeric_limits<Result>::max()};
+
 			static constexpr inline auto contract(
 				Left const &left,
 				Right const &right) {
 				return left + right;
 			}
-
-			using Result = decltype(contract(
-				std::declval<Left>(),
-				std::declval<Right>()));
-			static inline Result const DEFAULT_RESULT{
-				std::numeric_limits<Result>::max()};
 
 			static constexpr inline auto aggregate(
 				Result const &left,
