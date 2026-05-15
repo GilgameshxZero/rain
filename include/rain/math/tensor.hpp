@@ -570,6 +570,109 @@ namespace Rain::Math {
 				this->operator Value const &());
 		}
 
+		// Indexing is the main operation of a tensor, and most
+		// other operations build on it.
+		//
+		// Checks in-range iff DEBUG.
+		//
+		// We provide two versions of the indexing operator, to
+		// preserve const-ness.
+		//
+		// The base level indexing operator MUST return a Value
+		// reference, and NOT a scalar tensor. While scalar
+		// tensors are valid and will work, the conversion
+		// during `applyOver` dominates the runtime  and incurs
+		// a heavy performance penalty.
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
+				nullptr>
+		inline Value const &operator[](std::size_t idx) const {
+			if constexpr (Platform::isDebug()) {
+				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
+					throw Exception(Error::OUT_OF_RANGE);
+				}
+			}
+			return this->VALUES
+				[this->OFFSET + this->RANGES[0].start +
+					this->RANGES[0].step * idx];
+		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
+				nullptr>
+		inline Value &operator[](std::size_t idx) {
+			return const_cast<Value &>(
+				const_cast<TypeThis const *>(this)->operator[](
+					idx));
+		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER > 1)>::type * =
+				nullptr>
+		Tensor<Value, ORDER - 1> const operator[](
+			std::size_t idx) const {
+			if constexpr (Platform::isDebug()) {
+				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
+					throw Exception(Error::OUT_OF_RANGE);
+				}
+			}
+
+			// Must take into account transpose.
+			std::array<std::size_t, ORDER - 1> newDimPerm;
+			for (std::size_t i{1}; i < ORDER; i++) {
+				newDimPerm[i - 1] = this->TRANSPOSE[i] +
+					(this->TRANSPOSE[i] > this->TRANSPOSE[0] ? -1
+																									 : 0);
+			}
+
+			std::array<Range, ORDER - 1> ranges;
+			std::array<std::size_t, ORDER - 1> sizesUnderlying;
+			std::size_t rangeShift{
+				this->RANGES[this->TRANSPOSE[0]].start +
+				this->RANGES[this->TRANSPOSE[0]].step * idx};
+			for (std::size_t i{1}; i < ORDER; i++) {
+				sizesUnderlying[newDimPerm[i - 1]] =
+					this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
+				if (this->TRANSPOSE[i] > this->TRANSPOSE[0]) {
+					rangeShift *=
+						this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
+					ranges[newDimPerm[i - 1]] =
+						this->RANGES[this->TRANSPOSE[i]];
+				} else {
+					// `stop` and `start` are calculated from the new
+					// `step`.
+					ranges[newDimPerm[i - 1]].step =
+						this->RANGES[this->TRANSPOSE[i]].step *
+						this->SIZES_UNDERLYING[this->TRANSPOSE[0]];
+					ranges[newDimPerm[i - 1]].start =
+						this->RANGES[this->TRANSPOSE[i]].start *
+						this->SIZES_UNDERLYING[this->TRANSPOSE[0]];
+					ranges[newDimPerm[i - 1]].stop =
+						ranges[newDimPerm[i - 1]].start +
+						this->RANGES[this->TRANSPOSE[i]].step *
+							this->SIZES_UNDERLYING[this->TRANSPOSE[0]] *
+							this->SIZES[this->TRANSPOSE[i]];
+				}
+			}
+			return {
+				this->VALUES,
+				ranges,
+				sizesUnderlying,
+				this->OFFSET + rangeShift,
+				newDimPerm};
+		}
+		template<
+			std::size_t TENSOR_ORDER = ORDER,
+			typename std::enable_if<(TENSOR_ORDER > 1)>::type * =
+				nullptr>
+		inline Tensor<Value, ORDER - 1> operator[](
+			std::size_t idx) {
+			return const_cast<Tensor<Value, ORDER - 1> &&>(
+				const_cast<TypeThis const *>(this)->operator[](
+					idx));
+		}
+
 		// Public shorthands for `applyOver`.
 		template<std::size_t REMAINING_ORDER>
 		inline auto applyOver(
@@ -703,36 +806,51 @@ namespace Rain::Math {
 				});
 			return accumulator;
 		}
+		template<
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy>
 		inline auto sum() const {
 			return this->accumulate(
 				[](Value &accumulator, Value const &value) {
-					accumulator += value;
+					accumulator = Policy<Value, Value>::aggregate(
+						accumulator, value);
 				},
 				Value{});
 		}
 		template<
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto mean() const {
-			return this->sum() / this->SIZES[0];
+			return this->sum<Policy>() / this->SIZES[0];
 		}
 		template<
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto variance() const {
 			auto x{this->copy() - this->mean()};
-			return x.asMultiplyInner(x) / this->SIZES[0];
+			return x.template asMultiplyInner<Value, Policy>(x) /
+				this->SIZES[0];
 		}
 		template<
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto standardDeviation() const {
-			return std::sqrt(this->variance());
+			return std::sqrt(this->variance<Policy>());
 		}
+		template<
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy>
 		inline auto product() const {
 			return this->accumulate(
 				[](Value &accumulator, Value const &value) {
-					accumulator *= value;
+					accumulator = Policy<Value, Value>::contract(
+						accumulator, value);
 				},
 				Value{1});
 		}
@@ -813,109 +931,6 @@ namespace Rain::Math {
 				std::numeric_limits<Value>::max()) const {
 			auto result{this->copy()};
 			return result.clamp(low, high);
-		}
-
-		// Indexing is the main operation of a tensor, and most
-		// other operations build on it.
-		//
-		// Checks in-range iff DEBUG.
-		//
-		// We provide two versions of the indexing operator, to
-		// preserve const-ness.
-		//
-		// The base level indexing operator MUST return a Value
-		// reference, and NOT a scalar tensor. While scalar
-		// tensors are valid and will work, the conversion
-		// during `applyOver` dominates the runtime  and incurs
-		// a heavy performance penalty.
-		template<
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
-				nullptr>
-		inline Value const &operator[](std::size_t idx) const {
-			if constexpr (Platform::isDebug()) {
-				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
-					throw Exception(Error::OUT_OF_RANGE);
-				}
-			}
-			return this->VALUES
-				[this->OFFSET + this->RANGES[0].start +
-					this->RANGES[0].step * idx];
-		}
-		template<
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
-				nullptr>
-		inline Value &operator[](std::size_t idx) {
-			return const_cast<Value &>(
-				const_cast<TypeThis const *>(this)->operator[](
-					idx));
-		}
-		template<
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER > 1)>::type * =
-				nullptr>
-		Tensor<Value, ORDER - 1> const operator[](
-			std::size_t idx) const {
-			if constexpr (Platform::isDebug()) {
-				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
-					throw Exception(Error::OUT_OF_RANGE);
-				}
-			}
-
-			// Must take into account transpose.
-			std::array<std::size_t, ORDER - 1> newDimPerm;
-			for (std::size_t i{1}; i < ORDER; i++) {
-				newDimPerm[i - 1] = this->TRANSPOSE[i] +
-					(this->TRANSPOSE[i] > this->TRANSPOSE[0] ? -1
-																									 : 0);
-			}
-
-			std::array<Range, ORDER - 1> ranges;
-			std::array<std::size_t, ORDER - 1> sizesUnderlying;
-			std::size_t rangeShift{
-				this->RANGES[this->TRANSPOSE[0]].start +
-				this->RANGES[this->TRANSPOSE[0]].step * idx};
-			for (std::size_t i{1}; i < ORDER; i++) {
-				sizesUnderlying[newDimPerm[i - 1]] =
-					this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
-				if (this->TRANSPOSE[i] > this->TRANSPOSE[0]) {
-					rangeShift *=
-						this->SIZES_UNDERLYING[this->TRANSPOSE[i]];
-					ranges[newDimPerm[i - 1]] =
-						this->RANGES[this->TRANSPOSE[i]];
-				} else {
-					// `stop` and `start` are calculated from the new
-					// `step`.
-					ranges[newDimPerm[i - 1]].step =
-						this->RANGES[this->TRANSPOSE[i]].step *
-						this->SIZES_UNDERLYING[this->TRANSPOSE[0]];
-					ranges[newDimPerm[i - 1]].start =
-						this->RANGES[this->TRANSPOSE[i]].start *
-						this->SIZES_UNDERLYING[this->TRANSPOSE[0]];
-					ranges[newDimPerm[i - 1]].stop =
-						ranges[newDimPerm[i - 1]].start +
-						this->RANGES[this->TRANSPOSE[i]].step *
-							this->SIZES_UNDERLYING[this->TRANSPOSE[0]] *
-							this->SIZES[this->TRANSPOSE[i]];
-				}
-			}
-			return {
-				this->VALUES,
-				ranges,
-				sizesUnderlying,
-				this->OFFSET + rangeShift,
-				newDimPerm};
-		}
-		template<
-			std::size_t TENSOR_ORDER = ORDER,
-			typename std::enable_if<(TENSOR_ORDER > 1)>::type * =
-				nullptr>
-		inline Tensor<Value, ORDER - 1> operator[](
-			std::size_t idx) {
-			return const_cast<Tensor<Value, ORDER - 1> &&>(
-				const_cast<TypeThis const *>(this)->operator[](
-					idx));
 		}
 
 		// Arithmetic operators. Checks dimension equality iff
@@ -1521,21 +1536,25 @@ namespace Rain::Math {
 		// (vectors).
 		template<
 			typename OtherValue,
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asMultiplyInner(
 			Tensor<OtherValue, 1> const &other) const {
-			return this->asMultiply<1>(other, {0}, {0});
+			return this->asMultiply<1, Policy>(other, {0}, {0});
 		}
 		template<
 			typename OtherValue,
+			template<typename, typename> typename Policy =
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asMultiplyOuter(
 			Tensor<OtherValue, 1> const &other) const {
-			return this->asMultiply<0>(other, {}, {});
+			return this->asMultiply<0, Policy>(other, {}, {});
 		}
 		// Element-wise.
 		template<typename OtherValue>
