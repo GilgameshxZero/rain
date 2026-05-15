@@ -15,10 +15,11 @@ class Type2 {
 	};
 };
 
-template<std::size_t, bool>
+template<typename, typename>
 class Type3 {};
 
-class Type4 : public Type3<4, true> {};
+class Type4 :
+	public Type3<TypeUpgrade<4>, TypeUpgrade<true>> {};
 
 int main() {
 	// Must include <array>.
@@ -26,26 +27,31 @@ int main() {
 	static_assert(
 		!TraitType<std::array<int, 8>>::IsStdHashable::VALUE);
 	static_assert(
-		!(TraitTypeTemplate<std::pair>::IsBaseOfTemplate<
-			std::array<int, 8>>::VALUE));
+		!(TypeTrait<TypeDowngrade<std::pair>>::IsTemplateOf<
+			std::array<int, 8>>::value));
+	static_assert(
+		TypeTrait<TypeDowngrade<std::pair>>::IsTemplateOf<
+			std::pair<int, bool>>::value);
 	static_assert(
 		TraitType<std::array<int, 8>>::IsConstIterable::VALUE);
 
 	// Cannot use std::is_base_of with template base types.
 	static_assert(
-		TraitTypeTemplate<std::pair>::IsBaseOfTemplate<
-			std::pair<int, char>>::VALUE);
+		TypeTrait<TypeDowngrade<std::pair>>::IsTemplateOf<
+			std::pair<int, char>>::value);
+	static_assert(!TypeTrait<TypeDowngrade<std::vector>>::
+			IsTemplateBaseOf<std::pair<int, char>>::value);
 	static_assert(
-		!TraitTypeTemplate<std::vector>::IsBaseOfTemplate<
-			std::pair<int, char>>::VALUE);
-	static_assert(
-		TraitTypeTemplate<std::vector>::IsBaseOfTemplate<
-			std::vector<int>>::VALUE);
+		TypeTrait<TypeDowngrade<std::vector>>::IsTemplateOf<
+			std::vector<int>>::value);
 
-	static_assert(!TraitTypeTemplateAuto<
-		Type3>::IsBaseOfTemplate<std::vector<int>>::VALUE);
-	static_assert(TraitTypeTemplateAuto<
-		Type3>::IsBaseOfTemplate<Type4>::VALUE);
+	static_assert(
+		!TypeTrait<TypeDowngrade<Type3>>::IsTemplateBaseOf<
+			std::vector<int>>::value);
+	static_assert(TypeTrait<
+		TypeDowngrade<Type3>>::IsTemplateBaseOf<Type4>::value);
+	static_assert(!TypeTrait<
+		TypeDowngrade<Type3>>::IsTemplateOf<Type4>::value);
 
 	static_assert(!TraitType<std::size_t>::IsSigned::VALUE);
 

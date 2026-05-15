@@ -162,13 +162,54 @@ namespace Rain::Functional {
 		using TypeUnderlying =
 			typename Type::template Underlying<Args...>;
 
-		template<template<typename...> typename TypeBase>
-		static std::false_type isTemplateOf(...);
+		// Detects if Type is the template of a base of
+		// TypeSpecific.
+		template<template<typename...> typename>
+		static std::false_type isTemplateBaseOf(...);
 		template<
 			template<typename...> typename TypeBase,
 			typename... Args>
-		static std::true_type isTemplateOf(
-			TypeBase<Args...> const &);
+		static std::true_type isTemplateBaseOf(
+			TypeBase<Args...> const *);
+
+		public:
+		template<
+			typename TypeSpecific,
+			std::enable_if<TypeTraitInterfaceFirstInterface<
+				TypeSpecific>::IsTypeSidegrade::value>::type * =
+				nullptr>
+		using IsTemplateBaseOf =
+			decltype(isTemplateBaseOf<TypeUnderlying>(
+				std::declval<TypeSpecific *>()));
+
+		// To determine if TypeSpecific is a specification of
+		// the Type template, but not a derived class of it,
+		// Type must be at least a TemplateBase (template and/or
+		// base) of TypeSpecific. Then, we can take the "middle"
+		// type, which is a specification of Type. If the middle
+		// type is equal to TypeSpecific, then we are not a
+		// base, just a template.
+		private:
+		template<typename, typename, typename = void>
+		class IsTemplateOfInterface : public std::false_type {};
+		template<typename TypeSpecific, typename TypeMiddle>
+		class IsTemplateOfInterface<
+			TypeSpecific,
+			TypeMiddle,
+			typename std::enable_if<std::
+					is_same<TypeSpecific, TypeMiddle>::value>::type> :
+			public std::true_type {};
+
+		template<typename, template<typename...> typename>
+		static std::false_type isTemplateOf(...);
+		template<
+			typename TypeSpecific,
+			template<typename...> typename TypeBase,
+			typename... Args>
+		static IsTemplateOfInterface<
+			TypeSpecific,
+			TypeBase<Args...>>
+			isTemplateOf(TypeBase<Args...> const *);
 
 		public:
 		template<
@@ -177,8 +218,8 @@ namespace Rain::Functional {
 				TypeSpecific>::IsTypeSidegrade::value>::type * =
 				nullptr>
 		using IsTemplateOf =
-			decltype(isTemplateOf<TypeUnderlying>(
-				std::declval<TypeSpecific &>()));
+			decltype(isTemplateOf<TypeSpecific, TypeUnderlying>(
+				std::declval<TypeSpecific *>()));
 	};
 
 	// Type traits for a parameter pack where at least the
@@ -348,21 +389,6 @@ namespace Rain::Functional {
 
 	// Type traits for template types.
 	// TODO: Replace with TypeTrait.
-	template<template<typename...> typename Type>
-	class TraitTypeTemplate {
-		public:
-		template<template<typename...> typename>
-		static TraitFalse isBaseOfTemplate(...);
-		template<
-			template<typename...> typename TypeInner,
-			typename... TypeTemplate>
-		static TraitTrue isBaseOfTemplate(
-			TypeInner<TypeTemplate...> const *);
-		template<typename TypeDerived>
-		using IsBaseOfTemplate =
-			decltype(isBaseOfTemplate<Type>(
-				std::declval<TypeDerived *>()));
-	};
 	template<template<auto...> typename Type>
 	class TraitTypeTemplateAuto {
 		public:
