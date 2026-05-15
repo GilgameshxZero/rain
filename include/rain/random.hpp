@@ -95,9 +95,9 @@ namespace Rain::Random {
 			typename std::enable_if<
 				!Functional::TraitType<
 					TypeInner>::IsStdHashable::VALUE &&
-				Functional::TraitTypeTemplate<std::pair>::
-					IsBaseOfTemplate<TypeInner>::VALUE>::type * =
-				nullptr>
+				Functional::TypeTrait<Functional::TypeDowngrade<
+					std::pair>>::IsTemplateOf<TypeInner>::value>::type
+				* = nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
 			combineHash(
@@ -116,8 +116,8 @@ namespace Rain::Random {
 			typename std::enable_if<
 				!Functional::TraitType<
 					TypeInner>::IsStdHashable::VALUE &&
-				!Functional::TraitTypeTemplate<
-					std::pair>::IsBaseOfTemplate<TypeInner>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					std::pair>>::IsTemplateOf<TypeInner>::value &&
 				Functional::TraitType<TypeInner>::IsConstIterable::
 					VALUE>::type * = nullptr>
 		std::size_t operator()(Type const &value) const {

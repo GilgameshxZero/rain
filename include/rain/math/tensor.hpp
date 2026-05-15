@@ -130,21 +130,20 @@ namespace Rain::Math {
 		// SFINAE to check an arbitrary type with a tensor of a
 		// given order.
 		template<
+			template<std::size_t> class,
+			typename,
+			std::size_t,
+			typename>
+		static std::false_type isTensorOfComparativeOrderImpl(
+			...);
+		template<
 			template<std::size_t> class Comparator,
 			typename Value,
 			std::size_t ORDER,
 			typename std::enable_if<
-				Comparator<ORDER>::VALUE>::type * = nullptr>
+				Comparator<ORDER>::value>::type * = nullptr>
 		static std::true_type isTensorOfComparativeOrderImpl(
 			Tensor<Value, ORDER> *);
-		template<
-			template<std::size_t> class =
-				Functional::TraitAuto<0_zu>::IsEqualTo,
-			typename = std::nullptr_t,
-			std::size_t = 0,
-			typename = std::nullptr_t>
-		static std::false_type isTensorOfComparativeOrderImpl(
-			...);
 		template<
 			template<std::size_t> class Comparator,
 			typename TypeDerived>
@@ -164,8 +163,8 @@ namespace Rain::Math {
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
 			typename std::enable_if<isTensorOfComparativeOrder<
-				Functional::TraitAuto<
-					REMAINING_ORDER>::template IsLessThan,
+				Functional::TypeTrait<Functional::TypeUpgrade<
+					REMAINING_ORDER>>::template IsLessThan,
 				ResultType>::value>::type * = nullptr>
 		static inline void applyOver(
 			auto &&callable,
@@ -188,8 +187,8 @@ namespace Rain::Math {
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
 			typename std::enable_if<isTensorOfComparativeOrder<
-				Functional::TraitAuto<
-					REMAINING_ORDER>::template IsEqualTo,
+				Functional::TypeTrait<Functional::TypeUpgrade<
+					REMAINING_ORDER>>::template IsEqualTo,
 				ResultType>::value>::type * = nullptr>
 		static inline void applyOver(
 			auto &&callable,
@@ -440,12 +439,12 @@ namespace Rain::Math {
 		// random constructor.
 		template<
 			typename... Values,
-			std::enable_if<
-				!Functional::TraitType<typename Functional::
-						TraitTypes<Values...>::TraitRemaining::First>::
+			std::enable_if<!Functional::TraitType<
+				typename Functional::TypeTrait<
+					Values...>::TypeTraitRemaining::TypeFirst>::
 					template IsCallableWith<typename Functional::
-							TraitTypes<Values...>::First &>::VALUE>::type
-				* = nullptr>
+							TypeTrait<Values...>::TypeFirst &>::VALUE>::
+				type * = nullptr>
 		Tensor(
 			std::array<std::size_t, ORDER> const &sizes,
 			Values &&...values) :
