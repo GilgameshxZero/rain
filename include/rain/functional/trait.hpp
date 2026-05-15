@@ -5,7 +5,8 @@
 
 namespace Rain::Functional {
 	// True/false types for ease-of-use later. We prefer these
-	// of the std ones because of naming conventions.
+	// of the std ones because of naming conventions (`VALUE`
+	// instead of `value`).
 	struct TraitTrue {
 		static inline bool constexpr VALUE{true};
 	};
@@ -13,23 +14,23 @@ namespace Rain::Functional {
 		static inline bool constexpr VALUE{false};
 	};
 
-	// "Traits" for an std::size_t type template argument.
-	template<std::size_t LEFT>
-	class TraitSizeT {
+	// "Trait" for a non-type template argument.
+	template<auto LEFT>
+	class TraitAuto {
 		public:
 		// Usage of these scoped templates as a template
 		// template parameter may require the use of the
 		// `template` keyword if the outer template is dependent
-		// (e.g., `Property<SIZE>::template isEqualTo`).
-		template<std::size_t RIGHT>
+		// (e.g., `TraitAuto<SIZE>::template isEqualTo`).
+		template<auto RIGHT>
 		struct IsEqualTo {
 			static inline bool constexpr VALUE{LEFT == RIGHT};
 		};
-		template<std::size_t RIGHT>
+		template<auto RIGHT>
 		struct IsLessThan {
 			static inline bool constexpr VALUE{LEFT < RIGHT};
 		};
-		template<std::size_t RIGHT>
+		template<auto RIGHT>
 		struct IsGreaterThan {
 			static inline bool constexpr VALUE{LEFT < RIGHT};
 		};

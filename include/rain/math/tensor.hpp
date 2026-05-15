@@ -139,7 +139,7 @@ namespace Rain::Math {
 			Tensor<Value, ORDER> *);
 		template<
 			template<std::size_t> class =
-				Functional::TraitSizeT<0>::IsEqualTo,
+				Functional::TraitAuto<0_zu>::IsEqualTo,
 			typename = std::nullptr_t,
 			std::size_t = 0,
 			typename = std::nullptr_t>
@@ -164,7 +164,7 @@ namespace Rain::Math {
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
 			typename std::enable_if<isTensorOfComparativeOrder<
-				Functional::TraitSizeT<
+				Functional::TraitAuto<
 					REMAINING_ORDER>::template IsLessThan,
 				ResultType>::value>::type * = nullptr>
 		static inline void applyOver(
@@ -188,7 +188,7 @@ namespace Rain::Math {
 			std::size_t REMAINING_ORDER,
 			typename ResultType,
 			typename std::enable_if<isTensorOfComparativeOrder<
-				Functional::TraitSizeT<
+				Functional::TraitAuto<
 					REMAINING_ORDER>::template IsEqualTo,
 				ResultType>::value>::type * = nullptr>
 		static inline void applyOver(
