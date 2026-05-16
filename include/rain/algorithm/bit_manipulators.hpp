@@ -12,8 +12,8 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			Functional::TraitType<Integer>::IsIntegral::VALUE &&
-			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			Functional::TypeTrait<Integer>::IsIntegral::value &&
+			!Functional::TypeTrait<Integer>::IsSigned::value>::
 			type * = nullptr>
 	inline std::size_t mostSignificant1BitIdxImpl(
 		Integer const &x) {
@@ -67,8 +67,8 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			Functional::TraitType<Integer>::IsIntegral::VALUE &&
-			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			Functional::TypeTrait<Integer>::IsIntegral::value &&
+			!Functional::TypeTrait<Integer>::IsSigned::value>::
 			type * = nullptr>
 	inline std::size_t leastSignificant1BitIdxImpl(
 		Integer const &x) {
@@ -109,8 +109,8 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			Functional::TraitType<Integer>::IsIntegral::VALUE &&
-			!Functional::TraitType<Integer>::IsSigned::VALUE>::
+			Functional::TypeTrait<Integer>::IsIntegral::value &&
+			!Functional::TypeTrait<Integer>::IsSigned::value>::
 			type * = nullptr>
 	inline std::size_t bitPopcountImpl(Integer const &x) {
 		std::size_t count{0};

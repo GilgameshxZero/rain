@@ -8,8 +8,8 @@ namespace Rain::Math {
 	// +/- INF.
 	template<
 		typename Value,
-		std::enable_if<Functional::TraitType<
-			Value>::IsFloatingPoint::VALUE>::type * = nullptr>
+		std::enable_if<Functional::TypeTrait<
+			Value>::IsFloatingPoint::value>::type * = nullptr>
 	inline Value clamp(Value value) {
 		return std::clamp(
 			value,

@@ -16,9 +16,9 @@
 
 namespace Rain::Data {
 	template<typename>
-	Functional::TraitFalse isSerializable(...);
+	std::false_type isSerializable(...);
 	template<typename DataType>
-	Functional::TraitTrue isSerializable(
+	std::true_type isSerializable(
 		typename DataType::Serializer *);
 	template<typename DataType>
 	using IsSerializable =
@@ -52,14 +52,14 @@ namespace Rain::Data {
 		// default.
 		template<
 			typename DataType,
-			std::enable_if<IsSerializable<DataType>::VALUE>::type
+			std::enable_if<IsSerializable<DataType>::value>::type
 				* = nullptr>
 		inline Serializer &operator<<(DataType const &data) {
 			return DataType::Serializer::serialize(*this, &data);
 		}
 		template<
 			typename DataType,
-			std::enable_if<!IsSerializable<DataType>::VALUE>::type
+			std::enable_if<!IsSerializable<DataType>::value>::type
 				* = nullptr>
 		inline Serializer &operator<<(DataType const &data) {
 			Algorithm::writeBytes(
@@ -141,7 +141,7 @@ namespace Rain::Data {
 		// overloaded, and provides a default.
 		template<
 			typename DataType,
-			std::enable_if<IsSerializable<DataType>::VALUE>::type
+			std::enable_if<IsSerializable<DataType>::value>::type
 				* = nullptr>
 		inline Deserializer &operator>>(DataType &data) {
 			return DataType::Serializer::deserialize(
@@ -149,7 +149,7 @@ namespace Rain::Data {
 		}
 		template<
 			typename DataType,
-			std::enable_if<!IsSerializable<DataType>::VALUE>::type
+			std::enable_if<!IsSerializable<DataType>::value>::type
 				* = nullptr>
 		inline Deserializer &operator>>(DataType &data) {
 			Algorithm::readBytes(

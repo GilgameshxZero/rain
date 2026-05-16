@@ -97,10 +97,10 @@ namespace Rain::Algorithm {
 		// BigInteger type.
 		typename IntegerSecond = IntegerFirst,
 		typename std::enable_if<
-			Functional::TraitType<
-				IntegerFirst>::IsIntegral::VALUE &&
-			Functional::TraitType<IntegerSecond>::IsIntegral::
-				VALUE>::type * = nullptr>
+			Functional::TypeTrait<
+				IntegerFirst>::IsIntegral::value &&
+			Functional::TypeTrait<IntegerSecond>::IsIntegral::
+				value>::type * = nullptr>
 	struct BigIntegerCommon :
 		std::conditional<
 			(sizeof(IntegerFirst) >= sizeof(IntegerSecond)),
@@ -109,29 +109,29 @@ namespace Rain::Algorithm {
 					Algorithm::MostSignificant1BitIdx<
 						sizeof(IntegerFirst) * 8 - 1>::value +
 					1 +
-					(!Functional::TraitType<
-						 IntegerFirst>::IsSigned::VALUE &&
-						Functional::TraitType<
-							IntegerSecond>::IsSigned::VALUE)>,
+					(!Functional::TypeTrait<
+						 IntegerFirst>::IsSigned::value &&
+						Functional::TypeTrait<
+							IntegerSecond>::IsSigned::value)>,
 				Functional::TypeUpgrade<
-					Functional::TraitType<
-						IntegerFirst>::IsSigned::VALUE ||
-					Functional::TraitType<
-						IntegerSecond>::IsSigned::VALUE>>,
+					Functional::TypeTrait<
+						IntegerFirst>::IsSigned::value ||
+					Functional::TypeTrait<
+						IntegerSecond>::IsSigned::value>>,
 			BigInteger<
 				Functional::TypeUpgrade<
 					Algorithm::MostSignificant1BitIdx<
 						sizeof(IntegerSecond) * 8 - 1>::value +
 					1 +
-					(!Functional::TraitType<
-						 IntegerSecond>::IsSigned::VALUE &&
-						Functional::TraitType<
-							IntegerFirst>::IsSigned::VALUE)>,
+					(!Functional::TypeTrait<
+						 IntegerSecond>::IsSigned::value &&
+						Functional::TypeTrait<
+							IntegerFirst>::IsSigned::value)>,
 				Functional::TypeUpgrade<
-					Functional::TraitType<
-						IntegerFirst>::IsSigned::VALUE ||
-					Functional::TraitType<
-						IntegerSecond>::IsSigned::VALUE>>> {};
+					Functional::TypeTrait<
+						IntegerFirst>::IsSigned::value ||
+					Functional::TypeTrait<
+						IntegerSecond>::IsSigned::value>>> {};
 
 	// Template recursion base case 2**5 = 32. Requires 64-bit
 	// integer to be available to support the overflow
@@ -205,8 +205,8 @@ namespace Rain::Algorithm {
 		// requires.
 		template<
 			typename Generator,
-			std::enable_if<!Functional::TraitType<
-				Generator>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<!Functional::TypeTrait<
+				Generator>::IsIntegral::value>::type * = nullptr,
 			decltype(std::declval<
 				std::uniform_int_distribution<>>()(
 				std::declval<Generator &>())) * = nullptr>
@@ -225,16 +225,16 @@ namespace Rain::Algorithm {
 				!std::is_same<ThisInteger, OtherInteger>::value &&
 				!std::is_same<UnderlyingInteger, OtherInteger>::
 					value>::type * = nullptr,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr,
 			std::enable_if<
 				((sizeof(OtherInteger) == 4) &&
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE == SIGNED) ||
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value == SIGNED) ||
 				((sizeof(OtherInteger) < 4) &&
 					(SIGNED ||
-						Functional::TraitType<OtherInteger>::IsSigned::
-								VALUE == SIGNED))>::type * = nullptr>
+						Functional::TypeTrait<OtherInteger>::IsSigned::
+								value == SIGNED))>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			// This constructor is well-defined since `value` is
@@ -245,13 +245,13 @@ namespace Rain::Algorithm {
 		// 1. Construct signed to larger unsigned.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) < 4) &&
 				(!SIGNED &&
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE)>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value)>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			// Casting to unsigned is well-defined.
@@ -259,13 +259,13 @@ namespace Rain::Algorithm {
 		// 2. Construct signed to same unsigned.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) == 4) &&
 				(SIGNED !=
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE) &&
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value) &&
 				!SIGNED>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
@@ -274,13 +274,13 @@ namespace Rain::Algorithm {
 		// 3. Construct unsigned to same signed.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) == 4) &&
 				(SIGNED !=
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE) &&
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value) &&
 				SIGNED>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
@@ -292,8 +292,8 @@ namespace Rain::Algorithm {
 		// 4. Construct to smaller unsigned.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr,
 			std::enable_if<
 				(sizeof(OtherInteger) > 4) && !SIGNED>::type * =
 				nullptr>
@@ -304,8 +304,8 @@ namespace Rain::Algorithm {
 		// 5. Construct to smaller signed.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr,
 			std::enable_if<(sizeof(OtherInteger) > 4) && SIGNED>::
 				type * = nullptr>
 		explicit inline constexpr BigInteger(
@@ -341,8 +341,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(UnderlyingInteger) <
@@ -357,16 +357,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(UnderlyingInteger) == sizeof(OtherInteger) &&
 				SIGNED !=
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE &&
-				!Functional::TraitType<
-					OtherInteger>::IsSigned::VALUE>::type * = nullptr>
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value &&
+				!Functional::TypeTrait<
+					OtherInteger>::IsSigned::value>::type * = nullptr>
 		explicit inline constexpr
 			operator OtherInteger() const {
 			return static_cast<OtherInteger>(this->value);
@@ -376,16 +376,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(UnderlyingInteger) == sizeof(OtherInteger) &&
 				SIGNED !=
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE &&
-				Functional::TraitType<
-					OtherInteger>::IsSigned::VALUE>::type * = nullptr>
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value &&
+				Functional::TypeTrait<
+					OtherInteger>::IsSigned::value>::type * = nullptr>
 		explicit inline constexpr
 			operator OtherInteger() const {
 			return static_cast<OtherInteger>(
@@ -398,12 +398,12 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
-				!Functional::TraitType<
-					OtherInteger>::IsSigned::VALUE &&
+				!Functional::TypeTrait<
+					OtherInteger>::IsSigned::value &&
 				(sizeof(UnderlyingInteger) >
 					sizeof(OtherInteger))>::type * = nullptr>
 		explicit inline constexpr
@@ -414,12 +414,12 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
-				Functional::TraitType<
-					OtherInteger>::IsSigned::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsSigned::value &&
 				(sizeof(UnderlyingInteger) >
 					sizeof(OtherInteger))>::type * = nullptr>
 		explicit inline constexpr
@@ -454,8 +454,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator==(
@@ -473,8 +473,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator<(
@@ -491,8 +491,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator<=(
@@ -510,8 +510,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator>(
@@ -529,8 +529,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator>=(
@@ -554,8 +554,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline auto constexpr operator&(
@@ -576,8 +576,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline auto constexpr operator|(
@@ -598,8 +598,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline auto constexpr operator^(
@@ -629,8 +629,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, std::size_t>::value>::
 				type * = nullptr>
 		inline ThisInteger constexpr operator>>(
@@ -681,8 +681,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, std::size_t>::value>::
 				type * = nullptr>
 		inline ThisInteger constexpr operator<<(
@@ -1336,8 +1336,8 @@ namespace Rain::Algorithm {
 		// requires.
 		template<
 			typename Generator,
-			std::enable_if<!Functional::TraitType<
-				Generator>::IsIntegral::VALUE>::type * = nullptr,
+			std::enable_if<!Functional::TypeTrait<
+				Generator>::IsIntegral::value>::type * = nullptr,
 			decltype(std::declval<
 				std::uniform_int_distribution<>>()(
 				std::declval<Generator &>())) * = nullptr>
@@ -1357,8 +1357,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				LOG_BITS == 6 &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
@@ -1366,8 +1366,8 @@ namespace Rain::Algorithm {
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
 				SIGNED ==
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE &&
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value &&
 				!SIGNED>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
@@ -1379,8 +1379,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				LOG_BITS == 6 &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
@@ -1388,8 +1388,8 @@ namespace Rain::Algorithm {
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
 				SIGNED ==
-					Functional::TraitType<
-						OtherInteger>::IsSigned::VALUE &&
+					Functional::TypeTrait<
+						OtherInteger>::IsSigned::value &&
 				SIGNED>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
@@ -1413,16 +1413,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerIntegerUnsigned) +
 							sizeof(SmallerInteger) !=
 						sizeof(OtherInteger) ||
 					SIGNED !=
-						Functional::TraitType<OtherInteger>::IsSigned::
-							VALUE)>::type * = nullptr>
+						Functional::TypeTrait<OtherInteger>::IsSigned::
+							value)>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			BigInteger(
@@ -1433,16 +1433,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
 				SIGNED !=
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			high(other.high),
@@ -1452,16 +1452,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) >
 					sizeof(OtherInteger)) &&
 				SIGNED ==
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			// If `other.isNegative()`, casting to an unsigned
@@ -1478,16 +1478,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) <
 					sizeof(OtherInteger)) &&
 				SIGNED ==
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			BigInteger(other.low) {}
@@ -1497,16 +1497,16 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) !=
 					sizeof(OtherInteger) &&
 				SIGNED !=
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value>::type * = nullptr>
 		explicit inline constexpr BigInteger(
 			OtherInteger const &other) :
 			BigInteger(
@@ -1524,8 +1524,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				LOG_BITS == 6 &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
@@ -1533,8 +1533,8 @@ namespace Rain::Algorithm {
 						sizeof(SmallerIntegerUnsigned) ==
 					sizeof(OtherInteger) &&
 				SIGNED ==
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value>::type * = nullptr>
 		explicit inline constexpr
 			operator OtherInteger() const {
 			// Unwrap high/low.
@@ -1557,8 +1557,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerInteger) +
@@ -1568,8 +1568,8 @@ namespace Rain::Algorithm {
 								sizeof(SmallerIntegerUnsigned) ==
 							sizeof(OtherInteger) &&
 						SIGNED !=
-							Functional::TraitType<OtherInteger>::
-								IsSigned::VALUE))>::type * = nullptr>
+							Functional::TypeTrait<OtherInteger>::
+								IsSigned::value))>::type * = nullptr>
 		explicit inline constexpr
 			operator OtherInteger() const {
 			return static_cast<OtherInteger>(
@@ -1580,15 +1580,15 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) >
 						sizeof(OtherInteger) &&
-					!Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE)>::type * = nullptr>
+					!Functional::TypeTrait<OtherInteger>::IsSigned::
+						value)>::type * = nullptr>
 		explicit inline constexpr
 			operator OtherInteger() const {
 			return static_cast<OtherInteger>(this->low);
@@ -1597,15 +1597,15 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) >
 						sizeof(OtherInteger) &&
-					Functional::TraitType<OtherInteger>::IsSigned::
-						VALUE)>::type * = nullptr>
+					Functional::TypeTrait<OtherInteger>::IsSigned::
+						value)>::type * = nullptr>
 		explicit inline constexpr
 			operator OtherInteger() const {
 			using OtherIntegerUnsigned =
@@ -1639,8 +1639,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator==(
@@ -1658,8 +1658,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator<(
@@ -1677,8 +1677,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator<=(
@@ -1697,8 +1697,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator>(
@@ -1716,8 +1716,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline bool constexpr operator>=(
@@ -1741,8 +1741,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline auto constexpr operator&(
@@ -1764,8 +1764,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline auto constexpr operator|(
@@ -1787,8 +1787,8 @@ namespace Rain::Algorithm {
 		template<
 			typename OtherInteger,
 			std::enable_if<
-				Functional::TraitType<
-					OtherInteger>::IsIntegral::VALUE &&
+				Functional::TypeTrait<
+					OtherInteger>::IsIntegral::value &&
 				!std::is_same<OtherInteger, ThisInteger>::value>::
 				type * = nullptr>
 		inline auto constexpr operator^(
@@ -1814,8 +1814,8 @@ namespace Rain::Algorithm {
 		// of the current BigInteger.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr>
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr>
 		inline ThisInteger constexpr operator>>(
 			OtherInteger const &other) const {
 			if (other == OtherInteger()) {
@@ -1869,8 +1869,8 @@ namespace Rain::Algorithm {
 		// of the current BigInteger.
 		template<
 			typename OtherInteger,
-			std::enable_if<Functional::TraitType<
-				OtherInteger>::IsIntegral::VALUE>::type * = nullptr>
+			std::enable_if<Functional::TypeTrait<
+				OtherInteger>::IsIntegral::value>::type * = nullptr>
 		inline ThisInteger constexpr operator<<(
 			OtherInteger const &other) const {
 			if (other == OtherInteger()) {

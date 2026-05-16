@@ -12,8 +12,8 @@ namespace Rain::Algorithm {
 	template<
 		typename Integer,
 		std::enable_if<
-			Functional::TraitType<Integer>::IsIntegral::VALUE &&
-			Functional::TraitType<Integer>::IsUnsigned::VALUE>::
+			Functional::TypeTrait<Integer>::IsIntegral::value &&
+			Functional::TypeTrait<Integer>::IsUnsigned::value>::
 			type * = nullptr>
 	inline bool isTriviallyComposite(Integer N) {
 		static std::uint32_t constexpr PRIMES[]{
@@ -96,8 +96,8 @@ namespace Rain::Algorithm {
 		typename Integer,
 		typename Callable,
 		std::enable_if<
-			Functional::TraitType<Integer>::IsIntegral::VALUE &&
-			Functional::TraitType<Integer>::IsUnsigned::VALUE>::
+			Functional::TypeTrait<Integer>::IsIntegral::value &&
+			Functional::TypeTrait<Integer>::IsUnsigned::value>::
 			type * = nullptr>
 	inline bool isPrimeMillerRabin(
 		Integer const &N,

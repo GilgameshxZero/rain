@@ -97,8 +97,8 @@ namespace Rain::Math {
 				Left const &left,
 				Right const &right) {
 				if constexpr (
-					Functional::TraitType<
-						Result>::IsFloatingPoint::VALUE) {
+					Functional::TypeTrait<
+						Result>::IsFloatingPoint::value) {
 					return Math::clamp(left * right);
 				} else {
 					return left * right;
@@ -109,8 +109,8 @@ namespace Rain::Math {
 				Result const &left,
 				Result const &right) {
 				if constexpr (
-					Functional::TraitType<
-						Result>::IsFloatingPoint::VALUE) {
+					Functional::TypeTrait<
+						Result>::IsFloatingPoint::value) {
 					return Math::clamp(left + right);
 				} else {
 					return left + right;
