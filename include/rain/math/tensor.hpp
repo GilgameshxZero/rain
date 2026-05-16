@@ -24,21 +24,21 @@ namespace Rain::Math {
 	template<
 		typename = std::nullptr_t,
 		typename = Functional::TypeUpgrade<0_zu>>
-	class TensorInterface;
+	class TensorType;
 
 	// Shorthand without TypeUpgrade.
 	template<
 		typename Value = std::nullptr_t,
 		std::size_t ORDER = 0_zu>
 	using Tensor =
-		TensorInterface<Value, Functional::TypeUpgrade<ORDER>>;
+		TensorType<Value, Functional::TypeUpgrade<ORDER>>;
 
 	template<>
-	class TensorInterface<
+	class TensorType<
 		std::nullptr_t,
 		Functional::TypeUpgrade<0_zu>> {
 		template<typename, typename>
-		friend class TensorInterface;
+		friend class TensorType;
 
 		public:
 		enum Error {
@@ -50,14 +50,14 @@ namespace Rain::Math {
 		class ErrorCategory : public std::error_category {
 			public:
 			char const *name() const noexcept {
-				return "Rain::Math::TensorInterface";
+				return "Rain::Math::TensorType";
 			}
 			std::string message(int error) const noexcept {
 				switch (error) {
 					case Error::NONE:
 						return "None.";
 					case Error::SIZES_MISMATCH:
-						return "TensorInterface(s) are not of "
+						return "TensorType(s) are not of "
 									 "compatible size "
 									 "for operation.";
 					case Error::OUT_OF_RANGE:
@@ -84,7 +84,7 @@ namespace Rain::Math {
 				step{std::numeric_limits<std::size_t>::max()};
 		};
 
-		// Standard policy for TensorInterface products. This
+		// Standard policy for TensorType products. This
 		// forms a ring.
 		template<typename Left, typename Right>
 		class PlusMultProductPolicy {
@@ -118,7 +118,7 @@ namespace Rain::Math {
 			}
 		};
 
-		// Policy for TensorInterface products where + is
+		// Policy for TensorType products where + is
 		// replaced with min and * is replaced with +. This form
 		// a semi-ring.
 		template<typename Left, typename Right>
@@ -159,8 +159,7 @@ namespace Rain::Math {
 			typename std::enable_if<
 				Comparator<ORDER>::value>::type * = nullptr>
 		static std::true_type isTensorOfComparativeOrderImpl(
-			TensorInterface<Value, Functional::TypeUpgrade<ORDER>>
-				*);
+			Tensor<Value, ORDER> *);
 		template<
 			template<std::size_t> class Comparator,
 			typename TypeDerived>
@@ -191,7 +190,7 @@ namespace Rain::Math {
 				std::size_t i{0};
 				i < result.SIZES[result.TRANSPOSE[0]];
 				i++) {
-				TensorInterface<>::applyOver<REMAINING_ORDER>(
+				Tensor<>::applyOver<REMAINING_ORDER>(
 					std::forward<decltype(callable)>(callable),
 					std::forward<decltype(result[i])>(result[i]),
 					std::forward<decltype(others[i])>(others[i])...);
@@ -214,13 +213,13 @@ namespace Rain::Math {
 			callable(
 				result, std::forward<decltype(others)>(others)...);
 		}
-		// `applyOver` called without a TensorInterface will
+		// `applyOver` called without a Tensor will
 		// simply call the function.
 		template<
 			std::size_t,
 			typename ResultType,
 			typename std::enable_if<!Functional::TypeTrait<
-				Functional::TypeDowngrade<TensorInterface>>::
+				Functional::TypeDowngrade<TensorType>>::
 					IsTemplateBaseOf<ResultType>::value>::type * =
 				nullptr>
 		static inline void applyOver(
@@ -239,7 +238,7 @@ namespace Rain::Math {
 			auto &&callable,
 			ResultType &&result,
 			auto &&...others) {
-			TensorInterface<>::applyOver<REMAINING_ORDER>(
+			Tensor<>::applyOver<REMAINING_ORDER>(
 				std::forward<decltype(callable)>(callable),
 				result,
 				std::forward<decltype(others)>(others)...);
@@ -261,16 +260,16 @@ namespace Rain::Math {
 	// give views of the same underlying data; this is not the
 	// case for the binary arithmetic operations.
 	template<typename Value, typename OrderValue>
-	class TensorInterface {
+	class TensorType {
 		public:
 		static inline std::size_t constexpr ORDER{
 			OrderValue::UNDERLYING};
 
 		private:
-		// Allow access of any other TensorInterface for a
+		// Allow access of any other Tensor for a
 		// proper product implementation.
 		template<typename, typename>
-		friend class TensorInterface;
+		friend class TensorType;
 
 		// Allow access from stream operators. It is fine that
 		// we only friend one template here, since the template
@@ -288,16 +287,14 @@ namespace Rain::Math {
 			typename std::enable_if<(OTHER_ORDER >= 1)>::type *>
 		friend std::ostream &operator<<(
 			std::ostream &,
-			TensorInterface<
-				TensorValue,
-				Functional::TypeUpgrade<OTHER_ORDER>> const &);
+			Tensor<TensorValue, OTHER_ORDER> const &);
 
 		private:
-		using TypeThis = TensorInterface<Value, OrderValue>;
-		using Range = TensorInterface<>::Range;
+		using TypeThis = TensorType<Value, OrderValue>;
+		using Range = Tensor<>::Range;
 
-		using Error = TensorInterface<>::Error;
-		using Exception = TensorInterface<>::Exception;
+		using Error = Tensor<>::Error;
+		using Exception = Tensor<>::Exception;
 
 		std::shared_ptr<Value[]> VALUES;
 		std::array<Range, ORDER> RANGES;
@@ -351,7 +348,7 @@ namespace Rain::Math {
 		// true or false, the compiler may refuse to compile.
 		template<typename OtherValue>
 		inline void debugAssertEqualSizes(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			if constexpr (Platform::isDebug()) {
 				auto thisSize{this->size()},
@@ -422,7 +419,7 @@ namespace Rain::Math {
 
 		// Internal constructor for manually specifying
 		// underlying.
-		TensorInterface(
+		TensorType(
 			std::shared_ptr<Value[]> values,
 			std::array<Range, ORDER> const &ranges,
 			std::array<std::size_t, ORDER> const &sizesUnderlying,
@@ -443,8 +440,7 @@ namespace Rain::Math {
 				nullptr>
 		static constexpr inline auto identity(
 			std::size_t size) {
-			TensorInterface<Value, Functional::TypeUpgrade<2_zu>>
-				result({size, size});
+			Tensor<Value, 2_zu> result({size, size});
 			for (std::size_t i{0}; i < size; i++) {
 				result[i][i] = 1;
 			}
@@ -453,10 +449,10 @@ namespace Rain::Math {
 
 		// Default-initialize (since SFINAE fails for empty
 		// Values...) fills with all default-constructed values.
-		TensorInterface(
+		TensorType(
 			std::array<std::size_t, ORDER> const &sizes) :
-			VALUES{new Value[TensorInterface<>::calcSizesProduct(
-				sizes)]{}},
+			VALUES{
+				new Value[Tensor<>::calcSizesProduct(sizes)]{}},
 			RANGES{TypeThis::makeRangesDefault(sizes)},
 			SIZES{sizes},
 			SIZES_UNDERLYING{sizes},
@@ -472,11 +468,11 @@ namespace Rain::Math {
 					template IsCallableWith<typename Functional::
 							TypeTrait<Values...>::TypeFirst &>::value>::
 				type * = nullptr>
-		TensorInterface(
+		TensorType(
 			std::array<std::size_t, ORDER> const &sizes,
 			Values &&...values) :
-			VALUES{new Value[TensorInterface<>::calcSizesProduct(
-				sizes)]{std::forward<decltype(values)>(values)...}},
+			VALUES{new Value[Tensor<>::calcSizesProduct(sizes)]{
+				std::forward<decltype(values)>(values)...}},
 			RANGES{TypeThis::makeRangesDefault(sizes)},
 			SIZES{sizes},
 			SIZES_UNDERLYING{sizes},
@@ -488,28 +484,27 @@ namespace Rain::Math {
 			typename Distribution,
 			decltype(std::declval<Distribution>()(
 				std::declval<Generator &>())) * = nullptr>
-		TensorInterface(
+		TensorType(
 			std::array<std::size_t, ORDER> const &sizes,
 			Generator &generator,
 			Distribution &&distribution) :
-			TensorInterface(sizes) {
+			TensorType(sizes) {
 			this->applyOver<0>(
 				[&generator, &distribution](Value &value) {
 					value = distribution(generator);
 				});
 		}
 		// Careful! This reference-copies.
-		TensorInterface(TypeThis const &other) :
+		TensorType(TypeThis const &other) :
 			VALUES{other.VALUES},
 			RANGES{other.RANGES},
 			SIZES{other.SIZES},
 			SIZES_UNDERLYING{other.SIZES_UNDERLYING},
 			OFFSET{other.OFFSET},
 			TRANSPOSE{other.TRANSPOSE} {}
-		// The default constructor generates a TensorInterface
+		// The default constructor generates a Tensor
 		// with only a single element.
-		TensorInterface() :
-			TensorInterface(TypeThis::makeOnesSizes()) {}
+		TensorType() : TensorType(TypeThis::makeOnesSizes()) {}
 
 		// Copy assignment copies a reference, and not the
 		// underlying data.
@@ -519,8 +514,7 @@ namespace Rain::Math {
 		// assignment operator.
 		template<typename OtherValue>
 		auto &operator=(
-			TensorInterface<OtherValue, OrderValue> const
-				&other) {
+			TensorType<OtherValue, OrderValue> const &other) {
 			this->VALUES = other.VALUES;
 			this->RANGES = other.RANGES;
 			this->SIZES = other.SIZES;
@@ -552,7 +546,7 @@ namespace Rain::Math {
 		// Equality operator checks sizes and every index.
 		template<typename OtherValue>
 		bool operator==(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			auto thisSize{this->size()}, otherSize{other.size()};
 			for (std::size_t i{0}; i < ORDER; i++) {
@@ -562,7 +556,7 @@ namespace Rain::Math {
 			}
 
 			bool isEqual{true};
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&isEqual](
 					Value const &thisValue,
 					OtherValue const &otherValue) {
@@ -573,7 +567,7 @@ namespace Rain::Math {
 			return isEqual;
 		}
 
-		// A 0-order TensorInterface converts to/from
+		// A 0-order Tensor converts to/from
 		// automatically a scalar. This is necessary for
 		// degenerate cases in `multiply`.
 		//
@@ -639,10 +633,8 @@ namespace Rain::Math {
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER > 1)>::type * =
 				nullptr>
-		TensorInterface<
-			Value,
-			Functional::TypeUpgrade<ORDER - 1>> const
-			operator[](std::size_t idx) const {
+		Tensor<Value, ORDER - 1> const operator[](
+			std::size_t idx) const {
 			if constexpr (Platform::isDebug()) {
 				if (idx >= this->SIZES[this->TRANSPOSE[0]]) {
 					throw Exception(Error::OUT_OF_RANGE);
@@ -697,13 +689,9 @@ namespace Rain::Math {
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER > 1)>::type * =
 				nullptr>
-		inline TensorInterface<
-			Value,
-			Functional::TypeUpgrade<ORDER - 1>>
-			operator[](std::size_t idx) {
-			return const_cast<TensorInterface<
-				Value,
-				Functional::TypeUpgrade<ORDER - 1>> &&>(
+		inline Tensor<Value, ORDER - 1> operator[](
+			std::size_t idx) {
+			return const_cast<Tensor<Value, ORDER - 1> &&>(
 				const_cast<TypeThis const *>(this)->operator[](
 					idx));
 		}
@@ -713,7 +701,7 @@ namespace Rain::Math {
 		inline auto applyOver(
 			auto &&callable,
 			auto &&...others) {
-			TensorInterface<>::applyOver<REMAINING_ORDER>(
+			Tensor<>::applyOver<REMAINING_ORDER>(
 				std::forward<decltype(callable)>(callable),
 				*this,
 				std::forward<decltype(others)>(others)...);
@@ -723,13 +711,13 @@ namespace Rain::Math {
 		inline auto applyOver(
 			auto &&callable,
 			auto &&...others) const {
-			TensorInterface<>::applyOver<REMAINING_ORDER>(
+			Tensor<>::applyOver<REMAINING_ORDER>(
 				std::forward<decltype(callable)>(callable),
 				*this,
 				std::forward<decltype(others)>(others)...);
 			return *this;
 		}
-		// Return new TensorInterface with function applied over
+		// Return new Tensor with function applied over
 		// all indices.
 		template<std::size_t REMAINING_ORDER>
 		inline auto asApplyOver(
@@ -768,10 +756,7 @@ namespace Rain::Math {
 				thisTransposedSize.begin(),
 				thisTransposedSize.end() - 1,
 				resultSize.begin());
-			TensorInterface<
-				ResultType,
-				Functional::TypeUpgrade<ORDER - 1>>
-				result(resultSize);
+			Tensor<ResultType, ORDER - 1> result(resultSize);
 			return result.template applyOver<0>(
 				[&callable](ResultType &left, auto &&...right) {
 					left = callable(
@@ -797,34 +782,24 @@ namespace Rain::Math {
 				}
 				newSize[i] = thisSize[j++];
 			}
-			TensorInterface<
-				ResultType,
-				Functional::TypeUpgrade<ORDER + 1>>
-				result(newSize);
+			Tensor<ResultType, ORDER + 1> result(newSize);
 			return result.template applyOver<
 				ORDER + 1 - DIMENSION_IDX>(
 				[&callable](
-					TensorInterface<
-						Value,
-						Functional::TypeUpgrade<
-							ORDER + 1 - DIMENSION_IDX>> &l1,
+					Tensor<Value, ORDER + 1 - DIMENSION_IDX> &l1,
 					typename std::conditional<
 						ORDER - DIMENSION_IDX == 0,
 						Value,
-						TensorInterface<
-							Value,
-							Functional::TypeUpgrade<
-								ORDER - DIMENSION_IDX>>>::type const &that,
+						Tensor<Value, ORDER - DIMENSION_IDX>>::
+						type const &that,
 					auto &&...r1) {
 					l1.template applyOver<ORDER - DIMENSION_IDX>(
 						[&callable, &that](
 							typename std::conditional<
 								ORDER - DIMENSION_IDX == 0,
 								Value,
-								TensorInterface<
-									Value,
-									Functional::TypeUpgrade<
-										ORDER - DIMENSION_IDX>>>::type &l2,
+								Tensor<Value, ORDER - DIMENSION_IDX>>::type
+								&l2,
 							auto &&...r2) {
 							callable(
 								l2,
@@ -840,7 +815,7 @@ namespace Rain::Math {
 		//
 		// callable must take two arguments; the first is the
 		// accumulator of ResultType &, and the second is the
-		// current value in the TensorInterface.
+		// current value in the Tensor.
 		//
 		// Optionally supply a starting value for accumulator
 		// `result`.
@@ -856,7 +831,7 @@ namespace Rain::Math {
 		}
 		template<
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy>
+				Tensor<>::PlusMultProductPolicy>
 		inline auto sum() const {
 			return this->accumulate(
 				[](Value &accumulator, Value const &value) {
@@ -867,7 +842,7 @@ namespace Rain::Math {
 		}
 		template<
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto mean() const {
@@ -875,7 +850,7 @@ namespace Rain::Math {
 		}
 		template<
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto variance() const {
@@ -885,7 +860,7 @@ namespace Rain::Math {
 		}
 		template<
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto standardDeviation() const {
@@ -893,7 +868,7 @@ namespace Rain::Math {
 		}
 		template<
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy>
+				Tensor<>::PlusMultProductPolicy>
 		inline auto product() const {
 			return this->accumulate(
 				[](Value &accumulator, Value const &value) {
@@ -989,14 +964,14 @@ namespace Rain::Math {
 		// will perform allocations of the appropriate size.
 		template<typename OtherValue>
 		auto operator+(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			using ResultValue =
 				decltype(std::declval<Value>() + std::declval<OtherValue>());
 			this->debugAssertEqualSizes(other);
-			TensorInterface<ResultValue, OrderValue> result(
+			TensorType<ResultValue, OrderValue> result(
 				this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](
 					ResultValue &result,
 					Value const &that,
@@ -1010,9 +985,8 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator+=(
-			TensorInterface<OtherValue, OrderValue> const
-				&other) {
-			TensorInterface<>::applyOver<0>(
+			TensorType<OtherValue, OrderValue> const &other) {
+			Tensor<>::applyOver<0>(
 				[](Value &thatValue, OtherValue const &otherValue) {
 					thatValue += otherValue;
 				},
@@ -1024,9 +998,9 @@ namespace Rain::Math {
 		auto operator+(OtherValue const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>());
-			TensorInterface<ResultValue, OrderValue> result(
+			TensorType<ResultValue, OrderValue> result(
 				this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](ResultValue &result, Value const &that) {
 					result = that + other;
 				},
@@ -1036,20 +1010,20 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator+=(OtherValue const &other) {
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](Value &that) { that += other; }, *this);
 			return *this;
 		}
 		template<typename OtherValue>
 		auto operator-(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			using ResultValue =
 				decltype(std::declval<Value>() - std::declval<OtherValue>());
 			this->debugAssertEqualSizes(other);
-			TensorInterface<ResultValue, OrderValue> result(
+			TensorType<ResultValue, OrderValue> result(
 				this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](
 					ResultValue &result,
 					Value const &that,
@@ -1063,9 +1037,8 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator-=(
-			TensorInterface<OtherValue, OrderValue> const
-				&other) {
-			TensorInterface<>::applyOver<0>(
+			TensorType<OtherValue, OrderValue> const &other) {
+			Tensor<>::applyOver<0>(
 				[](Value &thatValue, OtherValue const &otherValue) {
 					thatValue -= otherValue;
 				},
@@ -1077,9 +1050,9 @@ namespace Rain::Math {
 		auto operator-(OtherValue const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>());
-			TensorInterface<ResultValue, OrderValue> result(
+			TensorType<ResultValue, OrderValue> result(
 				this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](ResultValue &result, Value const &that) {
 					result = that - other;
 				},
@@ -1089,16 +1062,16 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator-=(OtherValue const &other) {
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](Value &that) { that -= other; }, *this);
 			return *this;
 		}
 		// Arithmetic operators *, *= are defined with another
-		// TensorInterface operand iff they are of compatible
+		// Tensor operand iff they are of compatible
 		// size. This is a shorthand for `multiply`.
 		template<typename OtherValue>
 		inline auto operator*(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			// No need to check sizes here, since `multiply` will
 			// do it.
@@ -1106,8 +1079,7 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator*=(
-			TensorInterface<OtherValue, OrderValue> const
-				&other) {
+			TensorType<OtherValue, OrderValue> const &other) {
 			// Since allocation will happen anyway, we don't care
 			// about doing it in-place.
 			return *this = *this * other;
@@ -1116,9 +1088,9 @@ namespace Rain::Math {
 		auto operator*(OtherValue const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>());
-			TensorInterface<ResultValue, OrderValue> result(
+			TensorType<ResultValue, OrderValue> result(
 				this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](ResultValue &result, Value const &that) {
 					result = that * other;
 				},
@@ -1128,7 +1100,7 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator*=(OtherValue const &other) {
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](Value &that) { that *= other; }, *this);
 			return *this;
 		}
@@ -1136,9 +1108,9 @@ namespace Rain::Math {
 		auto operator/(OtherValue const &other) const {
 			using ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>());
-			TensorInterface<ResultValue, OrderValue> result(
+			TensorType<ResultValue, OrderValue> result(
 				this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](ResultValue &result, Value const &that) {
 					result = that / other;
 				},
@@ -1148,7 +1120,7 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator/=(OtherValue const &other) {
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](Value &that) { that /= other; }, *this);
 			return *this;
 		}
@@ -1184,7 +1156,7 @@ namespace Rain::Math {
 		}
 		inline auto asClean() const {
 			TypeThis result(this->size());
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](Value &resultValue, Value const &thisValue) {
 					resultValue = thisValue;
 				},
@@ -1225,8 +1197,7 @@ namespace Rain::Math {
 			return sizesTransposed;
 		}
 		inline auto sizeProduct() const {
-			return TensorInterface<>::calcSizesProduct(
-				this->SIZES);
+			return Tensor<>::calcSizesProduct(this->SIZES);
 		}
 		inline bool isEmpty() const {
 			for (auto const &i : this->SIZES) {
@@ -1238,7 +1209,7 @@ namespace Rain::Math {
 		}
 		// Fills every value with the quality operator.
 		void fill(Value const &other) {
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[&other](Value &that) { that = other; }, *this);
 		}
 		// Public access to underlying. Can test for views.
@@ -1320,7 +1291,7 @@ namespace Rain::Math {
 		// entries. Do not use more than one `0`. Will throw if
 		// sizes are incompatible.
 		//
-		// If TensorInterface has default start/stop/step and
+		// If Tensor has default start/stop/step and
 		// default transpose (i.e. is "clean"), reshape will
 		// return a view. Otherwise, reshape returns a copy.
 		template<std::size_t NEW_ORDER>
@@ -1328,8 +1299,7 @@ namespace Rain::Math {
 			std::array<std::size_t, NEW_ORDER> const &sizes)
 			const {
 			std::size_t toInfer{NEW_ORDER}, newTotalSize{1},
-				totalSize{
-					TensorInterface<>::calcSizesProduct(this->SIZES)};
+				totalSize{Tensor<>::calcSizesProduct(this->SIZES)};
 			for (std::size_t i{0}; i < NEW_ORDER; i++) {
 				if (sizes[i] == 0) {
 					if (toInfer != NEW_ORDER) {
@@ -1361,21 +1331,16 @@ namespace Rain::Math {
 				for (std::size_t i{0}; i < NEW_ORDER; i++) {
 					newTranspose[i] = i;
 				}
-				return TensorInterface<
-					Value,
-					Functional::TypeUpgrade<NEW_ORDER>>{
+				return Tensor<Value, NEW_ORDER>{
 					this->VALUES,
 					newRanges,
 					newSizes,
 					this->OFFSET,
 					newTranspose};
 			} else {
-				TensorInterface<
-					Value,
-					Functional::TypeUpgrade<NEW_ORDER>>
-					result{newSizes};
+				Tensor<Value, NEW_ORDER> result{newSizes};
 				std::size_t idx{0};
-				TensorInterface<>::applyOver<0>(
+				Tensor<>::applyOver<0>(
 					[&idx, &result](Value const &thisValue) {
 						result.VALUES[idx++] = thisValue;
 					},
@@ -1393,7 +1358,7 @@ namespace Rain::Math {
 		// static_cast on individual entries.
 		template<typename OtherValue>
 		inline auto asRetype() const {
-			TensorInterface<OtherValue, OrderValue> result(
+			TensorType<OtherValue, OrderValue> result(
 				this->size());
 			result.template applyOver<0>(
 				[](OtherValue &left, Value const &right) {
@@ -1406,7 +1371,7 @@ namespace Rain::Math {
 		// transposition. Not a transpose.
 		inline void swap(
 			std::array<std::size_t, 2> const &idx) {
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](Value &firstValue, Value &secondValue) {
 					std::swap(firstValue, secondValue);
 				},
@@ -1416,7 +1381,7 @@ namespace Rain::Math {
 
 		// Product functions.
 
-		// TensorInterface product is defined with a list of
+		// Tensor product is defined with a list of
 		// pairs of indices to contract.
 		//
 		// Type of result tensor is the same as the type of
@@ -1433,15 +1398,13 @@ namespace Rain::Math {
 		template<
 			std::size_t CONTRACT_ORDER,
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			typename OtherValue,
 			std::size_t OTHER_ORDER,
 			typename ResultValue =
 				typename Policy<Value, OtherValue>::Result>
 		auto asMultiply(
-			TensorInterface<
-				OtherValue,
-				Functional::TypeUpgrade<OTHER_ORDER>> const &other,
+			Tensor<OtherValue, OTHER_ORDER> const &other,
 			std::array<std::size_t, CONTRACT_ORDER> const
 				&thisContractDims,
 			std::array<std::size_t, CONTRACT_ORDER> const
@@ -1520,46 +1483,38 @@ namespace Rain::Math {
 			// Iterate over all non-contracted dimensions, and
 			// compute contraction (aggregate) of inner product
 			// over all remaining dimensions.
-			TensorInterface<
-				ResultValue,
-				Functional::TypeUpgrade<RESULT_ORDER>>
-				result(resultSize);
+			Tensor<ResultValue, RESULT_ORDER> result(resultSize);
 			result.fill(
 				Policy<Value, OtherValue>::DEFAULT_RESULT);
-			TensorInterface<>::applyOver<
-				OTHER_ORDER - CONTRACT_ORDER>(
+			Tensor<>::applyOver<OTHER_ORDER - CONTRACT_ORDER>(
 				[&otherTransposed](
 					// Based on how much `applyOver` unravels, we
 					// either end up with a base Value or a higher
-					// order TensorInterface. We need to be able to
+					// order Tensor. We need to be able to
 					// handle both here.
 					typename std::conditional<
 						OTHER_ORDER - CONTRACT_ORDER == 0,
 						ResultValue,
-						TensorInterface<
+						Tensor<
 							ResultValue,
-							Functional::TypeUpgrade<
-								OTHER_ORDER - CONTRACT_ORDER>>>::type
+							OTHER_ORDER - CONTRACT_ORDER>>::type
 						&resultOuter,
 					typename std::conditional<
 						CONTRACT_ORDER == 0,
 						Value,
-						TensorInterface<
-							Value,
-							Functional::TypeUpgrade<CONTRACT_ORDER>>>::
-						type const &thisInner) {
-					TensorInterface<>::applyOver<0>(
+						Tensor<Value, CONTRACT_ORDER>>::type const
+						&thisInner) {
+					Tensor<>::applyOver<0>(
 						[&resultOuter](
 							Value const &thisValue,
 							typename std::conditional<
 								OTHER_ORDER - CONTRACT_ORDER == 0,
 								Value,
-								TensorInterface<
+								Tensor<
 									OtherValue,
-									Functional::TypeUpgrade<
-										OTHER_ORDER - CONTRACT_ORDER>>>::
-								type const &otherInner) {
-							TensorInterface<>::applyOver<0>(
+									OTHER_ORDER - CONTRACT_ORDER>>::type const
+								&otherInner) {
+							Tensor<>::applyOver<0>(
 								[&thisValue](
 									ResultValue &resultInner,
 									OtherValue const &otherValue) {
@@ -1587,7 +1542,7 @@ namespace Rain::Math {
 		template<
 			std::size_t CONTRACT_ORDER,
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			typename OtherValue,
 			std::size_t OTHER_ORDER,
 			typename ResultValue =
@@ -1597,7 +1552,7 @@ namespace Rain::Math {
 			std::enable_if<RESULT_ORDER == ORDER>::type * =
 				nullptr>
 		auto multiply(
-			TensorInterface<
+			TensorType<
 				OtherValue,
 				Functional::TypeUpgrade<OTHER_ORDER>> const &other,
 			std::array<std::size_t, CONTRACT_ORDER> const
@@ -1617,34 +1572,29 @@ namespace Rain::Math {
 		template<
 			typename OtherValue,
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asMultiplyInner(
-			TensorInterface<
-				OtherValue,
-				Functional::TypeUpgrade<1_zu>> const &other) const {
+			Tensor<OtherValue, 1_zu> const &other) const {
 			return this->asMultiply<1, Policy>(other, {0}, {0});
 		}
 		template<
 			typename OtherValue,
 			template<typename, typename> typename Policy =
-				TensorInterface<>::PlusMultProductPolicy,
+				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asMultiplyOuter(
-			TensorInterface<
-				OtherValue,
-				Functional::TypeUpgrade<1_zu>> const &other) const {
+			Tensor<OtherValue, 1_zu> const &other) const {
 			return this->asMultiply<0, Policy>(other, {}, {});
 		}
 		// Element-wise.
 		template<typename OtherValue>
 		inline auto multiplyElementWise(
-			TensorInterface<OtherValue, OrderValue> const
-				&other) {
+			TensorType<OtherValue, OrderValue> const &other) {
 			return this->applyOver<0>(
 				[](Value &left, OtherValue const &right) {
 					left *= right;
@@ -1653,7 +1603,7 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto asMultiplyElementWise(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			return this->asApplyOver<0>(
 				[](Value &left, OtherValue const &right) {
@@ -1663,8 +1613,7 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto divideElementWise(
-			TensorInterface<OtherValue, OrderValue> const
-				&other) {
+			TensorType<OtherValue, OrderValue> const &other) {
 			return this->applyOver<0>(
 				[](Value &left, OtherValue const &right) {
 					left /= right;
@@ -1673,7 +1622,7 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto asDivideElementWise(
-			TensorInterface<OtherValue, OrderValue> const &other)
+			TensorType<OtherValue, OrderValue> const &other)
 			const {
 			return this->asApplyOver<0>(
 				[](Value &left, OtherValue const &right) {
@@ -1714,8 +1663,8 @@ namespace Rain::Math {
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asDiagonal() const {
-			TensorInterface<Value, Functional::TypeUpgrade<2_zu>>
-				result({this->SIZES[0], this->SIZES[0]});
+			Tensor<Value, 2_zu> result(
+				{this->SIZES[0], this->SIZES[0]});
 			for (std::size_t i{0}; i < this->SIZES[0]; i++) {
 				result[i][i] = (*this)[i];
 			}
@@ -1741,11 +1690,10 @@ namespace Rain::Math {
 				return *this;
 			}
 			auto resultSize{1_zu << (mSig + 1)};
-			TensorInterface<Value, Functional::TypeUpgrade<2_zu>>
-				result{{resultSize, resultSize}};
+			Tensor<Value, 2_zu> result{{resultSize, resultSize}};
 			// Pass `result` second so that we iterate over
 			// indices of `*this`.
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](Value &resultValue, Value const &thisValue) {
 					resultValue = thisValue;
 				},
@@ -1774,9 +1722,7 @@ namespace Rain::Math {
 			typename ResultValue =
 				decltype(std::declval<Value>() * std::declval<OtherValue>())>
 		auto asMultiplyStrassen(
-			TensorInterface<
-				OtherValue,
-				Functional::TypeUpgrade<2_zu>> const &other) const {
+			Tensor<OtherValue, 2_zu> const &other) const {
 			auto thisSize{this->size()}, otherSize{other.size()};
 			if constexpr (Platform::isDebug()) {
 				if (thisSize[1] != otherSize[0]) {
@@ -1810,36 +1756,29 @@ namespace Rain::Math {
 				b22{b.asSlice(
 					{{{halfSize, halfSize * 2},
 						{halfSize, halfSize * 2}}})};
-			std::array<
-				TensorInterface<
-					ResultValue,
-					Functional::TypeUpgrade<2_zu>>,
-				7>
-				m{
-					{{(a11 + a22)
-							 .template asMultiplyStrassen<
-								 BASE_SIZE_POWER>(b11 + b22)},
-						{(a21 + a22)
-								.template asMultiplyStrassen<
-									BASE_SIZE_POWER>(b11)},
-						{a11.template asMultiplyStrassen<
-							BASE_SIZE_POWER>(b12 - b22)},
-						{a22.template asMultiplyStrassen<
-							BASE_SIZE_POWER>(b21 - b11)},
-						{(a11 + a12)
-								.template asMultiplyStrassen<
-									BASE_SIZE_POWER>(b22)},
-						{(a21 - a11)
-								.template asMultiplyStrassen<
-									BASE_SIZE_POWER>(b11 + b12)},
-						{(a12 - a22)
-								.template asMultiplyStrassen<
-									BASE_SIZE_POWER>(b21 + b22)}}};
-			TensorInterface<
-				ResultValue,
-				Functional::TypeUpgrade<2_zu>>
-				c{{halfSize * 2, halfSize * 2}};
-			TensorInterface<>::applyOver<0>(
+			std::array<Tensor<ResultValue, 2_zu>, 7> m{
+				{{(a11 + a22)
+						 .template asMultiplyStrassen<BASE_SIZE_POWER>(
+							 b11 + b22)},
+					{(a21 + a22)
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
+								b11)},
+					{a11.template asMultiplyStrassen<BASE_SIZE_POWER>(
+						b12 - b22)},
+					{a22.template asMultiplyStrassen<BASE_SIZE_POWER>(
+						b21 - b11)},
+					{(a11 + a12)
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
+								b22)},
+					{(a21 - a11)
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
+								b11 + b12)},
+					{(a12 - a22)
+							.template asMultiplyStrassen<BASE_SIZE_POWER>(
+								b21 + b22)}}};
+			Tensor<ResultValue, 2_zu> c{
+				{halfSize * 2, halfSize * 2}};
+			Tensor<>::applyOver<0>(
 				[](
 					ResultValue &c11,
 					ResultValue const &m1,
@@ -1853,7 +1792,7 @@ namespace Rain::Math {
 				m[3],
 				m[4],
 				m[6]);
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](
 					ResultValue &c12,
 					ResultValue const &m3,
@@ -1862,7 +1801,7 @@ namespace Rain::Math {
 					{{{0, halfSize}, {halfSize, halfSize * 2}}}),
 				m[2],
 				m[4]);
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](
 					ResultValue &c21,
 					ResultValue const &m2,
@@ -1871,7 +1810,7 @@ namespace Rain::Math {
 					{{{halfSize, halfSize * 2}, {0, halfSize}}}),
 				m[1],
 				m[3]);
-			TensorInterface<>::applyOver<0>(
+			Tensor<>::applyOver<0>(
 				[](
 					ResultValue &c22,
 					ResultValue const &m1,
@@ -2025,26 +1964,22 @@ namespace Rain::Math {
 			nullptr>
 	std::ostream &operator<<(
 		std::ostream &stream,
-		Rain::Math::TensorInterface<
-			Value,
-			Functional::TypeUpgrade<OTHER_ORDER>> const &right) {
+		Rain::Math::Tensor<Value, OTHER_ORDER> const &right) {
 		return right.streamOutPadded(stream, 0);
 	}
 
 	// Arithmetic operators, called when the left operand is
-	// not a TensorInterface.
+	// not a Tensor.
 	template<
 		typename Left,
 		typename std::enable_if<!Functional::TypeTrait<
-			Functional::TypeDowngrade<TensorInterface>>::
+			Functional::TypeDowngrade<TensorType>>::
 				IsTemplateOf<Left>::value>::type * = nullptr,
 		typename Value,
 		std::size_t ORDER>
 	inline auto constexpr operator+(
 		Left const &left,
-		Rain::Math::TensorInterface<
-			Value,
-			Functional::TypeUpgrade<ORDER>> const &right) {
+		Rain::Math::Tensor<Value, ORDER> const &right) {
 		// Preserve operation order in case it is important;
 		return right.template asApplyOver<0>(
 			[&left](Value &value) { value = left + value; });
@@ -2052,15 +1987,13 @@ namespace Rain::Math {
 	template<
 		typename Left,
 		typename std::enable_if<!Functional::TypeTrait<
-			Functional::TypeDowngrade<TensorInterface>>::
+			Functional::TypeDowngrade<TensorType>>::
 				IsTemplateOf<Left>::value>::type * = nullptr,
 		typename Value,
 		std::size_t ORDER>
 	inline auto constexpr operator-(
 		Left const &left,
-		Rain::Math::TensorInterface<
-			Value,
-			Functional::TypeUpgrade<ORDER>> const &right) {
+		Rain::Math::Tensor<Value, ORDER> const &right) {
 		// Preserve operation order in case it is important;
 		return right.template asApplyOver<0>(
 			[&left](Value &value) { value = left - value; });
@@ -2068,15 +2001,13 @@ namespace Rain::Math {
 	template<
 		typename Left,
 		typename std::enable_if<!Functional::TypeTrait<
-			Functional::TypeDowngrade<TensorInterface>>::
+			Functional::TypeDowngrade<TensorType>>::
 				IsTemplateOf<Left>::value>::type * = nullptr,
 		typename Value,
 		std::size_t ORDER>
 	inline auto constexpr operator*(
 		Left const &left,
-		Rain::Math::TensorInterface<
-			Value,
-			Functional::TypeUpgrade<ORDER>> const &right) {
+		Rain::Math::Tensor<Value, ORDER> const &right) {
 		// Preserve operation order in case it is important;
 		return right.template asApplyOver<0>(
 			[&left](Value &value) { value = left * value; });
@@ -2084,15 +2015,13 @@ namespace Rain::Math {
 	template<
 		typename Left,
 		typename std::enable_if<!Functional::TypeTrait<
-			Functional::TypeDowngrade<TensorInterface>>::
+			Functional::TypeDowngrade<TensorType>>::
 				IsTemplateOf<Left>::value>::type * = nullptr,
 		typename Value,
 		std::size_t ORDER>
 	inline auto constexpr operator/(
 		Left const &left,
-		Rain::Math::TensorInterface<
-			Value,
-			Functional::TypeUpgrade<ORDER>> const &right) {
+		Rain::Math::Tensor<Value, ORDER> const &right) {
 		// Preserve operation order in case it is important;
 		return right.template asApplyOver<0>(
 			[&left](Value &value) { value = left / value; });
