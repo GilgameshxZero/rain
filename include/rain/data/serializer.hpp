@@ -81,11 +81,24 @@ namespace Rain::Data {
 	};
 	class Deserializer {
 		public:
+		template<typename>
+		static std::false_type hasConstruct(...);
+		template<typename Spec>
+		static std::true_type hasConstruct(
+			decltype(Spec::construct(
+				std::declval<Deserializer &>())) *);
+		template<typename Spec>
+		using HasConstruct =
+			decltype(hasConstruct<Spec>(nullptr));
+
 		std::istream &stream;
 
 		explicit Deserializer(std::istream &stream) :
 			stream{stream} {}
 
+		// Standard deserializers require the target object to
+		// possibly be in an invalid state before the function
+		// is called.
 		template<
 			typename Type,
 			typename std::enable_if<Functional::TypeTrait<
@@ -124,6 +137,38 @@ namespace Rain::Data {
 				}
 			}
 			return *this;
+		}
+
+		// Preferred RAII deserializers will construct the
+		// object from the stream.
+		//
+		// Because the type may be abstract and require a
+		// derived type's instantiation, this pattern must
+		// return a pointer.
+		//
+		// Only override the default construct if the construct
+		// function exists.
+		template<
+			typename Type,
+			typename std::enable_if<
+				Functional::TypeTrait<Functional::TypeDowngrade<
+					DeserializerSpec>>::IsSpecifiedBy<Type>::value &&
+				HasConstruct<DeserializerSpec<Type>>::value>::type
+				* = nullptr>
+		inline std::unique_ptr<Type> construct() {
+			return DeserializerSpec<Type>::construct(*this);
+		}
+		template<
+			typename Type,
+			typename std::enable_if<
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					DeserializerSpec>>::IsSpecifiedBy<Type>::value ||
+				!HasConstruct<DeserializerSpec<Type>>::value>::type
+				* = nullptr>
+		inline std::unique_ptr<Type> construct() {
+			std::unique_ptr<Type> pType(new Type);
+			*this >> *pType.get();
+			return pType;
 		}
 	};
 
