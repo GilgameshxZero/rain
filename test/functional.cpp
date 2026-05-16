@@ -23,9 +23,9 @@ class Type4 :
 
 int main() {
 	// Must include <array>.
-	static_assert(TraitType<long long>::IsStdHashable::VALUE);
+	static_assert(TypeTrait<long long>::IsStdHashable::value);
 	static_assert(
-		!TraitType<std::array<int, 8>>::IsStdHashable::VALUE);
+		!TypeTrait<std::array<int, 8>>::IsStdHashable::value);
 	static_assert(
 		!(TypeTrait<TypeDowngrade<std::pair>>::IsTemplateOf<
 			std::array<int, 8>>::value));
@@ -33,7 +33,7 @@ int main() {
 		TypeTrait<TypeDowngrade<std::pair>>::IsTemplateOf<
 			std::pair<int, bool>>::value);
 	static_assert(
-		TraitType<std::array<int, 8>>::IsConstIterable::VALUE);
+		TypeTrait<std::array<int, 8>>::IsConstIterable::value);
 
 	// Cannot use std::is_base_of with template base types.
 	static_assert(

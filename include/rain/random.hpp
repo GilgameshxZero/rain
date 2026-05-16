@@ -48,8 +48,8 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-			typename std::enable_if<Functional::TraitType<
-				TypeInner>::IsStdHashable::VALUE>::type * = nullptr,
+			typename std::enable_if<Functional::TypeTrait<
+				TypeInner>::IsStdHashable::value>::type * = nullptr,
 			typename std::enable_if<SIZE_T_SIZE == 8>::type * =
 				nullptr>
 		std::size_t operator()(Type const &value) const {
@@ -71,8 +71,8 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-			typename std::enable_if<Functional::TraitType<
-				TypeInner>::IsStdHashable::VALUE>::type * = nullptr,
+			typename std::enable_if<Functional::TypeTrait<
+				TypeInner>::IsStdHashable::value>::type * = nullptr,
 			typename std::enable_if<SIZE_T_SIZE == 4>::type * =
 				nullptr>
 		std::size_t operator()(Type const &value) const {
@@ -93,8 +93,8 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			typename std::enable_if<
-				!Functional::TraitType<
-					TypeInner>::IsStdHashable::VALUE &&
+				!Functional::TypeTrait<
+					TypeInner>::IsStdHashable::value &&
 				Functional::TypeTrait<Functional::TypeDowngrade<
 					std::pair>>::IsTemplateOf<TypeInner>::value>::type
 				* = nullptr>
@@ -114,12 +114,12 @@ namespace Rain::Random {
 		template<
 			typename TypeInner = Type,
 			typename std::enable_if<
-				!Functional::TraitType<
-					TypeInner>::IsStdHashable::VALUE &&
+				!Functional::TypeTrait<
+					TypeInner>::IsStdHashable::value &&
 				!Functional::TypeTrait<Functional::TypeDowngrade<
 					std::pair>>::IsTemplateOf<TypeInner>::value &&
-				Functional::TraitType<TypeInner>::IsConstIterable::
-					VALUE>::type * = nullptr>
+				Functional::TypeTrait<TypeInner>::IsConstIterable::
+					value>::type * = nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
 			for (auto const &i : value) {

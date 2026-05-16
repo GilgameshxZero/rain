@@ -118,6 +118,41 @@ namespace Rain::Functional {
 				nullptr>
 		using IsBaseOf = decltype(isBaseOf<Type>(
 			std::declval<TypeDerived *>()));
+
+		private:
+		template<typename>
+		static std::false_type isStdHashable(...);
+		template<typename T>
+		static std::true_type isStdHashable(
+			decltype(std::hash<T>()) *);
+
+		public:
+		using IsStdHashable =
+			decltype(isStdHashable<Type>(nullptr));
+
+		private:
+		template<typename>
+		static std::false_type isConstIterable(...);
+		template<typename T>
+		static std::true_type isConstIterable(
+			typename T::const_iterator *);
+
+		public:
+		using IsConstIterable =
+			decltype(isConstIterable<Type>(nullptr));
+
+		private:
+		template<typename, typename...>
+		static std::false_type isCallableWith(...);
+		template<typename T, typename... Args>
+		static std::true_type isCallableWith(
+			decltype(std::declval<T>()(
+				std::declval<Args...>())) *);
+
+		public:
+		template<typename... Args>
+		using IsCallableWith =
+			decltype(isCallableWith<Type, Args...>(nullptr));
 	};
 
 	// Type traits for a single type which is a downgrade.
@@ -358,32 +393,5 @@ namespace Rain::Functional {
 		static IsUnsignedCustom isUnsigned(
 			decltype(T::Trait::IS_UNSIGNED) *);
 		using IsUnsigned = decltype(isUnsigned<Type>(nullptr));
-
-		// Custom type traits.
-		template<typename>
-		static TraitFalse isStdHashable(...);
-		template<typename T>
-		static TraitTrue isStdHashable(
-			decltype(std::hash<T>()) *);
-		using IsStdHashable =
-			decltype(isStdHashable<Type>(nullptr));
-
-		template<typename>
-		static TraitFalse isConstIterable(...);
-		template<typename T>
-		static TraitTrue isConstIterable(
-			typename T::const_iterator *);
-		using IsConstIterable =
-			decltype(isConstIterable<Type>(nullptr));
-
-		template<typename, typename...>
-		static TraitFalse isCallableWith(...);
-		template<typename T, typename... Args>
-		static TraitTrue isCallableWith(
-			decltype(std::declval<T>()(
-				std::declval<Args...>())) *);
-		template<typename... Args>
-		using IsCallableWith =
-			decltype(isCallableWith<Type, Args...>(nullptr));
 	};
 }

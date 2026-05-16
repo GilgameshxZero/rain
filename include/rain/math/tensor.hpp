@@ -466,11 +466,11 @@ namespace Rain::Math {
 		// random constructor.
 		template<
 			typename... Values,
-			std::enable_if<!Functional::TraitType<
+			std::enable_if<!Functional::TypeTrait<
 				typename Functional::TypeTrait<
 					Values...>::TypeTraitRemaining::TypeFirst>::
 					template IsCallableWith<typename Functional::
-							TypeTrait<Values...>::TypeFirst &>::VALUE>::
+							TypeTrait<Values...>::TypeFirst &>::value>::
 				type * = nullptr>
 		TensorInterface(
 			std::array<std::size_t, ORDER> const &sizes,
