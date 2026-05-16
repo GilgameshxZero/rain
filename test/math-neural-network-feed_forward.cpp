@@ -238,9 +238,8 @@ int main(int, char const *const *const) {
 		}
 		ofstream serializerStream(
 			assetPath / ".network.tmp.hfm", ios::binary);
-		Serializer serializer(serializerStream);
 		HuffmanStreamBuf encoderBuf(
-			*serializer.stream.rdbuf(), ss.str());
+			*serializerStream.rdbuf(), ss.str());
 		ostream encoder(&encoderBuf);
 		encoder << ss.rdbuf();
 		encoder.flush();

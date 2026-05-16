@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.5.6
+
+1. `Deserializer::construct` allows constructing object without ever being in an invalid state.
+2. `Serializer` privatized where possible.
+3. Product policy removed from `Tensor`, replaced with `Clamped<T>` and `MinPlus<T>`.
+
 ## 7.5.5
 
 1. `Serializer` uses template specialization to define custom behavior again.
