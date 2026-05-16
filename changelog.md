@@ -1,5 +1,21 @@
 # Changelog
 
+## 7.5.2
+
+1. `TraitType` -> `TypeTrait` refactor.
+  1. Non-type template parameters (and template template parameters, and more advanced template template parameters) are now preferred to be passed to types *as* types, via `Functional::TypeUpgrade` (for non-type parameters) and `Functional::TypeDowngrade` (for template template parameters). In this way, there will never be any need to support template parameters more complex than template template parameters.
+    1. Classes which take non-type template parameters, including `Tensor`, `BigInteger`, and `Modulus*` are refactored to take the new `TypeUpgrade`/`TypeDowngrade` parameters instead. Shorthands still preserve non-type template parameter syntax; the shorthands perform the upgrading.
+  2. Type traits for a `Type` are now all placed in `TypeTrait<Type...>`. Depending on the parameters of the template parameter pack `Type...`, the available traits increases or decreases.
+    1. Packs with at least one type can access `TypeFirst` and `TypeTraitRemaining` to access individual types of the remaining pack.
+    2. Packs with at least one type can also determine the Upgrade/Sidegrade/Downgrade identity of the first type.
+    3. Packs with at least one type, which is itself a `TypeUpgrade`, can access comparator types `IsLessThan`, `IsEqualTo`, `IsGreaterThan`.
+    4. Packs with at least one type, which is itself a bare type (referred to as `TypeSidegrade`), can access `IsBaseOf<T>`, `IsConstIterable`, `IsStdHashable`, `IsCallableWith`, as well as the classic arithmetic type traits.
+    5. Packs with at least one type, which is itself a `TypeDowngrade`, can access "functional" type traits, including `IsTemplateOf` and `IsTemplateBaseOf`.
+      1. Respectfully, these traits determine if `Type` is a template of a specialization, or a template and/or base class of a specialization.
+      2. Used extensively by the three sets of arithmetic classes: `Tensor`, `BigInteger`, `Modulus*`.
+  3. Select hotfixes are in place for non-standard MSVC behavior.
+2. `SplitMixHash` has been split up with SFINAE at the class definition level, rather than SFINAE at the function `operator()` level. This makes it easier to reason within the buggy MSVC environment.
+
 ## 7.5.1
 
 1. Add test for `FeedForward` based on MNIST, 4-layer, 2-epoch, subsetted data.

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../platform.hpp"
+
 #include <functional>
 #include <type_traits>
 
@@ -104,58 +106,49 @@ namespace Rain::Functional {
 		typename std::enable_if<
 			TypeTraitInterfaceFirstInterface<
 				Type>::IsTypeSidegrade::value>::type> {
-		private:
+		public:
 		template<typename>
 		static std::false_type isBaseOf(...);
 		template<typename TypeBase>
 		static std::true_type isBaseOf(TypeBase const *);
-
-		public:
 		template<
 			typename TypeDerived,
 			std::enable_if<TypeTraitInterfaceFirstInterface<
 				TypeDerived>::IsTypeSidegrade::value>::type * =
 				nullptr>
-		using IsBaseOf = decltype(isBaseOf<Type>(
-			std::declval<TypeDerived *>()));
+		using IsBaseOf =
+			decltype(isBaseOf<typename std::decay<Type>::type>(
+				std::declval<
+					typename std::decay<TypeDerived>::type *>()));
 
-		private:
 		template<typename>
 		static std::false_type isStdHashable(...);
 		template<typename T>
 		static std::true_type isStdHashable(
 			decltype(std::hash<T>()) *);
+		using IsStdHashable = decltype(isStdHashable<
+			typename std::decay<Type>::type>(nullptr));
 
-		public:
-		using IsStdHashable =
-			decltype(isStdHashable<Type>(nullptr));
-
-		private:
 		template<typename>
 		static std::false_type isConstIterable(...);
 		template<typename T>
 		static std::true_type isConstIterable(
 			typename T::const_iterator *);
+		using IsConstIterable = decltype(isConstIterable<
+			typename std::decay<Type>::type>(nullptr));
 
-		public:
-		using IsConstIterable =
-			decltype(isConstIterable<Type>(nullptr));
-
-		private:
 		template<typename, typename...>
 		static std::false_type isCallableWith(...);
 		template<typename T, typename... Args>
 		static std::true_type isCallableWith(
 			decltype(std::declval<T>()(
 				std::declval<Args...>())) *);
-
-		public:
 		template<typename... Args>
-		using IsCallableWith =
-			decltype(isCallableWith<Type, Args...>(nullptr));
+		using IsCallableWith = decltype(isCallableWith<
+			typename std::decay<Type>::type,
+			Args...>(nullptr));
 
 		// Classical type traits.
-		private:
 		struct IsIntegralDefault {
 			static inline bool constexpr value{
 				std::is_integral<Type>::value};
@@ -169,11 +162,10 @@ namespace Rain::Functional {
 		template<typename T>
 		static IsIntegralCustom isIntegral(
 			decltype(T::Trait::IS_INTEGRAL) *);
+		using IsIntegral =
+			decltype(isIntegral<typename std::decay<Type>::type>(
+				nullptr));
 
-		public:
-		using IsIntegral = decltype(isIntegral<Type>(nullptr));
-
-		private:
 		struct IsFloatingPointDefault {
 			static inline bool constexpr value{
 				std::is_floating_point<Type>::value};
@@ -187,12 +179,9 @@ namespace Rain::Functional {
 		template<typename T>
 		static IsFloatingPointCustom isFloatingPoint(
 			decltype(T::Trait::IS_FLOATING_POINT) *);
+		using IsFloatingPoint = decltype(isFloatingPoint<
+			typename std::decay<Type>::type>(nullptr));
 
-		public:
-		using IsFloatingPoint =
-			decltype(isFloatingPoint<Type>(nullptr));
-
-		private:
 		struct IsArithmeticDefault {
 			static inline bool constexpr value{
 				IsIntegral::value || IsFloatingPoint::value};
@@ -206,12 +195,9 @@ namespace Rain::Functional {
 		template<typename T>
 		static IsArithmeticCustom isArithmetic(
 			decltype(T::Trait::IS_ARITHMETIC) *);
+		using IsArithmetic = decltype(isArithmetic<
+			typename std::decay<Type>::type>(nullptr));
 
-		public:
-		using IsArithmetic =
-			decltype(isArithmetic<Type>(nullptr));
-
-		private:
 		struct IsSignedDefaultInnerTrue {
 			static inline bool constexpr value{
 				Type(-1) < Type(0)};
@@ -237,11 +223,10 @@ namespace Rain::Functional {
 		template<typename T>
 		static IsSignedCustom isSigned(
 			decltype(T::Trait::IS_SIGNED) *);
+		using IsSigned =
+			decltype(isSigned<typename std::decay<Type>::type>(
+				nullptr));
 
-		public:
-		using IsSigned = decltype(isSigned<Type>(nullptr));
-
-		private:
 		struct IsUnsignedDefaultInner {
 			static inline bool constexpr value{
 				Type(0) < Type(-1)};
@@ -264,9 +249,9 @@ namespace Rain::Functional {
 		template<typename T>
 		static IsUnsignedCustom isUnsigned(
 			decltype(T::Trait::IS_UNSIGNED) *);
-
-		public:
-		using IsUnsigned = decltype(isUnsigned<Type>(nullptr));
+		using IsUnsigned =
+			decltype(isUnsigned<typename std::decay<Type>::type>(
+				nullptr));
 	};
 
 	// Type traits for a single type which is a downgrade.
@@ -278,7 +263,7 @@ namespace Rain::Functional {
 		typename std::enable_if<
 			TypeTraitInterfaceFirstInterface<
 				Type>::IsTypeDowngrade::value>::type> {
-		private:
+		public:
 		// Template specification detection is actually very
 		// difficult in this context, largely due to
 		// TypeUnderlying being a alias template dependent type,
@@ -320,16 +305,22 @@ namespace Rain::Functional {
 			typename... Args>
 		static std::true_type isTemplateBaseOf(
 			TypeBase<Args...> const *);
-
-		public:
+		// MSVC has a bug where template type deduction here
+		// doesn't properly take into account the variadic
+		// Args... So we manually overload for up to 2
+		// arguments.
 		template<
-			typename TypeSpecific,
-			std::enable_if<TypeTraitInterfaceFirstInterface<
-				TypeSpecific>::IsTypeSidegrade::value>::type * =
-				nullptr>
+			template<typename...> typename TypeBase,
+			typename Arg1,
+			typename Arg2>
+		static std::true_type isTemplateBaseOf(
+			TypeBase<Arg1, Arg2> const *);
+
+		template<typename TypeSpecific>
 		using IsTemplateBaseOf =
 			decltype(isTemplateBaseOf<TypeUnderlying>(
-				std::declval<TypeSpecific *>()));
+				std::declval<
+					typename std::decay<TypeSpecific>::type *>()));
 
 		// To determine if TypeSpecific is a specification of
 		// the Type template, but not a derived class of it,
@@ -338,7 +329,6 @@ namespace Rain::Functional {
 		// type, which is a specification of Type. If the middle
 		// type is equal to TypeSpecific, then we are not a
 		// base, just a template.
-		private:
 		template<typename, typename, typename = void>
 		class IsTemplateOfInterface : public std::false_type {};
 		template<typename TypeSpecific, typename TypeMiddle>
@@ -359,16 +349,22 @@ namespace Rain::Functional {
 			TypeSpecific,
 			TypeBase<Args...>>
 			isTemplateOf(TypeBase<Args...> const *);
-
-		public:
+		// MSVC bug here again. TODO: file it.
 		template<
 			typename TypeSpecific,
-			std::enable_if<TypeTraitInterfaceFirstInterface<
-				TypeSpecific>::IsTypeSidegrade::value>::type * =
-				nullptr>
-		using IsTemplateOf =
-			decltype(isTemplateOf<TypeSpecific, TypeUnderlying>(
-				std::declval<TypeSpecific *>()));
+			template<typename...> typename TypeBase,
+			typename Arg1,
+			typename Arg2>
+		static IsTemplateOfInterface<
+			TypeSpecific,
+			TypeBase<Arg1, Arg2>>
+			isTemplateOf(TypeBase<Arg1, Arg2> const *);
+
+		template<typename TypeSpecific>
+		using IsTemplateOf = decltype(isTemplateOf<
+			typename std::decay<TypeSpecific>::type,
+			TypeUnderlying>(std::declval<
+			typename std::decay<TypeSpecific>::type *>()));
 	};
 
 	// Type traits for a parameter pack where at least the

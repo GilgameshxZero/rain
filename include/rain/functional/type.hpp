@@ -15,5 +15,6 @@ namespace Rain {
 	// Standard types whose template parameters are types,
 	// under the "everything-as-a-type" paradigm of
 	// `trait.hpp`.
+	//
 	// TODO.
 }
