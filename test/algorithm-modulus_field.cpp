@@ -4,15 +4,15 @@ using Rain::Error::releaseAssert;
 
 int main() {
 	{
-		static_assert(
-			!Rain::Functional::TraitTypeTemplateTypeTypeAuto<
-				Rain::Algorithm::ModulusRingBase>::
-				IsBaseOfTemplate<int>::VALUE);
-		static_assert(
-			Rain::Functional::TraitTypeTemplateTypeTypeAuto<
-				Rain::Algorithm::ModulusRingBase>::
-				IsBaseOfTemplate<Rain::Algorithm::
-						ModulusField<long long, 17>>::VALUE);
+		static_assert(!Rain::Functional::TypeTrait<
+			Rain::Functional::TypeDowngrade<
+				Rain::Algorithm::ModulusRingBaseInterface>>::
+				IsTemplateOf<int>::value);
+		static_assert(Rain::Functional::TypeTrait<
+			Rain::Functional::TypeDowngrade<
+				Rain::Algorithm::ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<Rain::Algorithm::
+						ModulusField<long long, 17>>::value);
 		static_assert(
 			(2 * Rain::Algorithm::ModulusField<int, 7>{3})
 				.value == 6);

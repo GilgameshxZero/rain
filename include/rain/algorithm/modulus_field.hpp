@@ -3,6 +3,7 @@
 // multiply in O(1) and divide in O(ln N).
 #pragma once
 
+#include "../literal.hpp"
 #include "../random.hpp"
 #include "rain/functional/trait.hpp"
 
@@ -13,8 +14,17 @@ namespace Rain::Algorithm {
 	template<
 		typename = std::nullptr_t,
 		typename = std::nullptr_t,
-		std::size_t = 0>
-	class ModulusRingBase;
+		typename = Functional::TypeUpgrade<0_zu>>
+	class ModulusRingBaseInterface;
+
+	template<
+		typename Derived = std::nullptr_t,
+		typename Underlying = std::nullptr_t,
+		std::size_t MODULUS_OUTER = 0_zu>
+	using ModulusRingBase = ModulusRingBaseInterface<
+		Derived,
+		Underlying,
+		Functional::TypeUpgrade<MODULUS_OUTER>>;
 
 	// Implementation for a modulus ring CRTP over the
 	// integers, supporting basic operations add, subtract,
@@ -35,26 +45,31 @@ namespace Rain::Algorithm {
 	template<
 		typename Derived,
 		typename Underlying,
-		std::size_t MODULUS_OUTER>
-	class ModulusRingBase {
+		typename ModulusOuterValue>
+	class ModulusRingBaseInterface {
+		public:
+		static inline std::size_t constexpr MODULUS_OUTER{
+			ModulusOuterValue::UNDERLYING};
+
 		private:
 		using TypeThis =
 			ModulusRingBase<Derived, Underlying, MODULUS_OUTER>;
+
 		template<typename TypeDerived>
-		using isDerivedFromModulusRing =
-			Functional::TraitTypeTemplateTypeTypeAuto<
-				ModulusRingBase>::IsBaseOfTemplate<TypeDerived>;
+		using IsDerivedFromModulusRing = Functional::TypeTrait<
+			Functional::TypeDowngrade<ModulusRingBaseInterface>>::
+			IsTemplateBaseOf<TypeDerived>;
 
 		public:
 		Underlying const MODULUS;
 		Underlying value;
 
 		// Construction with a raw value will directly take the
-		// value. Construction with another ModulusRingBase will
-		// call the % operator on the other's value, which will
-		// always stay in range of the other's ring. This value
-		// is then explicitly cast into the current underlying
-		// type.
+		// value. Construction with another
+		// ModulusRingBaseInterface will call the % operator on
+		// the other's value, which will always stay in range of
+		// the other's ring. This value is then explicitly cast
+		// into the current underlying type.
 		//
 		// If the integer specified is signed and negative, we
 		// want to wrap it back to the positives first.
@@ -63,12 +78,12 @@ namespace Rain::Algorithm {
 		// narrowing casts, if necessary.
 		template<
 			typename Integer = std::size_t,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr,
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER != 0>::type * =
 				nullptr>
-		inline constexpr ModulusRingBase(
+		inline constexpr ModulusRingBaseInterface(
 			Integer const &value = 0) :
 			MODULUS{MODULUS_OUTER},
 			// Writing `Integer() - value` avoids MSVC C4146.
@@ -80,12 +95,12 @@ namespace Rain::Algorithm {
 						this->MODULUS) {}
 		template<
 			typename Integer = std::size_t,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr,
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER == 0>::type * =
 				nullptr>
-		inline constexpr ModulusRingBase(
+		inline constexpr ModulusRingBaseInterface(
 			Underlying const &modulus,
 			Integer const &value = 0) :
 			MODULUS{modulus},
@@ -103,7 +118,7 @@ namespace Rain::Algorithm {
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER != 0>::type * =
 				nullptr>
-		inline constexpr ModulusRingBase(
+		inline constexpr ModulusRingBaseInterface(
 			ModulusRingBase<
 				OtherDerived,
 				OtherUnderlying,
@@ -123,7 +138,7 @@ namespace Rain::Algorithm {
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
 			typename std::enable_if<MODULUS_INNER == 0>::type * =
 				nullptr>
-		inline constexpr ModulusRingBase(
+		inline constexpr ModulusRingBaseInterface(
 			Underlying const &modulus,
 			ModulusRingBase<
 				OtherDerived,
@@ -133,20 +148,22 @@ namespace Rain::Algorithm {
 			value(
 				other.value < 0
 					? this->MODULUS -
-						(static_cast<Underlying>(decltype(other.value)() - other.value) %
+						(static_cast<Underlying>(
+							 decltype(other.value)() - other.value) %
 							this->MODULUS)
 					: static_cast<Underlying>(other.value) %
 						this->MODULUS) {}
 
 		// Explicit copy constructor helps avoid compiler
 		// warnings on `clang`.
-		inline constexpr ModulusRingBase(
+		inline constexpr ModulusRingBaseInterface(
 			TypeThis const &other) :
 			MODULUS{other.MODULUS},
 			value{
 				other.value < 0
 					? this->MODULUS -
-						(static_cast<Underlying>(decltype(other.value)() - other.value) %
+						(static_cast<Underlying>(
+							 decltype(other.value)() - other.value) %
 							this->MODULUS)
 					: static_cast<Underlying>(other.value) %
 						this->MODULUS} {}
@@ -182,8 +199,8 @@ namespace Rain::Algorithm {
 		// for the current type.
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr &operator=(Integer const &other) {
 			return *this = build(other);
 		}
@@ -210,8 +227,8 @@ namespace Rain::Algorithm {
 		// may still be deceptive.
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		explicit inline constexpr operator Integer() const {
 			return static_cast<Integer>(this->value);
 		}
@@ -222,8 +239,8 @@ namespace Rain::Algorithm {
 		// are generated by the compiler automatically.
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator==(
 			Integer const &other) const {
 			return *this == build(other);
@@ -241,8 +258,8 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator<(
 			Integer const &other) const {
 			return *this < build(other);
@@ -259,8 +276,8 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator<=(
 			Integer const &other) const {
 			return *this <= build(other);
@@ -277,8 +294,8 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator>(
 			Integer const &other) const {
 			return *this > build(other);
@@ -295,8 +312,8 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator>=(
 			Integer const &other) const {
 			return *this >= build(other);
@@ -318,8 +335,8 @@ namespace Rain::Algorithm {
 		// them into this type.
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator+(
 			Integer const &other) const {
 			return *this + build(other);
@@ -341,8 +358,8 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator-(
 			Integer const &other) const {
 			return *this - build(other);
@@ -367,8 +384,8 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator*(
 			Integer const &other) const {
 			return *this * build(other);
@@ -391,8 +408,8 @@ namespace Rain::Algorithm {
 		// Modulus operates directly on modded operand value.
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline auto constexpr operator%(
 			Integer const &other) const {
 			return *this % build(other);
@@ -416,7 +433,7 @@ namespace Rain::Algorithm {
 		// Unary operations are mostly shorthands for binary
 		// operations.
 		inline auto constexpr operator-() const {
-			return ModulusRingBase() - *this;
+			return ModulusRingBaseInterface() - *this;
 		}
 		inline auto constexpr operator++() {
 			return *this += 1;
@@ -473,8 +490,8 @@ namespace Rain::Algorithm {
 		// O(ln N) exponentiation. The exponent's value is used.
 		template<
 			typename Integer,
-			typename std::enable_if<!isDerivedFromModulusRing<
-				Integer>::VALUE>::type * = nullptr>
+			typename std::enable_if<!IsDerivedFromModulusRing<
+				Integer>::value>::type * = nullptr>
 		inline Derived constexpr power(
 			Integer const &exponent) const {
 			// Double base case to cover 0 but also avoid a single
@@ -581,7 +598,7 @@ namespace Rain::Algorithm {
 	// ModulusRing instead.
 	template<
 		typename Underlying,
-		std::size_t MODULUS_OUTER = 0>
+		std::size_t MODULUS_OUTER = 0_zu>
 	class ModulusField :
 		public ModulusRingBase<
 			ModulusField<Underlying, MODULUS_OUTER>,
@@ -665,16 +682,15 @@ namespace Rain::Algorithm {
 	// a raw integer.
 	template<
 		typename Integer,
-		typename std::enable_if<!Functional::
-				TraitTypeTemplateTypeTypeAuto<ModulusRingBase>::
-					IsBaseOfTemplate<Integer>::VALUE>::type * =
-			nullptr,
+		typename std::enable_if<!Functional::TypeTrait<
+			Functional::TypeDowngrade<ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<Integer>::value>::type * = nullptr,
 		typename Derived,
 		typename Underlying,
 		std::size_t MODULUS_OUTER>
 	inline auto constexpr operator+(
 		Integer const &left,
-		Rain::Algorithm::ModulusRingBase<
+		ModulusRingBase<
 			Derived,
 			Underlying,
 			MODULUS_OUTER> const &right) {
@@ -682,16 +698,15 @@ namespace Rain::Algorithm {
 	}
 	template<
 		typename Integer,
-		typename std::enable_if<!Functional::
-				TraitTypeTemplateTypeTypeAuto<ModulusRingBase>::
-					IsBaseOfTemplate<Integer>::VALUE>::type * =
-			nullptr,
+		typename std::enable_if<!Functional::TypeTrait<
+			Functional::TypeDowngrade<ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<Integer>::value>::type * = nullptr,
 		typename Derived,
 		typename Underlying,
 		std::size_t MODULUS_OUTER>
 	inline auto constexpr operator-(
 		Integer const &left,
-		Rain::Algorithm::ModulusRingBase<
+		ModulusRingBase<
 			Derived,
 			Underlying,
 			MODULUS_OUTER> const &right) {
@@ -699,16 +714,15 @@ namespace Rain::Algorithm {
 	}
 	template<
 		typename Integer,
-		typename std::enable_if<!Functional::
-				TraitTypeTemplateTypeTypeAuto<ModulusRingBase>::
-					IsBaseOfTemplate<Integer>::VALUE>::type * =
-			nullptr,
+		typename std::enable_if<!Functional::TypeTrait<
+			Functional::TypeDowngrade<ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<Integer>::value>::type * = nullptr,
 		typename Derived,
 		typename Underlying,
 		std::size_t MODULUS_OUTER>
 	inline auto constexpr operator*(
 		Integer const &left,
-		Rain::Algorithm::ModulusRingBase<
+		ModulusRingBase<
 			Derived,
 			Underlying,
 			MODULUS_OUTER> const &right) {
@@ -716,16 +730,15 @@ namespace Rain::Algorithm {
 	}
 	template<
 		typename Integer,
-		typename std::enable_if<!Functional::
-				TraitTypeTemplateTypeTypeAuto<ModulusRingBase>::
-					IsBaseOfTemplate<Integer>::VALUE>::type * =
-			nullptr,
+		typename std::enable_if<!Functional::TypeTrait<
+			Functional::TypeDowngrade<ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<Integer>::value>::type * = nullptr,
 		typename Derived,
 		typename Underlying,
 		std::size_t MODULUS_OUTER>
 	inline auto constexpr operator%(
 		Integer const &left,
-		Rain::Algorithm::ModulusRingBase<
+		ModulusRingBase<
 			Derived,
 			Underlying,
 			MODULUS_OUTER> const &right) {
@@ -733,10 +746,9 @@ namespace Rain::Algorithm {
 	}
 	template<
 		typename Integer,
-		typename std::enable_if<!Functional::
-				TraitTypeTemplateTypeTypeAuto<ModulusRingBase>::
-					IsBaseOfTemplate<Integer>::VALUE>::type * =
-			nullptr,
+		typename std::enable_if<!Functional::TypeTrait<
+			Functional::TypeDowngrade<ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<Integer>::value>::type * = nullptr,
 		typename Underlying,
 		std::size_t MODULUS_OUTER>
 	inline auto constexpr operator/(

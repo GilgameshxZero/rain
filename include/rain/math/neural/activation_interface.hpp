@@ -59,7 +59,8 @@ namespace Rain::Math::Neural {
 						Tensor<Value, 2> &left,
 						Tensor<Value, 1> const &y1,
 						Tensor<Value, 1> const &y2) {
-						left.deepCopyFrom(this->getIncrementalGradient(y1, y2));
+						left.deepCopyFrom(
+							this->getIncrementalGradient(y1, y2));
 					},
 					z1,
 					z2);

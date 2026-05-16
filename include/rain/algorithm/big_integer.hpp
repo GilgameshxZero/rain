@@ -15,24 +15,35 @@
 
 namespace Rain::Algorithm {
 	// Forward declaration.
-	template<std::size_t = 0, bool = false>
+	//
+	// Takes template arguments of Functional::TypeUpgrade of
+	// std::size_t and bool.
+	template<
+		typename = std::nullptr_t,
+		typename = std::nullptr_t>
 	class BigInteger;
 
-	// Shorthands.
+	// Shorthands without TypeUpgrade.
 	template<std::size_t LOG_BITS>
-	using BigIntegerSigned = BigInteger<LOG_BITS, true>;
+	using BigIntegerSigned = BigInteger<
+		Functional::TypeUpgrade<LOG_BITS>,
+		Functional::TypeUpgrade<true>>;
 	template<std::size_t LOG_BITS>
-	using BigIntegerUnsigned = BigInteger<LOG_BITS, false>;
+	using BigIntegerUnsigned = BigInteger<
+		Functional::TypeUpgrade<LOG_BITS>,
+		Functional::TypeUpgrade<false>>;
 }
 
 namespace std {
 	// `std::numeric_limits`.
 	template<std::size_t LOG_BITS, bool SIGNED>
-	class numeric_limits<
-		Rain::Algorithm::BigInteger<LOG_BITS, SIGNED>> {
+	class numeric_limits<Rain::Algorithm::BigInteger<
+		Rain::Functional::TypeUpgrade<LOG_BITS>,
+		Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
-		using ThisInteger =
-			Rain::Algorithm::BigInteger<LOG_BITS, SIGNED>;
+		using ThisInteger = Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<LOG_BITS>,
+			Rain::Functional::TypeUpgrade<SIGNED>>;
 
 		static ThisInteger constexpr min() {
 			return ThisInteger(
@@ -55,11 +66,13 @@ namespace std {
 	// We do not inherit directly because the return type is
 	// wrong.
 	template<bool SIGNED>
-	class numeric_limits<
-		Rain::Algorithm::BigInteger<5, SIGNED>> {
+	class numeric_limits<Rain::Algorithm::BigInteger<
+		Rain::Functional::TypeUpgrade<std::size_t{5}>,
+		Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
-		using ThisInteger =
-			Rain::Algorithm::BigInteger<5, SIGNED>;
+		using ThisInteger = Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<std::size_t{5}>,
+			Rain::Functional::TypeUpgrade<SIGNED>>;
 		using UnderlyingInteger =
 			typename ThisInteger::UnderlyingInteger;
 
@@ -92,29 +105,33 @@ namespace Rain::Algorithm {
 		std::conditional<
 			(sizeof(IntegerFirst) >= sizeof(IntegerSecond)),
 			BigInteger<
-				Algorithm::MostSignificant1BitIdx<
-					sizeof(IntegerFirst) * 8 - 1>::value +
+				Functional::TypeUpgrade<
+					Algorithm::MostSignificant1BitIdx<
+						sizeof(IntegerFirst) * 8 - 1>::value +
 					1 +
 					(!Functional::TraitType<
 						 IntegerFirst>::IsSigned::VALUE &&
 						Functional::TraitType<
-							IntegerSecond>::IsSigned::VALUE),
-				Functional::TraitType<
-					IntegerFirst>::IsSigned::VALUE ||
+							IntegerSecond>::IsSigned::VALUE)>,
+				Functional::TypeUpgrade<
 					Functional::TraitType<
-						IntegerSecond>::IsSigned::VALUE>,
+						IntegerFirst>::IsSigned::VALUE ||
+					Functional::TraitType<
+						IntegerSecond>::IsSigned::VALUE>>,
 			BigInteger<
-				Algorithm::MostSignificant1BitIdx<
-					sizeof(IntegerSecond) * 8 - 1>::value +
+				Functional::TypeUpgrade<
+					Algorithm::MostSignificant1BitIdx<
+						sizeof(IntegerSecond) * 8 - 1>::value +
 					1 +
 					(!Functional::TraitType<
 						 IntegerSecond>::IsSigned::VALUE &&
 						Functional::TraitType<
-							IntegerFirst>::IsSigned::VALUE),
-				Functional::TraitType<
-					IntegerFirst>::IsSigned::VALUE ||
+							IntegerFirst>::IsSigned::VALUE)>,
+				Functional::TypeUpgrade<
 					Functional::TraitType<
-						IntegerSecond>::IsSigned::VALUE>> {};
+						IntegerFirst>::IsSigned::VALUE ||
+					Functional::TraitType<
+						IntegerSecond>::IsSigned::VALUE>>> {};
 
 	// Template recursion base case 2**5 = 32. Requires 64-bit
 	// integer to be available to support the overflow
@@ -152,14 +169,20 @@ namespace Rain::Algorithm {
 	// All constructors and cast operators should be explicit,
 	// except for the copy constructor.
 	template<bool SIGNED>
-	class BigInteger<5, SIGNED> {
+	class BigInteger<
+		Functional::TypeUpgrade<5_zu>,
+		Functional::TypeUpgrade<SIGNED>> {
 		public:
-		using ThisInteger = BigInteger<5, SIGNED>;
+		using ThisInteger = BigInteger<
+			Functional::TypeUpgrade<5_zu>,
+			Functional::TypeUpgrade<SIGNED>>;
 		using UnderlyingInteger = std::conditional<
 			SIGNED,
 			std::int32_t,
 			std::uint32_t>::type;
-		using OppositeSignInteger = BigInteger<5, !SIGNED>;
+		using OppositeSignInteger = BigInteger<
+			Functional::TypeUpgrade<5_zu>,
+			Functional::TypeUpgrade<!SIGNED>>;
 
 		UnderlyingInteger value;
 
@@ -320,8 +343,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(UnderlyingInteger) <
 					sizeof(OtherInteger)>::type * = nullptr>
 		explicit inline constexpr
@@ -336,8 +359,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(UnderlyingInteger) == sizeof(OtherInteger) &&
 				SIGNED !=
 					Functional::TraitType<
@@ -355,8 +378,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(UnderlyingInteger) == sizeof(OtherInteger) &&
 				SIGNED !=
 					Functional::TraitType<
@@ -377,8 +400,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				!Functional::TraitType<
 					OtherInteger>::IsSigned::VALUE &&
 				(sizeof(UnderlyingInteger) >
@@ -393,8 +416,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				Functional::TraitType<
 					OtherInteger>::IsSigned::VALUE &&
 				(sizeof(UnderlyingInteger) >
@@ -733,13 +756,21 @@ namespace Rain::Algorithm {
 		// M} = {-1, X, 0, 8}).
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
-			BigInteger<5, SIGNED || RIGHT_SIGNED>,
-			BigInteger<5, false>>
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>,
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<false>>>
 			addWithOverflow(
 				ThisInteger const &left,
-				BigInteger<5, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<5, SIGNED || RIGHT_SIGNED>;
+				BigInteger<
+					Functional::TypeUpgrade<5_zu>,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
 			using LargerInteger = std::int64_t;
 			auto upLeft{static_cast<LargerInteger>(left)},
 				upRight{static_cast<LargerInteger>(right)},
@@ -764,7 +795,10 @@ namespace Rain::Algorithm {
 
 			// Cast upResult down into unsigned BigInteger<5> will
 			// truncate and is well-defined.
-			BigInteger<5, false> low(upResult);
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<false>>
+				low(upResult);
 			return {high, low};
 		}
 		template<
@@ -804,13 +838,21 @@ namespace Rain::Algorithm {
 		}
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
-			BigInteger<5, SIGNED || RIGHT_SIGNED>,
-			BigInteger<5, false>>
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>,
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<false>>>
 			subtractWithOverflow(
 				ThisInteger const &left,
-				BigInteger<5, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<5, SIGNED || RIGHT_SIGNED>;
+				BigInteger<
+					Functional::TypeUpgrade<5_zu>,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
 			using LargerInteger = std::int64_t;
 			auto upLeft{static_cast<LargerInteger>(left)},
 				upRight{static_cast<LargerInteger>(right)},
@@ -829,7 +871,10 @@ namespace Rain::Algorithm {
 							? std::numeric_limits<ResultInteger>::lowest()
 							: ResultInteger(std::uint32_t{0x80000000}));
 			}
-			BigInteger<5, false> low(upResult);
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<false>>
+				low(upResult);
 			return {high, low};
 		}
 		template<
@@ -867,13 +912,21 @@ namespace Rain::Algorithm {
 		}
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
-			BigInteger<5, SIGNED || RIGHT_SIGNED>,
-			BigInteger<5, false>>
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>,
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<false>>>
 			multiplyWithOverflow(
 				ThisInteger const &left,
-				BigInteger<5, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<5, SIGNED || RIGHT_SIGNED>;
+				BigInteger<
+					Functional::TypeUpgrade<5_zu>,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
 			using LargerInteger = typename std::conditional<
 				SIGNED || RIGHT_SIGNED,
 				std::int64_t,
@@ -895,7 +948,10 @@ namespace Rain::Algorithm {
 							? std::numeric_limits<ResultInteger>::lowest()
 							: ResultInteger(std::uint32_t{0x80000000}));
 			}
-			BigInteger<5, false> low(upResult);
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<false>>
+				low(upResult);
 			return {high, low};
 		}
 		template<
@@ -939,13 +995,23 @@ namespace Rain::Algorithm {
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
 			ThisInteger,
-			BigInteger<5, SIGNED || RIGHT_SIGNED>>
+			BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>>
 			divideWithRemainder(
 				ThisInteger const &left,
-				BigInteger<5, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<5, SIGNED || RIGHT_SIGNED>;
-			if (right == BigInteger<5, RIGHT_SIGNED>()) {
+				BigInteger<
+					Functional::TypeUpgrade<5_zu>,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				Functional::TypeUpgrade<5_zu>,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
+			if (
+				right ==
+				BigInteger<
+					Functional::TypeUpgrade<5_zu>,
+					Functional::TypeUpgrade<RIGHT_SIGNED>>()) {
 				return {ThisInteger(), ResultInteger()};
 			}
 			auto dividend{
@@ -953,13 +1019,18 @@ namespace Rain::Algorithm {
 					? static_cast<std::uint32_t>(~left) + 1u
 					: static_cast<std::uint32_t>(left)},
 				divisor{
-					right < BigInteger<5, RIGHT_SIGNED>()
+					right < BigInteger<
+										Functional::TypeUpgrade<5_zu>,
+										Functional::TypeUpgrade<RIGHT_SIGNED>>()
 						? static_cast<std::uint32_t>(~right) + 1u
 						: static_cast<std::uint32_t>(right)};
 			bool remainderNegative{left < ThisInteger()},
 				quotientNegative{
 					(left < ThisInteger()) !=
-					(right < BigInteger<5, RIGHT_SIGNED>())};
+					(right <
+						BigInteger<
+							Functional::TypeUpgrade<5_zu>,
+							Functional::TypeUpgrade<RIGHT_SIGNED>>())};
 			auto remainder{
 				static_cast<std::int64_t>(dividend % divisor)},
 				quotient{
@@ -1045,9 +1116,9 @@ namespace Rain::Algorithm {
 		// Free function binary operator overloads.
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator==(
 			OtherInteger const &left,
@@ -1059,9 +1130,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator<(
 			OtherInteger const &left,
@@ -1073,9 +1144,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator<=(
 			OtherInteger const &left,
@@ -1087,9 +1158,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator>(
 			OtherInteger const &left,
@@ -1101,9 +1172,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator>=(
 			OtherInteger const &left,
@@ -1115,9 +1186,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator+(
 			OtherInteger const &left,
@@ -1129,9 +1200,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator-(
 			OtherInteger const &left,
@@ -1143,9 +1214,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator*(
 			OtherInteger const &left,
@@ -1157,9 +1228,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator/(
 			OtherInteger const &left,
@@ -1171,9 +1242,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator%(
 			OtherInteger const &left,
@@ -1209,15 +1280,25 @@ namespace Rain::Algorithm {
 	// as well as comparison, i/o, and cast operators. All
 	// behaviors are well-defined and mimic the properties of
 	// the base case.
-	template<std::size_t LOG_BITS, bool SIGNED>
+	template<typename LogBitsValue, typename SignedValue>
 	class BigInteger {
 		public:
-		using ThisInteger = BigInteger<LOG_BITS, SIGNED>;
-		using SmallerInteger = BigInteger<LOG_BITS - 1, SIGNED>;
-		using SmallerIntegerUnsigned =
-			BigInteger<LOG_BITS - 1, false>;
-		using OppositeSignInteger =
-			BigInteger<LOG_BITS, !SIGNED>;
+		static inline std::size_t constexpr LOG_BITS{
+			LogBitsValue::UNDERLYING};
+		static inline bool constexpr SIGNED{
+			SignedValue::UNDERLYING};
+
+		using ThisInteger =
+			BigInteger<LogBitsValue, SignedValue>;
+		using SmallerInteger = BigInteger<
+			Functional::TypeUpgrade<LOG_BITS - 1>,
+			SignedValue>;
+		using SmallerIntegerUnsigned = BigInteger<
+			Functional::TypeUpgrade<LOG_BITS - 1>,
+			Functional::TypeUpgrade<false>>;
+		using OppositeSignInteger = BigInteger<
+			LogBitsValue,
+			Functional::TypeUpgrade<!SIGNED>>;
 
 		static std::size_t const HALF_BITS{
 			1_zu << (LOG_BITS - 1)};
@@ -1279,8 +1360,8 @@ namespace Rain::Algorithm {
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
 				LOG_BITS == 6 &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
@@ -1301,8 +1382,8 @@ namespace Rain::Algorithm {
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
 				LOG_BITS == 6 &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
@@ -1334,8 +1415,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerIntegerUnsigned) +
 							sizeof(SmallerInteger) !=
 						sizeof(OtherInteger) ||
@@ -1354,8 +1435,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) ==
 					sizeof(OtherInteger) &&
@@ -1373,8 +1454,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) >
 					sizeof(OtherInteger)) &&
@@ -1399,8 +1480,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) <
 					sizeof(OtherInteger)) &&
@@ -1418,8 +1499,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerIntegerUnsigned) +
 						sizeof(SmallerInteger) !=
 					sizeof(OtherInteger) &&
@@ -1446,8 +1527,8 @@ namespace Rain::Algorithm {
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
 				LOG_BITS == 6 &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				sizeof(SmallerInteger) +
 						sizeof(SmallerIntegerUnsigned) ==
 					sizeof(OtherInteger) &&
@@ -1478,8 +1559,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) <
 						sizeof(OtherInteger) ||
@@ -1501,8 +1582,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) >
 						sizeof(OtherInteger) &&
@@ -1518,8 +1599,8 @@ namespace Rain::Algorithm {
 			std::enable_if<
 				Functional::TraitType<
 					OtherInteger>::IsIntegral::VALUE &&
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					BigInteger>>::IsTemplateOf<OtherInteger>::value &&
 				(sizeof(SmallerInteger) +
 							sizeof(SmallerIntegerUnsigned) >
 						sizeof(OtherInteger) &&
@@ -1842,13 +1923,21 @@ namespace Rain::Algorithm {
 		// Arithmetic.
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
-			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>,
-			BigInteger<LOG_BITS, false>>
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>,
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<false>>>
 			addWithOverflow(
 				ThisInteger const &left,
-				BigInteger<LOG_BITS, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>;
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
 			auto r1{SmallerInteger::addWithOverflow(
 				left.high, right.high)};
 			auto r2{SmallerIntegerUnsigned::addWithOverflow(
@@ -1862,7 +1951,10 @@ namespace Rain::Algorithm {
 					r1.first, SmallerInteger(r3.first))};
 			return {
 				ResultInteger(r4.first, r4.second),
-				BigInteger<LOG_BITS, false>(r3.second, r2.second)};
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<false>>(
+					r3.second, r2.second)};
 		}
 		template<
 			typename OtherInteger,
@@ -1892,8 +1984,9 @@ namespace Rain::Algorithm {
 				static_cast<ThisInteger>((unsignedLow << 1) >> 1)};
 			if (
 				unsignedLow >
-				(std::numeric_limits<
-					 BigInteger<LOG_BITS, false>>::max() >>
+				(std::numeric_limits<BigInteger<
+						LogBitsValue,
+						Functional::TypeUpgrade<false>>>::max() >>
 					1)) {
 				targetLow ^=
 					std::numeric_limits<ThisInteger>::lowest();
@@ -1908,13 +2001,21 @@ namespace Rain::Algorithm {
 		}
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
-			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>,
-			BigInteger<LOG_BITS, false>>
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>,
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<false>>>
 			subtractWithOverflow(
 				ThisInteger const &left,
-				BigInteger<LOG_BITS, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>;
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
 			auto r1{SmallerInteger::subtractWithOverflow(
 				left.high, right.high)};
 			auto r2{SmallerIntegerUnsigned::subtractWithOverflow(
@@ -1952,7 +2053,10 @@ namespace Rain::Algorithm {
 			}
 			return {
 				ResultInteger(r4.first, r4.second),
-				BigInteger<LOG_BITS, false>(r3.second, r2.second)};
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<false>>(
+					r3.second, r2.second)};
 		}
 		template<
 			typename OtherInteger,
@@ -1980,8 +2084,9 @@ namespace Rain::Algorithm {
 				static_cast<ThisInteger>((unsignedLow << 1) >> 1)};
 			if (
 				unsignedLow >
-				(std::numeric_limits<
-					 BigInteger<LOG_BITS, false>>::max() >>
+				(std::numeric_limits<BigInteger<
+						LogBitsValue,
+						Functional::TypeUpgrade<false>>>::max() >>
 					1)) {
 				targetLow ^=
 					std::numeric_limits<ThisInteger>::lowest();
@@ -1995,13 +2100,21 @@ namespace Rain::Algorithm {
 		}
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
-			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>,
-			BigInteger<LOG_BITS, false>>
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>,
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<false>>>
 			multiplyWithOverflow(
 				ThisInteger const &left,
-				BigInteger<LOG_BITS, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>;
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
 			auto r1{SmallerInteger::multiplyWithOverflow(
 				left.high, right.high)};
 			auto r2{SmallerIntegerUnsigned::multiplyWithOverflow(
@@ -2038,7 +2151,10 @@ namespace Rain::Algorithm {
 							r7.first) +
 						r8.first + r9.first,
 					r9.second),
-				BigInteger<LOG_BITS, false>(r6.second, r4.second)};
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<false>>(
+					r6.second, r4.second)};
 		}
 		template<
 			typename OtherInteger,
@@ -2069,8 +2185,9 @@ namespace Rain::Algorithm {
 				static_cast<ThisInteger>((unsignedLow << 1) >> 1)};
 			if (
 				unsignedLow >
-				(std::numeric_limits<
-					 BigInteger<LOG_BITS, false>>::max() >>
+				(std::numeric_limits<BigInteger<
+						LogBitsValue,
+						Functional::TypeUpgrade<false>>>::max() >>
 					1)) {
 				targetLow ^=
 					std::numeric_limits<ThisInteger>::lowest();
@@ -2086,13 +2203,23 @@ namespace Rain::Algorithm {
 		template<bool RIGHT_SIGNED>
 		static inline constexpr std::pair<
 			ThisInteger,
-			BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>>
+			BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>>
 			divideWithRemainder(
 				ThisInteger const &left,
-				BigInteger<LOG_BITS, RIGHT_SIGNED> const &right) {
-			using ResultInteger =
-				BigInteger<LOG_BITS, SIGNED || RIGHT_SIGNED>;
-			if (right == BigInteger<LOG_BITS, RIGHT_SIGNED>()) {
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<RIGHT_SIGNED>> const
+					&right) {
+			using ResultInteger = BigInteger<
+				LogBitsValue,
+				Functional::TypeUpgrade<SIGNED || RIGHT_SIGNED>>;
+			if (
+				right ==
+				BigInteger<
+					LogBitsValue,
+					Functional::TypeUpgrade<RIGHT_SIGNED>>()) {
 				return {ThisInteger(), ResultInteger()};
 			}
 			// Shift up divisor until it is about to exceed
@@ -2108,16 +2235,31 @@ namespace Rain::Algorithm {
 			// type, so overflow will not be a problem.
 			auto dividend{
 				left < ThisInteger()
-					? BigInteger<LOG_BITS, false>(~left) + 1u
-					: BigInteger<LOG_BITS, false>(left)},
+					? BigInteger<
+							LogBitsValue,
+							Functional::TypeUpgrade<false>>(~left) +
+						1u
+					: BigInteger<
+							LogBitsValue,
+							Functional::TypeUpgrade<false>>(left)},
 				divisor{
-					right < BigInteger<LOG_BITS, RIGHT_SIGNED>()
-						? BigInteger<LOG_BITS, false>(~right) + 1u
-						: BigInteger<LOG_BITS, false>(right)};
+					right < BigInteger<
+										LogBitsValue,
+										Functional::TypeUpgrade<RIGHT_SIGNED>>()
+						? BigInteger<
+								LogBitsValue,
+								Functional::TypeUpgrade<false>>(~right) +
+							1u
+						: BigInteger<
+								LogBitsValue,
+								Functional::TypeUpgrade<false>>(right)};
 			bool remainderNegative{left < ThisInteger()},
 				quotientNegative{
 					(left < ThisInteger()) !=
-					(right < BigInteger<LOG_BITS, RIGHT_SIGNED>())};
+					(right <
+						BigInteger<
+							LogBitsValue,
+							Functional::TypeUpgrade<RIGHT_SIGNED>>())};
 			if (divisor > dividend) {
 				return {left, ResultInteger()};
 			}
@@ -2213,9 +2355,9 @@ namespace Rain::Algorithm {
 		// Free function binary operator overloads.
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator==(
 			OtherInteger const &left,
@@ -2227,9 +2369,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator<(
 			OtherInteger const &left,
@@ -2241,9 +2383,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator<=(
 			OtherInteger const &left,
@@ -2255,9 +2397,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator>(
 			OtherInteger const &left,
@@ -2269,9 +2411,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator>=(
 			OtherInteger const &left,
@@ -2283,9 +2425,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator+(
 			OtherInteger const &left,
@@ -2297,9 +2439,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator-(
 			OtherInteger const &left,
@@ -2311,9 +2453,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator*(
 			OtherInteger const &left,
@@ -2325,9 +2467,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr &operator/(
 			OtherInteger const &left,
@@ -2339,9 +2481,9 @@ namespace Rain::Algorithm {
 		}
 		template<
 			typename OtherInteger,
-			typename std::enable_if<
-				!Functional::TraitTypeTemplateAuto<BigInteger>::
-					IsBaseOfTemplate<OtherInteger>::VALUE>::type * =
+			typename std::enable_if<!Functional::TypeTrait<
+				Functional::TypeDowngrade<BigInteger>>::
+					IsTemplateOf<OtherInteger>::value>::type * =
 				nullptr>
 		friend inline ThisInteger constexpr operator%(
 			OtherInteger const &left,
@@ -2363,7 +2505,9 @@ namespace Rain::Algorithm {
 			}
 			// Similar to division algorithm, but we need to
 			// reserve an additional 10x size, not just 2x.
-			using LargerInteger = BigInteger<LOG_BITS + 1, false>;
+			using LargerInteger = BigInteger<
+				Functional::TypeUpgrade<LOG_BITS + 1>,
+				Functional::TypeUpgrade<false>>;
 			LargerInteger remainder(right);
 			std::vector<LargerInteger> digits;
 			digits.push_back(LargerInteger(1));
@@ -2404,23 +2548,29 @@ namespace Rain::Algorithm {
 
 namespace std {
 	template<bool SIGNED>
-	struct hash<Rain::Algorithm::BigInteger<5, SIGNED>> {
-		size_t operator()(
-			Rain::Algorithm::BigInteger<5, SIGNED> const &value)
+	struct hash<Rain::Algorithm::BigInteger<
+		Rain::Functional::TypeUpgrade<std::size_t{5}>,
+		Rain::Functional::TypeUpgrade<SIGNED>>> {
+		size_t operator()(Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<std::size_t{5}>,
+			Rain::Functional::TypeUpgrade<SIGNED>> const &value)
 			const {
-			return hash<typename Rain::Algorithm::
-					BigInteger<5, SIGNED>::UnderlyingInteger>{}(
-				value.value);
+			return hash<typename Rain::Algorithm::BigInteger<
+				Rain::Functional::TypeUpgrade<std::size_t{5}>,
+				Rain::Functional::TypeUpgrade<SIGNED>>::
+					UnderlyingInteger>{}(value.value);
 		}
 	};
 	// Hash operator for this user-defined type, which
 	// combines hashes of the inner type.
 	template<std::size_t LOG_BITS, bool SIGNED>
-	struct hash<
-		Rain::Algorithm::BigInteger<LOG_BITS, SIGNED>> {
-		size_t operator()(
-			Rain::Algorithm::BigInteger<LOG_BITS, SIGNED> const
-				&value) const {
+	struct hash<Rain::Algorithm::BigInteger<
+		Rain::Functional::TypeUpgrade<LOG_BITS>,
+		Rain::Functional::TypeUpgrade<SIGNED>>> {
+		size_t operator()(Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<LOG_BITS>,
+			Rain::Functional::TypeUpgrade<SIGNED>> const &value)
+			const {
 			size_t result{
 				Rain::Random::SplitMixHash<decltype(value.high)>{}(
 					value.high)};
