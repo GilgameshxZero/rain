@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.5.3
+
+1. Refactor arithmetic type traits from `Trait` subclass to individual template specializations, per trait.
+
 ## 7.5.2
 
 1. `TraitType` -> `TypeTrait` refactor.
