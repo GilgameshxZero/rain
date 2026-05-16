@@ -85,7 +85,7 @@ namespace Rain::Data {
 	template<>
 	class SerializerSpec<Networking::Host, void> {
 		public:
-		static auto &operate(
+		static auto &serialize(
 			Data::Serializer &serializer,
 			Networking::Host const &data) {
 			return serializer << data.node << data.service;
@@ -94,7 +94,7 @@ namespace Rain::Data {
 	template<>
 	class DeserializerSpec<Networking::Host, void> {
 		public:
-		static auto &operate(
+		static auto &deserialize(
 			Data::Deserializer &deserializer,
 			Networking::Host &data) {
 			return deserializer >> data.node >> data.service;

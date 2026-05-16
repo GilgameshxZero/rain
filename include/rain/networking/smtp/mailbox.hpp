@@ -51,7 +51,7 @@ namespace Rain::Data {
 	template<>
 	class SerializerSpec<Networking::Smtp::Mailbox, void> {
 		public:
-		static auto &operate(
+		static auto &serialize(
 			Data::Serializer &serializer,
 			Networking::Smtp::Mailbox const &data) {
 			return serializer << data.name << data.host;
@@ -60,7 +60,7 @@ namespace Rain::Data {
 	template<>
 	class DeserializerSpec<Networking::Smtp::Mailbox, void> {
 		public:
-		static auto &operate(
+		static auto &deserialize(
 			Data::Deserializer &deserializer,
 			Networking::Smtp::Mailbox &data) {
 			return deserializer >> data.name >> data.host;

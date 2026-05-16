@@ -2103,7 +2103,7 @@ namespace Rain::Data {
 	template<typename Value, std::size_t ORDER>
 	class SerializerSpec<Math::Tensor<Value, ORDER>, void> {
 		public:
-		static auto &operate(
+		static auto &serialize(
 			Data::Serializer &serializer,
 			Math::Tensor<Value, ORDER> const &data) {
 			serializer << data.size();
@@ -2125,7 +2125,7 @@ namespace Rain::Data {
 	template<typename Value, std::size_t ORDER>
 	class DeserializerSpec<Math::Tensor<Value, ORDER>, void> {
 		public:
-		static auto &operate(
+		static auto &deserialize(
 			Data::Deserializer &deserializer,
 			Math::Tensor<Value, ORDER> &data) {
 			std::array<std::size_t, ORDER> size;

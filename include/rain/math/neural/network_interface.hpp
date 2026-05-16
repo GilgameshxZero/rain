@@ -31,7 +31,7 @@ namespace Rain::Data {
 				IsTemplateBaseOf<Type>::value>::type> {
 		public:
 		template<typename Value>
-		static auto &operate(
+		static auto &serialize(
 			Data::Serializer &serializer,
 			Math::Neural::NetworkInterface<Value> const &data) {
 			return data.serialize(serializer);
@@ -46,7 +46,7 @@ namespace Rain::Data {
 				IsTemplateBaseOf<Type>::value>::type> {
 		public:
 		template<typename Value>
-		static auto &operate(
+		static auto &deserialize(
 			Data::Deserializer &deserializer,
 			Math::Neural::ActivationInterface<Value> &data) {
 			return data.deserialize(deserializer);
