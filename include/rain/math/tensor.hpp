@@ -2013,34 +2013,6 @@ namespace Rain::Math {
 		inline auto invert() {
 			return *this = this->inverse();
 		}
-
-		// Data::Serializer.
-		class Serializer {
-			public:
-			static auto &serialize(
-				Data::Serializer &serializer,
-				TypeThis const *data) {
-				serializer << data->size();
-				serializer.write(
-					reinterpret_cast<char const *>(
-						data->data().get()),
-					sizeof(Value) * data->sizeProduct());
-				return serializer;
-			}
-			static auto &deserialize(
-				Data::Deserializer &deserializer,
-				TypeThis *data) {
-				std::array<std::size_t, ORDER> size;
-				deserializer >> size;
-				*data =
-					Rain::Math::TensorInterface<Value, OrderValue>(
-						size);
-				deserializer.read(
-					reinterpret_cast<char *>(data->data().get()),
-					sizeof(Value) * data->sizeProduct());
-				return deserializer;
-			}
-		};
 	};
 
 	// Declare the operators here so they can be friended.
@@ -2125,4 +2097,53 @@ namespace Rain::Math {
 		return right.template asApplyOver<0>(
 			[&left](Value &value) { value = left / value; });
 	}
+}
+
+namespace Rain::Data {
+	template<typename Value, std::size_t ORDER>
+	class SerializerSpec<Math::Tensor<Value, ORDER>, void> {
+		public:
+		static auto &operate(
+			Data::Serializer &serializer,
+			Math::Tensor<Value, ORDER> const &data) {
+			serializer << data.size();
+			// It may be unsafe to write the data block directly
+			// due to endian-ness.
+			if constexpr (
+				std::endian::native == std::endian::little) {
+				serializer.stream.write(
+					reinterpret_cast<char const *>(data.data().get()),
+					sizeof(Value) * data.sizeProduct());
+			} else {
+				data.applyOver<0>(
+					[&serializer](
+						Value const &value) { serializer << value; });
+			}
+			return serializer;
+		}
+	};
+	template<typename Value, std::size_t ORDER>
+	class DeserializerSpec<Math::Tensor<Value, ORDER>, void> {
+		public:
+		static auto &operate(
+			Data::Deserializer &deserializer,
+			Math::Tensor<Value, ORDER> &data) {
+			std::array<std::size_t, ORDER> size;
+			deserializer >> size;
+			data = Rain::Math::Tensor<Value, ORDER>(size);
+			// It may be unsafe to write the data block directly
+			// due to endian-ness.
+			if constexpr (
+				std::endian::native == std::endian::little) {
+				deserializer.stream.read(
+					reinterpret_cast<char *>(data.data().get()),
+					sizeof(Value) * data.sizeProduct());
+			} else {
+				data.applyOver<0>([&deserializer](Value &value) {
+					deserializer >> value;
+				});
+			}
+			return deserializer;
+		}
+	};
 }

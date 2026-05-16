@@ -98,20 +98,39 @@ namespace Rain::Math::Neural {
 		}
 
 		virtual ~ActivationInterface() {}
+	};
+}
 
-		// Data::Serializer.
-		class Serializer {
-			public:
-			static auto &serialize(
-				Data::Serializer &serializer,
-				ActivationInterface const *data) {
-				return data->serialize(serializer);
-			}
-			static auto &deserialize(
-				Data::Deserializer &deserializer,
-				ActivationInterface *data) {
-				return data->deserialize(deserializer);
-			}
-		};
+namespace Rain::Data {
+	template<typename Type>
+	class SerializerSpec<
+		Type,
+		typename std::enable_if<
+			Functional::TypeTrait<Functional::TypeDowngrade<
+				Math::Neural::ActivationInterface>>::
+				IsTemplateBaseOf<Type>::value>::type> {
+		public:
+		template<typename Value>
+		static auto &operate(
+			Data::Serializer &serializer,
+			Math::Neural::ActivationInterface<Value> const
+				&data) {
+			return data.serialize(serializer);
+		}
+	};
+	template<typename Type>
+	class DeserializerSpec<
+		Type,
+		typename std::enable_if<
+			Functional::TypeTrait<Functional::TypeDowngrade<
+				Math::Neural::ActivationInterface>>::
+				IsTemplateBaseOf<Type>::value>::type> {
+		public:
+		template<typename Value>
+		static auto &operate(
+			Data::Deserializer &deserializer,
+			Math::Neural::ActivationInterface<Value> &data) {
+			return data.deserialize(deserializer);
+		}
 	};
 }

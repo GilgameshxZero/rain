@@ -1,10 +1,20 @@
 // Tests for pickle serialization/deserialization.
 #include <rain.hpp>
 
-using Rain::Error::releaseAssert;
+using namespace Rain;
+using namespace Data;
+using namespace Error;
+
+using namespace std;
 
 int main() {
-	using namespace Rain::Literal;
+	{
+		static_assert(Serializer::HasSpec<std::string>::value);
+		static_assert(!Serializer::HasSpec<int>::value);
+		static_assert(
+			Deserializer::HasSpec<std::string>::value);
+		static_assert(!Deserializer::HasSpec<int>::value);
+	}
 
 	int sData[]{1, 4, 5, 10, -5, -49, 3049};
 	std::string sStr{"yahallo!"};
@@ -12,8 +22,8 @@ int main() {
 		439548549457045LL, 348LL, 3934957LL, 39LL, -4LL};
 	std::vector<std::string> sVrStr{"hello", "world", "! :D"};
 	{
-		Rain::Data::Serializer serializer(
-			"data-serializer.txt");
+		ofstream file("data-serializer.txt");
+		Serializer serializer(file);
 		serializer << sData << sStr << sVrLL << sVrStr;
 	}
 
@@ -21,8 +31,8 @@ int main() {
 	decltype(sStr) dStr;
 	decltype(sVrLL) dVrLL;
 	decltype(sVrStr) dVrStr;
-	Rain::Data::Deserializer deserializer(
-		"data-serializer.txt");
+	ifstream file("data-serializer.txt");
+	Deserializer deserializer(file);
 	deserializer >> dData >> dStr >> dVrLL >> dVrStr;
 
 	releaseAssert(memcmp(sData, dData, sizeof(sData)) == 0);

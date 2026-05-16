@@ -78,20 +78,26 @@ namespace Rain::Networking {
 			Rain::Networking::Host const &host) {
 			return stream << host.asStr();
 		}
+	};
+}
 
-		// Data::Serializer.
-		class Serializer {
-			public:
-			static auto &serialize(
-				Data::Serializer &serializer,
-				Host const *data) {
-				return serializer << data->node << data->service;
-			}
-			static auto &deserialize(
-				Data::Deserializer &deserializer,
-				Host *data) {
-				return deserializer >> data->node >> data->service;
-			}
-		};
+namespace Rain::Data {
+	template<>
+	class SerializerSpec<Networking::Host, void> {
+		public:
+		static auto &operate(
+			Data::Serializer &serializer,
+			Networking::Host const &data) {
+			return serializer << data.node << data.service;
+		}
+	};
+	template<>
+	class DeserializerSpec<Networking::Host, void> {
+		public:
+		static auto &operate(
+			Data::Deserializer &deserializer,
+			Networking::Host &data) {
+			return deserializer >> data.node >> data.service;
+		}
 	};
 }
