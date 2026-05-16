@@ -2536,13 +2536,34 @@ namespace Rain::Algorithm {
 			}
 			return stream;
 		}
+	};
+}
 
-		// Type traits.
-		struct Trait {
-			static inline bool constexpr IS_INTEGRAL{true};
-			static inline bool constexpr IS_SIGNED{SIGNED};
-			static inline bool constexpr IS_UNSIGNED{!SIGNED};
-		};
+// Type traits.
+namespace Rain::Functional {
+	template<std::size_t LOG_BITS, bool SIGNED>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
+		Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<LOG_BITS>,
+			Rain::Functional::TypeUpgrade<SIGNED>>> {
+		public:
+		static inline bool constexpr value{true};
+	};
+	template<std::size_t LOG_BITS, bool SIGNED>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsSigned<
+		Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<LOG_BITS>,
+			Rain::Functional::TypeUpgrade<SIGNED>>> {
+		public:
+		static inline bool constexpr value{SIGNED};
+	};
+	template<std::size_t LOG_BITS, bool SIGNED>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsUnsigned<
+		Rain::Algorithm::BigInteger<
+			Rain::Functional::TypeUpgrade<LOG_BITS>,
+			Rain::Functional::TypeUpgrade<SIGNED>>> {
+		public:
+		static inline bool constexpr value{!SIGNED};
 	};
 }
 

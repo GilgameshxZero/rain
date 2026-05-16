@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../functional/trait.hpp"
 #include "algorithm.hpp"
 
 #include <climits>
@@ -436,12 +437,27 @@ namespace Rain::Algorithm {
 			}
 			return stream;
 		}
+	};
+}
 
-		// Traits.
-		struct Trait {
-			static inline bool constexpr IS_INTEGRAL{true};
-			static inline bool constexpr IS_SIGNED{false};
-			static inline bool constexpr IS_UNSIGNED{true};
-		};
+// Type traits.
+namespace Rain::Functional {
+	template<>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
+		Rain::Algorithm::BigIntegerFlexUnsigned> {
+		public:
+		static inline bool constexpr value{true};
+	};
+	template<>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsSigned<
+		Rain::Algorithm::BigIntegerFlexUnsigned> {
+		public:
+		static inline bool constexpr value{false};
+	};
+	template<>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsUnsigned<
+		Rain::Algorithm::BigIntegerFlexUnsigned> {
+		public:
+		static inline bool constexpr value{true};
 	};
 }

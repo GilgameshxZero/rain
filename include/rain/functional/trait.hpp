@@ -97,7 +97,89 @@ namespace Rain::Functional {
 			integral_constant<bool, (Type::UNDERLYING > RIGHT)>;
 	};
 
-	// Type traits for a single type which is a downgrade.
+	// Individual overrideable type traits for Sidegrade
+	// type arithmetic traits.
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral {
+		public:
+		static inline bool constexpr value{
+			std::is_integral<Type>::value};
+	};
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsFloatingPoint {
+		public:
+		static inline bool constexpr value{
+			std::is_floating_point<Type>::value};
+	};
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsArithmetic {
+		public:
+		static inline bool constexpr value{
+			TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
+				Type>::value ||
+			TypeTraitInterfaceFirstInterfaceSidegradeIsFloatingPoint<
+				Type>::value};
+	};
+	template<typename, typename = void>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsSignedInterface;
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsSignedInterface<
+			Type,
+			typename std::enable_if<
+				!TypeTraitInterfaceFirstInterfaceSidegradeIsArithmetic<
+					Type>::value>::type> {
+		public:
+		static inline bool constexpr value{false};
+	};
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsSignedInterface<
+			Type,
+			typename std::enable_if<
+				TypeTraitInterfaceFirstInterfaceSidegradeIsArithmetic<
+					Type>::value>::type> {
+		public:
+		static inline bool constexpr value{Type(-1) < Type(0)};
+	};
+	template<typename Type>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsSigned :
+		public TypeTraitInterfaceFirstInterfaceSidegradeIsSignedInterface<
+			Type> {};
+	template<typename, typename = void>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsUnsignedInterface;
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsUnsignedInterface<
+			Type,
+			typename std::enable_if<
+				!TypeTraitInterfaceFirstInterfaceSidegradeIsArithmetic<
+					Type>::value>::type> {
+		public:
+		static inline bool constexpr value{false};
+	};
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsUnsignedInterface<
+			Type,
+			typename std::enable_if<
+				TypeTraitInterfaceFirstInterfaceSidegradeIsArithmetic<
+					Type>::value>::type> {
+		public:
+		static inline bool constexpr value{Type(0) < Type(-1)};
+	};
+	template<typename Type>
+	class
+		TypeTraitInterfaceFirstInterfaceSidegradeIsUnsigned :
+		public TypeTraitInterfaceFirstInterfaceSidegradeIsUnsignedInterface<
+			Type> {};
+
+	// Type traits for a single type/sidegrade.
 	template<typename, typename = void>
 	class TypeTraitInterfaceFirstInterfaceSidegrade {};
 	template<typename Type>
@@ -148,110 +230,22 @@ namespace Rain::Functional {
 			typename std::decay<Type>::type,
 			Args...>(nullptr));
 
-		// Classical type traits.
-		struct IsIntegralDefault {
-			static inline bool constexpr value{
-				std::is_integral<Type>::value};
-		};
-		struct IsIntegralCustom {
-			static inline bool constexpr value{
-				Type::Trait::IS_INTEGRAL};
-		};
-		template<typename>
-		static IsIntegralDefault isIntegral(...);
-		template<typename T>
-		static IsIntegralCustom isIntegral(
-			decltype(T::Trait::IS_INTEGRAL) *);
+		// Classical arithmetic type traits.
 		using IsIntegral =
-			decltype(isIntegral<typename std::decay<Type>::type>(
-				nullptr));
-
-		struct IsFloatingPointDefault {
-			static inline bool constexpr value{
-				std::is_floating_point<Type>::value};
-		};
-		struct IsFloatingPointCustom {
-			static inline bool constexpr value{
-				Type::Trait::IS_FLOATING_POINT};
-		};
-		template<typename>
-		static IsFloatingPointDefault isFloatingPoint(...);
-		template<typename T>
-		static IsFloatingPointCustom isFloatingPoint(
-			decltype(T::Trait::IS_FLOATING_POINT) *);
-		using IsFloatingPoint = decltype(isFloatingPoint<
-			typename std::decay<Type>::type>(nullptr));
-
-		struct IsArithmeticDefault {
-			static inline bool constexpr value{
-				IsIntegral::value || IsFloatingPoint::value};
-		};
-		struct IsArithmeticCustom {
-			static inline bool constexpr value{
-				Type::Trait::IS_ARITHMETIC};
-		};
-		template<typename>
-		static IsArithmeticDefault isArithmetic(...);
-		template<typename T>
-		static IsArithmeticCustom isArithmetic(
-			decltype(T::Trait::IS_ARITHMETIC) *);
-		using IsArithmetic = decltype(isArithmetic<
-			typename std::decay<Type>::type>(nullptr));
-
-		struct IsSignedDefaultInnerTrue {
-			static inline bool constexpr value{
-				Type(-1) < Type(0)};
-		};
-		struct IsSignedDefaultInnerFalse {
-			static inline bool constexpr value{false};
-		};
-		template<typename>
-		static IsSignedDefaultInnerFalse isSignedDefaultInner(
-			...);
-		template<typename T>
-		static IsSignedDefaultInnerTrue isSignedDefaultInner(
-			std::enable_if<T::value>::type *);
-		using IsSignedDefault =
-			decltype(isSignedDefaultInner<IsArithmetic>(nullptr));
-
-		struct IsSignedCustom {
-			static inline bool constexpr value{
-				Type::Trait::IS_SIGNED};
-		};
-		template<typename>
-		static IsSignedDefault isSigned(...);
-		template<typename T>
-		static IsSignedCustom isSigned(
-			decltype(T::Trait::IS_SIGNED) *);
+			TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
+				typename std::decay<Type>::type>;
+		using IsFloatingPoint =
+			TypeTraitInterfaceFirstInterfaceSidegradeIsFloatingPoint<
+				typename std::decay<Type>::type>;
+		using IsArithmetic =
+			TypeTraitInterfaceFirstInterfaceSidegradeIsArithmetic<
+				typename std::decay<Type>::type>;
 		using IsSigned =
-			decltype(isSigned<typename std::decay<Type>::type>(
-				nullptr));
-
-		struct IsUnsignedDefaultInner {
-			static inline bool constexpr value{
-				Type(0) < Type(-1)};
-		};
-		template<typename>
-		static std::false_type isUnsignedDefaultInner(...);
-		template<typename T>
-		static IsUnsignedDefaultInner isUnsignedDefaultInner(
-			std::enable_if<T::value>::type *);
-		using IsUnsignedDefault =
-			decltype(isUnsignedDefaultInner<IsArithmetic>(
-				nullptr));
-
-		struct IsUnsignedCustom {
-			static inline bool constexpr value{
-				Type::Trait::IS_UNSIGNED};
-		};
-		template<typename>
-		static IsUnsignedDefault isUnsigned(...);
-		template<typename T>
-		static IsUnsignedCustom isUnsigned(
-			decltype(T::Trait::IS_UNSIGNED) *);
+			TypeTraitInterfaceFirstInterfaceSidegradeIsSigned<
+				typename std::decay<Type>::type>;
 		using IsUnsigned =
-			decltype(isUnsigned<typename std::decay<Type>::type>(
-				nullptr));
+			TypeTraitInterfaceFirstInterfaceSidegradeIsUnsigned<
+				typename std::decay<Type>::type>;
 	};
 
 	// Type traits for a single type which is a downgrade.

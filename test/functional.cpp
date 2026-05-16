@@ -1,5 +1,5 @@
-#include <rain.hpp>
 
+#include <rain.hpp>
 using namespace Rain;
 using namespace Functional;
 
@@ -10,13 +10,22 @@ class Type1 {
 	struct Trait {};
 };
 
-class Type2 {
-	public:
-	struct Trait {
-		static inline bool constexpr IS_INTEGRAL{true};
-		static inline bool constexpr IS_SIGNED{false};
+class Type2 {};
+
+namespace Rain::Functional {
+	template<>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
+		Type2> {
+		public:
+		static inline bool constexpr value{true};
 	};
-};
+	template<>
+	class TypeTraitInterfaceFirstInterfaceSidegradeIsSigned<
+		Type2> {
+		public:
+		static inline bool constexpr value{false};
+	};
+}
 
 template<typename, typename>
 class Type3 {};
@@ -99,6 +108,19 @@ int main() {
 	static_assert(!TypeTrait<Type2>::IsFloatingPoint::value);
 	static_assert(TypeTrait<Type2>::IsArithmetic::value);
 	static_assert(!TypeTrait<Type2>::IsSigned::value);
+
+	static_assert(TypeTrait<
+		Algorithm::BigIntegerFlexUnsigned>::IsIntegral::value);
+	static_assert(!TypeTrait<
+		Algorithm::BigIntegerFlexUnsigned>::IsSigned::value);
+	static_assert(TypeTrait<
+		Algorithm::BigIntegerFlexUnsigned>::IsUnsigned::value);
+	static_assert(TypeTrait<
+		Algorithm::BigIntegerSigned<7>>::IsIntegral::value);
+	static_assert(TypeTrait<
+		Algorithm::BigIntegerSigned<7>>::IsSigned::value);
+	static_assert(!TypeTrait<
+		Algorithm::BigIntegerSigned<7>>::IsUnsigned::value);
 
 	{
 		E<Functional::TypeUpgrade<77>,
