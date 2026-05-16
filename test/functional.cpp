@@ -1,7 +1,8 @@
-
 #include <rain.hpp>
+
 using namespace Rain;
 using namespace Functional;
+using namespace Math;
 
 using namespace std;
 
@@ -109,18 +110,18 @@ int main() {
 	static_assert(TypeTrait<Type2>::IsArithmetic::value);
 	static_assert(!TypeTrait<Type2>::IsSigned::value);
 
-	static_assert(TypeTrait<
-		Algorithm::BigIntegerFlexUnsigned>::IsIntegral::value);
-	static_assert(!TypeTrait<
-		Algorithm::BigIntegerFlexUnsigned>::IsSigned::value);
-	static_assert(TypeTrait<
-		Algorithm::BigIntegerFlexUnsigned>::IsUnsigned::value);
-	static_assert(TypeTrait<
-		Algorithm::BigIntegerSigned<7>>::IsIntegral::value);
-	static_assert(TypeTrait<
-		Algorithm::BigIntegerSigned<7>>::IsSigned::value);
-	static_assert(!TypeTrait<
-		Algorithm::BigIntegerSigned<7>>::IsUnsigned::value);
+	static_assert(
+		TypeTrait<BigIntegerFlexUnsigned>::IsIntegral::value);
+	static_assert(
+		!TypeTrait<BigIntegerFlexUnsigned>::IsSigned::value);
+	static_assert(
+		TypeTrait<BigIntegerFlexUnsigned>::IsUnsigned::value);
+	static_assert(
+		TypeTrait<BigIntegerSigned<7>>::IsIntegral::value);
+	static_assert(
+		TypeTrait<BigIntegerSigned<7>>::IsSigned::value);
+	static_assert(
+		!TypeTrait<BigIntegerSigned<7>>::IsUnsigned::value);
 
 	{
 		E<Functional::TypeUpgrade<77>,

@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	template<
 		typename = std::nullptr_t,
 		typename = std::nullptr_t,
@@ -523,7 +523,7 @@ namespace Rain::Algorithm {
 		// Ease-of-use streaming operators.
 		friend inline std::ostream constexpr &operator<<(
 			std::ostream &stream,
-			Rain::Algorithm::ModulusRingBase<
+			Rain::Math::ModulusRingBase<
 				Derived,
 				Underlying,
 				MODULUS_OUTER> const &right) {
@@ -531,7 +531,7 @@ namespace Rain::Algorithm {
 		}
 		friend inline std::istream constexpr &operator>>(
 			std::istream &stream,
-			Rain::Algorithm::
+			Rain::Math::
 				ModulusRingBase<Derived, Underlying, MODULUS_OUTER>
 					&right) {
 			stream >> right.value;
@@ -753,7 +753,7 @@ namespace Rain::Algorithm {
 		std::size_t MODULUS_OUTER>
 	inline auto constexpr operator/(
 		Integer const &left,
-		Rain::Algorithm::ModulusField<
+		Rain::Math::ModulusField<
 			Underlying,
 			MODULUS_OUTER> const &right) {
 		return right.build(left) / right;
@@ -767,9 +767,9 @@ namespace Rain::Algorithm {
 // <https://stackoverflow.com/questions/21900707/specializing-stdhash-to-derived-classes>.
 namespace std {
 	template<typename Underlying, std::size_t MODULUS_OUTER>
-	struct hash<Rain::Algorithm::
-			ModulusRing<Underlying, MODULUS_OUTER>> {
-		size_t operator()(Rain::Algorithm::ModulusRing<
+	struct hash<
+		Rain::Math::ModulusRing<Underlying, MODULUS_OUTER>> {
+		size_t operator()(Rain::Math::ModulusRing<
 			Underlying,
 			MODULUS_OUTER> const &value) const {
 			return Rain::Random::SplitMixHash<
@@ -778,9 +778,9 @@ namespace std {
 	};
 
 	template<typename Underlying, std::size_t MODULUS_OUTER>
-	struct hash<Rain::Algorithm::
-			ModulusField<Underlying, MODULUS_OUTER>> {
-		size_t operator()(Rain::Algorithm::ModulusField<
+	struct hash<
+		Rain::Math::ModulusField<Underlying, MODULUS_OUTER>> {
+		size_t operator()(Rain::Math::ModulusField<
 			Underlying,
 			MODULUS_OUTER> const &value) const {
 			return Rain::Random::SplitMixHash<

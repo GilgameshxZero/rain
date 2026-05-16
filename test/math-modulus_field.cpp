@@ -6,23 +6,22 @@ int main() {
 	{
 		static_assert(!Rain::Functional::TypeTrait<
 			Rain::Functional::TypeDowngrade<
-				Rain::Algorithm::ModulusRingBaseInterface>>::
+				Rain::Math::ModulusRingBaseInterface>>::
 				IsTemplateOf<int>::value);
 		static_assert(Rain::Functional::TypeTrait<
 			Rain::Functional::TypeDowngrade<
-				Rain::Algorithm::ModulusRingBaseInterface>>::
-				IsTemplateBaseOf<Rain::Algorithm::
-						ModulusField<long long, 17>>::value);
+				Rain::Math::ModulusRingBaseInterface>>::
+				IsTemplateBaseOf<
+					Rain::Math::ModulusField<long long, 17>>::value);
 		static_assert(
-			(2 * Rain::Algorithm::ModulusField<int, 7>{3})
-				.value == 6);
+			(2 * Rain::Math::ModulusField<int, 7>{3}).value == 6);
 	}
 
 	{
 		using PMR1 =
-			Rain::Algorithm::ModulusField<long long, 998244353>;
+			Rain::Math::ModulusField<long long, 998244353>;
 		using PMR2 =
-			Rain::Algorithm::ModulusField<long long, 1000000009>;
+			Rain::Math::ModulusField<long long, 1000000009>;
 
 		PMR1 x, y(100);
 		PMR2 z;
@@ -106,10 +105,9 @@ int main() {
 	}
 
 	{
-		Rain::Algorithm::ModulusField<std::size_t, 998244353> x,
+		Rain::Math::ModulusField<std::size_t, 998244353> x,
 			y(100);
-		Rain::Algorithm::ModulusField<std::size_t, 1000000009>
-			z;
+		Rain::Math::ModulusField<std::size_t, 1000000009> z;
 		// Make sure this is true!
 		releaseAssert(sizeof(std::size_t) >= 8);
 		x += 5;
@@ -156,8 +154,7 @@ int main() {
 	}
 
 	{
-		Rain::Algorithm::ModulusField<uint64_t, 998244353> v{
-			99};
+		Rain::Math::ModulusField<uint64_t, 998244353> v{99};
 		releaseAssert(sizeof(uint64_t) == 8);
 		releaseAssert((v + 504957) / 3 == 168352);
 		releaseAssert(v - 2038 == 998242414);
@@ -166,22 +163,22 @@ int main() {
 		std::cout << "v is " << v << '.' << std::endl;
 
 		auto res{
-			Rain::Algorithm::ModulusField<std::size_t, 23>(5)
-				.power(4)};
+			Rain::Math::ModulusField<std::size_t, 23>(5).power(
+				4)};
 		releaseAssert(res == 625 % 23);
 	}
 
 	// Fibonacci tests.
 	{
 		releaseAssert(
-			(Rain::Algorithm::fibonacciNumber<Rain::Algorithm::
-					 ModulusField<std::size_t, 988244353>>(
+			(Rain::Math::fibonacciNumber<
+				 Rain::Math::ModulusField<std::size_t, 988244353>>(
 				 1000000000) == 910643820));
 	}
 
 	// Runtime modulus.
 	{
-		Rain::Algorithm::ModulusField<long long> x(23);
+		Rain::Math::ModulusField<long long> x(23);
 		x = 3;
 		releaseAssert(x == 3);
 		releaseAssert(x == -20);
@@ -190,7 +187,7 @@ int main() {
 		auto y{x + 11};
 		releaseAssert(y == 14);
 
-		Rain::Algorithm::ModulusField<long long> z(13, 1);
+		Rain::Math::ModulusField<long long> z(13, 1);
 		releaseAssert(z == 1);
 		releaseAssert(z * 14 == 14);
 
@@ -217,8 +214,7 @@ int main() {
 	}
 
 	{
-		using MF =
-			Rain::Algorithm::ModulusField<std::size_t, 13>;
+		using MF = Rain::Math::ModulusField<std::size_t, 13>;
 		MF a, b, c, d;
 
 		// Constructing with a large negative integer should
@@ -247,8 +243,7 @@ int main() {
 	}
 
 	{
-		using MF =
-			Rain::Algorithm::ModulusField<std::size_t, 13>;
+		using MF = Rain::Math::ModulusField<std::size_t, 13>;
 
 		// Is a hashable type.
 		std::unordered_set<MF> S;
@@ -256,8 +251,8 @@ int main() {
 	}
 
 	{
-		using MR = Rain::Algorithm::ModulusRing<long long, 14>;
-		using MF = Rain::Algorithm::ModulusField<long long, 7>;
+		using MR = Rain::Math::ModulusRing<long long, 14>;
+		using MF = Rain::Math::ModulusField<long long, 7>;
 		MR x{5};
 		MF y{1};
 

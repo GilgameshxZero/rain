@@ -11,7 +11,7 @@
 #include <queue>
 #include <vector>
 
-namespace Rain::Algorithm {
+namespace Rain::Data {
 	// Encode into or decode from an underlying stream.
 	//
 	// Final byte always stores the number of filler bits [0,

@@ -1,8 +1,10 @@
 #include <rain.hpp>
 
-using Rain::Error::releaseAssert;
-using namespace Rain::Algorithm;
 using namespace Rain;
+using namespace Math;
+using namespace Algorithm;
+using namespace Error;
+
 using namespace std;
 
 int main() {

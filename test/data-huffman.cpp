@@ -1,11 +1,13 @@
 // Tests for Huffman en/de-coding.
 #include <rain.hpp>
 
-using Rain::Error::releaseAssert;
+using namespace Rain;
+using namespace Data;
+using namespace Error;
 
 void assertEncodeDecode(std::string const &text) {
 	std::ostringstream encodedStream;
-	Rain::Algorithm::HuffmanStreamBuf encodeStreamBuf(
+	HuffmanStreamBuf encodeStreamBuf(
 		*encodedStream.rdbuf(), text);
 	std::ostream encoder(&encodeStreamBuf);
 	encoder << text;
@@ -14,8 +16,7 @@ void assertEncodeDecode(std::string const &text) {
 	std::string encodedText{encodedStream.str()};
 
 	std::istringstream decodedStream{encodedText};
-	Rain::Algorithm::HuffmanStreamBuf decodeStreamBuf(
-		*decodedStream.rdbuf());
+	HuffmanStreamBuf decodeStreamBuf(*decodedStream.rdbuf());
 	std::istream decoder(&decodeStreamBuf);
 	std::string decodedText(
 		(std::istreambuf_iterator<char>(decoder)),
@@ -38,8 +39,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	auto timeBegin = std::chrono::steady_clock::now();
 	std::cout << "Filename: " << name << '.' << std::endl;
 
-	std::filesystem::path const filePath{
-		"../test/" + name};
+	std::filesystem::path const filePath{"../test/" + name};
 	std::ifstream fileIn(filePath, std::ios::binary);
 	std::array<std::size_t, UCHAR_MAX + 1> fileFrequency{0};
 	int nextC{fileIn.get()};
@@ -50,10 +50,10 @@ void assertEncodeDecodeFile(std::string const &name) {
 	fileIn.close();
 
 	std::filesystem::create_directory(
-		"algorithm-huffman.cpp.asset");
+		"data-huffman.cpp.asset");
 	std::filesystem::path const encodedPath{name + ".huff"};
 	std::ofstream encodedOut(encodedPath, std::ios::binary);
-	Rain::Algorithm::HuffmanStreamBuf encodedStreamBuf(
+	HuffmanStreamBuf encodedStreamBuf(
 		*encodedOut.rdbuf(), fileFrequency);
 	std::ostream encodedStream{&encodedStreamBuf};
 	fileIn.open(filePath, std::ios::binary);
@@ -78,8 +78,7 @@ void assertEncodeDecodeFile(std::string const &name) {
 	std::filesystem::path const decodedPath{name};
 	std::ifstream encodedIn(encodedPath, std::ios::binary);
 	std::ofstream decodedOut(decodedPath, std::ios::binary);
-	Rain::Algorithm::HuffmanStreamBuf decodedStreamBuf(
-		*encodedIn.rdbuf());
+	HuffmanStreamBuf decodedStreamBuf(*encodedIn.rdbuf());
 	decodedOut << &decodedStreamBuf;
 	decodedOut.close();
 	encodedIn.close();
@@ -144,12 +143,11 @@ int main() {
 	assertEncodeDecode(
 		"testing the EOF SUB \x1a and NULL \x00 characters"s);
 
+	assertEncodeDecodeFile("data-huffman.cpp.asset/text.txt");
 	assertEncodeDecodeFile(
-		"algorithm-huffman.cpp.asset/text.txt");
+		"data-huffman.cpp.asset/blue_orb.png");
 	assertEncodeDecodeFile(
-		"algorithm-huffman.cpp.asset/blue_orb.png");
-	assertEncodeDecodeFile(
-		"algorithm-huffman.cpp.asset/1905.02175.pdf");
+		"data-huffman.cpp.asset/1905.02175.pdf");
 
 	return 0;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../algorithm/algorithm.hpp"
 #include "../functional/trait.hpp"
-#include "algorithm.hpp"
 
 #include <climits>
 #include <cstdint>
@@ -9,7 +9,7 @@
 #include <sstream>
 #include <vector>
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	// Flexible (and fast) big integer type (henceforth called
 	// `BIF`) with an underlying std::vector instead of
 	// recursion.
@@ -444,19 +444,19 @@ namespace Rain::Algorithm {
 namespace Rain::Functional {
 	template<>
 	class TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
-		Rain::Algorithm::BigIntegerFlexUnsigned> {
+		Rain::Math::BigIntegerFlexUnsigned> {
 		public:
 		static inline bool constexpr value{true};
 	};
 	template<>
 	class TypeTraitInterfaceFirstInterfaceSidegradeIsSigned<
-		Rain::Algorithm::BigIntegerFlexUnsigned> {
+		Rain::Math::BigIntegerFlexUnsigned> {
 		public:
 		static inline bool constexpr value{false};
 	};
 	template<>
 	class TypeTraitInterfaceFirstInterfaceSidegradeIsUnsigned<
-		Rain::Algorithm::BigIntegerFlexUnsigned> {
+		Rain::Math::BigIntegerFlexUnsigned> {
 		public:
 		static inline bool constexpr value{true};
 	};

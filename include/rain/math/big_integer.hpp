@@ -13,7 +13,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	// Forward declaration.
 	//
 	// Takes template arguments of Functional::TypeUpgrade of
@@ -37,11 +37,11 @@ namespace Rain::Algorithm {
 namespace std {
 	// `std::numeric_limits`.
 	template<std::size_t LOG_BITS, bool SIGNED>
-	class numeric_limits<Rain::Algorithm::BigInteger<
+	class numeric_limits<Rain::Math::BigInteger<
 		Rain::Functional::TypeUpgrade<LOG_BITS>,
 		Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
-		using ThisInteger = Rain::Algorithm::BigInteger<
+		using ThisInteger = Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<LOG_BITS>,
 			Rain::Functional::TypeUpgrade<SIGNED>>;
 
@@ -66,11 +66,11 @@ namespace std {
 	// We do not inherit directly because the return type is
 	// wrong.
 	template<bool SIGNED>
-	class numeric_limits<Rain::Algorithm::BigInteger<
+	class numeric_limits<Rain::Math::BigInteger<
 		Rain::Functional::TypeUpgrade<std::size_t{5}>,
 		Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
-		using ThisInteger = Rain::Algorithm::BigInteger<
+		using ThisInteger = Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<std::size_t{5}>,
 			Rain::Functional::TypeUpgrade<SIGNED>>;
 		using UnderlyingInteger =
@@ -90,7 +90,7 @@ namespace std {
 	};
 }
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	template<
 		typename IntegerFirst,
 		// Selecting a single type will give the corresponding
@@ -2543,7 +2543,7 @@ namespace Rain::Algorithm {
 namespace Rain::Functional {
 	template<std::size_t LOG_BITS, bool SIGNED>
 	class TypeTraitInterfaceFirstInterfaceSidegradeIsIntegral<
-		Rain::Algorithm::BigInteger<
+		Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<LOG_BITS>,
 			Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
@@ -2551,7 +2551,7 @@ namespace Rain::Functional {
 	};
 	template<std::size_t LOG_BITS, bool SIGNED>
 	class TypeTraitInterfaceFirstInterfaceSidegradeIsSigned<
-		Rain::Algorithm::BigInteger<
+		Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<LOG_BITS>,
 			Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
@@ -2559,7 +2559,7 @@ namespace Rain::Functional {
 	};
 	template<std::size_t LOG_BITS, bool SIGNED>
 	class TypeTraitInterfaceFirstInterfaceSidegradeIsUnsigned<
-		Rain::Algorithm::BigInteger<
+		Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<LOG_BITS>,
 			Rain::Functional::TypeUpgrade<SIGNED>>> {
 		public:
@@ -2569,14 +2569,14 @@ namespace Rain::Functional {
 
 namespace std {
 	template<bool SIGNED>
-	struct hash<Rain::Algorithm::BigInteger<
+	struct hash<Rain::Math::BigInteger<
 		Rain::Functional::TypeUpgrade<std::size_t{5}>,
 		Rain::Functional::TypeUpgrade<SIGNED>>> {
-		size_t operator()(Rain::Algorithm::BigInteger<
+		size_t operator()(Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<std::size_t{5}>,
 			Rain::Functional::TypeUpgrade<SIGNED>> const &value)
 			const {
-			return hash<typename Rain::Algorithm::BigInteger<
+			return hash<typename Rain::Math::BigInteger<
 				Rain::Functional::TypeUpgrade<std::size_t{5}>,
 				Rain::Functional::TypeUpgrade<SIGNED>>::
 					UnderlyingInteger>{}(value.value);
@@ -2585,10 +2585,10 @@ namespace std {
 	// Hash operator for this user-defined type, which
 	// combines hashes of the inner type.
 	template<std::size_t LOG_BITS, bool SIGNED>
-	struct hash<Rain::Algorithm::BigInteger<
+	struct hash<Rain::Math::BigInteger<
 		Rain::Functional::TypeUpgrade<LOG_BITS>,
 		Rain::Functional::TypeUpgrade<SIGNED>>> {
-		size_t operator()(Rain::Algorithm::BigInteger<
+		size_t operator()(Rain::Math::BigInteger<
 			Rain::Functional::TypeUpgrade<LOG_BITS>,
 			Rain::Functional::TypeUpgrade<SIGNED>> const &value)
 			const {

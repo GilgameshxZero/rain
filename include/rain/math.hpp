@@ -1,8 +1,14 @@
 #pragma once
 
+#include "math/big_integer.hpp"
+#include "math/big_integer_flex.hpp"
 #include "math/clamp.hpp"
+#include "math/fibonacci.hpp"
 #include "math/math.hpp"
+#include "math/miller_rabin.hpp"
+#include "math/modulus_field.hpp"
 #include "math/neural.hpp"
+#include "math/partition.hpp"
 #include "math/prime.hpp"
 #include "math/sqrt.hpp"
 #include "math/tensor.hpp"

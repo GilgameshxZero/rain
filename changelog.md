@@ -1,5 +1,10 @@
 # Changelog
 
+## 7.5.4
+
+1. Move `BigInteger*`, `Modulus*`, `MillerRabin`, `Fibonacci`, `Partition` to `Math`.
+2. Move `Huffman` to `Data`.
+
 ## 7.5.3
 
 1. Refactor arithmetic type traits from `Trait` subclass to individual template specializations, per trait.

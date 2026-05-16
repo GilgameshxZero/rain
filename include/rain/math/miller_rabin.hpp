@@ -1,12 +1,12 @@
 #pragma once
 
+#include "../algorithm/bit_manipulators.hpp"
 #include "../functional/trait.hpp"
 #include "big_integer.hpp"
-#include "bit_manipulators.hpp"
 
 #include <random>
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	// Primality tester for small ints up to 65536, or trivial
 	// composite detector for larger ints.
 	template<
@@ -107,7 +107,8 @@ namespace Rain::Algorithm {
 			return N == 2 || N == 3;
 		}
 
-		std::size_t lsb{leastSignificant1BitIdx(N - 1)};
+		std::size_t lsb{
+			Algorithm::leastSignificant1BitIdx(N - 1)};
 		Integer truncated((N - 1) >> lsb);
 
 		for (std::size_t i{0}; i < K; i++) {

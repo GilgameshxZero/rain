@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	// Computes up to the N-th partition number in
 	// O(N\sqrt{N}) using the pentagonal numbers/generating
 	// function. This can be done in O(N\lg N) but may involve

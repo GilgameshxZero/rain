@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace Rain::Algorithm {
+namespace Rain::Math {
 	// Compute the `index`-th Fibonacci matrix in $O(\log N)$
 	// time. Helper function to fibonacciNumber. `index` must
 	// be positive.
