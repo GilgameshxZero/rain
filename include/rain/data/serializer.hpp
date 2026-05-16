@@ -2,13 +2,9 @@
 #pragma once
 
 #include "../algorithm/bit_manipulators.hpp"
-#include "../literal.hpp"
 
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <map>
-#include <optional>
+#include <memory>
 #include <set>
 #include <string>
 #include <unordered_set>
