@@ -181,10 +181,19 @@ int main() {
 		releaseAssert(h == 217);
 
 		// Product policy.
-		auto i{e.asMultiply<1, Tensor<>::MinPlusProductPolicy>(
-			f, {0}, {0})};
+		auto i{e.asRetype<MinPlus<int>>().asMultiplyInner(
+			f.asRetype<MinPlus<int>>())};
 		cout << i << '\n';
 		releaseAssert(i == 8);
+		{
+			Tensor<Clamped<long double>, 1> x(
+				{1}, std::numeric_limits<long double>::max()),
+				y(x);
+			auto z{x.asMultiplyInner(y)};
+			cout << z << endl;
+			releaseAssert(
+				z == std::numeric_limits<long double>::max());
+		}
 
 		// Normal product, equality.
 		Tensor<int, 2> a{{360, 500}}, b{{500, 420}}, c, d;

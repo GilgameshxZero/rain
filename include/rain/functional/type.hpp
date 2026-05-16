@@ -1,10 +1,8 @@
-// Normalizes platform differences in type availability.
+// Normalizes platform differences in type availability, and
+// defines common types to all of Rain.
 #pragma once
 
-#include "trait.hpp"
-
 #include <cstdint>
-#include <type_traits>
 
 namespace Rain {
 	// errno_t is non-standard; however we define it here to

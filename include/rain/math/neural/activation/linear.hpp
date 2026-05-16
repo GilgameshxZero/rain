@@ -22,10 +22,9 @@ namespace Rain::Math::Neural::Activation {
 
 		virtual Tensor<Value, 1> apply(
 			Tensor<Value, 1> &z1) const override {
-			return (
-				z1.template multiply<1>(this->weight, {0}, {0}) +
-				this->bias)
-				.clamp();
+			return z1.template multiply<1>(
+							 this->weight, {0}, {0}) +
+				this->bias;
 		}
 		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
@@ -35,18 +34,13 @@ namespace Rain::Math::Neural::Activation {
 		virtual void stepWithGradient(
 			Tensor<Value, 2> const &z1,
 			Tensor<Value, 2> const &gradient) override {
-			this->weight =
-				(this->weight -
-					z1.template asMultiply<1>(gradient, {0}, {0}))
-					.clamp();
-			this->bias =
-				(this->bias -
-					gradient.asContract(
-						0,
-						[](Tensor<Value, 1> const &right) {
-							return right.sum();
-						}))
-					.clamp();
+			this->weight = this->weight -
+				z1.template asMultiply<1>(gradient, {0}, {0});
+			this->bias = this->bias -
+				gradient.asContract(
+					0, [](Tensor<Value, 1> const &right) {
+						return right.sum();
+					});
 		}
 
 		virtual Data::Serializer &serialize(

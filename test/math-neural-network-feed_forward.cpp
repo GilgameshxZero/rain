@@ -11,6 +11,7 @@ using namespace std;
 
 using LL = long long;
 using LD = long double;
+using CLD = Clamped<LD>;
 
 #define RF(x, from, to)                                    \
 	for (                                                    \
@@ -21,7 +22,7 @@ using LD = long double;
 // live.
 size_t constexpr C_THREAD{8}, C_CLASS{10}, C_EPOCH{2},
 	BATCH_SIZE{256}, MINI_BATCH_SIZE{BATCH_SIZE / C_THREAD};
-LD constexpr STEP_SIZE{3e-4};
+CLD constexpr STEP_SIZE{3e-4};
 
 template<typename Value>
 char pixelToChar(Value pixel) {
@@ -73,55 +74,56 @@ int main(int, char const *const *const) {
 	testY.slice({{{0, 1024}}});
 
 	auto trainXDbl{trainX.asReshape<2>({trainX.size()[0], 0})
-			.asRetype<LD>()},
+			.asRetype<CLD>()},
 		testXDbl{testX.asReshape<2>({testX.size()[0], 0})
-				.asRetype<LD>()};
-	Tensor<LD, 2> trainYOneHot({trainY.size()[0], C_CLASS}),
+				.asRetype<CLD>()};
+	Tensor<CLD, 2> trainYOneHot({trainY.size()[0], C_CLASS}),
 		testYOneHot({testY.size()[0], C_CLASS});
 	trainYOneHot.applyOver<1>(
-		[&](Tensor<LD, 1> &left, uint8_t const &right) {
+		[&](Tensor<CLD, 1> &left, uint8_t const &right) {
 			left[right] = 1;
 		},
 		trainY);
 	testYOneHot.applyOver<1>(
-		[&](Tensor<LD, 1> &left, uint8_t const &right) {
+		[&](Tensor<CLD, 1> &left, uint8_t const &right) {
 			left[right] = 1;
 		},
 		testY);
 
-	Network::FeedForward<LD> network(
-		{make_shared<Activation::Linear<LD>>(
-			 Tensor<LD, 2>({784, 256}, gen, dist),
-			 Tensor<LD, 1>({256}, gen, dist)),
-			make_shared<Activation::Relu<LD>>(),
-			make_shared<Activation::Normalization<LD>>(),
-			make_shared<Activation::Linear<LD>>(
-				Tensor<LD, 2>({256, 84}, gen, dist),
-				Tensor<LD, 1>({84}, gen, dist)),
-			make_shared<Activation::Relu<LD>>(),
-			make_shared<Activation::Normalization<LD>>(),
-			make_shared<Activation::Linear<LD>>(
-				Tensor<LD, 2>({84, 32}, gen, dist),
-				Tensor<LD, 1>({32}, gen, dist)),
-			make_shared<Activation::Relu<LD>>(),
-			make_shared<Activation::Normalization<LD>>(),
-			make_shared<Activation::Linear<LD>>(
-				Tensor<LD, 2>({32, 10}, gen, dist),
-				Tensor<LD, 1>({10}, gen, dist)),
-			make_shared<Activation::Normalization<LD>>(),
-			make_shared<Activation::Softmax<LD>>()});
-	Loss::CrossEntropy<LD> L;
+	Network::FeedForward<CLD> network(
+		{make_shared<Activation::Linear<CLD>>(
+			 Tensor<CLD, 2>({784, 256}, gen, dist),
+			 Tensor<CLD, 1>({256}, gen, dist)),
+			make_shared<Activation::Relu<CLD>>(),
+			make_shared<Activation::Normalization<CLD>>(),
+			make_shared<Activation::Linear<CLD>>(
+				Tensor<CLD, 2>({256, 84}, gen, dist),
+				Tensor<CLD, 1>({84}, gen, dist)),
+			make_shared<Activation::Relu<CLD>>(),
+			make_shared<Activation::Normalization<CLD>>(),
+			make_shared<Activation::Linear<CLD>>(
+				Tensor<CLD, 2>({84, 32}, gen, dist),
+				Tensor<CLD, 1>({32}, gen, dist)),
+			make_shared<Activation::Relu<CLD>>(),
+			make_shared<Activation::Normalization<CLD>>(),
+			make_shared<Activation::Linear<CLD>>(
+				Tensor<CLD, 2>({32, 10}, gen, dist),
+				Tensor<CLD, 1>({10}, gen, dist)),
+			make_shared<Activation::Normalization<CLD>>(),
+			make_shared<Activation::Softmax<CLD>>()});
+	Loss::CrossEntropy<CLD> L;
 
-	vector<LD> lossV, scoreV;
+	vector<CLD> lossV, scoreV;
 	{
 		ThreadPool tp(C_THREAD);
 
-		LD stepSizeScaler{1.0L};
+		CLD stepSizeScaler{1.0L};
 		RF(k, 0, C_EPOCH) {
 			size_t cBatchTrain{trainXDbl.size()[0] / BATCH_SIZE};
 			// size_t cBatchTrain{8};
 			{
-				vector<vector<Tensor<LD, 2>>> activationV(C_THREAD),
+				vector<vector<Tensor<CLD, 2>>> activationV(
+					C_THREAD),
 					activationGradientV(C_THREAD);
 				mutex coutMtx;
 
@@ -166,7 +168,7 @@ int main(int, char const *const *const) {
 				}
 			}
 
-			LD lossSum{};
+			CLD lossSum{};
 			Tensor<size_t, 1> score({testXDbl.size()[0]});
 			size_t cBatchTest{testXDbl.size()[0] / BATCH_SIZE};
 			{
@@ -199,7 +201,7 @@ int main(int, char const *const *const) {
 									[](
 										size_t &left,
 										uint8_t const &r1,
-										Tensor<LD, 1> const &r2) {
+										Tensor<CLD, 1> const &r2) {
 										left = r1 == r2.argMax();
 									},
 									testY.asSlice(
@@ -219,7 +221,7 @@ int main(int, char const *const *const) {
 			// cout << score.asSlice({{{0, 256}}}) << endl;
 			lossV.push_back(lossSum / cBatchTest / C_THREAD);
 			scoreV.push_back(
-				(LD)score.sum() / cBatchTest / BATCH_SIZE);
+				(CLD)score.sum() / cBatchTest / BATCH_SIZE);
 			cout << "Epoch " << k << ": loss = " << lossV.back()
 					 << ", score = " << scoreV.back() << '.' << endl;
 		}

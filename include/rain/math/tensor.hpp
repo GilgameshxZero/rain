@@ -6,7 +6,6 @@
 #include "../functional/trait.hpp"
 #include "../literal.hpp"
 #include "../platform.hpp"
-#include "clamp.hpp"
 #include "sqrt.hpp"
 
 #include <array>
@@ -82,64 +81,6 @@ namespace Rain::Math {
 				std::numeric_limits<std::size_t>::max()},
 				stop{std::numeric_limits<std::size_t>::max()},
 				step{std::numeric_limits<std::size_t>::max()};
-		};
-
-		// Standard policy for TensorType products. This
-		// forms a ring.
-		template<typename Left, typename Right>
-		class PlusMultProductPolicy {
-			public:
-			using Result =
-				decltype(std::declval<Left>() * std::declval<Right>());
-			static inline Result const DEFAULT_RESULT{};
-
-			static constexpr inline auto contract(
-				Left const &left,
-				Right const &right) {
-				if constexpr (
-					Functional::TypeTrait<
-						Result>::IsFloatingPoint::value) {
-					return Math::clamp(left * right);
-				} else {
-					return left * right;
-				}
-			}
-
-			static constexpr inline auto aggregate(
-				Result const &left,
-				Result const &right) {
-				if constexpr (
-					Functional::TypeTrait<
-						Result>::IsFloatingPoint::value) {
-					return Math::clamp(left + right);
-				} else {
-					return left + right;
-				}
-			}
-		};
-
-		// Policy for TensorType products where + is
-		// replaced with min and * is replaced with +. This form
-		// a semi-ring.
-		template<typename Left, typename Right>
-		class MinPlusProductPolicy {
-			public:
-			using Result =
-				decltype(std::declval<Left>() + std::declval<Right>());
-			static inline Result const DEFAULT_RESULT{
-				std::numeric_limits<Result>::max()};
-
-			static constexpr inline auto contract(
-				Left const &left,
-				Right const &right) {
-				return left + right;
-			}
-
-			static constexpr inline auto aggregate(
-				Result const &left,
-				Result const &right) {
-				return std::min(left, right);
-			}
 		};
 
 		private:
@@ -473,6 +414,17 @@ namespace Rain::Math {
 			Values &&...values) :
 			VALUES{new Value[Tensor<>::calcSizesProduct(sizes)]{
 				std::forward<decltype(values)>(values)...}},
+			RANGES{TypeThis::makeRangesDefault(sizes)},
+			SIZES{sizes},
+			SIZES_UNDERLYING{sizes},
+			OFFSET{0},
+			TRANSPOSE{TypeThis::makeDimPermDefault()} {}
+		// Value-initialize, single value version.
+		TensorType(
+			std::array<std::size_t, ORDER> const &sizes,
+			Value const &value) :
+			VALUES{new Value[Tensor<>::calcSizesProduct(sizes)]{
+				value}},
 			RANGES{TypeThis::makeRangesDefault(sizes)},
 			SIZES{sizes},
 			SIZES_UNDERLYING{sizes},
@@ -829,51 +781,39 @@ namespace Rain::Math {
 				});
 			return accumulator;
 		}
-		template<
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy>
 		inline auto sum() const {
 			return this->accumulate(
 				[](Value &accumulator, Value const &value) {
-					accumulator = Policy<Value, Value>::aggregate(
-						accumulator, value);
+					accumulator = accumulator + value;
 				},
 				Value{});
 		}
 		template<
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto mean() const {
-			return this->sum<Policy>() / this->SIZES[0];
+			return this->sum() / this->SIZES[0];
 		}
 		template<
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
 		inline auto variance() const {
 			auto x{this->copy() - this->mean()};
-			return x.template asMultiplyInner<Value, Policy>(x) /
+			return x.template asMultiplyInner<Value>(x) /
 				this->SIZES[0];
 		}
 		template<
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			std::enable_if<TENSOR_ORDER == 1>::type * = nullptr>
-		inline auto standardDeviation() const {
-			return std::sqrt(this->variance<Policy>());
+		inline Value standardDeviation() const {
+			// No auto return type because custom types may not
+			// overload `sqrt` yet, so this is safer.
+			return std::sqrt(this->variance());
 		}
-		template<
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy>
 		inline auto product() const {
 			return this->accumulate(
 				[](Value &accumulator, Value const &value) {
-					accumulator = Policy<Value, Value>::contract(
-						accumulator, value);
+					accumulator = accumulator * value;
 				},
 				Value{1});
 		}
@@ -1014,6 +954,27 @@ namespace Rain::Math {
 				[&other](Value &that) { that += other; }, *this);
 			return *this;
 		}
+		// Explicit specialization for elementwise Value +/-
+		// helps avoid ambiguous operator with user-defined
+		// Value (e.g. Clamped<T>).
+		auto operator+(Value const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<Value>());
+			TensorType<ResultValue, OrderValue> result(
+				this->size());
+			Tensor<>::applyOver<0>(
+				[&other](ResultValue &result, Value const &that) {
+					result = that + other;
+				},
+				result,
+				*this);
+			return result;
+		}
+		inline auto &operator+=(Value const &other) {
+			Tensor<>::applyOver<0>(
+				[&other](Value &that) { that += other; }, *this);
+			return *this;
+		}
 		template<typename OtherValue>
 		auto operator-(
 			TensorType<OtherValue, OrderValue> const &other)
@@ -1066,6 +1027,24 @@ namespace Rain::Math {
 				[&other](Value &that) { that -= other; }, *this);
 			return *this;
 		}
+		auto operator-(Value const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<Value>());
+			TensorType<ResultValue, OrderValue> result(
+				this->size());
+			Tensor<>::applyOver<0>(
+				[&other](ResultValue &result, Value const &that) {
+					result = that - other;
+				},
+				result,
+				*this);
+			return result;
+		}
+		inline auto &operator-=(Value const &other) {
+			Tensor<>::applyOver<0>(
+				[&other](Value &that) { that -= other; }, *this);
+			return *this;
+		}
 		// Arithmetic operators *, *= are defined with another
 		// Tensor operand iff they are of compatible
 		// size. This is a shorthand for `multiply`.
@@ -1104,6 +1083,24 @@ namespace Rain::Math {
 				[&other](Value &that) { that *= other; }, *this);
 			return *this;
 		}
+		auto operator*(Value const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<Value>());
+			TensorType<ResultValue, OrderValue> result(
+				this->size());
+			Tensor<>::applyOver<0>(
+				[&other](ResultValue &result, Value const &that) {
+					result = that * other;
+				},
+				result,
+				*this);
+			return result;
+		}
+		inline auto &operator*=(Value const &other) {
+			Tensor<>::applyOver<0>(
+				[&other](Value &that) { that *= other; }, *this);
+			return *this;
+		}
 		template<typename OtherValue>
 		auto operator/(OtherValue const &other) const {
 			using ResultValue =
@@ -1120,6 +1117,24 @@ namespace Rain::Math {
 		}
 		template<typename OtherValue>
 		inline auto &operator/=(OtherValue const &other) {
+			Tensor<>::applyOver<0>(
+				[&other](Value &that) { that /= other; }, *this);
+			return *this;
+		}
+		auto operator/(Value const &other) const {
+			using ResultValue =
+				decltype(std::declval<Value>() * std::declval<Value>());
+			TensorType<ResultValue, OrderValue> result(
+				this->size());
+			Tensor<>::applyOver<0>(
+				[&other](ResultValue &result, Value const &that) {
+					result = that / other;
+				},
+				result,
+				*this);
+			return result;
+		}
+		inline auto &operator/=(Value const &other) {
 			Tensor<>::applyOver<0>(
 				[&other](Value &that) { that /= other; }, *this);
 			return *this;
@@ -1397,18 +1412,16 @@ namespace Rain::Math {
 		// DEBUG.
 		template<
 			std::size_t CONTRACT_ORDER,
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			typename OtherValue,
-			std::size_t OTHER_ORDER,
-			typename ResultValue =
-				typename Policy<Value, OtherValue>::Result>
+			std::size_t OTHER_ORDER>
 		auto asMultiply(
 			Tensor<OtherValue, OTHER_ORDER> const &other,
 			std::array<std::size_t, CONTRACT_ORDER> const
 				&thisContractDims,
 			std::array<std::size_t, CONTRACT_ORDER> const
 				&otherContractDims) const {
+			using ResultValue =
+				decltype(std::declval<Value>() + std::declval<OtherValue>());
 			std::size_t constexpr RESULT_ORDER{
 				ORDER + OTHER_ORDER - CONTRACT_ORDER * 2};
 
@@ -1484,8 +1497,6 @@ namespace Rain::Math {
 			// compute contraction (aggregate) of inner product
 			// over all remaining dimensions.
 			Tensor<ResultValue, RESULT_ORDER> result(resultSize);
-			result.fill(
-				Policy<Value, OtherValue>::DEFAULT_RESULT);
 			Tensor<>::applyOver<OTHER_ORDER - CONTRACT_ORDER>(
 				[&otherTransposed](
 					// Based on how much `applyOver` unravels, we
@@ -1519,10 +1530,7 @@ namespace Rain::Math {
 									ResultValue &resultInner,
 									OtherValue const &otherValue) {
 									resultInner =
-										Policy<Value, OtherValue>::aggregate(
-											resultInner,
-											Policy<Value, OtherValue>::contract(
-												thisValue, otherValue));
+										resultInner + thisValue * otherValue;
 								},
 								resultOuter,
 								otherInner);
@@ -1535,18 +1543,19 @@ namespace Rain::Math {
 				// the first position.
 				result,
 				thisTransposed);
-			return result;
+
+			if constexpr (RESULT_ORDER == 0) {
+				return static_cast<ResultValue>(result);
+			} else {
+				return result;
+			}
 		}
 		// Special case where product is the same order as the
 		// left operand.
 		template<
 			std::size_t CONTRACT_ORDER,
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			typename OtherValue,
 			std::size_t OTHER_ORDER,
-			typename ResultValue =
-				typename Policy<Value, OtherValue>::Result,
 			std::size_t RESULT_ORDER = ORDER + OTHER_ORDER -
 				CONTRACT_ORDER * 2,
 			std::enable_if<RESULT_ORDER == ORDER>::type * =
@@ -1561,35 +1570,29 @@ namespace Rain::Math {
 				&otherContractDims) {
 			return *this = this->asMultiply<
 							 CONTRACT_ORDER,
-							 Policy,
 							 OtherValue,
-							 OTHER_ORDER,
-							 ResultValue>(
+							 OTHER_ORDER>(
 							 other, thisContractDims, otherContractDims);
 		}
 		// Inner and outer product are defined iff ORDER == 1
 		// (vectors).
 		template<
 			typename OtherValue,
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asMultiplyInner(
 			Tensor<OtherValue, 1_zu> const &other) const {
-			return this->asMultiply<1, Policy>(other, {0}, {0});
+			return this->asMultiply<1>(other, {0}, {0});
 		}
 		template<
 			typename OtherValue,
-			template<typename, typename> typename Policy =
-				Tensor<>::PlusMultProductPolicy,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 1)>::type * =
 				nullptr>
 		inline auto asMultiplyOuter(
 			Tensor<OtherValue, 1_zu> const &other) const {
-			return this->asMultiply<0, Policy>(other, {}, {});
+			return this->asMultiply<0>(other, {}, {});
 		}
 		// Element-wise.
 		template<typename OtherValue>

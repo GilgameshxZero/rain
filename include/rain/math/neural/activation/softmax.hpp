@@ -11,7 +11,7 @@ namespace Rain::Math::Neural::Activation {
 			Tensor<Value, 1> &z1) const override {
 			// Easy to overflow during exp!
 			// Range: [+0, +MAX].
-			z1 = z1.exp().clamp();
+			z1.exp();
 			// z1 is finite, z1.sum is [+0, +INF] but is always
 			// at least z1. So, range is finite and needn't be
 			// clamped.
@@ -21,9 +21,7 @@ namespace Rain::Math::Neural::Activation {
 		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &z2) const override {
-			return z2.asMultiplyElementWise(1 - z2)
-				.clamp()
-				.asDiagonal();
+			return z2.asMultiplyElementWise(1 - z2).asDiagonal();
 		}
 	};
 }
