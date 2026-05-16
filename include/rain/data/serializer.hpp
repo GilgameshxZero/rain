@@ -29,40 +29,33 @@ namespace Rain::Data {
 	// memory addresses, it must be handled specially.
 	class Serializer {
 		public:
-		template<typename>
-		static std::false_type hasSpec(...);
-		template<typename Type>
-		static std::true_type hasSpec(
-			decltype(SerializerSpec<Type>()) *);
-		template<typename Type>
-		using HasSpec =
-			decltype(hasSpec<typename std::decay<Type>::type>(
-				nullptr));
-
 		std::ostream &stream;
 
 		explicit Serializer(std::ostream &stream) :
 			stream{stream} {}
 
-		// Const and  non-const overloads for "one-time" data.
+		// Const and non-const overloads for "one-time" data.
 		template<
 			typename Type,
-			typename std::enable_if<HasSpec<Type>::value>::type
-				* = nullptr>
+			typename std::enable_if<Functional::TypeTrait<
+				Functional::TypeDowngrade<SerializerSpec>>::
+					IsSpecifiedBy<Type>::value>::type * = nullptr>
 		inline auto &operator<<(Type &data) {
 			return SerializerSpec<Type>::operate(*this, data);
 		}
 		template<
 			typename Type,
-			typename std::enable_if<HasSpec<Type>::value>::type
-				* = nullptr>
+			typename std::enable_if<Functional::TypeTrait<
+				Functional::TypeDowngrade<SerializerSpec>>::
+					IsSpecifiedBy<Type>::value>::type * = nullptr>
 		inline auto &operator<<(Type const &data) {
 			return SerializerSpec<Type>::operate(*this, data);
 		}
 		template<
 			typename Type,
 			typename std::enable_if<
-				!HasSpec<Type>::value &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					SerializerSpec>>::IsSpecifiedBy<Type>::value &&
 				!std::is_array<Type>::value>::type * = nullptr>
 		inline auto &operator<<(Type const &data) {
 			Algorithm::writeBytes(
@@ -74,7 +67,8 @@ namespace Rain::Data {
 		template<
 			typename Type,
 			typename std::enable_if<
-				!HasSpec<Type>::value &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					SerializerSpec>>::IsSpecifiedBy<Type>::value &&
 				std::is_array<Type>::value>::type * = nullptr>
 		inline auto &operator<<(Type const &data) {
 			if constexpr (
@@ -91,16 +85,6 @@ namespace Rain::Data {
 	};
 	class Deserializer {
 		public:
-		template<typename>
-		static std::false_type hasSpec(...);
-		template<typename Type>
-		static std::true_type hasSpec(
-			decltype(DeserializerSpec<Type>()) *);
-		template<typename Type>
-		using HasSpec =
-			decltype(hasSpec<typename std::decay<Type>::type>(
-				nullptr));
-
 		std::istream &stream;
 
 		explicit Deserializer(std::istream &stream) :
@@ -108,15 +92,17 @@ namespace Rain::Data {
 
 		template<
 			typename Type,
-			typename std::enable_if<HasSpec<Type>::value>::type
-				* = nullptr>
+			typename std::enable_if<Functional::TypeTrait<
+				Functional::TypeDowngrade<DeserializerSpec>>::
+					IsSpecifiedBy<Type>::value>::type * = nullptr>
 		inline auto &operator>>(Type &data) {
 			return DeserializerSpec<Type>::operate(*this, data);
 		}
 		template<
 			typename Type,
 			typename std::enable_if<
-				!HasSpec<Type>::value &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					DeserializerSpec>>::IsSpecifiedBy<Type>::value &&
 				!std::is_array<Type>::value>::type * = nullptr>
 		inline auto &operator>>(Type &data) {
 			Algorithm::readBytes(
@@ -128,7 +114,8 @@ namespace Rain::Data {
 		template<
 			typename Type,
 			typename std::enable_if<
-				!HasSpec<Type>::value &&
+				!Functional::TypeTrait<Functional::TypeDowngrade<
+					DeserializerSpec>>::IsSpecifiedBy<Type>::value &&
 				std::is_array<Type>::value>::type * = nullptr>
 		inline auto &operator>>(Type &data) {
 			if constexpr (

@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.5.5
+
+1. `Serializer` uses template specialization to define custom behavior again.
+  1. No longer subclasses `istream`/`ostream`.
+  2. Uses type traits to determine if custom behavior exists.
+
 ## 7.5.4
 
 1. Move `BigInteger*`, `Modulus*`, `MillerRabin`, `Fibonacci`, `Partition` to `Math`.

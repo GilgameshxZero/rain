@@ -60,7 +60,8 @@ int main(int, char const *const *const) {
 	{
 		ifstream fStream(assetPath / "mnist.hfm", ios::binary);
 		HuffmanStreamBuf decoderBuf(*fStream.rdbuf());
-		Deserializer deserializer(&decoderBuf);
+		istream decoderStream(&decoderBuf);
+		Deserializer deserializer(decoderStream);
 		deserializer >> trainX >> trainY >> testX >> testY;
 	}
 
@@ -230,12 +231,14 @@ int main(int, char const *const *const) {
 	{
 		stringstream ss;
 		{
-			Serializer serializer(ss.rdbuf());
+			Serializer serializer(ss);
 			serializer << network << lossV << scoreV;
 		}
-		Serializer serializer(assetPath / ".network.tmp.hfm");
+		ofstream serializerStream(
+			assetPath / ".network.tmp.hfm", ios::binary);
+		Serializer serializer(serializerStream);
 		HuffmanStreamBuf encoderBuf(
-			*serializer.rdbuf(), ss.str());
+			*serializer.stream.rdbuf(), ss.str());
 		ostream encoder(&encoderBuf);
 		encoder << ss.rdbuf();
 		encoder.flush();

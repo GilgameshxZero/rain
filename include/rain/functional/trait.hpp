@@ -359,6 +359,19 @@ namespace Rain::Functional {
 			typename std::decay<TypeSpecific>::type,
 			TypeUnderlying>(std::declval<
 			typename std::decay<TypeSpecific>::type *>()));
+
+		// Detects if Type<Args...> is a defined type.
+		template<template<typename...> typename, typename...>
+		static std::false_type isSpecifiedBy(...);
+		template<
+			template<typename...> typename TypeTemplate,
+			typename... Args>
+		static std::true_type isSpecifiedBy(
+			decltype(TypeTemplate<Args...>()) *);
+		template<typename... Args>
+		using IsSpecifiedBy = decltype(isSpecifiedBy<
+			TypeUnderlying,
+			typename std::decay<Args>::type...>(nullptr));
 	};
 
 	// Type traits for a parameter pack where at least the

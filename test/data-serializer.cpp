@@ -9,11 +9,18 @@ using namespace std;
 
 int main() {
 	{
-		static_assert(Serializer::HasSpec<std::string>::value);
-		static_assert(!Serializer::HasSpec<int>::value);
+		static_assert(Functional::TypeTrait<
+			Functional::TypeDowngrade<DeserializerSpec>>::
+				IsSpecifiedBy<std::string>::value);
 		static_assert(
-			Deserializer::HasSpec<std::string>::value);
-		static_assert(!Deserializer::HasSpec<int>::value);
+			!Functional::TypeTrait<Functional::TypeDowngrade<
+				DeserializerSpec>>::IsSpecifiedBy<int>::value);
+		static_assert(Functional::TypeTrait<
+			Functional::TypeDowngrade<DeserializerSpec>>::
+				IsSpecifiedBy<std::string>::value);
+		static_assert(
+			!Functional::TypeTrait<Functional::TypeDowngrade<
+				DeserializerSpec>>::IsSpecifiedBy<int>::value);
 	}
 
 	int sData[]{1, 4, 5, 10, -5, -49, 3049};
