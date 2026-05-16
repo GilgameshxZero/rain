@@ -2043,7 +2043,7 @@ namespace Rain::Data {
 			// due to endian-ness.
 			if constexpr (
 				std::endian::native == std::endian::little) {
-				serializer.stream.write(
+				serializer.write(
 					reinterpret_cast<char const *>(data.data().get()),
 					sizeof(Value) * data.sizeProduct());
 			} else {
@@ -2067,7 +2067,7 @@ namespace Rain::Data {
 			// due to endian-ness.
 			if constexpr (
 				std::endian::native == std::endian::little) {
-				deserializer.stream.read(
+				deserializer.read(
 					reinterpret_cast<char *>(data.data().get()),
 					sizeof(Value) * data.sizeProduct());
 			} else {

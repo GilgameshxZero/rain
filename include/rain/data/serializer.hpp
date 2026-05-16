@@ -37,9 +37,9 @@ namespace Rain::Data {
 		using HasSerialize =
 			decltype(hasSerialize<Type>(nullptr));
 
-		public:
 		std::ostream &stream;
 
+		public:
 		Serializer(std::ostream &stream) : stream{stream} {}
 
 		// Const and non-const overloads for "one-time" data.
@@ -86,6 +86,12 @@ namespace Rain::Data {
 			}
 			return *this;
 		}
+
+		// Carried functions.
+		auto &write(auto &&...args) {
+			return this->stream.write(
+				std::forward<decltype(args)>(args)...);
+		}
 	};
 	class Deserializer {
 		private:
@@ -111,9 +117,9 @@ namespace Rain::Data {
 		using HasConstruct =
 			decltype(hasConstruct<Type>(nullptr));
 
-		public:
 		std::istream &stream;
 
+		public:
 		Deserializer(std::istream &stream) : stream{stream} {}
 
 		// Standard deserializers require the target object to
@@ -182,6 +188,12 @@ namespace Rain::Data {
 			*this >> *pType.get();
 			return pType;
 		}
+
+		// Carried functions.
+		auto &read(auto &&...args) {
+			return this->stream.read(
+				std::forward<decltype(args)>(args)...);
+		}
 	};
 
 	// Joint serializer/deserializer.
@@ -230,7 +242,7 @@ namespace Rain::Data {
 			std::basic_string<CharT, Traits, Allocator> const
 				&data) {
 			serializer << data.size();
-			serializer.stream.write(
+			serializer.write(
 				reinterpret_cast<char const *>(data.data()),
 				sizeof(CharT) * data.size());
 			return serializer;
@@ -250,7 +262,7 @@ namespace Rain::Data {
 			std::size_t size;
 			deserializer >> size;
 			data.resize(size);
-			deserializer.stream.read(
+			deserializer.read(
 				reinterpret_cast<char *>(&data[0]),
 				sizeof(CharT) * size);
 			return deserializer;
