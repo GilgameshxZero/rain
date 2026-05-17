@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.5.7
+
+1. Fixed softmax Jacobian missing terms.
+  1. Feed forward test now achieves 90% accuracy in two epochs with a slightly bigger dataset and smaller network. It is much faster to run.
+2. `Linear::stepWithGradient` now takes average of batch instead of sum.
+3. `Clamped<T>` now declares `numeric_limits`.
+4. Small `Tensor` refactor.
+
 ## 7.5.6
 
 1. `Deserializer::construct` allows constructing object without ever being in an invalid state.

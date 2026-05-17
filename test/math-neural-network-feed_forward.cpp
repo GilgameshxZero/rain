@@ -11,18 +11,15 @@ using namespace std;
 
 using LL = long long;
 using LD = long double;
-using CLD = Clamped<LD>;
+using CF = Clamped<LD>;
 
 #define RF(x, from, to)                                    \
 	for (                                                    \
 		LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL};     \
 		x != _to;                                              \
 		x += _delta)
-// 8 may not be optimal for the test environment, but we'll
-// live.
-size_t constexpr C_THREAD{8}, C_CLASS{10}, C_EPOCH{2},
-	BATCH_SIZE{256}, MINI_BATCH_SIZE{BATCH_SIZE / C_THREAD};
-CLD constexpr STEP_SIZE{3e-4};
+size_t constexpr C_CLASS{10}, C_EPOCH{2};
+CF constexpr STEP_SIZE{1e-1};
 
 template<typename Value>
 char pixelToChar(Value pixel) {
@@ -47,6 +44,12 @@ void showImg(
 }
 
 int main(int, char const *const *const) {
+	size_t C_THREAD{clamp(
+		(size_t)thread::hardware_concurrency(), 1_zu, 8_zu)},
+		BATCH_SIZE{C_THREAD * 32_zu},
+		MINI_BATCH_SIZE{BATCH_SIZE / C_THREAD};
+	cout << "Threads: " << C_THREAD << '.' << endl;
+
 	filesystem::path assetPath{
 		std::string(__FILE__) + ".asset/"};
 	assetPath.make_preferred();
@@ -54,7 +57,7 @@ int main(int, char const *const *const) {
 
 	// random_device rd;
 	mt19937 gen(0);
-	uniform_real_distribution<LD> dist;
+	normal_distribution<LD> dist(0.0L, 0.1L);
 
 	Tensor<uint8_t, 3> trainX, testX;
 	Tensor<uint8_t, 1> trainY, testY;
@@ -68,62 +71,51 @@ int main(int, char const *const *const) {
 
 	// For this test, slice the trainset to 8K and the
 	// testset to 1K.
-	trainX.slice({{{0, 8192}, {}, {}}});
-	trainY.slice({{{0, 8192}}});
+	trainX.slice({{{0, 20480}, {}, {}}});
+	trainY.slice({{{0, 20480}}});
 	testX.slice({{{0, 1024}, {}, {}}});
 	testY.slice({{{0, 1024}}});
 
 	auto trainXDbl{trainX.asReshape<2>({trainX.size()[0], 0})
-			.asRetype<CLD>()},
+			.asRetype<CF>()},
 		testXDbl{testX.asReshape<2>({testX.size()[0], 0})
-				.asRetype<CLD>()};
-	Tensor<CLD, 2> trainYOneHot({trainY.size()[0], C_CLASS}),
+				.asRetype<CF>()};
+	Tensor<CF, 2> trainYOneHot({trainY.size()[0], C_CLASS}),
 		testYOneHot({testY.size()[0], C_CLASS});
 	trainYOneHot.applyOver<1>(
-		[&](Tensor<CLD, 1> &left, uint8_t const &right) {
+		[&](Tensor<CF, 1> &left, uint8_t const &right) {
 			left[right] = 1;
 		},
 		trainY);
 	testYOneHot.applyOver<1>(
-		[&](Tensor<CLD, 1> &left, uint8_t const &right) {
+		[&](Tensor<CF, 1> &left, uint8_t const &right) {
 			left[right] = 1;
 		},
 		testY);
+	trainXDbl /= 256;
+	testXDbl /= 256;
 
-	Network::FeedForward<CLD> network(
-		{make_shared<Activation::Linear<CLD>>(
-			 Tensor<CLD, 2>({784, 256}, gen, dist),
-			 Tensor<CLD, 1>({256}, gen, dist)),
-			make_shared<Activation::Relu<CLD>>(),
-			make_shared<Activation::Normalization<CLD>>(),
-			make_shared<Activation::Linear<CLD>>(
-				Tensor<CLD, 2>({256, 84}, gen, dist),
-				Tensor<CLD, 1>({84}, gen, dist)),
-			make_shared<Activation::Relu<CLD>>(),
-			make_shared<Activation::Normalization<CLD>>(),
-			make_shared<Activation::Linear<CLD>>(
-				Tensor<CLD, 2>({84, 32}, gen, dist),
-				Tensor<CLD, 1>({32}, gen, dist)),
-			make_shared<Activation::Relu<CLD>>(),
-			make_shared<Activation::Normalization<CLD>>(),
-			make_shared<Activation::Linear<CLD>>(
-				Tensor<CLD, 2>({32, 10}, gen, dist),
-				Tensor<CLD, 1>({10}, gen, dist)),
-			make_shared<Activation::Normalization<CLD>>(),
-			make_shared<Activation::Softmax<CLD>>()});
-	Loss::CrossEntropy<CLD> L;
+	Network::FeedForward<CF> network(
+		{make_shared<Activation::Linear<CF>>(
+			 Tensor<CF, 2>({784, 64}, gen, dist),
+			 Tensor<CF, 1>({64}, gen, dist)),
+			make_shared<Activation::Relu<CF>>(),
+			make_shared<Activation::Linear<CF>>(
+				Tensor<CF, 2>({64, 10}, gen, dist),
+				Tensor<CF, 1>({10}, gen, dist)),
+			make_shared<Activation::Softmax<CF>>()});
+	Loss::CrossEntropy<CF> L;
 
-	vector<CLD> lossV, scoreV;
+	vector<CF> lossV, scoreV;
 	{
 		ThreadPool tp(C_THREAD);
 
-		CLD stepSizeScaler{1.0L};
+		CF stepSizeScaler{1.0L};
 		RF(k, 0, C_EPOCH) {
 			size_t cBatchTrain{trainXDbl.size()[0] / BATCH_SIZE};
 			// size_t cBatchTrain{8};
 			{
-				vector<vector<Tensor<CLD, 2>>> activationV(
-					C_THREAD),
+				vector<vector<Tensor<CF, 2>>> activationV(C_THREAD),
 					activationGradientV(C_THREAD);
 				mutex coutMtx;
 
@@ -155,7 +147,8 @@ int main(int, char const *const *const) {
 							lock_guard coutLck(coutMtx);
 							cout << "Mini-batch " << i * C_THREAD + jInner
 									 << " / " << cBatchTrain * C_THREAD
-									 << ": loss = " << loss << ".    \r";
+									 << ": loss = " << loss << ".    \r"
+									 << flush;
 						});
 					}
 					tp.blockForTasks();
@@ -168,7 +161,7 @@ int main(int, char const *const *const) {
 				}
 			}
 
-			CLD lossSum{};
+			atomic<float> lossSum{};
 			Tensor<size_t, 1> score({testXDbl.size()[0]});
 			size_t cBatchTest{testXDbl.size()[0] / BATCH_SIZE};
 			{
@@ -201,7 +194,7 @@ int main(int, char const *const *const) {
 									[](
 										size_t &left,
 										uint8_t const &r1,
-										Tensor<CLD, 1> const &r2) {
+										Tensor<CF, 1> const &r2) {
 										left = r1 == r2.argMax();
 									},
 									testY.asSlice(
@@ -209,7 +202,7 @@ int main(int, char const *const *const) {
 									activationBack);
 
 							lock_guard lossSumLck(lossSumMtx);
-							lossSum += loss;
+							lossSum += (float)loss;
 						});
 					}
 					// Can also place outside i loop.
@@ -221,14 +214,14 @@ int main(int, char const *const *const) {
 			// cout << score.asSlice({{{0, 256}}}) << endl;
 			lossV.push_back(lossSum / cBatchTest / C_THREAD);
 			scoreV.push_back(
-				(CLD)score.sum() / cBatchTest / BATCH_SIZE);
+				(float)score.sum() / cBatchTest / BATCH_SIZE);
 			cout << "Epoch " << k << ": loss = " << lossV.back()
 					 << ", score = " << scoreV.back() << '.' << endl;
 		}
 	}
 
 	// This should work regardless of platform randomization.
-	releaseAssert(scoreV.back() > 0.6);
+	releaseAssert(scoreV.back() > 0.9);
 
 	{
 		stringstream ss;
