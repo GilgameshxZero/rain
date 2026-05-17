@@ -21,7 +21,7 @@ namespace Rain::Math::Neural::Activation {
 		virtual Tensor<Value, 2> getIncrementalGradient(
 			Tensor<Value, 1> const &,
 			Tensor<Value, 1> const &z2) const override {
-			return -z2.asMultiplyOuter(z2) + z2.asDiagonal();
+			return z2.asDiagonal() - z2.asMultiplyOuter(z2);
 		}
 	};
 }
