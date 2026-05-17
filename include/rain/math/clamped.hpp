@@ -167,3 +167,21 @@ namespace Rain::Math {
 		}
 	};
 }
+
+namespace std {
+	template<typename Type>
+	class numeric_limits<Rain::Math::Clamped<Type>> {
+		public:
+		using ThisInteger = Rain::Math::Clamped<Type>;
+
+		static ThisInteger constexpr min() {
+			return {numeric_limits<Type>::min()};
+		};
+		static ThisInteger constexpr lowest() {
+			return {numeric_limits<Type>::lowest()};
+		};
+		static ThisInteger constexpr max() {
+			return {numeric_limits<Type>::max()};
+		};
+	};
+}
