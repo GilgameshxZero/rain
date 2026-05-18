@@ -27,6 +27,8 @@ namespace Rain::Data {
 		private:
 		template<typename>
 		static std::false_type hasSerialize(...);
+		// Serialize can take any const-ness of data, but Type
+		// const & is accepted by both.
 		template<typename Type>
 		static std::true_type hasSerialize(
 			typename std::decay<

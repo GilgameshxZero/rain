@@ -48,7 +48,7 @@ namespace Rain::Data {
 		template<typename Value>
 		static auto &deserialize(
 			Data::Deserializer &deserializer,
-			Math::Neural::ActivationInterface<Value> &data) {
+			Math::Neural::NetworkInterface<Value> &data) {
 			return data.deserialize(deserializer);
 		}
 	};
