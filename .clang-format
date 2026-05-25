@@ -2,7 +2,7 @@
 	# clang-format currently has no option to indent only once
 	# after scope resolution `::`.
 	# Furthermore, alignment of open brackets on a return line
-	# fails to use CondinuationIndentWidth and instead adds
+	# fails to use ContinuationIndentWidth and instead adds
 	# the block indent.
 	# Furthermore, stream operators are always aligned, even
 	# when they have no reason to be. Ternary operators are
@@ -36,6 +36,7 @@
 	AlignAfterOpenBracket: false,
 	AlignOperands: DontAlign,
 	AlignConsecutiveDeclarations: false,
+	AlignEscapedNewlines: DontAlign,
 	AllowAllParametersOfDeclarationOnNextLine: false,
 	BreakAfterOpenBracketBracedList: true,
 	BreakAfterOpenBracketFunction: true,

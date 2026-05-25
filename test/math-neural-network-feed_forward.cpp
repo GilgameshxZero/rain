@@ -13,10 +13,10 @@ using LL = long long;
 using LD = long double;
 using CF = Clamped<LD>;
 
-#define RF(x, from, to)                                    \
-	for (                                                    \
-		LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL};     \
-		x != _to;                                              \
+#define RF(x, from, to) \
+	for ( \
+		LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; \
+		x != _to; \
 		x += _delta)
 size_t constexpr C_CLASS{10}, C_EPOCH{2};
 CF constexpr STEP_SIZE{1e-1};
@@ -69,7 +69,7 @@ int main(int, char const *const *const) {
 		deserializer >> trainX >> trainY >> testX >> testY;
 	}
 
-	// For this test, slice the trainset to 8K and the
+	// For this test, slice the train set to 8K and the
 	// testset to 1K.
 	trainX.slice({{{0, 20480}, {}, {}}});
 	trainY.slice({{{0, 20480}}});
