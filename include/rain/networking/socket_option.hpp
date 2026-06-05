@@ -146,7 +146,7 @@ namespace Rain::Networking {
 
 	// There are many concerns related to reusing of
 	// addresses:
-	// <https://stackoverflow.com/questions/14388706/how-do-so-reuseaddr-and-so-reuseport-differ>.
+	// <https://stackoverflow.com/questions/14388706>.
 	template<typename Socket>
 	class ReuseAddressSocketOption :
 		public Socket,
@@ -176,4 +176,5 @@ namespace Rain::Networking {
 	};
 
 	// TODO: SO_BINDTODEVICE and equivalent bind() on Windows.
+	// <https://stackoverflow.com/questions/33917575>.
 }
