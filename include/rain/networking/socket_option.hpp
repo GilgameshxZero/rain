@@ -42,7 +42,7 @@ namespace Rain::Networking {
 
 	// Don't linger. Thus causes any close on the socket to
 	// abort the connection immediately and doesn't let the
-	// Socket idle areound in the kernel.
+	// Socket idle around in the kernel.
 	template<typename Socket>
 	class NoLingerSocketOption :
 		public Socket,
@@ -174,4 +174,6 @@ namespace Rain::Networking {
 
 		virtual void alreadyReuseAddressSocketOption() final {}
 	};
+
+	// TODO: SO_BINDTODEVICE and equivalent bind() on Windows.
 }

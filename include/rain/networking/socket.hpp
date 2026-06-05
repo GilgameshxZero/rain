@@ -72,7 +72,7 @@ namespace Rain::Networking {
 		protected:
 		virtual NativeSocket nativeSocket() const noexcept = 0;
 
-		// Set a new socket to be non-blocking
+		// Set a new socket to be non-blocking.
 		void unblock() {
 			// All Sockets are non-blocking. A change in this will
 			// also change derived class interfaces.
