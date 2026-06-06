@@ -195,6 +195,7 @@ namespace Rain::Networking {
 	};
 
 	// Bitwise operators for PollFlag.
+	// TODO: Move definitions inline.
 	inline SocketInterface::PollFlag operator|(
 		SocketInterface::PollFlag const &left,
 		SocketInterface::PollFlag const &right) noexcept {

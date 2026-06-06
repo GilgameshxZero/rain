@@ -50,6 +50,7 @@ namespace Rain::Networking {
 		using Socket::Socket;
 
 		private:
+		// TODO: Better place to put initialization code?
 		class _NoLingerSocketOption {
 			public:
 			_NoLingerSocketOption(NoLingerSocketOption *that) {
