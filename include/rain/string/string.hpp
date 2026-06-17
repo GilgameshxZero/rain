@@ -167,18 +167,43 @@ namespace Rain::String {
 		}
 	};
 
-	// Transform string in a series of hex bytes, space
-	// separated. Useful for debugging.
-	inline std::string asHexStr(std::string const &str) {
+	// Hex string formats.
+	enum class HexStrFormat { RAW = 0, SPACED, UUID_V4 };
+
+	// Transform data into a series of hex bytes in various
+	// formats. Useful for debugging.
+	template<typename Type>
+	inline std::string asHexStr(
+		Type const &data,
+		HexStrFormat const &hexStrFormat = HexStrFormat::RAW) {
+		std::size_t resultSize{};
 		std::stringstream ss;
 		ss << std::hex << std::setfill('0');
-		for (auto &i : str) {
+		for (auto &i : data) {
 			// Cast to uint8_t to wrap around negative values,
 			// then to uint16_t to guarantee an into display.
 			ss << std::setw(2)
 				 << static_cast<std::uint16_t>(
-							static_cast<std::uint8_t>(i))
-				 << " ";
+							static_cast<std::uint8_t>(i));
+			resultSize += 2;
+			switch (hexStrFormat) {
+				case HexStrFormat::SPACED:
+					ss << ' ';
+					break;
+				case HexStrFormat::UUID_V4:
+					switch (resultSize) {
+						case 8:
+						case 12:
+						case 16:
+						case 20:
+							ss << '-';
+						default:
+							break;
+					}
+				case HexStrFormat::RAW:
+				default:
+					break;
+			};
 		}
 		return ss.str();
 	}
