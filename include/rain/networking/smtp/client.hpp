@@ -65,6 +65,7 @@ namespace Rain::Networking::Smtp {
 		ClientSocketSpec(
 			std::vector<std::pair<std::size_t, std::string>> const
 				&mxRecords,
+			std::string const &sourceBind = ""s,
 			std::size_t port = 25,
 			Time::Timeout timeout = 15s,
 			AddressInfo::Flag flags =
@@ -74,6 +75,7 @@ namespace Rain::Networking::Smtp {
 			Socket(
 				ClientSocketSpecInterfaceInterface::
 					mxRecordsToHostGroups(mxRecords, port),
+				sourceBind,
 				timeout,
 				flags) {}
 	};

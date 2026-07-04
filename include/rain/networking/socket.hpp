@@ -344,6 +344,56 @@ namespace Rain::Networking {
 		Host host() const {
 			return getNumericHost(this->name());
 		}
+
+		protected:
+		// Code-sharing: bind.
+		static void bind(
+			NativeSocket nativeSocket,
+			AddressInfo const &addressInfo) {
+			validateSystemCall(
+				::bind(
+					nativeSocket,
+					reinterpret_cast<sockaddr const *>(
+						&addressInfo.address),
+					static_cast<socklen_t>(addressInfo.addressLen)));
+		}
+		static void bind(
+			NativeSocket nativeSocket,
+			std::vector<AddressInfo> const &addressInfos) {
+			// Try all addresses in order, unlike Client which is
+			// parallel.
+			for (AddressInfo const &addressInfo : addressInfos) {
+				if (
+					::bind(
+						nativeSocket,
+						reinterpret_cast<sockaddr const *>(
+							&addressInfo.address),
+						static_cast<socklen_t>(
+							addressInfo.addressLen)) !=
+					NATIVE_SOCKET_ERROR) {
+					return;
+				}
+			}
+
+			// All binds failed.
+			throw Exception(getSystemError());
+		}
+		static void bind(
+			NativeSocket nativeSocket,
+			Host const &host,
+			Family family,
+			Type type,
+			Protocol protocol,
+			AddressInfo::Flag flags =
+				AddressInfo::Flag::V4MAPPED |
+				AddressInfo::Flag::ADDRCONFIG |
+				AddressInfo::Flag::ALL |
+				AddressInfo::Flag::PASSIVE) {
+			NamedSocketSpecInterface::bind(
+				nativeSocket,
+				getAddressInfos(
+					host, family, type, protocol, flags));
+		}
 	};
 
 	// No-op.

@@ -58,7 +58,7 @@ namespace Rain::Networking::Http {
 		// Target URI (including query parameters and fragment).
 		std::string target;
 
-		// Carry over constructor which recvs from a Socket.
+		// Carry over constructor which `recv`s from a Socket.
 		RequestMessageSpec(
 			Method method = {},
 			std::string const &target = "/",

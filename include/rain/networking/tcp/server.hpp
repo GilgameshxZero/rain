@@ -5,14 +5,9 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::Tcp {
-	class ServerSocketSpecInterfaceInterface :
-		virtual public NamedSocketSpecInterface,
-		virtual public Networking::
-			ServerSocketSpecInterfaceInterface {};
-
 	template<typename WorkerSocketSpec>
 	class ServerSocketSpecInterface :
-		virtual public ServerSocketSpecInterfaceInterface,
+		virtual public NamedSocketSpecInterface,
 		virtual public Networking::ServerSocketSpecInterface<
 			WorkerSocketSpec> {};
 

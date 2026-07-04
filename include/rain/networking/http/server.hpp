@@ -6,14 +6,9 @@
 
 namespace Rain::Networking::Http {
 	// HTTP Server specialization.
-	class ServerSocketSpecInterfaceInterface :
-		virtual public NamedSocketSpecInterface,
-		virtual public ReqRes::
-			ServerSocketSpecInterfaceInterface {};
-
 	template<typename WorkerSocketSpec>
 	class ServerSocketSpecInterface :
-		virtual public ServerSocketSpecInterfaceInterface,
+		virtual public NamedSocketSpecInterface,
 		virtual public ReqRes::ServerSocketSpecInterface<
 			WorkerSocketSpec> {};
 

@@ -5,17 +5,12 @@
 #include "socket.hpp"
 
 namespace Rain::Networking::ReqRes {
-	class ServerSocketSpecInterfaceInterface :
-		virtual public NamedSocketSpecInterface,
-		virtual public Tcp::ServerSocketSpecInterfaceInterface {
-	};
-
 	// Server specialization for R/R protocol Sockets.
 	//
 	// No support for pre/post-processing.
 	template<typename WorkerSocketSpec>
 	class ServerSocketSpecInterface :
-		virtual public ServerSocketSpecInterfaceInterface,
+		virtual public NamedSocketSpecInterface,
 		virtual public Tcp::ServerSocketSpecInterface<
 			WorkerSocketSpec> {};
 

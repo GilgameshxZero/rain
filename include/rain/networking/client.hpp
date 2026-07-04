@@ -4,6 +4,7 @@
 #pragma once
 
 #include "socket.hpp"
+#include "socket_option.hpp"
 
 #include <future>
 
@@ -101,6 +102,7 @@ namespace Rain::Networking {
 		// Return false on success, true on failure (all).
 		bool connect(
 			std::vector<AddressInfo> const &addressInfos,
+			std::string sourceBind = ""s,
 			Time::Timeout timeout = 15s) {
 			std::mutex mtx;
 
@@ -138,6 +140,7 @@ namespace Rain::Networking {
 							&connected,
 							&attemptsCompleted,
 							&addressInfo = addressInfos[idx],
+							&sourceBind,
 							timeout]() {
 							// Ignore any connect exceptions; any
 							// exceptions reported during tests probably
@@ -146,10 +149,11 @@ namespace Rain::Networking {
 																							&mtx,
 																							&connected,
 																							&addressInfo,
+																							&sourceBind,
 																							timeout]() {
 								// Calls the single-address constructor.
 								ClientSocketSpec<Socket> attemptSocket(
-									addressInfo, timeout);
+									addressInfo, sourceBind, timeout);
 								std::lock_guard lck(mtx);
 								if (!connected) {
 									connected = true;
@@ -198,10 +202,63 @@ namespace Rain::Networking {
 		ClientSocketSpec() {}
 
 		// All constructors either connect successfully or
-		// throw.
+		// throw. All path through this single-AddressInfo
+		// constructor.
+		//
+		// Optionally specify `sourceBind`, to bind to a
+		// specific interface (or interface address)
+		// before connecting.
+		//
+		// TODO: Quadratic spawned sockets upon connection
+		// attempt due to multiple resolving addresses.
 		ClientSocketSpec(
 			AddressInfo const &addressInfo,
+			std::string const &sourceBind = ""s,
 			Time::Timeout timeout = 15s) {
+			// On weak E/S systems (Unix), we need to set
+			// SO_BINDTODEVICE before bind. On strong E/S systems
+			// (Windows), we can directly bind to an interface
+			// address:
+			// <https://superuser.com/questions/1877085/curl-interface-so-bindtodevice-and-tunnel-interfaces>.
+			if (!sourceBind.empty()) {
+				std::set<std::string> interfaces;
+				std::vector<AddressInfo> addresses;
+
+				// First, assume sourceBind is an interface name,
+				// and attempt to get its address.
+				addresses = getInterfaceAddresses({sourceBind});
+				if (!addresses.empty()) {
+					interfaces.insert(sourceBind);
+				} else {
+					// If not an interface name, it is an address,
+					// and we need to get the interface name from
+					// the address.
+					addresses = getAddressInfos(sourceBind);
+					interfaces = getAddressInterfaces(addresses);
+				}
+
+				// Throw if either is empty.
+				if (interfaces.empty() || addresses.empty()) {
+					throw Exception(Error::RES_QUERY_FAILED);
+				}
+
+				// Based on strong/weak E/S, potentially set
+				// SO_BINDTODEVICE before binding to addresses.
+				//
+				// Directly use setsockopt here because it breaks
+				// some assumptions in `socket_option.hpp` anyway.
+#ifndef RAIN_PLATFORM_WINDOWS
+				validateSystemCall(setsockopt(
+					this->nativeSocket(),
+					SOL_SOCKET,
+					SO_BINDTODEVICE,
+					reinterpret_cast<void const *>(
+						interfaces.begin()->c_str()),
+					interfaces.begin()->length() + 1));
+#endif
+				NamedSocketSpecInterface::bind(
+					this->nativeSocket(), addresses);
+			}
 			if (
 				ClientSocketSpecInterface::connect(
 					this->nativeSocket(), addressInfo, timeout)) {
@@ -215,27 +272,31 @@ namespace Rain::Networking {
 		// closed.
 		ClientSocketSpec(
 			std::vector<AddressInfo> const &addressInfos,
+			std::string const &sourceBind = ""s,
 			Time::Timeout timeout = 15s) {
-			if (this->connect(addressInfos, timeout)) {
+			if (
+				this->connect(addressInfos, sourceBind, timeout)) {
 				throw Exception(Error::TIMED_OUT);
 			}
 		}
 		ClientSocketSpec(
 			Host const &host,
+			std::string const &sourceBind = ""s,
 			Time::Timeout timeout = 15s,
 			AddressInfo::Flag flags =
 				AddressInfo::Flag::V4MAPPED |
 				AddressInfo::Flag::ADDRCONFIG |
 				AddressInfo::Flag::ALL) {
-			// TODO: gai blocks indefinitely! But seems unlikely
-			// for many implementations.
+			// TODO: `getAddressInfos` blocks indefinitely! But
+			// seems unlikely for many implementations.
 			auto addressInfos = getAddressInfos(
 				host,
 				this->family(),
 				this->type(),
 				this->protocol(),
 				flags);
-			if (this->connect(addressInfos, timeout)) {
+			if (
+				this->connect(addressInfos, sourceBind, timeout)) {
 				throw Exception(Error::TIMED_OUT);
 			}
 		}
@@ -245,9 +306,11 @@ namespace Rain::Networking {
 		ClientSocketSpec(
 			std::vector<std::vector<AddressInfo>> const
 				&addressInfoGroups,
+			std::string const &sourceBind = ""s,
 			Time::Timeout timeout = 15s) {
 			for (auto const &addressInfos : addressInfoGroups) {
-				if (!this->connect(addressInfos, timeout)) {
+				if (!this->connect(
+							addressInfos, sourceBind, timeout)) {
 					return;
 				}
 			}
@@ -255,6 +318,7 @@ namespace Rain::Networking {
 		}
 		ClientSocketSpec(
 			std::vector<Host> const &hostGroups,
+			std::string const &sourceBind = ""s,
 			Time::Timeout timeout = 15s,
 			AddressInfo::Flag flags =
 				AddressInfo::Flag::V4MAPPED |
@@ -267,7 +331,8 @@ namespace Rain::Networking {
 					this->type(),
 					this->protocol(),
 					flags);
-				if (!this->connect(addressInfos, timeout)) {
+				if (!this->connect(
+							addressInfos, sourceBind, timeout)) {
 					return;
 				}
 			}

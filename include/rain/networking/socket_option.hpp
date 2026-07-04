@@ -16,7 +16,7 @@
 namespace Rain::Networking {
 	class SocketOptionInterface :
 		virtual public SocketInterface {
-		protected:
+		public:
 		// Code sharing.
 		template<typename Value>
 		static void setOption(
@@ -33,7 +33,7 @@ namespace Rain::Networking {
 #else
 				reinterpret_cast<void const *>(&value),
 #endif
-				sizeof(value)));
+				sizeof(Value)));
 		}
 	};
 
@@ -61,8 +61,8 @@ namespace Rain::Networking {
 					linger{1, 0});
 			}
 		};
-		_NoLingerSocketOption _noLingerSocketOption =
-			_NoLingerSocketOption(this);
+		_NoLingerSocketOption _noLingerSocketOption{
+			_NoLingerSocketOption(this)};
 
 		// No linger can only be set once.
 		virtual void alreadyNoLingerSocketOption() final {}
@@ -98,8 +98,8 @@ namespace Rain::Networking {
 #endif
 			}
 		};
-		_DualStackSocketOption _dualStackSocketOption =
-			_DualStackSocketOption(this);
+		_DualStackSocketOption _dualStackSocketOption{
+			_DualStackSocketOption(this)};
 
 		virtual void alreadyIpv6OnlySocketOption() final {}
 	};
@@ -135,8 +135,8 @@ namespace Rain::Networking {
 #endif
 			}
 		};
-		_Ipv6OnlySocketOption _ipv6OnlySocketOption =
-			_Ipv6OnlySocketOption(this);
+		_Ipv6OnlySocketOption _ipv6OnlySocketOption{
+			_Ipv6OnlySocketOption(this)};
 
 		// No linger can only be set once.
 		virtual void alreadyIpv6OnlySocketOption() final {}
@@ -170,12 +170,9 @@ namespace Rain::Networking {
 #endif
 			}
 		};
-		_ReuseAddressSocketOption _reuseAddressSocketOption =
-			_ReuseAddressSocketOption(this);
+		_ReuseAddressSocketOption _reuseAddressSocketOption{
+			_ReuseAddressSocketOption(this)};
 
 		virtual void alreadyReuseAddressSocketOption() final {}
 	};
-
-	// TODO: SO_BINDTODEVICE and equivalent bind() on Windows.
-	// <https://stackoverflow.com/questions/33917575>.
 }

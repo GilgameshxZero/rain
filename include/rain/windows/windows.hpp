@@ -18,7 +18,7 @@
 	#endif
 
 	// Prevents Windows.h from automatically include
-	// Winsock 1.1; Rain uses Winsock 2.
+	// Winsock 1.1; `rain` uses Winsock 2.
 	#ifndef WIN32_LEAN_AND_MEAN
 		#define WIN32_LEAN_AND_MEAN
 	#endif
@@ -35,6 +35,7 @@
 	#pragma comment(lib, "comdlg32.lib")
 	#pragma comment(lib, "advapi32.lib")
 	#pragma comment(lib, "kernel32.lib")
+	#pragma comment(lib, "iphlpapi.lib")
 
 	#include <Windows.h>
 	#include <shellapi.h>
@@ -46,5 +47,4 @@
 	#ifdef max
 		#undef max
 	#endif
-
 #endif

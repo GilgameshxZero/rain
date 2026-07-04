@@ -11,14 +11,11 @@
 #include "wsa.hpp"
 
 #ifdef RAIN_PLATFORM_WINDOWS
-
 	// Windows DNS utilities.
 	#pragma comment(lib, "Dnsapi.lib")
 
 	#include <WinDNS.h>
-
 #else
-
 	// POSIX libresolv.
 	#include <arpa/nameser.h>
 	#include <netdb.h>
@@ -26,6 +23,7 @@
 	#include <resolv.h>
 	#include <sys/types.h>
 
+	#include <ifaddrs.h>
 #endif
 
 #include <atomic>
@@ -122,12 +120,12 @@ namespace Rain::Networking {
 		hints.ai_socktype = static_cast<int>(type);
 		hints.ai_protocol = static_cast<int>(protocol);
 
-		addrinfo *addresses = nullptr;
-		int result = getaddrinfo(
+		addrinfo *addresses{nullptr};
+		int result{getaddrinfo(
 			host.node.empty() ? nullptr : host.node.c_str(),
 			host.service.empty() ? nullptr : host.service.c_str(),
 			&hints,
-			&addresses);
+			&addresses)};
 
 		if (result == -1) {
 			// getaddrinfo error.
@@ -284,5 +282,73 @@ namespace Rain::Networking {
 		// Sort by priority and return.
 		std::sort(mxRecords.begin(), mxRecords.end());
 		return mxRecords;
+	}
+
+	// Get a list of addresses corresponding to an interface
+	// name. Only the address and addressLen fields are
+	// guaranteed to be valid.
+	inline std::vector<AddressInfo> getInterfaceAddresses(
+		std::set<std::string> const &interfaces) {
+		std::vector<AddressInfo> addresses;
+#ifdef RAIN_PLATFORM_WINDOWS
+#else
+		struct ifaddrs *ifAddrs;
+		validateSystemCall(getifaddrs(&ifAddrs));
+		for (
+			auto &curAddr{ifAddrs}; curAddr != nullptr;
+			curAddr = curAddr->ifa_next) {
+			if (
+				curAddr->ifa_addr != nullptr &&
+				interfaces.count(curAddr->ifa_name)) {
+				addresses.push_back(
+					{{},
+						{},
+						{},
+						{},
+						{},
+						{},
+						sizeof(*curAddr->ifa_addr)});
+				std::memcpy(
+					&addresses.back().address,
+					curAddr->ifa_addr,
+					addresses.back().addressLen);
+			}
+		}
+		freeifaddrs(ifAddrs);
+#endif
+		return addresses;
+	}
+
+	// Get a set of interface names corresponding to an
+	// address.
+	inline std::set<std::string> getAddressInterfaces(
+		std::vector<AddressInfo> const &addresses) {
+		std::set<std::string> interfaces;
+#ifdef RAIN_PLATFORM_WINDOWS
+#else
+		struct ifaddrs *ifAddrs;
+		validateSystemCall(getifaddrs(&ifAddrs));
+		for (
+			auto &curAddr{ifAddrs}; curAddr != nullptr;
+			curAddr = curAddr->ifa_next) {
+			if (curAddr->ifa_addr == nullptr) {
+				continue;
+			}
+
+			// Compare current address with all target addresses.
+			for (auto &address : addresses) {
+				if (
+					std::memcmp(
+						&address.address,
+						curAddr->ifa_addr,
+						address.addressLen) == 0) {
+					interfaces.insert(curAddr->ifa_name);
+					break;
+				}
+			}
+		}
+		freeifaddrs(ifAddrs);
+#endif
+		return interfaces;
 	}
 }
