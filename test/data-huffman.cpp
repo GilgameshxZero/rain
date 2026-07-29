@@ -145,7 +145,7 @@ int main() {
 
 	assertEncodeDecodeFile("data-huffman.cpp.asset/text.txt");
 	assertEncodeDecodeFile(
-		"data-huffman.cpp.asset/blue_orb.png");
+		"data-huffman.cpp.asset/blue_orb.avif");
 	assertEncodeDecodeFile(
 		"data-huffman.cpp.asset/1905.02175.pdf");
 
