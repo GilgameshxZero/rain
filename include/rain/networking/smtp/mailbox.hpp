@@ -33,10 +33,15 @@ namespace Rain::Networking::Smtp {
 			return this->name + "@" + this->host.node;
 		}
 
-		// Equality for unordered_ types.
+		// Operators for STL types.
 		bool operator==(Mailbox const &other) const noexcept {
 			return this->name == other.name &&
 				this->host == other.host;
+		}
+		bool operator<(Mailbox const &other) const noexcept {
+			return this->name < other.name ||
+				(this->name == other.name &&
+					this->host < other.host);
 		}
 
 		friend inline std::ostream &operator<<(

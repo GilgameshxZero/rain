@@ -71,6 +71,14 @@ namespace Rain::Networking {
 		bool operator!=(Host const &other) const {
 			return !this->operator==(other);
 		}
+		bool operator<(Host const &other) const {
+			// node is compared case-insensitive (i.e. domain
+			// names are case-insensitive).
+			auto res{
+				strcasecmp(this->node.c_str(), other.node.c_str())};
+			return res < 0 ||
+				(res == 0 && this->service < other.service);
+		}
 
 		// User-defined operators for outputting hostnames.
 		friend inline std::ostream &operator<<(
