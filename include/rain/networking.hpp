@@ -5,6 +5,7 @@
 #include "networking/exception.hpp"
 #include "networking/host.hpp"
 #include "networking/http.hpp"
+#include "networking/imap.hpp"
 #include "networking/media_type.hpp"
 #include "networking/native_socket.hpp"
 #include "networking/req_res.hpp"

@@ -43,7 +43,7 @@ namespace Rain::Networking::Smtp {
 		// Single-line parameter for command.
 		std::string parameter;
 
-		// Carry over constructor which recvs from a Socket.
+		// Carry over constructor which `recv`s from a Socket.
 		RequestMessageSpec(
 			Command command = Command::HELO,
 			std::string const &parameter = "") :

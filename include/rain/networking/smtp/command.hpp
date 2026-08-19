@@ -1,10 +1,6 @@
 // SMTP request command.
 #pragma once
 
-#ifdef DELETE
-	#undef DELETE
-#endif
-
 #include "../../string/string.hpp"
 
 #include <iostream>
