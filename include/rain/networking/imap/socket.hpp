@@ -2,7 +2,6 @@
 #pragma once
 
 #include "../req_res/socket.hpp"
-#include "command.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
@@ -10,8 +9,6 @@ namespace Rain::Networking::Imap {
 	// IMAP Socket subclassing R/R Socket.
 	class SocketSpecInterface :
 		virtual public ReqRes::SocketSpecInterface {
-		protected:
-		using Command = Command;
 	};
 
 	template<typename Socket>

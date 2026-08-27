@@ -72,7 +72,7 @@ namespace Rain::Networking::ReqRes {
 		}
 
 		private:
-		virtual void onWork() final override {
+		virtual void onWork() override final {
 			// R/R protocol involves receiving a request, then
 			// processing it for a response to send. Subclasses
 			// override the processing step.
@@ -122,10 +122,10 @@ namespace Rain::Networking::ReqRes {
 		virtual bool onRequest(RequestMessageSpec &req) = 0;
 
 		// Optional exception handler does nothing by default.
-		// Should be noexcept. throw and catch again inside this
-		// function to determine the exception type. Guaranteed
-		// that this function is only called from within a catch
-		// block, so throw; is safe.
+		// throw and catch again inside this function to
+		// determine the exception type. Guaranteed that this
+		// function is only called from within a catch block, so
+		// `throw;` is safe.
 		virtual void onRequestException() {}
 
 		// Possibly send a response before the first request,

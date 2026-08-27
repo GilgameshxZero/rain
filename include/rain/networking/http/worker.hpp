@@ -47,7 +47,7 @@ namespace Rain::Networking::Http {
 		// cannot be constructed.
 		class ResponseAction {
 			public:
-			std::optional<ResponseMessageSpec> response;
+		std::optional<ResponseMessageSpec> response;
 
 			// If true, closes after the ResponseMessageSpec is
 			// sent, or aborts with no ResponseMessageSpec.
@@ -184,7 +184,7 @@ namespace Rain::Networking::Http {
 
 		// Handle non-error Request. Must not throw.
 		virtual bool onRequest(
-			RequestMessageSpec &req) final override {
+			RequestMessageSpec &req) override final {
 			// Run through filters and try to send.
 			std::smatch targetMatch;
 			for (RequestFilter const &filter : this->filters()) {
@@ -262,7 +262,7 @@ namespace Rain::Networking::Http {
 
 		// Catch exceptions during request receiving. Must not
 		// throw.
-		virtual void onRequestException() final override {
+		virtual void onRequestException() override final {
 			try {
 				throw;
 			} catch (typename RequestMessageSpecInterface::

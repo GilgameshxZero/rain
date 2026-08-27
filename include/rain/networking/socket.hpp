@@ -263,7 +263,7 @@ namespace Rain::Networking {
 
 		protected:
 		virtual NativeSocket
-			nativeSocket() const noexcept final override {
+			nativeSocket() const noexcept override final {
 			return this->_nativeSocket;
 		}
 

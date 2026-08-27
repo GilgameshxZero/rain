@@ -414,7 +414,7 @@ namespace Rain::Networking::Smtp {
 		// Handle non-error RequestMessageSpec. Must not throw.
 		// Invokes chains in order.
 		virtual bool onRequest(
-			RequestMessageSpec &req) final override {
+			RequestMessageSpec &req) override final {
 			// Get PreResponse based on the command.
 			auto result = [this, &req]() -> ResponseAction {
 				try {
@@ -481,7 +481,7 @@ namespace Rain::Networking::Smtp {
 
 		// Catch exceptions during request receiving. Must not
 		// throw.
-		virtual void onRequestException() final override {
+		virtual void onRequestException() override final {
 			try {
 				throw;
 			} catch (typename RequestMessageSpec::Exception const
