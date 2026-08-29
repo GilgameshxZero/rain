@@ -79,6 +79,14 @@ namespace Rain::Networking {
 				TcpProtocolInterface>>>
 			interrupter;
 
+		// Count active connections per host.
+		std::unordered_map<std::string, std::atomic_size_t>
+			cActivePeerConnections;
+		// Host rate limit sliding window size.
+		static std::chrono::steady_clock::
+			duration constexpr RATE_LIMIT_WINDOW_SIZE{60s};
+		static std::size_t const RATE_LIMIT_THRESHOLD{60};
+
 		// listen & accept on a bound Socket, in an std::async.
 		void serve(int backlog = LISTEN_BACKLOG_DEFAULT) {
 			validateSystemCall(
@@ -174,8 +182,15 @@ namespace Rain::Networking {
 										this->interrupter.second.get());
 
 									// Rate limit based on peer hostname.
-									if (!this->shouldRejectPeerHost(
-												worker.peerHost())) {
+									auto &cActiveConnections{
+										this->cActivePeerConnections[worker
+												.peerHost()]};
+									if (
+										!this->shouldRejectPeerHost(
+											worker.peerHost()) &&
+										cActiveConnections <
+											RATE_LIMIT_THRESHOLD) {
+										cActiveConnections++;
 										// Failures in onWork should be logged.
 										Rain::Error::consumeThrowable(
 											[&worker]() {
@@ -187,6 +202,7 @@ namespace Rain::Networking {
 													.onWork();
 											},
 											std::source_location::current())();
+										cActiveConnections--;
 									}
 								}));
 					} catch (std::exception const &exception) {
@@ -195,7 +211,7 @@ namespace Rain::Networking {
 						// Set maxThreads here so that we don’t exceed
 						// system maximum.
 						// TODO: Is there a better way to determine if
-						// we’ve hit the system maximum on threads?
+						// we've hit the system maximum on threads?
 						this->threadPool.setMaxThreads(
 							this->threadPool.getCThreads());
 					}
@@ -203,10 +219,6 @@ namespace Rain::Networking {
 			});
 		}
 
-		// Host rate limit sliding window size.
-		static std::chrono::steady_clock::
-			duration constexpr RATE_LIMIT_WINDOW_SIZE{60s};
-		static std::size_t const RATE_LIMIT_THRESHOLD{60};
 		// Maps a peer node to a pair (mutex, queue of times)
 		// where the queue contains all times the peer has
 		// connected within the sliding window, sorted in
