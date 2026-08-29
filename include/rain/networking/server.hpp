@@ -186,11 +186,13 @@ namespace Rain::Networking {
 										this->cActivePeerConnections[worker
 												.peerHost()]};
 									if (
+										// This comparison must come first as it
+										// must be incremented without
+										// conditional.
+										cActiveConnections++ <
+											RATE_LIMIT_THRESHOLD &&
 										!this->shouldRejectPeerHost(
-											worker.peerHost()) &&
-										cActiveConnections <
-											RATE_LIMIT_THRESHOLD) {
-										cActiveConnections++;
+											worker.peerHost())) {
 										// Failures in onWork should be logged.
 										Rain::Error::consumeThrowable(
 											[&worker]() {
@@ -202,8 +204,8 @@ namespace Rain::Networking {
 													.onWork();
 											},
 											std::source_location::current())();
-										cActiveConnections--;
 									}
+									cActiveConnections--;
 								}));
 					} catch (std::exception const &exception) {
 						std::cout << exception.what();
