@@ -3,6 +3,7 @@
 
 #include "imap/client.hpp"
 #include "imap/command.hpp"
+#include "imap/command_interface.hpp"
 #include "imap/message.hpp"
 #include "imap/request.hpp"
 #include "imap/request_command.hpp"

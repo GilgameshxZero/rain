@@ -99,7 +99,7 @@ namespace Rain::Networking::Http {
 					std::size_t i; separator != std::string::npos;) {
 					i = separator + 1;
 					std::size_t const equals{authStr.find('=', i)};
-					separator = authStr.find(',', equals + 1);
+					separator = authStr.find(',', equals);
 					std::string key{authStr.substr(i, equals - i)},
 						value{authStr.substr(
 							equals + 1, separator - equals - 1)};

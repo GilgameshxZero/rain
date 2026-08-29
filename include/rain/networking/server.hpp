@@ -16,6 +16,22 @@ namespace Rain::Networking {
 		virtual public NamedSocketSpecInterface {
 		protected:
 		// Override to build WorkerSockets.
+		//
+		// TODO: Instead of requiring the server to implement
+		// `makeWorker`, the server should be able to
+		// default-construct a `Worker` based on just the
+		// `nativeSocket` and `interrupter` arguments. If the
+		// derived protocol layers requires more complex worker
+		// construction, it should provide a policy factory to
+		// server which provides this constructor. Otherwise,
+		// the default policy factory will contain the default
+		// behavior.
+		//
+		// We prefer policy factories instead of a static
+		// function on the worker, because this static function
+		// must exist, but cannot be virtual due to language
+		// limitations. Thus, the policy can instead encapsulate
+		// both the worker type, and the worker factory.
 		virtual WorkerSocketSpec makeWorker(
 			NativeSocket nativeSocket,
 			SocketInterface *interrupter) = 0;
