@@ -28,6 +28,7 @@ namespace Rain::Networking {
 			PNG,
 			GIF,
 			SVG_XML,
+			AVIF,
 
 			MPEG,
 
@@ -74,6 +75,8 @@ namespace Rain::Networking {
 			{".gif", GIF},
 			{"image/svg+xml", SVG_XML},
 			{".svg", SVG_XML},
+			{"image/avif", AVIF},
+			{".avif", AVIF},
 
 			{"audio/mpeg", MPEG},
 			{".mp3", MPEG},
@@ -151,6 +154,8 @@ namespace Rain::Networking {
 						return "image/gif";
 					case SVG_XML:
 						return "image/svg+xml";
+					case AVIF:
+						return "image/avif";
 
 					case MPEG:
 						return "audio/mpeg";
@@ -194,6 +199,7 @@ namespace Rain::Networking {
 				case PNG:
 				case GIF:
 				case SVG_XML:
+				case AVIF:
 					return Type::IMAGE;
 
 				case MPEG:
