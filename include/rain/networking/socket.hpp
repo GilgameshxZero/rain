@@ -495,7 +495,7 @@ namespace Rain::Networking {
 		}
 
 		// Allow classic shutdown parameters, in addition to
-		// "graceful" shutdown, which shuts down write; recvs
+		// "graceful" shutdown, which shuts down write; `recv`s
 		// remaining data, and then shuts down read.
 		//
 		// A timeout may be provided for the blocking GRACEFUL

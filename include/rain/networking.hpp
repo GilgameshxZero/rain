@@ -1,4 +1,3 @@
-// Includes all /networking headers.
 #pragma once
 
 #include "networking/client.hpp"
