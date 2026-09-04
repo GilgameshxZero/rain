@@ -68,24 +68,50 @@ namespace Rain::Networking::Smtp {
 					if (!this->sourceStream->good()) {
 						return traits_type::eof();
 					}
-					this->sourceStream->get(
+					// We avoid `read` to avoid over-reading past
+					// `\r\n.\r\n`, as the bytes after must remain in
+					// the stream for the owner of the stream. We
+					// avoid `get` with a fixed buffer, because it is
+					// ambiguous whether it has failed, or encountered
+					// the delimiter immediately.
+					this->sourceStream->getline(
 						&this->buffer[0], this->buffer.length());
-					std::size_t cFilled = static_cast<std::size_t>(
-						this->sourceStream->gcount());
-					this->buffer[cFilled++] = '\n';
-					this->sourceStream->get();
+					auto cFilled{static_cast<std::size_t>(
+						this->sourceStream->gcount())};
+					// Member `getline` will set `failbit` iff buffer
+					// was filled, or no characters were read. If not
+					// set, and EOF was not reached, then the final
+					// character of the buffer, `\0`, should instead
+					// be `\n`. If set, then only the `failbit` must
+					// be cleared. If set, but read `0` characters,
+					// the underlying stream has failed to produce a
+					// character and should be interpreted as done.
+					//
+					// This is somewhat precise code and reasoning and
+					// should warrant care.
+					if (
+						!this->sourceStream->fail() &&
+						!this->sourceStream->eof()) {
+						this->buffer[cFilled - 1] = '\n';
+					} else if (cFilled == 0) {
+						return traits_type::eof();
+					} else {
+						this->sourceStream->clear(
+							this->sourceStream->rdstate() &
+							~std::ios::failbit);
+					}
 
 					// Run matcher. A match will set this->match to an
 					// invalid, but non-null location.
-					static std::string const terminator{"\r\n.\r\n"};
-					static auto const terminatorPartialMatch =
-						Algorithm::computeKmpPartialMatch(terminator);
+					static std::string const TERMINATOR{"\r\n.\r\n"};
+					static auto const TERMINATOR_PARTIAL_MATCH{
+						Algorithm::computeKmpPartialMatch(TERMINATOR)};
 					std::tie(this->match, this->candidate) =
 						Algorithm::kmpSearch(
 							&this->buffer[0],
 							cFilled,
-							terminator,
-							terminatorPartialMatch,
+							TERMINATOR,
+							TERMINATOR_PARTIAL_MATCH,
 							this->candidate);
 
 					// Regardless of match results (interpreted next
