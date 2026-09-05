@@ -8,8 +8,7 @@
 namespace Rain::Networking::Imap {
 	// IMAP Socket subclassing R/R Socket.
 	class SocketSpecInterface :
-		virtual public ReqRes::SocketSpecInterface {
-	};
+		virtual public ReqRes::SocketSpecInterface {};
 
 	template<typename Socket>
 	class SocketSpec :

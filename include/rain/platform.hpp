@@ -18,8 +18,8 @@
 	#define RAIN_PLATFORM_LINUX
 #endif
 
-#if !defined(RAIN_PLATFORM_WINDOWS) &&                     \
-	!defined(RAIN_PLATFORM_MACOS) &&                         \
+#if !defined(RAIN_PLATFORM_WINDOWS) && \
+	!defined(RAIN_PLATFORM_MACOS) && \
 	!defined(RAIN_PLATFORM_LINUX)
 	#define RAIN_PLATFORM_OTHER
 #endif

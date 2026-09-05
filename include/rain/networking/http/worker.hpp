@@ -47,7 +47,7 @@ namespace Rain::Networking::Http {
 		// cannot be constructed.
 		class ResponseAction {
 			public:
-		std::optional<ResponseMessageSpec> response;
+			std::optional<ResponseMessageSpec> response;
 
 			// If true, closes after the ResponseMessageSpec is
 			// sent, or aborts with no ResponseMessageSpec.

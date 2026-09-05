@@ -4,7 +4,7 @@
 // Skip over definitions of global min/max from other
 // sources.
 #ifndef NOMINMAX
-#define NOMINMAX
+	#define NOMINMAX
 #endif
 
 #include <algorithm>
@@ -15,9 +15,9 @@ using std::min;
 using std::max;
 
 #ifdef min
-#undef min
+	#undef min
 #endif
 
 #ifdef max
-#undef max
+	#undef max
 #endif

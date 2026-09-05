@@ -1245,8 +1245,7 @@ namespace Rain::Math {
 		inline auto size() const {
 			std::array<std::size_t, ORDER> sizesTransposed;
 			for (std::size_t i{0}; i < ORDER; i++) {
-				sizesTransposed[i] =
-					this->SIZE[this->TRANSPOSE[i]];
+				sizesTransposed[i] = this->SIZE[this->TRANSPOSE[i]];
 			}
 			return sizesTransposed;
 		}

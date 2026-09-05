@@ -62,8 +62,8 @@ bool doHandshake(
 	// 		return true;
 	// 	}
 	// 	auto handshake{
-	// 		dynamic_cast<Handshake *>(plaintext.fragment.get())};
-	// 	if (
+	// 		dynamic_cast<Handshake
+	// *>(plaintext.fragment.get())}; 	if (
 	// 		handshake->body->handshakeType() !=
 	// 		HandshakeType::CERTIFICATE) {
 	// 		log << "Failed to parse Certificate::Handshake.\n";
@@ -72,7 +72,8 @@ bool doHandshake(
 	// 	auto certificate{
 	// 		dynamic_cast<Certificate *>(handshake->body.get())};
 	// 	log << "Certificates: "
-	// 			<< certificate->certificates.size() << "." << endl;
+	// 			<< certificate->certificates.size() << "." <<
+	// endl;
 	// }
 
 	return false;

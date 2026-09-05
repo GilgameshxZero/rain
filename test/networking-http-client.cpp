@@ -46,7 +46,7 @@ int main() {
 
 	// {
 	// 	Http::Client<> client("api.ipify.org:80",
-	// "10.8.45.51"); 	client << Http::Request( 		Method::GET,
+	// "10.8.45.51"); 	client << Http::Request( Method::GET,
 	// 		"/",
 	// 		{{{"Host", "api.ipify.org"}}},
 	// 		{},

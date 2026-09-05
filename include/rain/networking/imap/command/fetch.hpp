@@ -10,7 +10,8 @@ namespace Rain::Networking::Imap::Command {
 		public:
 		std::string buffer;
 
-		Fetch(std::string const &buffer = "") : buffer{buffer} {}
+		Fetch(std::string const &buffer = "") :
+			buffer{buffer} {}
 
 		virtual std::string commandString() override final {
 			return "FETCH";

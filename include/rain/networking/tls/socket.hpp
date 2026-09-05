@@ -104,7 +104,8 @@ namespace Rain::Networking::Tls {
 		// This means that any TCP socket maintains at least 16M
 		// in memory state.
 		//
-		// TODO: This seems high. Can we fragment received handshake processessing, somehow?
+		// TODO: This seems high. Can we fragment received
+		// handshake processessing, somehow?
 		private:
 		// char recvBufferHandshake[1_zu << 24_zu],
 		// 	sendBufferApplicationData[1_zu << 10_zu],

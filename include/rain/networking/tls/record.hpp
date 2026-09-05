@@ -14,10 +14,9 @@
 #include <memory>
 
 namespace Rain::Networking::Tls {
-	// class PlaintextRecord : virtual public RecordInterface {
-	// 	public:
-	// 	ContentType contentType;
-	// 	ProtocolVersion version;
+	// class PlaintextRecord : virtual public RecordInterface
+	// { 	public: 	ContentType contentType; 	ProtocolVersion
+	// version;
 
 	// 	virtual ~PlaintextRecord() { delete this->rdbuf(); }
 
@@ -30,9 +29,8 @@ namespace Rain::Networking::Tls {
 	// 		contentType{contentType},
 	// 		version{version},
 	// 		std::iostream(
-	// 			str.empty() ? nullptr : new std::stringbuf(str)) {}
-	// 	PlaintextRecord(
-	// 		ContentType const &contentType,
+	// 			str.empty() ? nullptr : new std::stringbuf(str))
+	// {} 	PlaintextRecord( 		ContentType const &contentType,
 	// 		ProtocolVersion const &version,
 	// 		char const *cStr) :
 	// 		PlaintextRecord(
@@ -54,12 +52,13 @@ namespace Rain::Networking::Tls {
 	// 		std::filebuf &&filebuf) :
 	// 		contentType{contentType},
 	// 		version{version},
-	// 		std::iostream(new std::filebuf(std::move(filebuf))) {}
+	// 		std::iostream(new std::filebuf(std::move(filebuf)))
+	// {}
 
-	// 	// Cannot be copied because the buffer cannot be copied.
-	// 	PlaintextRecord(PlaintextRecord const &) = delete;
-	// 	PlaintextRecord &operator=(
-	// 		PlaintextRecord const &) = delete;
+	// 	// Cannot be copied because the buffer cannot be
+	// copied. 	PlaintextRecord(PlaintextRecord const &) =
+	// delete; 	PlaintextRecord &operator=( 		PlaintextRecord
+	// const &) = delete;
 
 	// 	// Move constructor also swaps streambufs and freeing
 	// 	// responsibility.
@@ -96,7 +95,8 @@ namespace Rain::Networking::Tls {
 	// 		return this->rdbuf()->in_avail();
 	// 	}
 
-	// 	// Stream operator. Cannot stream in >> directly, since
+	// 	// Stream operator. Cannot stream in >> directly,
+	// since
 	// 	// need to know Content-Length/Transfer-Encoding.
 	// 	friend inline std::ostream &operator<<(
 	// 		std::ostream &stream,
@@ -110,8 +110,8 @@ namespace Rain::Networking::Tls {
 	// 	virtual RecordType type() const override {
 	// 		return RecordType::PLAINTEXT;
 	// 	}
-	// 	virtual std::uint16_t fragmentLength() const override {
-	// 		return this->fragment->length();
+	// 	virtual std::uint16_t fragmentLength() const override
+	// { 		return this->fragment->length();
 	// 	}
 	// 	virtual std::uint16_t length() const override {
 	// 		return this->fragmentLength() + 5;
@@ -122,8 +122,8 @@ namespace Rain::Networking::Tls {
 	// 			stream, this->contentType, std::endian::big);
 	// 		this->version.sendWith(stream);
 	// 		Algorithm::writeBytes(
-	// 			stream, this->fragment->length(), std::endian::big);
-	// 		this->fragment->sendWith(stream);
+	// 			stream, this->fragment->length(),
+	// std::endian::big); 		this->fragment->sendWith(stream);
 	// 		stream.flush();
 	// 	}
 	// };
