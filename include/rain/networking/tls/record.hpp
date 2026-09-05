@@ -30,13 +30,10 @@ namespace Rain::Networking::Tls {
 	// 		version{version},
 	// 		std::iostream(
 	// 			str.empty() ? nullptr : new std::stringbuf(str))
-	// {} 	PlaintextRecord( 		ContentType const &contentType,
-	// 		ProtocolVersion const &version,
-	// 		char const *cStr) :
-	// 		PlaintextRecord(
-	// 			contentType,
-	// 			version,
-	// 			std::string(cStr)) {}
+	// {} 	PlaintextRecord( 		ContentType const
+	// &contentType, 		ProtocolVersion const &version, char
+	// const *cStr) : 		PlaintextRecord( 			contentType,
+	// version, 			std::string(cStr)) {}
 	// 	// Construct with buffer-like will move in the buffer.
 	// 	PlaintextRecord(
 	// 		ContentType const &contentType,
@@ -57,7 +54,7 @@ namespace Rain::Networking::Tls {
 
 	// 	// Cannot be copied because the buffer cannot be
 	// copied. 	PlaintextRecord(PlaintextRecord const &) =
-	// delete; 	PlaintextRecord &operator=( 		PlaintextRecord
+	// delete; 	PlaintextRecord &operator=( PlaintextRecord
 	// const &) = delete;
 
 	// 	// Move constructor also swaps streambufs and freeing
@@ -123,7 +120,7 @@ namespace Rain::Networking::Tls {
 	// 		this->version.sendWith(stream);
 	// 		Algorithm::writeBytes(
 	// 			stream, this->fragment->length(),
-	// std::endian::big); 		this->fragment->sendWith(stream);
+	// std::endian::big); this->fragment->sendWith(stream);
 	// 		stream.flush();
 	// 	}
 	// };

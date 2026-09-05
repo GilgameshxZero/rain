@@ -1,5 +1,22 @@
 # Changelog
 
+## 7.5.8
+
+1. Updated `clang-format`.
+2. Fixed deserializer for `NetworkInterface`.
+3. Added various formats to output hex string to string stream.
+4. Allow bind-to-device on socket connect.
+5. `Mailbox`, `Host` now implement comparison operators.
+6. Convert all images to `avif`.
+7. Sketched out parts of IMAP infrastructure, but a socket inheritance overhaul is pending.
+8. HTTP now detects `.avif` as `image/avif` `Content-Type`.
+9. Fix unbounded parsing bug for `Authorization` HTTP header.
+10. Add rate limit for number of active connections per `Host` in `Server`.
+11. Fix underflow bug for SMTP worker for lines longer than `1023` characters.
+12. Updated all CRLF line endings in source code to LF.
+13. Ran `clang-format` on all source files.
+14. Re-verified all available tests.
+
 ## 7.5.7
 
 1. Fixed softmax Jacobian missing terms.
