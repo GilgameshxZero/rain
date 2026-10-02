@@ -151,6 +151,13 @@ namespace Rain::Algorithm {
 				apply(Value &, Update const &, std::size_t) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
+			// `aggregate` is used iff the segtree is updated.
+			static inline Result aggregate(
+				Result const &,
+				Result const &,
+				Query const &) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
 		};
 
 		// Wraps a policy to implement a persistent segment tree
