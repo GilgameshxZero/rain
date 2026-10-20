@@ -1,10 +1,138 @@
-// Basic managed RAII Socket type, encapsulating a
-// NativeSocket.
-//
-// All Socket implementations derive from here, directly or
-// indirectly, or encapsulate a Socket. Interfaces should
-// always be virtually inherited from, and may not track
-// state.
+/* Networking provides `Socket`, a cross-platform
+ * encapsulation of network sockets, alongside common
+ * protocol and usage patterns. Socket behavior is
+ * customizable via the specification of *Policies* and
+ * inheritance. Below, we summarize the existing Policy and
+ * inheritance structure of provided sockets, and how best
+ * to extend them to implement custom behavior.
+ *
+ * Each socket type exists at a cross-section of a socket
+ * *specialization*, and a socket *protocol*. Socket
+ * specializations specify interaction and connection
+ * patterns, and inherit behavior as follows:
+ *
+ * Base
+ * 	[<- Named
+ * 		<- Server,
+ * 	<- Connected
+ * 		[<- Client,
+ * 		<- Worker]]
+ *
+ * Specific specialization information may be document at
+ * the base protocol class of that specialization.
+ *
+ * Socket protocols specify behavior consistent with
+ * communication standards, and inherit behavior as follows:
+ *
+ * Base
+ * 	<- Tcp
+ * 		[<- ReqRes
+ * 			[<- Http,
+ * 			<- Smtp,
+ * 			<- Imap],
+ * 		<- Tls (inherits from any Tcp-based protocol)]
+ *
+ * Specific protocol information may be documented at the
+ * base socket class of that protocol.
+ *
+ * Protocols may specify behavior, at destruction, which
+ * must occur after the destruction of its super-protocol.
+ * Consider, for example, a protocol whose sockets block
+ * until they are terminated by the destruction of the
+ * server managed by its super-protocol. Protocols may also
+ * specify behavior, at destruction, which must occur before
+ * the destruction of its super-protocol. Consider, for
+ * example, a protocol which specifies the sending of a
+ * "CLOSE" message before termination of its sockets by its
+ * super-protocol. Thus, protocols each inherit from their
+ * super-protocol, but their super-protocol must also
+ * inherit behaviors from the protocol policy.
+ *
+ * On the policy axis, then, code inheritance travels first
+ * through the protocols, up toward the base protocol. Then,
+ * the base protocol inherits the most derived policy, which
+ * inherits up the chain until it reaches the base policy:
+ *
+ * HttpProtocol
+ * 	-> ReqResProtocol
+ * 	-> TcpProtocol
+ * 	-> BaseProtocol
+ * 	-> HttpPolicy
+ * 	-> ReqResPolicy
+ * 	-> TcpPolicy
+ * 	-> BasePolicy
+ *
+ * Http may modify certain behaviors of its super-protocols
+ * by modifying its HttpPolicy. Http may extend the
+ * functions of its super-protocols by extending
+ * HttpProtocol.
+ *
+ * On the specialization axis, inheritance is performed
+ * between each layer of protocol or policy. For example,
+ * the full inheritance chain of HttpServer would be:
+ *
+ * HttpServerProtocol -> HttpNamedProtocol ->
+ * HttpBaseProtocol
+ * 	-> ReqResServerProtocol -> ReqResNamedProtocol ->
+ * ReqResBaseProtocol
+ * 	-> TcpServerProtocol -> TcpNamedProtocol ->
+ * TcpBaseProtocol
+ * 	-> BaseServerProtocol -> BaseNamedProtocol ->
+ * BaseBaseProtocol
+ * 	-> HttpServerPolicy -> HttpNamedPolicy -> HttpBasePolicy
+ * 	-> ReqResServerPolicy -> ReqResNamedPolicy ->
+ * ReqResBasePolicy
+ * 	-> TcpServerPolicy -> TcpNamedPolicy -> TcpBasePolicy
+ * 	-> BaseServerPolicy -> BaseNamedPolicy ->
+ * BaseBasePolicy.
+ *
+ * In most cases, *Base* will be named *Socket* instead to
+ * avoid ambiguity.
+ *
+ * Each class in any chain will also provide an *Interface
+ * class, which must hold no state. Interfaces are virtually
+ * inherited along *both* axis, and serve to provide an
+ * interface for classes to reach for, along either axis.
+ * The protocol-specialization chain MUST NOT be inherited
+ * virtually, and is the only inheritance chain allowed to
+ * hold resources and thus state. The policy chain MUST be
+ * inherited virtually at each step of the
+ * protocol-specialization chain, and MUST NOT hold state.
+ * The least-derived class to hold state, then, is always
+ * "BaseBaseProtocol".
+ *
+ * Prior to inheriting BaseBaseProtocol, a socket shall
+ * inherit a flexible-length Options chain, associated with
+ * low-level socket options such as "no linger" and "dual
+ * stack". BaseBaseProtocol furthermore inherits the
+ * Family/Type/Protocol (FTP) chain, which are three
+ * classes, inherited simultaneously, providing the
+ * Family/Type/Protocol configuration for the socket. Since
+ * the Options chain holds state (via BaseBaseProtocol), its
+ * inheritance must not be virtual. Likewise, Ftp
+ * inheritance must be virtual, as they hold no state.
+ *
+ * NoLingerOption -> DualStackOption -> ...
+ * 	-> BaseBaseProtocol
+ * 	-> [Ipv6FamilyFtp, StreamTypeFtp, TcpProtocolFtp]
+ * 	-> *Policy* chain...
+ *
+ * Confusingly, the Protocol of the FTP chain is not
+ * associated with the protocol chain mentioned earlier.
+ *
+ * To summarize, four chains of inheritance are arranged in
+ * the following order, where the Protocol-Specialization
+ * and Policy-Specialization chains are 2-dimensional, and
+ * traverse Protocol/Policy on its major axis:
+ *
+ * Protocol-Specialization
+ * 	-> Option
+ * 	-> BaseBaseProtocol
+ * 	-> [Ftp, Policy-Specialization]
+ *
+ * Socket classes are RAII, and a class always manages its
+ * own state, subject to certain changes through inherited
+ * policy. */
 #pragma once
 
 #include "../algorithm/algorithm.hpp"
